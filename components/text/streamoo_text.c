@@ -45,16 +45,17 @@ size_t streamoo_text_width(const uint8_t *text, size_t bytes)
     return width;
 }
 
-bool streamoo_text_draw_scrolled(streamoo_canvas_t *canvas, int32_t x, int32_t y, uint32_t offset,
+bool streamoo_text_draw_scrolled(streamoo_canvas_t *canvas, int32_t x, int32_t y, uint64_t offset,
                          const uint8_t *text, size_t bytes, uint8_t gray,
                          streamoo_glyph_fn glyph, void *context)
 {
-    if (!canvas || !canvas->pixels || (!text && bytes) || !glyph || gray > 15)
+    if (!canvas || !canvas->pixels || (!text && bytes) || !glyph || gray > 15 ||
+        offset > (uint64_t)INT64_MAX - INT32_MAX)
         return false;
     if (canvas->clip.width <= 0 || canvas->clip.height <= 0 ||
         (int64_t)y + 8 <= canvas->clip.y ||
         y >= (int32_t)canvas->clip.y + canvas->clip.height) return true;
-    int64_t cursor = (int64_t)x - offset;
+    int64_t cursor = (int64_t)x - (int64_t)offset;
     const int32_t right = (int32_t)canvas->clip.x + canvas->clip.width;
     while (bytes && cursor < right) {
         size_t consumed;

@@ -74,7 +74,7 @@ Odbiór na OLED nadal HARDWARE_TEST_PENDING, font Krypton i marquee są kolejne.
 
 ## Część 04d — wyrównanie i marquee
 
-Zaimplementowano wyrównanie i przewijanie opisane w [ADR 0007](adr/0007-text-alignment-and-marquee.md). Ruch zależy od czasu, ma pauzy na obu końcach i nie modyfikuje UTF-8. Na końcu testu OLED dodano 8 s animacji; pełna sekwencja trwa około 26 s. Parametry i płynność wymagają testu PCB.
+Zaimplementowano wyrównanie i przewijanie opisane w [ADR 0007](adr/0007-text-alignment-and-marquee.md). Ruch zależy od czasu i nie modyfikuje UTF-8. Pierwotny ping-pong został zastąpiony wymaganiem ruchu tylko w lewo w ADR 0009. Na końcu testu OLED dodano 8 s animacji; pełna sekwencja trwa około 26 s. Parametry i płynność wymagają testu PCB.
 
 ## Część 04e — większy font i alpha
 
@@ -82,3 +82,11 @@ W nagłówku testu używany jest StreamOO UI16, podzbiór OFL z Monaspace Krypto
 v1.400, 113 glifów, linia 16px. [ADR 0008](adr/0008-krypton-and-alpha-font-rendering.md)
 opisuje format, licencję, baseline i kompozycję 4bpp. Wiersze y16/y24 nadal
 mają mały font PL. Wzorzec hostowy i build przechodzą, odbiór na OLED pending.
+
+## Część 04f — tylko od prawej do lewej
+
+Użytkownik potwierdził poprawne polskie znaki i działanie scrolla; obecny
+font tymczasowo akceptuje, ale jego wygląd pozostaje do dopracowania.
+[ADR 0009](adr/0009-left-only-scroll.md) ustala scroll wyłącznie w lewo.
+Tekst powtarza się z prawej po proponowanym odstępie 24px, bez cofania.
+Animacja testu trwa teraz 20 s (całość około 38 s). Nowy cykl wymaga testu OLED.

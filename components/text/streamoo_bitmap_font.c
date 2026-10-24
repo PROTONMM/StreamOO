@@ -60,25 +60,32 @@ bool streamoo_bitmap_text_line(streamoo_canvas_t *canvas, streamoo_rect_t bounds
         const int32_t slack = bounds.width - width;
         if (align == STREAMOO_TEXT_CENTER) pen += slack / 2;
         if (align == STREAMOO_TEXT_RIGHT) pen += slack;
-    } else pen -= streamoo_marquee_offset(width, bounds.width, elapsed, speed, pause);
+    } else pen -= (int64_t)streamoo_marquee_offset(width, bounds.width, elapsed, speed, pause);
     const int32_t baseline = bounds.y + font->ascent +
         (bounds.height > font->line_height ? (bounds.height - font->line_height) / 2 : 0);
-    while (bytes) {
-        size_t consumed;
-        const streamoo_glyph_t *g = resolve(font, streamoo_utf8_next(text, bytes, &consumed));
-        text += consumed; bytes -= consumed;
-        /* width validated all source metrics before the first write. */
-        const int64_t x = pen + g->x;
-        const int32_t y = baseline + g->y;
-        if (g->w && g->h && x < (int32_t)child.clip.x + child.clip.width &&
-            x + g->w > child.clip.x && y < (int32_t)child.clip.y + child.clip.height &&
-            y + g->h > child.clip.y) {
-            if (x < INT16_MIN || x > INT16_MAX || y < INT16_MIN || y > INT16_MAX) return false;
-            const uint16_t stride = (g->w + 1) / 2;
-            if (!streamoo_canvas_alpha4(&child, x, y, g->w, g->h, font->bitmap + g->offset,
-                                         (size_t)stride * g->h, stride, gray)) return false;
+    const unsigned copies = width > (unsigned)bounds.width && speed ? 2 : 1;
+    const uint64_t period = streamoo_marquee_period(width);
+    for (unsigned copy = 0; copy < copies; ++copy) {
+        const uint8_t *cursor = text;
+        size_t remaining = bytes;
+        int64_t copy_pen = pen + (int64_t)(copy * period);
+        while (remaining) {
+            size_t consumed;
+            const streamoo_glyph_t *g = resolve(font, streamoo_utf8_next(cursor, remaining, &consumed));
+            cursor += consumed; remaining -= consumed;
+            /* width validated all source metrics before the first write. */
+            const int64_t x = copy_pen + g->x;
+            const int32_t y = baseline + g->y;
+            if (g->w && g->h && x < (int32_t)child.clip.x + child.clip.width &&
+                x + g->w > child.clip.x && y < (int32_t)child.clip.y + child.clip.height &&
+                y + g->h > child.clip.y) {
+                if (x < INT16_MIN || x > INT16_MAX || y < INT16_MIN || y > INT16_MAX) return false;
+                const uint16_t stride = (g->w + 1) / 2;
+                if (!streamoo_canvas_alpha4(&child, x, y, g->w, g->h, font->bitmap + g->offset,
+                                             (size_t)stride * g->h, stride, gray)) return false;
+            }
+            copy_pen += g->advance;
         }
-        pen += g->advance;
     }
     return true;
 }

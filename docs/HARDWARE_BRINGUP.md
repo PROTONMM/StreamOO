@@ -152,7 +152,7 @@ może być kontynuowana.
 
 ## Animacja tekstu — 04d
 
-Po sześciu obrazach dodano 8 s sceny: środkowany nagłówek, przewijane wiersze y16/24 i test LEWO/ŚRODEK/PRAWO. Łącznie około 26 s, potem panel OFF. Sprawdź pauzę przy początku i końcu, brak zapisu poza wierszem oraz brak gwałtownych skoków. Zapisz log `marquee frames=... elapsed=... us`. To pomiar testu, nie gwarancja FPS radia.
+Po sześciu obrazach dodano 8 s sceny: środkowany nagłówek, przewijane wiersze y16/24 i test LEWO/ŚRODEK/PRAWO. Łącznie około 26 s, potem panel OFF. W obecnej wersji sprawdź pauzę przy początku cyklu, wejście powtórzenia z prawej, brak zapisu poza wierszem i brak ruchu w prawo (ADR 0009). Zapisz log `marquee frames=... elapsed=... us`. To pomiar testu, nie gwarancja FPS radia.
 
 ## Duży font w animacji — 04e
 
@@ -163,3 +163,14 @@ z pauzami i bez wychodzenia poza swoje bounds. Sekwencja nadal trwa około
 26 s i kończy się OFF. Zdjęcie/log jest potrzebne do odbioru nowego fontu;
 wcześniejsze „działa” dotyczyło starszej wersji i nie zastępuje tego testu.
 Wzór hostowy z implementacji: `build/krypton-layout.png` (początek animacji).
+
+## Scroll wyłącznie w lewo — 04f
+
+Użytkownik potwierdził, że polskie znaki i dotychczasowy scroll działają;
+font na dziś akceptuje, lecz docelowy wygląd wymaga poprawy.
+Nowe firmware przewija tylko od prawej do lewej i powtarza tekst po odstępie.
+Przy początku cyklu zatrzymuje się na 1 s; nie wraca animacją w prawo.
+Ostatnia scena trwa teraz 20 s, więc cały test około 38 s, potem panel OFF.
+Sprawdź co najmniej jedno wejście kolejnej kopii tekstu z prawej i brak
+wychodzenia poza wiersze. Tę nową wersję należy odebrać osobno; nie jest
+objęta wcześniejszym potwierdzeniem działania.

@@ -16,6 +16,9 @@ int main(void)
             assert(streamoo_bitmap_text_line(&canvas, (streamoo_rect_t){x, y, 150, 16},
                                              font, text, strlen((const char *)text),
                                              STREAMOO_TEXT_CENTER, UINT64_MAX, 30, 1000, 15));
+            assert(streamoo_text_line(&canvas, (streamoo_rect_t){x, y, 150, 8},
+                                       text, strlen((const char *)text), STREAMOO_TEXT_LEFT,
+                                       UINT64_MAX, 30, 1000, 15, streamoo_font5x8, NULL));
             assert(guarded[0] == 0xa5 && guarded[8193] == 0xa5);
         }
     }

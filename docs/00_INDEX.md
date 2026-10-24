@@ -35,3 +35,5 @@ Etap 04c-2 i polecenie importu fontu: `adr/0006-provisional-polish-font-import.m
 Etap 04d: `adr/0007-text-alignment-and-marquee.md`. Metryki commitów: `COMMIT_METRICS.md`.
 
 Etap 04e: `adr/0008-krypton-and-alpha-font-rendering.md`; źródło fontu `../assets/fonts/README.md`.
+
+Etap 04f, scroll tylko w lewo: `adr/0009-left-only-scroll.md`.

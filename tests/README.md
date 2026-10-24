@@ -61,6 +61,8 @@ kontrole generatora mogą być oznaczone skip (w bieżącym uruchomieniu nie by�
 ASan/UBSan fontu (bez niedostępnego w środowisku LeakSanitizera):
 
 ```sh
-cc -std=c11 -Wall -Wextra -Werror -fsanitize=address,undefined   -fno-omit-frame-pointer -g -Icomponents/graphics/include -Icomponents/text/include   components/graphics/streamoo_canvas.c components/text/streamoo_text.c   components/text/streamoo_text_layout.c components/text/streamoo_bitmap_font.c   components/text/streamoo_ui_font.c tests/bitmap_font_sanitizer.c   -o /tmp/streamoo-bitmap-font-sanitizer
+cc -std=c11 -Wall -Wextra -Werror -fsanitize=address,undefined   -fno-omit-frame-pointer -g -Icomponents/graphics/include -Icomponents/text/include   components/graphics/streamoo_canvas.c components/text/streamoo_text.c   components/text/streamoo_text_layout.c components/text/streamoo_font5x8.c components/text/streamoo_bitmap_font.c   components/text/streamoo_ui_font.c tests/bitmap_font_sanitizer.c   -o /tmp/streamoo-bitmap-font-sanitizer
 ASAN_OPTIONS=detect_leaks=0 /tmp/streamoo-bitmap-font-sanitizer
 ```
+
+Scroll tylko w lewo: 4 nowe testy, łącznie 55. Monotoniczny offset, następna kopia wchodząca z prawej (oba fonty), wrap bez cofania, granice uint64. Sanitizer obejmuje teraz oba renderery.

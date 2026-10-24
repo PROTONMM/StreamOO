@@ -21,7 +21,8 @@ bool streamoo_text_draw(streamoo_canvas_t *canvas, int16_t x, int16_t y,
                          streamoo_glyph_fn glyph, void *context);
 
 /* Extended positioning used by marquee: signed origin minus unsigned pixel
- * offset is computed wide, avoiding int16 wrap for long text. */
+ * offset is computed wide, avoiding int16 wrap for long text.
+ * Offsets larger than INT64_MAX-INT32_MAX are rejected. */
 bool streamoo_text_draw_scrolled(streamoo_canvas_t *canvas, int32_t x, int32_t y,
-                                  uint32_t offset, const uint8_t *text, size_t bytes,
+                                  uint64_t offset, const uint8_t *text, size_t bytes,
                                   uint8_t gray, streamoo_glyph_fn glyph, void *context);

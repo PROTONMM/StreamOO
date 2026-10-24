@@ -67,7 +67,7 @@ static void display_task(void *context)
         const int64_t animation_start = esp_timer_get_time();
         TickType_t wake = xTaskGetTickCount();
         unsigned frames = 0;
-        while (esp_timer_get_time() - animation_start < 8000000 && error == ESP_OK) {
+        while (esp_timer_get_time() - animation_start < 20000000 && error == ESP_OK) {
             const uint64_t elapsed_ms = (esp_timer_get_time() - animation_start) / 1000;
             if (!streamoo_text_layout_smoke(frame, SSD1322_FRAME_BYTES, elapsed_ms)) {
                 error = ESP_ERR_INVALID_ARG;

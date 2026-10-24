@@ -1,20 +1,19 @@
 #include "streamoo_text_layout.h"
 
-uint32_t streamoo_marquee_offset(uint32_t content, uint32_t viewport,
+uint64_t streamoo_marquee_period(uint32_t content)
+{
+    return (uint64_t)content + STREAMOO_MARQUEE_GAP_PX;
+}
+
+uint64_t streamoo_marquee_offset(uint32_t content, uint32_t viewport,
                                  uint64_t elapsed, uint32_t speed, uint32_t pause)
 {
     if (content <= viewport || !viewport || !speed) return 0;
-    const uint32_t distance = content - viewport;
-    const uint64_t travel = ((uint64_t)distance * 1000 + speed - 1) / speed;
-    const uint64_t cycle = 2 * ((uint64_t)pause + travel);
-    uint64_t phase = elapsed % cycle;
+    const uint64_t period = streamoo_marquee_period(content);
+    const uint64_t travel = (period * 1000 + speed - 1) / speed;
+    const uint64_t phase = elapsed % ((uint64_t)pause + travel);
     if (phase < pause) return 0;
-    phase -= pause;
-    if (phase < travel) return (uint64_t)phase * speed / 1000;
-    phase -= travel;
-    if (phase < pause) return distance;
-    phase -= pause;
-    return distance - (uint64_t)phase * speed / 1000;
+    return (phase - pause) * speed / 1000;
 }
 
 bool streamoo_text_line(streamoo_canvas_t *canvas, streamoo_rect_t bounds,
@@ -31,7 +30,7 @@ bool streamoo_text_line(streamoo_canvas_t *canvas, streamoo_rect_t bounds,
     streamoo_canvas_t child;
     if (!streamoo_canvas_child(canvas, bounds, &child)) return false;
     int32_t x = bounds.x;
-    uint32_t offset = 0;
+    uint64_t offset = 0;
     if (width <= (unsigned)bounds.width) {
         const int32_t slack = bounds.width - width;
         if (align == STREAMOO_TEXT_CENTER) x += slack / 2;
@@ -40,5 +39,15 @@ bool streamoo_text_line(streamoo_canvas_t *canvas, streamoo_rect_t bounds,
         offset = streamoo_marquee_offset(width, bounds.width, elapsed, speed, pause);
     }
     const int32_t y = bounds.y + (bounds.height > 8 ? (bounds.height - 8) / 2 : 0);
-    return streamoo_text_draw_scrolled(&child, x, y, offset, text, bytes, gray, glyph, context);
+    if (!streamoo_text_draw_scrolled(&child, x, y, offset, text, bytes, gray, glyph, context))
+        return false;
+    if (width > (unsigned)bounds.width && speed) {
+        const int64_t next = (int64_t)x + (int64_t)streamoo_marquee_period(width) - (int64_t)offset;
+        if (next < (int32_t)child.clip.x + child.clip.width) {
+            /* period > offset and x is a bounded canvas coordinate. */
+            return streamoo_text_draw_scrolled(&child, (int32_t)next, y, 0,
+                                                text, bytes, gray, glyph, context);
+        }
+    }
+    return true;
 }

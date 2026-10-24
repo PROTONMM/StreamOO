@@ -18,8 +18,8 @@ menu "StreamOO Configuration"
             default y
             help
                 Black, white, grayscale, inverse, canvas geometry and Polish text,
-                then 8 seconds of text alignment/marquee and display off after
-                approximately 26 seconds. No radio UI.
+                then 20 seconds of left-only marquee and display off after
+                approximately 38 seconds. No radio UI.
                 User module is configured with R5/R8: BS1=0 and BS0=0.
                 Cold power-on/reset must be provided by the board if RESET=-1.
         config STREAMOO_LCD_COLUMN_OFFSET

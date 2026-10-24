@@ -32,3 +32,7 @@ nowych zależności zewnętrznych. Font Krypton będzie osobnym podetapem.
 Na polecenie użytkownika wszystkie nowe commity mają trailery AI-Model i
 AI-Tokens. Nieudostępnione metryki pozostają unavailable, a nie szacunkiem;
 procedura jest opisana w `docs/COMMIT_METRICS.md` i AGENTS.md.
+
+## Zastąpienie kierunku ruchu
+
+Nowsza decyzja użytkownika z 2026-10-24: [ADR 0009](0009-left-only-scroll.md) zastępuje ping-pong przewijaniem wyłącznie w lewo. Opis powyżej dokumentuje pierwotną wersję, nie aktualne zachowanie.

@@ -22,3 +22,5 @@
 | D18 | OTWARTE | Hasło AP: konkretna wartość w prywatnej konfiguracji; uwierzytelnianie administracyjne WWW. |
 | D19 | OTWARTE | Czy lista stacji ma zawijać się (wrap-around), parametr timeout menu. |
 | D20 | OTWARTE | Typ formatu daty/godziny i strefy, ustawienie godziny przy niedostępnym SNTP. |
+| D21 | USTALONE | Scroll ma poruszać tekst wyłącznie od prawej do lewej; nowsza decyzja użytkownika, ADR 0009. |
+| D22 | OTWARTE | Obecny font tymczasowo zaakceptowany, polskie znaki poprawne według użytkownika; docelowy wygląd czcionki wymaga dopracowania. |

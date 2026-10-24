@@ -100,6 +100,23 @@ class BitmapFontTests(unittest.TestCase):
         bad = Font(None, None, 0, 0, 16, 13)
         self.assertEqual(self.lib.streamoo_bitmap_text_width(C.byref(bad), b'', 0), C.c_size_t(-1).value)
 
+    def test_cyclic_alpha_font_repeat_moves_only_left(self):
+        glyph = Glyph(ord('A'), 0, 0, 0, 2, 1, 1)
+        bitmap = (C.c_uint8 * 1)(0xf0)
+        font = Font(C.pointer(glyph), bitmap, 1, 1, 1, 0)
+        frame = (C.c_uint8 * 8)()
+        canvas = Canvas()
+        self.lib.streamoo_canvas_init(C.byref(canvas), frame, 8, 16, 1, 8)
+        for time, expected in ((3000, [4, 6, 8]), (3034, [3, 5, 7, 9]),
+                               (3133, [1, 3, 5, 7, 9]), (3134, [0, 2, 4, 6, 8])):
+            for i in range(8):
+                frame[i] = 0
+            self.assertTrue(self.lib.streamoo_bitmap_text_line(C.byref(canvas), Rect(0, 0, 10, 1),
+                                                               C.byref(font), b'A' * 20, 20,
+                                                               0, time, 30, 1000, 15))
+            active = [x for x in range(16) if ((frame[x // 2] >> (0 if x & 1 else 4)) & 15)]
+            self.assertEqual(active, expected)
+
     def test_layout_matches_frozen_frame_and_cannot_write_outside_buffer(self):
         guard = (C.c_uint8 * 8194)(*([0xa5] * 8194))
         pointer = C.cast(C.byref(guard, 1), C.POINTER(C.c_uint8))

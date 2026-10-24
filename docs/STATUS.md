@@ -5,7 +5,7 @@
 | 01 zakres | wymagania zebrane | dokumentacja |
 | 02 schemat i profil | walidator i menuconfig zaimplementowane; HARDWARE_TEST_PENDING | ADR 0001; 5 testów hostowych, 2332 konfiguracje; build PASS |
 | 03 szkielet | baza zaimplementowana; odbiór sprzętowy i integracyjny OPEN | ESP-IDF v6.1 build PASS; ADR 0002 |
-| 04 UI/SSD1322 | OLED działa według użytkownika; 04b canvas gotowy; pełne UI niezaimplementowane | ADR 0003/0004; 26 testów PASS; build PASS; pomiary i nowy obraz pending |
+| 04 UI/SSD1322 | font i PL zaakceptowane tymczasowo; nowy scroll tylko w lewo; pełne UI niezaimplementowane | ADR 0009; 55 testów PASS; odbiór nowego cyklu pending |
 | 05 encoder | NIEZAIMPLEMENTOWANE | — |
 | 06 audio | NIEZAIMPLEMENTOWANE | — |
 | 07 DSP | NIEZAIMPLEMENTOWANE | — |
@@ -257,6 +257,29 @@ Zmiana dotyczy wyłącznie dokumentacji; bez zmian firmware i ponownego buildu.
   Otwarta licencja małego fontu PL pozostaje bez zmian.
 - Następnie: po potwierdzeniu czytelności fontów/layoutu na OLED — dalszy UI,
   wymienne widgety i lista stacji. Pełnego etapu 04 nadal nie zakończono.
-- Hash: `git log -1 --format=%H --grep='^stage-04e:'`.
+- Hash: `b8ca9569df9ecb75aa2067e2b47dfd7a47b8061a`.
 - Model/tokeny: trailery commita, według COMMIT_METRICS.md; nieudostępnione
   dane są oznaczone unavailable, nie oszacowane.
+
+## Odbiór fontu i zmiana scrolla — etap 04f (2026-10-24)
+
+- Użytkownik potwierdził działanie, poprawne polskie znaki i scroll po 04e.
+  Czcionka jest tymczasowo akceptowana, wygląd wymaga późniejszej poprawy.
+  Nie dopisano nieprzekazanych pomiarów ani docelowej akceptacji typografii.
+- Nowe wymaganie: ruch tylko od prawej do lewej. Usunięto aktywny ruch
+  powrotny; powtórzenie tekstu wchodzi z prawej po odstępie 24px (propozycja).
+  Dotyczy obu fontów. Offset uint64 i clipping chronią granice i długie teksty.
+- Scena animowana trwa 20 s, cała diagnostyka około 38 s, potem panel OFF.
+  Daje to czas na zobaczenie pełnego cyklu przy aktualnych długościach tekstu.
+- `python3 -m unittest discover -s tests -q` — PASS, 55 testów (4 nowe).
+  Sprawdzono brak cofania, powtórzenie, oba renderery, granice i bufory.
+- ASan/UBSan renderera fontów — PASS; program rozszerzony na font 5×8.
+  LeakSanitizer pominięty z powodu ptrace (detect_leaks=0), bez deklaracji
+  testu wycieków. `idf.py reconfigure build` i `git diff --check` — PASS.
+  Obraz ESP32-S3: 0x3c060 / 245856 B.
+- HARDWARE_TEST_PENDING: odbiór nowej pętli lewostronnej na OLED.
+  Nie wykonywano flash/erase/eFuse. ADR: 0009.
+- Następny zakres: widgety i lista stacji; osobno dalsze strojenie wyglądu
+  czcionki. Poprawność PL z poprzedniej wersji jest potwierdzona przez użytkownika.
+- Hash: `git log -1 --format=%H --grep='^stage-04f:'`.
+- Model i tokeny w trailerach commita według COMMIT_METRICS.md.

@@ -24,7 +24,7 @@ class LayoutTests(unittest.TestCase):
         cls.lib = C.CDLL(str(library))
         cls.lib.streamoo_marquee_offset.argtypes = [C.c_uint32, C.c_uint32, C.c_uint64,
                                                    C.c_uint32, C.c_uint32]
-        cls.lib.streamoo_marquee_offset.restype = C.c_uint32
+        cls.lib.streamoo_marquee_offset.restype = C.c_uint64
         cls.lib.streamoo_canvas_init.argtypes = [C.POINTER(Canvas), C.POINTER(C.c_uint8), C.c_size_t,
                                                 C.c_int16, C.c_int16, C.c_uint16]
         cls.lib.streamoo_text_line.argtypes = [C.POINTER(Canvas), Rect, C.c_char_p, C.c_size_t,
@@ -32,7 +32,7 @@ class LayoutTests(unittest.TestCase):
                                               C.c_uint8, GLYPH, C.c_void_p]
         cls.lib.streamoo_text_line.restype = C.c_bool
         cls.lib.streamoo_text_draw_scrolled.argtypes = [C.POINTER(Canvas), C.c_int32, C.c_int32,
-                                                       C.c_uint32, C.c_char_p, C.c_size_t,
+                                                       C.c_uint64, C.c_char_p, C.c_size_t,
                                                        C.c_uint8, GLYPH, C.c_void_p]
         cls.lib.streamoo_text_layout_smoke.argtypes = [C.POINTER(C.c_uint8), C.c_size_t, C.c_uint64]
 
@@ -52,9 +52,9 @@ class LayoutTests(unittest.TestCase):
     def pixel(self, x, y=0):
         return (self.guard[1 + y * 32 + x // 2] >> (0 if x & 1 else 4)) & 15
 
-    def test_pause_forward_end_pause_return_and_wrap(self):
+    def test_pause_left_motion_and_repeat_cycle(self):
         expected = {0: 0, 999: 0, 1000: 0, 1500: 15, 2999: 59,
-                    3000: 60, 3999: 60, 4000: 60, 4500: 45, 5999: 1, 6000: 0}
+                    3000: 60, 3999: 89, 4000: 90, 4500: 105, 5133: 123, 5134: 0}
         for time, offset in expected.items():
             self.assertEqual(self.lib.streamoo_marquee_offset(100, 40, time, 30, 1000), offset)
 
@@ -64,7 +64,7 @@ class LayoutTests(unittest.TestCase):
                      (100, 40, 999, 0, 1000), (100, 0, 999, 30, 1000)):
             self.assertEqual(function(*args), 0)
         for speed in (1, 30, 0xffffffff):
-            self.assertLessEqual(function(0xffffffff, 1, 0xffffffffffffffff, speed, 0xffffffff), 0xfffffffe)
+            self.assertLessEqual(function(0xffffffff, 1, 0xffffffffffffffff, speed, 0xffffffff), 0xffffffff + 23)
 
     def test_left_center_right_and_vertical_clipping(self):
         for align, start in ((0, 10), (1, 17), (2, 25)):
@@ -99,3 +99,28 @@ class LayoutTests(unittest.TestCase):
         self.assertTrue(self.lib.streamoo_text_layout_smoke(frame, 8192, 2500))
         self.assertEqual(bytes(frame)[:16 * 128], initial[:16 * 128])
         self.assertNotEqual(bytes(frame)[16 * 128:32 * 128], initial[16 * 128:32 * 128])
+
+    def test_repeat_enters_from_right_after_gap(self):
+        data = b'A' * 8  # nominal ink 47px + 24px gap = 71px period
+        self.assertTrue(self.lib.streamoo_text_line(C.byref(self.canvas), Rect(10, 0, 20, 4),
+                                                    data, len(data), 0, 3000, 30, 1000,
+                                                    15, self.glyph, None))
+        expected = []
+        for x in range(64):
+            source = (60 + x - 10) % 71
+            expected.append(15 if 10 <= x < 30 and source < 47 and source % 6 < 5 else 0)
+        self.assertEqual([self.pixel(x) for x in range(64)], expected)
+        self.assertEqual((self.guard[0], self.guard[-1]), (0xa5, 0xa5))
+
+    def test_offset_never_reverses_between_wraps(self):
+        values = [self.lib.streamoo_marquee_offset(100, 40, t, 30, 1000)
+                  for t in range(1000, 5134)]
+        self.assertEqual(values, sorted(values))
+        self.assertEqual(max(values), 123)
+
+    def test_excessive_public_scroll_offset_is_rejected(self):
+        before = bytes(self.guard)
+        self.assertFalse(self.lib.streamoo_text_draw_scrolled(C.byref(self.canvas), 0, 0,
+                                                             0xffffffffffffffff, b'A', 1,
+                                                             15, self.glyph, None))
+        self.assertEqual(bytes(self.guard), before)
