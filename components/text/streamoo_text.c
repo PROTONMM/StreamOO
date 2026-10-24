@@ -45,16 +45,16 @@ size_t streamoo_text_width(const uint8_t *text, size_t bytes)
     return width;
 }
 
-bool streamoo_text_draw(streamoo_canvas_t *canvas, int16_t x, int16_t y,
+bool streamoo_text_draw_scrolled(streamoo_canvas_t *canvas, int32_t x, int32_t y, uint32_t offset,
                          const uint8_t *text, size_t bytes, uint8_t gray,
                          streamoo_glyph_fn glyph, void *context)
 {
     if (!canvas || !canvas->pixels || (!text && bytes) || !glyph || gray > 15)
         return false;
     if (canvas->clip.width <= 0 || canvas->clip.height <= 0 ||
-        (int32_t)y + 8 <= canvas->clip.y ||
+        (int64_t)y + 8 <= canvas->clip.y ||
         y >= (int32_t)canvas->clip.y + canvas->clip.height) return true;
-    int32_t cursor = x;
+    int64_t cursor = (int64_t)x - offset;
     const int32_t right = (int32_t)canvas->clip.x + canvas->clip.width;
     while (bytes && cursor < right) {
         size_t consumed;
@@ -74,10 +74,18 @@ bool streamoo_text_draw(streamoo_canvas_t *canvas, int16_t x, int16_t y,
                     if (columns[col] & (1u << row)) rows[row] |= 0x80 >> col;
                 }
             }
-            /* cursor < right <= INT16_MAX, starts as int16; no narrowing wrap. */
-            streamoo_canvas_mask(canvas, (int16_t)cursor, y, 5, 8, rows, sizeof(rows), 1, gray);
+            /* Only visible coordinates are narrowed: cursor is between -4
+             * and the surface right edge; y is between -7 and its bottom. */
+            streamoo_canvas_mask(canvas, (int16_t)cursor, (int16_t)y, 5, 8, rows, sizeof(rows), 1, gray);
         }
         cursor += 6;
     }
     return true;
+}
+
+bool streamoo_text_draw(streamoo_canvas_t *canvas, int16_t x, int16_t y,
+                         const uint8_t *text, size_t bytes, uint8_t gray,
+                         streamoo_glyph_fn glyph, void *context)
+{
+    return streamoo_text_draw_scrolled(canvas, x, y, 0, text, bytes, gray, glyph, context);
 }

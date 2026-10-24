@@ -215,3 +215,20 @@ ogonków i odstępów oraz pomiary czasów nie zostały osobno przekazane.
 Pozostają punktami do uzupełnienia protokołu, nie blokują dalszej pracy
 nad marquee i wyrównaniem. Status licencji zmian PL pozostaje otwarty.
 Zmiana dotyczy wyłącznie dokumentacji; bez zmian firmware i ponownego buildu.
+
+## Etap 04d — wyrównanie i marquee (2026-10-24)
+
+- `text`: wyrównanie left/center/right, clipping wiersza i czysty zegarowy
+  marquee ping-pong. Rozszerzona pozycja bez zawijania int16 dla długich tekstów.
+- Aplikacja: po 18 s statycznych obrazów dodano 8 s animacji, razem około
+  26 s do wyłączenia panelu. Proponowane 30 px/s i pauzy 1 s; bez realnych
+  metadanych. Nagłówek nadal ma mały font; Krypton jest kolejnym podetapem.
+- Testy: 42 PASS (`python3 -m unittest discover -s tests -q`), w tym 6 nowych.
+  `idf.py reconfigure build` — PASS. `git diff --check` — PASS.
+- HARDWARE_TEST_PENDING: czytelność przewijania, pauzy, wyrównanie, pomiary
+  liczby klatek/czasu na ESP32-S3. Nie wykonano flash/erase/eFuse.
+- ADR 0007. Następnie: font Krypton i renderer glifów 4bpp.
+- Metryki każdego nowego commita: trailery AI-Model i AI-Tokens, według
+  `COMMIT_METRICS.md`. Rodzina modelu GPT-6/Codex, wariant runtime oraz
+  licznik tokenów nie są udostępnione; brakujące dane oznaczono unavailable.
+- Hash: `git log -1 --format=%H --grep='^stage-04d:'`.

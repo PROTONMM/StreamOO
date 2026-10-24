@@ -71,3 +71,7 @@ oraz `THIRD_PARTY_NOTICES.md` odnotowują licencję polskich zmian jako
 DO SPRAWDZENIA. Nie jest to import kodu Arduino ani konwertera yoRadio.
 Szósty obraz diagnostyczny zawiera polskie napisy; cały test trwa około 18 s.
 Odbiór na OLED nadal HARDWARE_TEST_PENDING, font Krypton i marquee są kolejne.
+
+## Część 04d — wyrównanie i marquee
+
+Zaimplementowano wyrównanie i przewijanie opisane w [ADR 0007](adr/0007-text-alignment-and-marquee.md). Ruch zależy od czasu, ma pauzy na obu końcach i nie modyfikuje UTF-8. Na końcu testu OLED dodano 8 s animacji; pełna sekwencja trwa około 26 s. Parametry i płynność wymagają testu PCB.

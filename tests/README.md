@@ -49,3 +49,5 @@ bit7 glifu, clippingu i fallbacku z oryginalnym syntetycznym providerem.
 Testy nie dołączają bitmap z ZIP i nie potwierdzają fontu na OLED.
 
 Font PL: 4 nowe testy, łącznie 36. Obejmują wszystkie 113 bitmap przez digest źródła, mapping, ogonki i pełną scenę tekstową. Zobacz `THIRD_PARTY_NOTICES.md` dla statusu importowanych bitmap.
+
+Layout: 6 nowych testów, łącznie 42. Fazy i granice marquee, wyrównanie, długi offset, reset/pominięte klatki i izolacja wierszy.

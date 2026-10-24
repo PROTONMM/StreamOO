@@ -1,6 +1,7 @@
 #include "display_smoke.h"
 #include "canvas_smoke.h"
 #include "text_smoke.h"
+#include "text_layout_smoke.h"
 
 #include <inttypes.h>
 #include <string.h>
@@ -61,6 +62,23 @@ static void display_task(void *context)
                      step, esp_timer_get_time() - start, esp_err_to_name(error));
             if (error == ESP_OK) vTaskDelay(pdMS_TO_TICKS(3000));
         }
+    }
+    if (error == ESP_OK) {
+        const int64_t animation_start = esp_timer_get_time();
+        TickType_t wake = xTaskGetTickCount();
+        unsigned frames = 0;
+        while (esp_timer_get_time() - animation_start < 8000000 && error == ESP_OK) {
+            const uint64_t elapsed_ms = (esp_timer_get_time() - animation_start) / 1000;
+            if (!streamoo_text_layout_smoke(frame, SSD1322_FRAME_BYTES, elapsed_ms)) {
+                error = ESP_ERR_INVALID_ARG;
+                break;
+            }
+            error = streamoo_ssd1322_present(display, frame, SSD1322_FRAME_BYTES);
+            ++frames;
+            vTaskDelayUntil(&wake, pdMS_TO_TICKS(40) ? pdMS_TO_TICKS(40) : 1);
+        }
+        ESP_LOGI("display_smoke", "marquee frames=%u elapsed=%" PRId64 " us",
+                 frames, esp_timer_get_time() - animation_start);
     }
     if (error != ESP_OK) ESP_LOGE("display_smoke", "Failed: %s", esp_err_to_name(error));
     if (display) {

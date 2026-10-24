@@ -11,3 +11,7 @@
 9. Nie przechowuj haseł w repo. Hasło AP ma być jednakowe dla urządzeń, lecz podawane w prywatnym procesie budowania; nie logować haseł.
 10. Jeśli brak danych: napisz test/eksperyment, oznacz OPEN, nie wymyślaj niezweryfikowanego zachowania.
 11. Żaden opis lub artefakt nowego projektu nie może używać starej nazwy konkretnej modyfikacji; nowy system to StreamOO, projektem źródłowym jest yoRadio.
+12. Każdy nowy commit agenta ma zawierać trailery `AI-Model` i `AI-Tokens`
+    zgodnie z `docs/COMMIT_METRICS.md`. Zapisuj faktycznie udostępnione dane;
+    jeśli model wariantu lub licznik nie są widoczne, jawnie oznacz brak.
+    Nie wymyślaj liczby tokenów ani nie wyciągaj jej z rozmiaru diffu.

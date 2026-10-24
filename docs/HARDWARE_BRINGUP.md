@@ -149,3 +149,7 @@ wgranie i działanie firmware. Zapisano podstawowy test funkcjonalny jako
 potwierdzony przez użytkownika. Szczegółów oceny glifów i pomiarów nie
 przekazano; nie uzupełniono ich domysłami. Dalsza implementacja tekstu
 może być kontynuowana.
+
+## Animacja tekstu — 04d
+
+Po sześciu obrazach dodano 8 s sceny: środkowany nagłówek, przewijane wiersze y16/24 i test LEWO/ŚRODEK/PRAWO. Łącznie około 26 s, potem panel OFF. Sprawdź pauzę przy początku i końcu, brak zapisu poza wierszem oraz brak gwałtownych skoków. Zapisz log `marquee frames=... elapsed=... us`. To pomiar testu, nie gwarancja FPS radia.
