@@ -202,3 +202,10 @@ snapshot=1002`. To rejestrator komendy testowej; nie zmienia stacji audio.
 Sprawdź czytelność wybranego wiersza, płynny ruch i brak kolizji z nagłówkiem
 TEST, przygaszenie sąsiadów i przejścia po zatwierdzeniu. Sterowanie jest
 na razie automatyczne. Enkoder i rzeczywiste katalogi nie są tym testowane.
+
+### Wynik użytkownika — 04h, 2026-10-24
+
+Użytkownik potwierdził działanie listy i poprawność wyboru stacji.
+Odbiór pokazu 04h na OLED zaliczony na podstawie tego zgłoszenia.
+Nie jest to test fizycznego enkodera, rzeczywistego katalogu ani audio;
+wersja 04h używa automatycznych zdarzeń i katalogu TEST.

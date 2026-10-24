@@ -5,7 +5,7 @@
 | 01 zakres | wymagania zebrane | dokumentacja |
 | 02 schemat i profil | walidator i menuconfig zaimplementowane; HARDWARE_TEST_PENDING | ADR 0001; 5 testów hostowych, 2332 konfiguracje; build PASS |
 | 03 szkielet | baza zaimplementowana; odbiór sprzętowy i integracyjny OPEN | ESP-IDF v6.1 build PASS; ADR 0002 |
-| 04 UI/SSD1322 | lista i właściciel UI gotowe do testu; pełny HOME i input nadal w implementacji | ADR 0011; 73 testy PASS; odbiór listy pending |
+| 04 UI/SSD1322 | lista i wybór potwierdzone przez użytkownika; pełny HOME i input nadal w implementacji | ADR 0011; 73 testy PASS; odbiór pokazu 04h zaliczony |
 | 05 encoder | NIEZAIMPLEMENTOWANE | — |
 | 06 audio | NIEZAIMPLEMENTOWANE | — |
 | 07 DSP | NIEZAIMPLEMENTOWANE | — |
@@ -349,4 +349,15 @@ Zmiana wyłącznie dokumentacyjna; `git diff --check` — PASS, bez buildu firmw
   i przejścia. Nie wykonano flash/erase/eFuse. ADR 0011.
 - Dalszy zakres: pełny ekran HOME i integracja gestów po sterowniku wejścia;
   rzeczywiste katalogi/player dopiero w ich etapach. Pełny etap 04 nieukończony.
-- Hash: `git log -1 --format=%H --grep='^stage-04h:'`.
+- Hash: `5aec16d62022a640e243f69d6d08fc50e7237a8e`.
+
+## Odbiór pokazu listy 04h (2026-10-24)
+
+Użytkownik potwierdził: „Działa, wybór stacji jest OK”. Zapisano pozytywny
+odbiór listy i wyboru w pokazie 04h na OLED, według kontekstu wersji
+5aec16d. Nie otrzymano osobnego hasha obrazu ani logów pomiarowych.
+Sterowanie w tej wersji było automatyczne na katalogu TEST; potwierdzenie
+nie oznacza obsługi fizycznego enkodera ani odtwarzania rzeczywistych stacji.
+Kwestia docelowego wrap-around i dopracowania wyglądu czcionki pozostaje
+otwarta. Zmiana tylko dokumentacyjna; `git diff --check` — PASS, bez nowego
+buildu firmware.

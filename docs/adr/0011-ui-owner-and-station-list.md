@@ -75,3 +75,9 @@ wyłącznie znanego trybu detect_leaks=0. Nie raportujemy testu wycieków.
 Odbiór OLED obejmuje płynność i czytelność listy. Fizyczne gesty, player,
 repozytorium stacji i pełny ekran HOME są w dalszych etapach. Własność UI
 nie oznacza zaimplementowania tych komponentów przez sam model testowy.
+
+## Wynik odbioru
+
+2026-10-24 użytkownik potwierdził działanie i poprawny wybór stacji.
+Pokaz listy 04h na OLED zaakceptowany; fizyczne wejście i rzeczywisty
+player pozostają do implementacji. Nie zmienia to otwartej decyzji D19.
