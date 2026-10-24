@@ -438,3 +438,15 @@ i otwarte decyzje pozostają aktualne. Zmiana tylko dokumentacyjna;
 - HARDWARE_TEST_PENDING: liczniki IRQ obu kanałów, przeciwne delta,
   liczba zdarzeń na ząbek, brak overflow. Przy nadal zerowym B sprawdzić
   fizyczny sygnał GPIO16; przyczyna pozostaje OPEN.
+
+## Wynik diagnostyki enkodera 05b (2026-10-24)
+
+Użytkownik przekazał log IRQ: podczas obrotu A ma m.in. 15/10/35/21 zboczy
+na interwał, B stale 0 i zero IRQ; BTN=1. Brak raportu overflow w przesłanym
+fragmencie. Odbiór kanału B/kierunku nadal FAILED/OPEN, nie uznano etapu 05.
+Ponownie sprawdzono S1E2→IO16 w schemacie i lokalną konfigurację B=16,
+HALF_QUADRATURE=y, INTERNAL_PULLUP wyłączone. Półkrok nie zastępuje kanału B.
+Następny eksperyment: włączyć istniejący Kconfig wewnętrznych pull-up,
+przebudować/wgrać i porównać poziom B oraz IRQ podczas obrotu. Jeśli nadal
+stałe zero, pomiar sygnału/ciągłości toru B na sprzęcie. Przyczyna nieustalona.
+Zmiana tylko dokumentacyjna; git diff --check PASS, bez nowego buildu/flash.
