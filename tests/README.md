@@ -78,3 +78,15 @@ ASAN_OPTIONS=detect_leaks=0 /tmp/streamoo-visualization-sanitizer
 
 LeakSanitizer jest niedostępny w obecnym środowisku ptrace; powyższy wynik
 nie jest testem wycieków. Komponent nie wykonuje alokacji.
+
+UI/lista: 11 nowych testów, łącznie 73. Rozdzielenie browse/cancel od komend,
+ID+generation, kolejka pełna/retry, retarget, granice, snapshot replacement,
+pusta lista, clipping, jasność i pełny automat diagnostyczny.
+
+```sh
+cc -std=c11 -Wall -Wextra -Werror -fsanitize=address,undefined   -fno-omit-frame-pointer -g -Icomponents/graphics/include -Icomponents/text/include   -Icomponents/ui/include -Imain components/graphics/streamoo_canvas.c   components/text/streamoo_text.c components/text/streamoo_text_layout.c   components/text/streamoo_font5x8.c components/text/streamoo_bitmap_font.c   components/text/streamoo_ui_font.c components/ui/streamoo_ui.c   components/ui/streamoo_ui_list.c main/ui_list_probe.c tests/ui_sanitizer.c   -o /tmp/streamoo-ui-sanitizer
+ASAN_OPTIONS=detect_leaks=0 /tmp/streamoo-ui-sanitizer
+```
+
+Jak wcześniej, niedostępny LeakSanitizer nie jest częścią wyniku; wykonano
+ASan/UBSan oraz canary. UI nie wykonuje alokacji.

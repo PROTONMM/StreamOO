@@ -188,3 +188,17 @@ firmware nie odtwarza jeszcze audio i nie liczy FFT. Pełny test nadal około
 brak wychodzenia poza środkowy panel i brak pozostałości przy zmianie trybu.
 Scroll w lewo i fonty pozostają bez zmian. Zapisz zdjęcia/wynik jako odbiór
 04g, oddzielnie od wcześniejszego potwierdzenia.
+
+## Animowana lista TEST — 04h
+
+Dotychczasowe działanie zostało potwierdzone przez użytkownika. Nowa lista
+jest osobnym zakresem odbioru. Po 38s wcześniejszych obrazów pojawia się
+8-sekundowy pokaz: zaznaczona Łódź, przejście do Gdańska i Poznania,
+zatrzymanie na końcu katalogu, powrót do Gdańska i potwierdzenie, następnie
+ponowne otwarcie na niezmienionym snapshotcie Łódź. Wszystkie nazwy są TEST.
+Cały test trwa około 46s, potem OFF. Log: `list diagnostic requested=1003
+snapshot=1002`. To rejestrator komendy testowej; nie zmienia stacji audio.
+
+Sprawdź czytelność wybranego wiersza, płynny ruch i brak kolizji z nagłówkiem
+TEST, przygaszenie sąsiadów i przejścia po zatwierdzeniu. Sterowanie jest
+na razie automatyczne. Enkoder i rzeczywiste katalogi nie są tym testowane.

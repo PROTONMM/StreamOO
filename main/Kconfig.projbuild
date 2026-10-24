@@ -19,8 +19,9 @@ menu "StreamOO Configuration"
             help
                 Black, white, grayscale, inverse, canvas geometry and Polish text,
                 then 20 seconds of left-only marquee with synthetic visualization
-                widgets and display off after
-                approximately 38 seconds. No radio UI.
+                widgets, followed by 8 seconds of synthetic station-list
+                navigation. Display off
+                after approximately 46 seconds. No player or real station catalog.
                 User module is configured with R5/R8: BS1=0 and BS0=0.
                 Cold power-on/reset must be provided by the board if RESET=-1.
         config STREAMOO_LCD_COLUMN_OFFSET

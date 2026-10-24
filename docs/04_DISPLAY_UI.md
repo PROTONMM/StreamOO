@@ -99,3 +99,15 @@ określa API i granice odpowiedzialności. Rysowanie nie wykonuje analizy DSP.
 Aplikacyjna diagnostyka automatycznie zmienia widżet co 6 s, z jawnymi danymi
 TEST; to nie jest jeszcze wybór gestem ani działająca wizualizacja audio.
 Użytkownik potwierdził starszy scroll 04f; nowe widżety oczekują odbioru OLED.
+
+## Część 04h — lista i właściciel stanu
+
+`ui` zarządza przeglądaniem listy, logicznym wyborem i pozycją animacji.
+Renderer pokazuje wyróżniony cel i przygaszonych sąsiadów; nie wywołuje
+sterownika ani playera. Confirm przekazuje stable_id+generation do adaptera
+kolejki, cancel/browse nie wysyłają komendy. [ADR 0011](adr/0011-ui-owner-and-station-list.md)
+opisuje własność snapshotów, zachowanie przy odmowie kolejki i animację.
+
+Testowa lista nie zawija się, D19 pozostaje OPEN. Automat diagnostyczny
+pokazuje ją przez 8s; pełny test około 46s. Odbiór listy OLED pending,
+sterowanie enkoderem i pełny ekran HOME nie są jeszcze zaimplementowane.

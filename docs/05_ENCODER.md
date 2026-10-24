@@ -22,3 +22,11 @@
 
 ## Trwałość
 Zmiany głośności i wizualizacji: debounce zapisu NVS 5 sekund od **ostatniej** zmiany, tylko przy różnicy; kontrolowany shutdown/restart flush. Obrót przy naciśniętym przycisku zmienia wizualizację bez regulacji głośności.
+
+## Przygotowany interfejs UI
+
+Etap 04h dostarcza `streamoo_ui_open_stations/move/confirm/cancel`.
+Przyszły adapter gestów ma wywoływać je w jednym zadaniu UI; callback GPIO
+nie może rysować ani mutować UI bezpośrednio. Kursor i animacja są oddzielone
+(Q16 zamiast float). Sam ten interfejs nie jest implementacją enkodera,
+debounce ani mapowania A/B. W teście granice są clamped; finalny wrap to D19.

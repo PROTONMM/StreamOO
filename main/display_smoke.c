@@ -2,6 +2,7 @@
 #include "canvas_smoke.h"
 #include "text_smoke.h"
 #include "text_layout_smoke.h"
+#include "ui_list_probe.h"
 
 #include <inttypes.h>
 #include <string.h>
@@ -79,6 +80,24 @@ static void display_task(void *context)
         }
         ESP_LOGI("display_smoke", "marquee frames=%u elapsed=%" PRId64 " us",
                  frames, esp_timer_get_time() - animation_start);
+    }
+    if (error == ESP_OK) {
+        streamoo_ui_list_probe_t probe;
+        if (!streamoo_ui_list_probe_init(&probe)) error = ESP_ERR_INVALID_STATE;
+        const int64_t list_start = esp_timer_get_time();
+        TickType_t wake = xTaskGetTickCount();
+        while (error == ESP_OK && esp_timer_get_time() - list_start < 8000000) {
+            const uint64_t elapsed = (esp_timer_get_time() - list_start) / 1000;
+            if (!streamoo_ui_list_probe_draw(&probe, frame, SSD1322_FRAME_BYTES, elapsed)) {
+                error = ESP_ERR_INVALID_ARG;
+                break;
+            }
+            error = streamoo_ssd1322_present(display, frame, SSD1322_FRAME_BYTES);
+            vTaskDelayUntil(&wake, pdMS_TO_TICKS(40) ? pdMS_TO_TICKS(40) : 1);
+        }
+        if (error == ESP_OK)
+            ESP_LOGI("display_smoke", "list diagnostic requested=%" PRIu64 " snapshot=%" PRIu64,
+                     probe.requested_id, probe.ui.playing_id);
     }
     if (error != ESP_OK) ESP_LOGE("display_smoke", "Failed: %s", esp_err_to_name(error));
     if (display) {

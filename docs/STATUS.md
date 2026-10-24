@@ -5,7 +5,7 @@
 | 01 zakres | wymagania zebrane | dokumentacja |
 | 02 schemat i profil | walidator i menuconfig zaimplementowane; HARDWARE_TEST_PENDING | ADR 0001; 5 testów hostowych, 2332 konfiguracje; build PASS |
 | 03 szkielet | baza zaimplementowana; odbiór sprzętowy i integracyjny OPEN | ESP-IDF v6.1 build PASS; ADR 0002 |
-| 04 UI/SSD1322 | scroll i PL potwierdzone; trzy widżety gotowe do testu; pełne UI niezaimplementowane | ADR 0010; 62 testy PASS; nowe widżety pending |
+| 04 UI/SSD1322 | lista i właściciel UI gotowe do testu; pełny HOME i input nadal w implementacji | ADR 0011; 73 testy PASS; odbiór listy pending |
 | 05 encoder | NIEZAIMPLEMENTOWANE | — |
 | 06 audio | NIEZAIMPLEMENTOWANE | — |
 | 07 DSP | NIEZAIMPLEMENTOWANE | — |
@@ -308,7 +308,7 @@ Zmiana dotyczy wyłącznie dokumentacji; bez zmian firmware i ponownego buildu.
   pasm i peak oraz brak artefaktów przy przełączeniu. Nie wykonano flash.
 - ADR 0010. Następnie: animowana lista i właściciel stanu UI, integracja
   gestów dopiero przy sterowniku wejścia; dane audio dopiero po DSP.
-- Hash: `git log -1 --format=%H --grep='^stage-04g:'`.
+- Hash: `4ce01fdcb54d4aa132f1f248b4d08ce0b72f4e19`.
 - Model/tokeny w trailerach zgodnie z COMMIT_METRICS.md; niedostępnych
   liczników nie oszacowano.
 
@@ -318,3 +318,35 @@ Na nowe polecenie użytkownika wyłączono dodawanie trailerów AI-Model i
 AI-Tokens do kolejnych wiadomości commitów. Zaktualizowano AGENTS.md
 oraz COMMIT_METRICS.md. Wcześniejsza historia pozostaje bez zmian.
 Zmiana wyłącznie dokumentacyjna; `git diff --check` — PASS, bez buildu firmware.
+
+## Potwierdzenie i etap 04h — lista stacji i właściciel UI (2026-10-24)
+
+- Użytkownik potwierdził działanie po wdrożeniu widżetów 04g (według kontekstu
+  4ce01fd); szczegółowych pomiarów i hasha urządzenia nie przekazano.
+  Wcześniejsza uwaga o późniejszym dopracowaniu czcionki pozostaje aktualna.
+- Komponent `ui`: HOME/STATIONS, logiczny wybór i animacja Q16, otwarcie,
+  ruch, cancel/confirm. Catalog snapshot z trwałymi ID i generation,
+  pojedynczy właściciel UI i nonblocking callback do przyszłej kolejki.
+- Browse/cancel bez komendy; confirm wysyła ID+generation dopiero przy
+  przyjęciu przez adapter. Pełna kolejka zostawia listę otwartą. Snapshot
+  playing_id nie jest zmieniany przez UI. Nie ma jeszcze playera/audio.
+- Renderer: wyróżniony środkowy cel, przygaszone sąsiednie wiersze, clipping,
+  lewostronny marquee zaznaczonej nazwy i obsługa pustego katalogu.
+- Parametry testowe: animacja 160ms, granice bez wrap. D19 nadal OPEN;
+  nie przyjęto docelowego zawijania ani timeoutu bez potwierdzenia UX.
+- `ui_list_probe`: syntetyczna lista TEST i automatyczne zdarzenia, bez
+  sterowania enkoderem. Pokaz 8s po poprzedniej sekwencji, razem około 46s.
+  Log requested=1003/snapshot=1002 potwierdza rozdzielenie modelu w diagnozie.
+- `python3 -m unittest discover -s tests -q` — PASS, 73 testy (11 nowych).
+  Zbadano stany, komendy, queue failure, animację, katalog, clipping, jasność
+  oraz scenę/skrypt z referencyjnym framebufferem obejrzanym na hoście.
+- ASan/UBSan `tests/ui_sanitizer.c` — PASS: skrypt i 1000 retargetów.
+  LeakSanitizer pominięty pod ptrace (detect_leaks=0), bez testu wycieków.
+- `idf.py reconfigure build` — PASS; obraz esp32s3 0x3d140 / 250176 B.
+  Usunięto wykryty błąd brakującego nagłówka layoutu w scenie aplikacji;
+  ponowny build i test integracyjny sceny przeszły. `git diff --check` — PASS.
+- HARDWARE_TEST_PENDING: nowa lista na OLED, wyróżnienie celu, animacja
+  i przejścia. Nie wykonano flash/erase/eFuse. ADR 0011.
+- Dalszy zakres: pełny ekran HOME i integracja gestów po sterowniku wejścia;
+  rzeczywiste katalogi/player dopiero w ich etapach. Pełny etap 04 nieukończony.
+- Hash: `git log -1 --format=%H --grep='^stage-04h:'`.

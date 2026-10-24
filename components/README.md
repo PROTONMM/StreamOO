@@ -2,11 +2,10 @@
 
 Zaimplementowane: `board_config` (walidator), `platform` (metryki/start),
 `hardware_probe` (opcjonalny surowy pomiar wejść), `ssd1322` (protokół i
-transport SPI), `graphics` (canvas 4bpp, clipping i prymitywy). `text` (UTF-8, backend glifów i font ASCII/PL; licencja zmian PL do sprawdzenia). Aplikacja ma skończony test `display_smoke`. Nie zawierają
+transport SPI), `graphics` (canvas 4bpp, clipping i prymitywy), `text` (UTF-8, backend glifów i font ASCII/PL; licencja zmian PL do sprawdzenia). Aplikacja ma skończony test `display_smoke`. Nie zawierają
 funkcji radia.
 
 Kolejne samodzielne komponenty:
-- `streamoo_ui` — framebuffer 4bpp, renderer, fonty, widgety
 - `streamoo_input` — enkoder, debounce i rozpoznawanie gestów
 - `streamoo_player` — centralny stan, komendy
 - `streamoo_stream` — HTTP(S) input, bufory
@@ -23,3 +22,5 @@ Nie dodawaj pustych `CMakeLists.txt` komponentów do builda: twórz je wraz z pi
 `text` zawiera także metryczny renderer glifów alpha 4bpp oraz zasób StreamOO UI16 na bazie Krypton (OFL); `graphics` komponuje alpha z tłem. Fonty nie zależą od sterownika ekranu.
 
 `ui_widgets` renderuje trzy wizualizacje z niemodyfikowanego snapshotu i zależy tylko od `graphics`. Nie zawiera DSP; dane syntetyczne istnieją wyłącznie w aplikacyjnym `visualization_probe`.
+
+`ui`: pojedynczy właściciel ekranu i wyboru na liście, animacja Q16, borrowed catalog snapshot i adapter komendy SelectStation. Zależy od graphics/text, nie od playera, GPIO i RTOS.
