@@ -1,30 +1,14 @@
 # Model i tokeny dla commitów
 
-Od polecenia użytkownika z 2026-10-24 każdy nowy commit agenta zawiera
-trailery `AI-Model` i `AI-Tokens` w wiadomości Git. Dotyczy to także commitów
-dokumentacji. Nie przepisujemy historii ani nie odtwarzamy fikcyjnych liczników.
+Aktualizacja polecenia użytkownika z 2026-10-24: nie dodawaj do wiadomości
+commitów trailerów `AI-Model` ani `AI-Tokens`. Dotyczy to także commitów
+dokumentacji. Ta zasada zastępuje wcześniejszy obowiązek dopisywania trailerów.
 
-Ta sesja udostępnia nazwę rodziny GPT-6 / Codex, ale nie dokładny runtime
-model ID i nie licznik zużycia tokenów. Dlatego obecny zapis to:
+Wcześniejszych wiadomości commitów nie przepisujemy. Wpisy w historycznych
+opisach etapów odnoszą się do obowiązującej wówczas zasady.
 
-```text
-AI-Model: GPT-6 / Codex (runtime variant unavailable)
-AI-Tokens: unavailable (session usage counters not exposed)
-```
-
-`unavailable` oznacza brak danych, nie zero. Nie zastępuj tego liczbą tokenów
-z długości diffu, liczby słów ani estymacją kosztu. Jeżeli przyszła sesja
-udostępni wiarygodną metrykę, zapisz liczbę i źródło pomiaru. Należy rozróżnić
-input/output/cached/reasoning, jeśli dostawca je ujawnia, oraz zakres licznika
-(np. różnica od poprzedniego commita). Sam domyślny model z lokalnego configu
-nie dowodzi modelu wybranego dla konkretnej odpowiedzi.
-
-Odczyt danych powiązanych bezpośrednio z hashem commita:
-
-```sh
-git log --format='%h %s%n%(trailers:key=AI-Model)%(trailers:key=AI-Tokens)'
-```
-
-Licznika dla wcześniejszych commitów nie dostarczono. Nie oznaczamy ich jako
-pomierzonych. Trailery zapisują pochodzenie danych w samym commicie, bez
-cyklicznego wpisywania jego hasha do własnej zawartości.
+Jeśli dostępne będą wiarygodne dane modelu i zużycia tokenów, można zapisać
+je w dokumentacji z hashem commita i źródłem pomiaru. Nie dodawaj rekordów
+zastępczych dla brakujących danych. Nie szacuj tokenów z diffu, liczby słów
+ani kosztu; domyślny model z konfiguracji nie potwierdza modelu użytego
+w konkretnej odpowiedzi.

@@ -311,3 +311,10 @@ Zmiana dotyczy wyłącznie dokumentacji; bez zmian firmware i ponownego buildu.
 - Hash: `git log -1 --format=%H --grep='^stage-04g:'`.
 - Model/tokeny w trailerach zgodnie z COMMIT_METRICS.md; niedostępnych
   liczników nie oszacowano.
+
+## Zasady wiadomości commitów (2026-10-24)
+
+Na nowe polecenie użytkownika wyłączono dodawanie trailerów AI-Model i
+AI-Tokens do kolejnych wiadomości commitów. Zaktualizowano AGENTS.md
+oraz COMMIT_METRICS.md. Wcześniejsza historia pozostaje bez zmian.
+Zmiana wyłącznie dokumentacyjna; `git diff --check` — PASS, bez buildu firmware.
