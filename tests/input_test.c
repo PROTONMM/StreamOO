@@ -43,5 +43,19 @@ int main(void)
     init(false,false,false); t=1ULL<<40;
     sample(3,1,1); sample(3,1,20); sample(3,0,600);
     assert(sample(3,0,20).kind==STREAMOO_INPUT_LONG);
+    /* Reported hardware trace: B stuck low, only A toggles. Neither
+     * direction nor detents may be invented from this incomplete signal. */
+    streamoo_input_init(&s, 1, 0, false, true, false, 0); t=0;
+    for (unsigned i=0; i<200; ++i) {
+        assert(sample(i & 1 ? 2 : 0, false, 1).kind==STREAMOO_INPUT_NONE);
+    }
+    /* Short pulses between RTOS ticks must be decoded when edge capture
+     * supplies every state, including multiple edges in the same ms. */
+    init(true,false,false);
+    assert(sample(1,0,0).kind==STREAMOO_INPUT_NONE);
+    e=sample(0,0,0);
+    assert(e.kind==STREAMOO_INPUT_ROTATE && e.delta==1);
+    sample(2,0,0); e=sample(3,0,0);
+    assert(e.kind==STREAMOO_INPUT_ROTATE && e.delta==1);
     return 0;
 }

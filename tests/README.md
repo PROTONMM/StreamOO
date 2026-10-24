@@ -105,3 +105,7 @@ LeakSanitizer niedostępny w ptrace, bez deklaracji testu wycieków.
 
 Enkoder 05a: `test_input.py` kompiluje i wykonuje `input_test.c` z ostrzeżeniami
 jako błędami. Łącznie 84 testy; nie jest to test szybkości sprzętu GPIO.
+
+Regresje 05b w tym samym harnessie: stałe B nie tworzy detentów,
+krótkie sekwencje dostarczone przez capture w tej samej ms dają półkroki.
+Transport IRQ/kolejka i overflow wymagają osobnego odbioru na sprzęcie.

@@ -39,3 +39,11 @@ Domyślnie włączony `STREAMOO_ENCODER_GESTURE_TEST` wypisuje w konsoli TEST
 ROTATE/SHORT/LONG/PRESSED_ROTATE i delta. Obecny adapter próbkuje co tick,
 więc należy testować wolne ruchy; szybkie mogą gubić zbocza. Nie steruje UI.
 Półkrok, kierunek, pull-up i timing wymagają odbioru. Etap 05 pozostaje częściowy.
+
+## Część 05b — oba kanały przez IRQ
+
+Po zgłoszeniu braku zmian B w pollingowym teście 05a adapter zastąpiono
+przechwytywaniem zboczy ANYEDGE, kolejką i diagnostyką strat.
+[ADR 0014](adr/0014-encoder-irq-diagnostics.md). Starszy opis ograniczeń
+pollingu powyżej dotyczy 05a. Półkrok potwierdzony przez użytkownika;
+odczyt B i kierunek nadal wymagają testu sprzętowego. UI bez zmian.

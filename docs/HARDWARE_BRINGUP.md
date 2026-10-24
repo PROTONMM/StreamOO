@@ -247,3 +247,20 @@ bez zmian i gaśnie po około 46s, diagnostyka konsoli działa nadal.
 
 To próbnik co tick RTOS (okres wypisany w logu), bez gwarancji szybkich ruchów.
 Nie zmienia stacji, volume ani wizualizacji. NVS i audio nie są uruchamiane.
+
+## Enkoder 05b — rozstrzygnięcie braku kanału B
+
+Wersja 05b zastępuje powyższy polling przechwytywaniem przerwań. Po wgraniu
+monitor powinien wypisać `TEST IRQ capture: A=GPIO5 B=GPIO16 BTN=GPIO7; half=1`.
+Log co sekundę ma teraz nazwę `IRQ edges`, zamiast `sampled edges`.
+
+Obracaj kilka ząbków w jedną stronę, potem w drugą. Liczniki IRQ A i B
+powinny rosnąć, a TEST ROTATE delta powinno mieć przeciwne znaki dla obu
+kierunków. W spoczynku wartości A/B mogą być 0 lub 1; istotne są zbocza.
+Jeżeli pojawia się ostrzeżenie `A changes, B has no IRQ`, prześlij log;
+należy zweryfikować tor B do GPIO16. Nie zmieniono pinów ani pull-up.
+Półkrok pozostaje włączony zgodnie z potwierdzeniem użytkownika.
+
+Liczba IRQ nie jest liczbą ząbków (obejmuje odbicia). `IRQ queue overflow`
+unieważnia próbę: dekoder resetuje się bez wymyślania brakujących kroków.
+Sprawdź też SHORT/LONG oraz PRESSED_ROTATE bez kliku po puszczeniu.

@@ -28,5 +28,5 @@ Nie dodawaj pustych `CMakeLists.txt` komponentów do builda: twórz je wraz z pi
 `ui` ma również pełny HOME ze spójnego snapshotu, walidację generacji i metadanych oraz cache źródeł. Pobieranie danych, synchronizacja czasu i audio nie należą do renderera.
 
 Etap 05a: rzeczywisty komponent `input` to czysty dekoder gestów;
-`hardware_probe` jest adapterem diagnostycznym GPIO z pollingiem co tick.
-Docelowy transport szybkich zboczy oraz adapter sterowania pozostają otwarte.
+`hardware_probe` od etapu 05b przechwytuje zbocza GPIO w IRQ i kolejce,
+z licznikami strat. Odbiór transportu na sprzęcie i adapter sterowania pozostają otwarte.

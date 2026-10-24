@@ -419,3 +419,22 @@ i otwarte decyzje pozostają aktualne. Zmiana tylko dokumentacyjna;
   (detect_leaks=0 z powodu środowiska ptrace, bez testu wycieków).
   `git diff --check` — PASS. Bez flash/erase/eFuse.
 - Obecny profil RTOS 100Hz daje 10ms próbkowania; szybki transport wejść OPEN.
+
+## Etap 05b — diagnostyka braku zboczy B (2026-10-24)
+
+- Zgłoszenie użytkownika dla 05a: A zmienia się, B=0, sampled edges B=0
+  w obu kierunkach. Użytkownik potwierdził półkrok. Nie uznano odbioru wejść.
+- Zastąpiono polling zboczy przechwytywaniem ANYEDGE i kolejką 128 próbek.
+  Osobne IRQ edges A/B/BTN, komunikat brakującego kanału, raport utraty
+  i reset dekodera po overflow. ISR nie loguje ani nie steruje UI.
+- Półkrok zachowany; GPIO i pull-up bez zmian. Nowy log odróżnia IRQ edges
+  od dawnych sampled edges. Wciąż brak mapowania gestów do UI/playera.
+- 84 testy PASS; regresja stałego B nie tworzy kierunku/kroków,
+  poprawne półkroki z krótkich impulsów tego samego ms są dekodowane.
+- ASan/UBSan dekodera PASS (detect_leaks=0, bez testu wycieków).
+  Adapter IRQ/kolejka wymagają sprzętu; brak hostowego testu ich transportu.
+- ESP-IDF 6.1 build PASS, obraz 0x3ee00 B. git diff --check PASS.
+  Nie wykonano flash/erase/eFuse. ADR 0014.
+- HARDWARE_TEST_PENDING: liczniki IRQ obu kanałów, przeciwne delta,
+  liczba zdarzeń na ząbek, brak overflow. Przy nadal zerowym B sprawdzić
+  fizyczny sygnał GPIO16; przyczyna pozostaje OPEN.

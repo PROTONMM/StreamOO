@@ -45,3 +45,5 @@ Etap 04h: `adr/0011-ui-owner-and-station-list.md`.
 Etap 04i: `adr/0012-home-snapshot-renderer.md`.
 
 Etap 05a: `adr/0013-encoder-decoder-characterization.md`.
+
+Etap 05b: `adr/0014-encoder-irq-diagnostics.md`.
