@@ -110,7 +110,7 @@ menu "StreamOO Configuration"
             default n
         config STREAMOO_ENCODER_REVERSED
             bool "Invert encoder direction"
-            default n
+            default y
         config STREAMOO_ENCODER_HALF_QUADRATURE
             bool "Use half-quadrature detents"
             default y

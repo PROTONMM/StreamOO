@@ -60,3 +60,11 @@ stacji. Stan widoczny w wierszu TEST; ekran działa do resetu. Wyłączenie
 tej opcji przywraca skończoną sekwencję OLED. Wejścia trafiają do zadania UI
 przez kolejkę gestów; overflow jest logowany. Integracja rzeczywistego
 playera i NVS nie została wykonana. Odbiór nowej interakcji na sprzęcie OPEN.
+
+## Kierunek po odbiorze 05c
+
+Użytkownik zgłosił odwrócony kierunek volume i listy. Domyślnie
+`STREAMOO_ENCODER_REVERSED=y`: prawo zwiększa volume/indeks stacji,
+lewo zmniejsza. Ta sama korekta dotyczy cyklu widżetów. Przy istniejącym
+sdkconfig sprawdź `Invert encoder direction` w menuconfig — zmiana defaults
+nie zastępuje zapisanych ustawień. Uzupełnienie ADR 0015.

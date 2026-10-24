@@ -17,3 +17,12 @@ Log nie identyfikuje obrotu zgodnego z zegarem ani liczby zdarzeń na ząbek.
 Nie potwierdza również ciągłego trzymania przycisku po PRESSED_ROTATE.
 Te kwestie i pełny odbiór gestów pozostają otwarte. Zmiana dotyczy mapowania;
 nie wymaga nowej biblioteki ani zmiany dekodera.
+
+## Doprecyzowanie kierunku po teście interaktywnym
+
+Użytkownik potwierdził działanie 05c, ale obrót w lewo zwiększał volume,
+a w prawo zmniejszał; lista miała ten sam odwrócony kierunek.
+Ustawiamy domyślne ENCODER_REVERSED=y w Kconfig i sdkconfig.defaults.
+Zmiana znaku pozostaje w dekoderze, wspólna dla zwykłego i wciśniętego
+obrotu; nie odwracamy osobno adaptera listy ani volume. Oczekiwane:
+prawo zwiększa volume i indeks stacji, lewo zmniejsza. Piny bez zmian.

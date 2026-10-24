@@ -499,3 +499,15 @@ Zmiana dokumentacyjna; git diff --check PASS, bez nowego buildu/flash.
   jeden ząbek/jeden krok, kierunek, brak overflow obu kolejek, tryby A/B.
 - Nie uruchomiono realnego audio/playera, sieci ani NVS. Trwałość po 5s
   i realne komendy playera pozostają do integracji; etap 05 częściowy.
+
+## Korekta kierunku po odbiorze interaktywnego UI (2026-10-24)
+
+Użytkownik potwierdził działanie 05c, zgłosił lewo=volume+, prawo=volume-
+i odwrócone przewijanie stacji. Ustawiono ENCODER_REVERSED=y w Kconfig,
+sdkconfig.defaults oraz lokalnej konfiguracji buildu. Wspólny dekoder
+odwraca zwykły obrót i pressed-rotate; adaptery UI pozostają bez zmian.
+Oczekiwane prawo=volume+/następna stacja, lewo=volume-/poprzednia.
+ADR 0015 uzupełniony. Piny 5/6/7 i półkrok zachowane.
+91 testów unittest PASS (w tym istniejący test odwróconego dekodera).
+Odbiór nowego kierunku HARDWARE_TEST_PENDING; bez flash/erase/eFuse.
+ESP-IDF 6.1 build PASS; git diff --check PASS.
