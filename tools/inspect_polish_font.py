@@ -19,7 +19,7 @@ SLOTS = {'ą': 0xb8, 'ć': 0xbd, 'ę': 0xd6, 'ł': 0xcf, 'ń': 0xc0,
          'Ó': 0xbf, 'Ś': 0xcc, 'Ź': 0xbc, 'Ż': 0xba}
 
 
-def inspect(archive, preview=None):
+def load_font(archive):
     with ZipFile(archive) as zipped:
         names = [item for item in zipped.infolist() if item.filename.endswith('/glcdfont.c')]
         if len(names) != 1 or names[0].file_size > 100000:
@@ -36,6 +36,11 @@ def inspect(archive, preview=None):
     values = bytes(int(token, 0) for token in re.findall(r'0[xX][0-9a-fA-F]+|0[bB][01]+', body[1]))
     if len(values) != 256 * 5:
         raise ValueError(f'Expected 256 five-column glyphs, found {len(values)} bytes')
+    return raw, values, names[0].filename, license_files
+
+
+def inspect(archive, preview=None):
+    raw, values, filename, license_files = load_font(archive)
     mapping = [{'char': char, 'unicode': f'U+{ord(char):04X}', 'slot': f'0x{slot:02X}',
                 'uses_row_8': any(value & 128 for value in values[slot * 5:slot * 5 + 5])}
                for char, slot in SLOTS.items()]
@@ -61,7 +66,7 @@ def inspect(archive, preview=None):
         rows = b''.join(b'\0' + pixels[y * width:(y + 1) * width] for y in range(height))
         png = b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', struct.pack('>IIBBBBB', width, height, 8, 0, 0, 0, 0))
         Path(preview).write_bytes(png + chunk(b'IDAT', zlib.compress(rows)) + chunk(b'IEND', b''))
-    return {'file': names[0].filename, 'sha256': hashlib.sha256(raw).hexdigest(),
+    return {'file': filename, 'sha256': hashlib.sha256(raw).hexdigest(),
             'glyphs': 256, 'columns': 5, 'stored_rows': 8,
             'license_files': license_files, 'mapping': mapping}
 

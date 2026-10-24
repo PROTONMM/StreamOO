@@ -21,6 +21,6 @@ Celem jest nowa implementacja natywna ESP-IDF, nie port starego programu Arduino
 
 Dokumenty zawierają statusy **USTALONE / PROPONOWANE / DO POTWIERDZENIA**. Nie traktować zaproponowanych wartości jako ustaleń użytkownika.
 
-Testy hostowe: `python3 -m unittest discover -s tests -v`. Build: `idf.py reconfigure build`. Dla modułu msalamon R5/R8 dodano test OLED (około 15 s, potem panel OFF). Odbiór resetu i obrazu: [protokół sprzętowy](docs/HARDWARE_BRINGUP.md).
+Testy hostowe: `python3 -m unittest discover -s tests -v`. Build: `idf.py reconfigure build`. Dla modułu msalamon R5/R8 dodano test OLED (około 18 s, potem panel OFF). Odbiór resetu i obrazu: [protokół sprzętowy](docs/HARDWARE_BRINGUP.md).
 
-Podstawowe działanie OLED potwierdzone przez użytkownika; nowa scena renderera i szczegółowe pomiary wymagają odbioru sprzętowego. Pełny UI i fonty nadal w implementacji.
+Podstawowe działanie OLED potwierdzone przez użytkownika; nowa scena renderera i szczegółowe pomiary wymagają odbioru sprzętowego. Dołączono mały font PL i jego test; większy font oraz pełny UI nadal w implementacji. Stan licencji małego fontu: [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

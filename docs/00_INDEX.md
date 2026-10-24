@@ -29,3 +29,5 @@ Etap 04a i moduł msalamon: `adr/0003-ssd1322-msalamon-spi-bringup.md`.
 Etap 04b i canvas: `adr/0004-independent-4bpp-canvas.md`.
 
 Etap 04c-1 i referencyjny font PL: `adr/0005-font-reference-and-utf8.md`.
+
+Etap 04c-2 i polecenie importu fontu: `adr/0006-provisional-polish-font-import.md`; stan licencji: `../THIRD_PARTY_NOTICES.md`.

@@ -62,3 +62,12 @@ warunki polskich zmian nie są opisane w ZIP i wymagają wyjaśnienia.
 Niezależny `text` obsługuje ścisłe UTF-8, pomiar szerokości i provider 5×8,
 bez kopiowania konwertera yoRadio. Testy syntetyczne nie oznaczają wdrożenia
 polskiego fontu, fontu Krypton ani tekstów na urządzeniu.
+
+## Część 04c-2 — font PL dołączony
+
+Na wyraźne polecenie użytkownika zaimportowano ASCII i 18 polskich glifów
+z ustalonego źródła. [ADR 0006](adr/0006-provisional-polish-font-import.md)
+oraz `THIRD_PARTY_NOTICES.md` odnotowują licencję polskich zmian jako
+DO SPRAWDZENIA. Nie jest to import kodu Arduino ani konwertera yoRadio.
+Szósty obraz diagnostyczny zawiera polskie napisy; cały test trwa około 18 s.
+Odbiór na OLED nadal HARDWARE_TEST_PENDING, font Krypton i marquee są kolejne.

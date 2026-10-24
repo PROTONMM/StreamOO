@@ -69,3 +69,9 @@ Testy używają własnego syntetycznego wzoru glifu, nie skopiowanych bitmap.
 Backend jest gotowy do podłączenia fontu, lecz aplikacja go jeszcze nie używa
 z powodu braku zaakceptowanego zasobu. Nie deklarujemy polskich napisów na OLED,
 Krypton, wyrównania/marquee ani pełnej typografii jako zrealizowanych.
+
+## Późniejsza decyzja użytkownika
+
+[ADR 0006](0006-provisional-polish-font-import.md) zastępuje decyzję o wstrzymaniu
+importu: użytkownik polecił skopiować bitmapy i odnotować licencję do sprawdzenia.
+Status nieznanej licencji nie został tym zmieniony na zweryfikowany.

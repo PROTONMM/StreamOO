@@ -8,3 +8,5 @@ visually reviewed. No fonts, external artwork or device data.
 
 `test_canvas.py` compares the entire result with this frozen file. Updating
 it requires reviewing the intended visual change; tests do not overwrite it.
+
+`polish_text.4bpp`: 256×64, stride 128 B, scena `main/text_smoke.c`. Zawiera importowane bitmapy fontu — pochodzenie, polecenie użytkownika i nierozstrzygnięta licencja zmian PL są opisane w `THIRD_PARTY_NOTICES.md`. Wzorzec obejrzano jako PNG przed zapisaniem.

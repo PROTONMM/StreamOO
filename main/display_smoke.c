@@ -1,5 +1,6 @@
 #include "display_smoke.h"
 #include "canvas_smoke.h"
+#include "text_smoke.h"
 
 #include <inttypes.h>
 #include <string.h>
@@ -34,7 +35,7 @@ static void display_task(void *context)
         ESP_LOGW("display_smoke", "Experimental panel profile; verify image on OLED. RESET GPIO=%d",
                  CONFIG_STREAMOO_LCD_RST);
         /* Finite test avoids leaving a bright diagnostic image indefinitely. */
-        for (int step = 0; step < 5 && error == ESP_OK; ++step) {
+        for (int step = 0; step < 6 && error == ESP_OK; ++step) {
             if (step == 0) memset(frame, 0x00, SSD1322_FRAME_BYTES);
             if (step == 1) memset(frame, 0xff, SSD1322_FRAME_BYTES);
             if (step == 2) ssd1322_test_pattern(frame, SSD1322_FRAME_BYTES);
@@ -49,6 +50,10 @@ static void display_task(void *context)
                 }
                 ESP_LOGI("display_smoke", "canvas scene raster=%" PRId64 " us",
                          esp_timer_get_time() - render_start);
+            }
+            if (step == 5 && !streamoo_text_smoke(frame, SSD1322_FRAME_BYTES)) {
+                error = ESP_ERR_INVALID_ARG;
+                break;
             }
             const int64_t start = esp_timer_get_time();
             error = streamoo_ssd1322_present(display, frame, SSD1322_FRAME_BYTES);

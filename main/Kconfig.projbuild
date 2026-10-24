@@ -17,8 +17,8 @@ menu "StreamOO Configuration"
             bool "Run finite SSD1322 diagnostic at startup"
             default y
             help
-                Black, white, grayscale, inverse and clipped canvas geometry,
-                then display off after approximately 15 seconds. No radio UI.
+                Black, white, grayscale, inverse, canvas geometry and Polish text,
+                then display off after approximately 18 seconds. No radio UI.
                 User module is configured with R5/R8: BS1=0 and BS0=0.
                 Cold power-on/reset must be provided by the board if RESET=-1.
         config STREAMOO_LCD_COLUMN_OFFSET

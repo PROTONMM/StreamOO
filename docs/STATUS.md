@@ -172,9 +172,34 @@ pozostają do uzupełnienia protokołem. Enkoder nie został tym potwierdzony.
   jest jeszcze używany w aplikacji. Zachowano test OLED 04b.
 - `git diff --check` — PASS. Nie wykonano flash/erase/eFuse.
 - ADR: `adr/0005-font-reference-and-utf8.md`.
-- Commit: `git log -1 --format=%H --grep='^stage-04c-1:'` rozwiązuje hash
-  tego podetapu, niemożliwy do osadzenia we własnej zawartości commita.
+- Commit: `3b85ffc6fd01939ce28a7818ed6e539535e636f2`.
 - Następny krok: wyjaśnienie licencji konkretnej modyfikacji, import glifów
   z notami, test polskich napisów na OLED, następnie marquee/Krypton.
   Polski font nie jest jeszcze w firmware; brak tekstowego testu sprzętowego
   pozostaje HARDWARE_TEST_PENDING. Pełny etap 04 nadal nieukończony.
+
+## Etap 04c-2 — polski font w firmware (2026-10-24)
+
+- Użytkownik wyraźnie polecił skopiować font i pozostawić sprawdzenie
+  licencji jako otwarte. Decyzja dotyczy tego zasobu i została wykonana;
+  licencja polskich modyfikacji nie została uznana za wyjaśnioną.
+- Zaimportowano 95 glifów ASCII i 18 PL (565 B danych bitmapowych), natywny
+  lookup Unicode w `text`, bez kodu Arduino i bez konwertera yoRadio.
+- Pochodzenie i stan licencji: `THIRD_PARTY_NOTICES.md`; zachowano notę BSD
+  bazowego Adafruit GFX. Nie przypisano tej licencji nieznanym zmianom.
+- Narzędzie odtwarzania: `tools/import_polish_font.py`; pin SHA-256 źródła
+  odrzuca przypadkowe użycie innej wersji pliku.
+- Szósty obraz diagnostyczny (`step=5`) pokazuje polskie napisy i ogonki.
+  Diagnostyka trwa teraz około 18 s, następnie panel OFF. GPIO bez zmian.
+- `python3 -m unittest discover -s tests -v` — PASS (36 testów, 4 nowe).
+  Digest 113 bitmap, indeksy Unicode, bit7, klatka referencyjna i canary.
+  Podgląd `build/polish-text-smoke.png` obejrzany; wzorzec zamrożony.
+- `idf.py reconfigure build` — PASS, ESP-IDF v6.1/esp32s3,
+  obraz `0x39910` / 235792 B. `git diff --check` — PASS.
+- HARDWARE_TEST_PENDING: czytelność wszystkich 18 liter na OLED, ogonki
+  w wierszu 8px i brak nakładania między wierszami. Nie wykonano flash.
+- ADR: `adr/0006-provisional-polish-font-import.md`.
+- Commit: `git log -1 --format=%H --grep='^stage-04c-2:'` wskazuje commit
+  tego podetapu; hash nie może być częścią własnej zawartości.
+- Następny zakres: marquee, wyrównanie i font Krypton; licencja małej
+  modyfikacji wciąż DO SPRAWDZENIA. Pełnego etapu 04 nie ukończono.

@@ -130,3 +130,14 @@ To test prymitywów i izolacji pól, nie ekran radia. Całość trwa około 15 s
 potem panel gaśnie. Log `canvas scene raster=... us` podaje czas samej
 rasteryzacji; `frame transfer=... us` pozostaje pomiarem wysyłki.
 Tego nowego obrazu nie obejmuje wcześniejsze potwierdzenie użytkownika.
+
+## Szósty obraz — font PL (04c-2)
+
+Po scenie canvas nowy firmware wyświetla przez około 3 s `step=5`:
+małe i wielkie polskie litery, „Zażółć gęślą jaźń” oraz pary ą/Ą/ę/Ę
+na ostatnim wierszu. Diagnostyka trwa teraz około 18 s i kończy się OFF.
+Sprawdź wszystkie 18 liter, rozróżnienie ś/ź/ż oraz pełne ogonki bez
+nakładania na kolejny wiersz. Zapisz zdjęcie/log i wynik osobno od
+wcześniejszego potwierdzenia podstawowego działania OLED.
+Podgląd oczekiwany: `build/polish-text-smoke.png` z ostatniej implementacji.
+To test bitmapowego fontu, nie fontu Krypton ani gotowego UI.
