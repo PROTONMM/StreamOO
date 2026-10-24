@@ -464,3 +464,14 @@ Zmiana tylko dokumentacyjna; git diff --check PASS, bez nowego buildu/flash.
 - 84 testy unittest PASS; ESP-IDF 6.1 build PASS; git diff --check PASS.
   Bez flash/erase/eFuse. Mapowanie potwierdzone przez użytkownika,
   pełny etap 05 i adapter gestów do UI nadal nieukończone.
+
+## Odbiór obrotu z przyciskiem (2026-10-24)
+
+Przesłany przez użytkownika log 117335–119815ms pokazuje PRESSED_ROTATE
+z delta=+1 i -1 przy BTN=0, bez zwykłych ROTATE. Po zwolnieniu BTN=1
+w przesłanym fragmencie nie ma dodatkowego SHORT/LONG. Potwierdzono
+poprawne zachowanie tego scenariusza na sprzęcie z pinami 5/6/7.
+Wcześniej zaobserwowano również ROTATE obu znaków i SHORT/LONG.
+Nie deklarujemy pomiaru maksymalnej szybkości, liczby zdarzeń na ząbek
+ani kierunku zegarowego. Następny zakres: adapter gestów A/B do UI.
+Zmiana dokumentacyjna; git diff --check PASS, bez nowego buildu/flash.
