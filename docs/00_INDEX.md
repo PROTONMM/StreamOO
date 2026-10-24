@@ -1,5 +1,7 @@
 # Plan i indeks dokumentacji
 
+Punkt wznowienia pracy: [RESUME.md](RESUME.md).
+
 Statusy: **USTALONE** = użytkownik podjął decyzję; **PROPONOWANE** = sugestia techniczna do przetestowania; **OTWARTE** = brak potwierdzenia. Etapy projektowe opisują wymagania i kryteria odbioru, nie stwierdzają ukończenia kodu.
 
 | Numer | Plik | Zakres |

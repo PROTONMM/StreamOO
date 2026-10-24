@@ -1,5 +1,7 @@
 # Status implementacji
 
+Punkt wznowienia po zakończeniu pracy 2026-10-24: [RESUME.md](RESUME.md).
+
 | Etap | Stan | Dowód |
 |---|---|---|
 | 01 zakres | wymagania zebrane | dokumentacja |
@@ -595,3 +597,10 @@ przy zapisach NVS ani dowodem działania pełnego pipeline/playera.
 Następny zakres audio: rzeczywista regulacja gain z rampą oraz sterowanie
 start/stop przez oddzielnego właściciela stanu. Zmiana dokumentacyjna;
 git diff --check PASS, bez nowego buildu/flash.
+
+## Koniec pracy i punkt wznowienia (2026-10-24)
+
+Na prośbę użytkownika zakończono pracę na dziś. Aktualny stan i kolejny
+zakres 06b (rzeczywisty gain/rampa i PLAY/STOP) zapisano w RESUME.md.
+Ostatni odebrany firmware: 06a `edb7c63`, odbiór `80e146c`.
+Zmiana dokumentacyjna; git diff --check PASS, bez nowego buildu/flash.
