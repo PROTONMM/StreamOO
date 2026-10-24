@@ -141,3 +141,11 @@ nakładania na kolejny wiersz. Zapisz zdjęcie/log i wynik osobno od
 wcześniejszego potwierdzenia podstawowego działania OLED.
 Podgląd oczekiwany: `build/polish-text-smoke.png` z ostatniej implementacji.
 To test bitmapowego fontu, nie fontu Krypton ani gotowego UI.
+
+### Wynik zgłoszony przez użytkownika — 2026-10-24
+
+Po wersji 04c-2 (`867714d`) użytkownik potwierdził własną kompilację,
+wgranie i działanie firmware. Zapisano podstawowy test funkcjonalny jako
+potwierdzony przez użytkownika. Szczegółów oceny glifów i pomiarów nie
+przekazano; nie uzupełniono ich domysłami. Dalsza implementacja tekstu
+może być kontynuowana.

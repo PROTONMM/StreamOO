@@ -203,3 +203,15 @@ pozostają do uzupełnienia protokołem. Enkoder nie został tym potwierdzony.
   tego podetapu; hash nie może być częścią własnej zawartości.
 - Następny zakres: marquee, wyrównanie i font Krypton; licencja małej
   modyfikacji wciąż DO SPRAWDZENIA. Pełnego etapu 04 nie ukończono.
+
+## Odbiór użytkownika po etapie 04c-2 (2026-10-24)
+
+Użytkownik potwierdził: „skompilowałem, wgrałem, działa”, po przekazaniu
+commita `867714d` z polskim fontem. Odnotowano udaną kompilację, wgranie
+przez użytkownika i podstawowe działanie tej wersji na płytce.
+Nie otrzymano oddzielnego hasha obrazu, zdjęcia ani logu; przypisanie do
+04c-2 wynika z kontekstu rozmowy. Szczegółowa ocena wszystkich 18 glifów,
+ogonków i odstępów oraz pomiary czasów nie zostały osobno przekazane.
+Pozostają punktami do uzupełnienia protokołu, nie blokują dalszej pracy
+nad marquee i wyrównaniem. Status licencji zmian PL pozostaje otwarty.
+Zmiana dotyczy wyłącznie dokumentacji; bez zmian firmware i ponownego buildu.
