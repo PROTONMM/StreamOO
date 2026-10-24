@@ -25,3 +25,17 @@ Compressed 256 KiB, start/rebuffer ~64 KiB (adaptowane do bitrate i czasu), PCM 
 
 ## Testy
 MP3/AAC LC/HE-AAC oraz FLAC/Vorbis/Opus w wspieranych kontenerach, różne sample rates, URL redirect/TLS/ICY, utrata Wi-Fi, przepełnienie/niedopełnienie, szybkie zmiany stacji, brak drop-out, obciążenie CPU oraz heap i stabilność wielogodzinna.
+
+## Część 06a — natywne I2S i skończony ton
+
+`audio_output`: I2S0 master 48kHz, stereo Philips 32-bit, slot32, bez MCLK,
+GPIO DOUT48/BCLK47/WS21. Wypełnianie DMA w IRAM callback bez blokującego
+write, flash, alokacji i FFT. [ADR 0018](adr/0018-i2s-output-tone-bringup.md).
+
+Domyślny STREAMOO_I2S_SMOKE_TEST uruchamia około 10s sekwencji z cichym
+sygnałem ~-30dBFS peak i rampami50ms: cisza, lewy1kHz, prawy2kHz, oba1kHz,
+z przerwami; potem cisza i wyłączenie kanału. UI/NVS nadal działają osobno.
+TEST VOL/PLAY nie sterują tym sygnałem. DAC musi sprzętowo mieć ustawiony
+format I2S, być odmutowany i obsługiwać PLL bez MCLK; model/zwory użytkownika
+nie są jeszcze potwierdzone. Sterownik, zegary i dźwięk wymagają odbioru.
+Pełny pipeline, volume gain, dekodery i odtwarzanie strumieni nadal OPEN.

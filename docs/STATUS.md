@@ -6,13 +6,13 @@
 | 02 schemat i profil | walidator i menuconfig zaimplementowane; HARDWARE_TEST_PENDING | ADR 0001; 5 testów hostowych, 2332 konfiguracje; build PASS |
 | 03 szkielet | baza zaimplementowana; odbiór sprzętowy i integracyjny OPEN | ESP-IDF v6.1 build PASS; ADR 0002 |
 | 04 UI/SSD1322 | HOME i lista odebrane na OLED; końcowe strojenie fontu OPEN | ADR 0012; odbiór użytkownika |
-| 05 encoder | dekoder/IRQ i gesty odebrane; interaktywny adapter odebrany w trybie A; preferencje NVS HARDWARE_TEST_PENDING | ADR 0013–0017; 99 testów PASS |
-| 06 audio | NIEZAIMPLEMENTOWANE | — |
+| 05 encoder | dekoder/IRQ i gesty odebrane; interaktywny adapter odebrany w trybie A; preferencje NVS odebrane; shutdown/flush OPEN | ADR 0013–0017; 99 testów PASS |
+| 06 audio | natywne wyjście I2S i skończony test kanałów; HARDWARE_TEST_PENDING | ADR 0018; 107 testów PASS |
 | 07 DSP | NIEZAIMPLEMENTOWANE | — |
 | 08 stacje | NIEZAIMPLEMENTOWANE | — |
 | 09 sieć | NIEZAIMPLEMENTOWANE | — |
 | 10 WWW | NIEZAIMPLEMENTOWANE | — |
-| 11 storage/OTA | pierwszy zakres NVS: volume/widżet; sprzęt/flush i pozostały zakres OPEN | ADR 0017; polityka/format PASS |
+| 11 storage/OTA | NVS volume/widżet odebrane; flush i pozostały zakres OPEN | ADR 0017; odbiór użytkownika |
 | 12 testy końcowe | NIEURUCHOMIONE | — |
 
 Aktualizuj tabelę dopiero po wykonaniu i zapisaniu wyniku testów.
@@ -557,3 +557,29 @@ obrazu i logu pomiarowego. Nie rozszerzamy odbioru na test zaniku podczas
 zapisu, zużycie flash, błędy NVS ani kontrolowany shutdown/flush.
 Kolejny zakres: podstawowe wyjście I2S/PCM5102A etapu 06.
 Zmiana dokumentacyjna; git diff --check PASS, bez nowego buildu/flash.
+
+## Etap 06a — I2S/DMA i test PCM5102A (2026-10-24)
+
+- audio_output: natywny esp_driver_i2s (API/licencja Apache-2.0 lokalnego
+  ESP-IDF 6.1 sprawdzone). Master I2S0, Philips stereo 48kHz/32-bit,
+  slot32, nominalne BCLK 3.072MHz/WS48kHz, bez MCLK, GPIO48/47/21.
+- 4 bufory DMA po 240 ramek, jawny preload zer przed enable; callback
+  uzupełnia zakończony bufor. Bez alokacji, flash, blokującego write, logów,
+  float i FFT w wydawaniu próbek. I2S/GDMA ISR IRAM-safe włączone.
+- Oryginalny skończony generator: 10s ciszy/L1k/R2k/oba1k z przerwami,
+  peak1036 w ekwiwalencie int16 (~-30dBFS), rampy 50ms. Niezależny od
+  TEST VOL/PLAY. Po końcu zera, odpływ DMA i disable/delete poza ISR.
+- Nowy STREAMOO_I2S_SMOKE_TEST domyślnie y. UI/enkoder i NVS działają
+  równolegle; nie połączono jeszcze prawdziwego playera/DSP/strumieni.
+- 107 testów unittest PASS (8 nowych, pełne 480000 ramek, częstotliwości,
+  izolacja, RMS/DC/peak, granice ramp, chunk invariance, canary i argumenty).
+  ASan/UBSan generatora PASS, 2100 bloków; detect_leaks=0 pod ptrace,
+  bez testu wycieków. Driver DMA i analogowy DAC wymagają sprzętu.
+- ESP-IDF 6.1 reconfigure/build i końcowy build PASS, git diff --check PASS.
+  ELF: tone_dma_fill 0x40377508, tone_fill 0x40377518, audio_dma_sent
+  0x40377618 (IRAM), tone/wave 0x3fc96fd8/0x3fc96fdc (DRAM). Generator
+  nie ma wywołań helperów według objdump. Nie wykonano flash/erase/eFuse.
+- ADR 0018. HARDWARE_TEST_PENDING: rzeczywiste połączenia/strapping modułu,
+  kanały i dźwięk, clock/jitter, brak słyszalnych zakłóceń podczas UI/NVS,
+  max_fill i liczba buforów. Statystyki callbacku nie są testem underrun.
+- Pipeline/kodeki/player, rzeczywisty volume ramp, FIFO i DSP nadal OPEN.

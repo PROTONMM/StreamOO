@@ -37,3 +37,7 @@ jedynym właścicielem UI. Brak prawdziwego playera; od 05d preferencje volume/w
 `preferences`: czysty format/debounce oraz backend NVS z ESP-IDF 6.1.
 Jeden worker wykonuje zapis po 5s, UI wysyła kopie do skrzynki latest-wins.
 Inicjalizacja/odczyt przy starcie, bez automatycznego erase. Bez zależności UI.
+
+`audio_output`: natywny I2S0 48kHz stereo32, callback IRAM wypełnia DMA,
+bez blokującego write w ścieżce próbek. Aplikacyjne audio_tone/audio_probe
+tworzą skończony test kanałów; nie są playerem, dekoderem ani DSP.

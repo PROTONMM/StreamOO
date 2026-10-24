@@ -40,3 +40,8 @@ skończonego pokazu OLED. TEST VOL/PLAY/W pokazuje skutki gestów, nadal bez aud
 Od etapu 05d volume/widżet są zapisywane w NVS po 5s bez zmian.
 Wyłącz STREAMOO_ENCODER_UI_TEST, aby wrócić do pokazu 46s.
 Instrukcja odbioru: [HARDWARE_BRINGUP](docs/HARDWARE_BRINGUP.md).
+
+Etap06a domyślnie dodaje jednorazowy test dźwięku PCM5102A przy boot:
+około10s, lewy1kHz, prawy2kHz i oba kanały, z przerwami i rampami.
+Stały niski poziom, niezależny od TEST VOL/PLAY. Wyłącz
+STREAMOO_I2S_SMOKE_TEST, aby nie uruchamiać tonu. To nie jest streaming radia.

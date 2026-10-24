@@ -132,3 +132,16 @@ STREAMOO_PREFERENCES_SANITIZE='-fsanitize=address,undefined -fno-omit-frame-poin
 ```
 
 ASan/UBSan PASS, LeakSanitizer pod ptrace wyłączony, bez testu wycieków.
+
+Audio06a: 8 nowych testów (łącznie107): cisza i koniec, izolacja L/R,
+częstotliwości, poziom/RMS/DC, rampy, chunk invariance, canary, błędne argumenty
+i cała sekwencja480000 ramek. Sterownik I2S/DMA i analogowy DAC wymagają sprzętu.
+
+```sh
+cc -std=c11 -Wall -Wextra -Werror -fsanitize=address,undefined -fno-omit-frame-pointer -g -Imain main/audio_tone.c tests/audio_tone_sanitizer.c -o /tmp/streamoo-audio-tone-sanitizer
+ASAN_OPTIONS=detect_leaks=0 /tmp/streamoo-audio-tone-sanitizer
+```
+
+ASan/UBSan PASS, 2100 bloków z canary, końcowa cisza. LeakSanitizer pod
+ptrace wyłączony, bez testu wycieków. ELF/objdump użyto do sprawdzenia
+IRAM generatora/callbacków i DRAM tablicy/stanu; nie jest to test hardware.

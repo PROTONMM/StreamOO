@@ -315,3 +315,40 @@ Reset wcześniej niż Saved może przywrócić poprzednie wartości. Wersja nie
 ma jeszcze kontrolowanego shutdown/flush. Jeśli pojawi się Preferences
 unavailable lub Save failed, prześlij log; firmware nie kasuje NVS automatycznie.
 Nie testowano jeszcze zaniku w trakcie samego zapisu ani zużycia flash.
+
+## Audio 06a — lewy/prawy PCM5102A
+
+Nowy STREAMOO_I2S_SMOKE_TEST domyślnie y uruchamia jednorazowy ton po boot.
+Nie kasuj NVS; UI nadal ma zapisane preferencje. Sygnał ma stały niski poziom
+około -30dBFS peak niezależny od TEST VOL i TEST PLAY/STOP. Do odsłuchu
+użyj wejścia liniowego wzmacniacza/aktywnych głośników z niską głośnością.
+
+Sekwencja względem startu I2S (początkowe DMA dodaje około20ms ciszy):
+
+| Czas | Wyjście |
+|---|---|
+| 0–1s | cisza |
+| 1–3s | tylko lewy, 1kHz |
+| 3–4s | cisza |
+| 4–6s | tylko prawy, 2kHz |
+| 6–7s | cisza |
+| 7–9s | oba kanały, 1kHz |
+| 9–10s | cisza, następnie wyłączenie I2S |
+
+Sprawdź kolejność stron, oba kanały, ciche przejścia i brak trwającego tonu
+po końcu. Podaj log `audio_probe: TEST ended: ... buffers=... max_fill=... invalid=...`.
+Oczekiwane ESP_OK, invalid=0, max_fill wyraźnie poniżej5000us. To pomiar
+renderowania w callbacku, nie dowód braku jitter/dropout. Zmiany enkodera,
+UI i zapis NVS można sprawdzić równolegle, ale testu sygnału nie zatrzymuje
+przycisk PLAY/STOP. Wyłącz opcję I2S smoke, aby boot nie emitował tonów.
+
+Przy ciszy zweryfikuj faktyczne DOUT48→DIN, BCLK47→BCK, WS21→LRCK,
+wspólną masę i zasilanie zgodne z dokumentacją swojego modułu. Wymagania
+profilu PCM5102A: FMT=I2S, XSMT odmutowany, SCK na GND dla pracy bez MCLK.
+Źródło: [TI SLAS859C](https://www.ti.com/lit/ds/symlink/pcm5102a.pdf).
+Nie przypisano dodatkowych GPIO do pinów sterujących DAC. Schemat ma
+również złącze alternatywnego modułu WeAct PCM5100A; nie zakładamy użycia
+tamtego modułu. Jeśli sygnału brak, potrzebny model/zdjęcie zworek modułu.
+
+Dla analizatora: WS nominalnie48kHz, BCLK3.072MHz, Philips bit-shift1,
+stereo32. Rzeczywisty rate/jitter i amplituda analogowa wymagają pomiaru.

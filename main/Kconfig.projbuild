@@ -80,6 +80,15 @@ menu "StreamOO Configuration"
             default 10
     endmenu
     menu "Hardware: PCM5102A (I2S)"
+        config STREAMOO_I2S_SMOKE_TEST
+            bool "Run finite left/right I2S tone TEST at startup"
+            default y
+            select I2S_ISR_IRAM_SAFE
+            help
+                About 10 seconds: silence, left 1kHz, right 2kHz, both 1kHz.
+                Fixed approximately -30dBFS peak, independent of UI volume.
+                48kHz/32-bit Philips I2S, no MCLK. Requires DAC configured
+                for I2S and unmuted. Not a stream player or audio pipeline.
         config STREAMOO_I2S_DOUT
             int "I2S DATA OUT GPIO"
             range 0 48

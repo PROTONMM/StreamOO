@@ -4,6 +4,7 @@
 #include "streamoo_platform.h"
 #include "streamoo_input_probe.h"
 #include "display_smoke.h"
+#include "audio_probe.h"
 #include "streamoo_preferences.h"
 
 static const char *TAG = "StreamOO";
@@ -37,6 +38,10 @@ void app_main(void)
     if (streamoo_input_probe_start() != ESP_OK) {
         ESP_LOGE(TAG, "Input probe could not start");
     }
+#endif
+#if defined(CONFIG_STREAMOO_I2S_SMOKE_TEST)
+    if (streamoo_audio_probe_start() != ESP_OK)
+        ESP_LOGE(TAG, "Audio probe could not start");
 #endif
 #if defined(CONFIG_STREAMOO_LCD_SMOKE_TEST)
     if (streamoo_display_smoke_start() != ESP_OK) {
