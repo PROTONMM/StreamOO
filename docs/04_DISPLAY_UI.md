@@ -121,5 +121,6 @@ nie mogą pochodzić ze starszej stacji/strumienia. Nieznane dane mają jawne
 placeholdery. UI wybiera rodzaj widżetu, a producent dostarcza poziomy.
 
 Nowy 20s pokaz HOME zastępuje poprzednią scenę i zachowuje czas całej
-sekwencji około 46s. Odbiór HOME na OLED pending. Renderery i lista są gotowe
+sekwencji około 46s. Użytkownik potwierdził poprawne działanie pokazu HOME
+wersji `8f895bd` na OLED (2026-10-24). Renderery i lista są gotowe
 programowo; pełne fizyczne sterowanie wymaga etapu 05 i źródła danych dalszych etapów.

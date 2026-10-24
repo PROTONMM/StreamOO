@@ -390,3 +390,14 @@ buildu firmware.
 - Następny zakres: odbiór HOME i fizyczny enkoder/gesty etapu 05.
   Finalne strojenie fontów, format czasu i rzeczywiste źródła danych pozostają.
 - Hash: `git log -1 --format=%H --grep='^stage-04i:'`.
+
+## Odbiór HOME 04i (2026-10-24)
+
+Użytkownik potwierdził: „Testy prawidłowe, weszystko działa”. Zapisano
+pozytywny odbiór pokazu HOME na OLED według kontekstu wersji `8f895bd`.
+Nie otrzymano osobnego hasha wgranego obrazu ani logów pomiarowych.
+Odbiór dotyczy syntetycznych scen TEST opisanych w 04i; integracja
+rzeczywistej sieci, zegara, playera i DSP pozostaje w dalszych etapach.
+Kolejny zakres: fizyczny enkoder i gesty etapu 05. Dopracowanie czcionki
+i otwarte decyzje pozostają aktualne. Zmiana tylko dokumentacyjna;
+`git diff --check` — PASS, bez ponownego buildu firmware.
