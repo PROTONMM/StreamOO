@@ -1,12 +1,11 @@
 # Komponenty ESP-IDF
 
 Zaimplementowane: `board_config` (walidator), `platform` (metryki/start),
-`hardware_probe` (opcjonalny surowy pomiar wejść), `ssd1322` (protokół i
+`hardware_probe` (przechwytywanie IRQ, diagnostyka i kolejka gestów), `ssd1322` (protokół i
 transport SPI), `graphics` (canvas 4bpp, clipping i prymitywy), `text` (UTF-8, backend glifów i font ASCII/PL; licencja zmian PL do sprawdzenia). Aplikacja ma skończony test `display_smoke`. Nie zawierają
 funkcji radia.
 
 Kolejne samodzielne komponenty:
-- `streamoo_input` — enkoder, debounce i rozpoznawanie gestów
 - `streamoo_player` — centralny stan, komendy
 - `streamoo_stream` — HTTP(S) input, bufory
 - `streamoo_decoders` — adaptery kodeków, kontenery
@@ -23,10 +22,14 @@ Nie dodawaj pustych `CMakeLists.txt` komponentów do builda: twórz je wraz z pi
 
 `ui_widgets` renderuje trzy wizualizacje z niemodyfikowanego snapshotu i zależy tylko od `graphics`. Nie zawiera DSP; dane syntetyczne istnieją wyłącznie w aplikacyjnym `home_probe`.
 
-`ui`: pojedynczy właściciel ekranu i wyboru na liście, animacja Q16, borrowed catalog snapshot i adapter komendy SelectStation. Zależy od graphics/text, nie od playera, GPIO i RTOS.
+`ui`: pojedynczy właściciel ekranu i wyboru na liście, animacja Q16, borrowed catalog snapshot i adapter komendy SelectStation. Zależy od graphics/text/ui_widgets oraz typów input, nie od playera, GPIO i RTOS.
 
 `ui` ma również pełny HOME ze spójnego snapshotu, walidację generacji i metadanych oraz cache źródeł. Pobieranie danych, synchronizacja czasu i audio nie należą do renderera.
 
 Etap 05a: rzeczywisty komponent `input` to czysty dekoder gestów;
 `hardware_probe` od etapu 05b przechwytuje zbocza GPIO w IRQ i kolejce,
-z licznikami strat. Odbiór transportu na sprzęcie i adapter sterowania pozostają otwarte.
+z licznikami strat. Podstawowe gesty potwierdzono na sprzęcie 5/6/7; szybkość graniczna pozostaje otwarta.
+
+Etap 05c: ui_controls mapuje gesty A/B do UI i callbacku komend. Aplikacyjny
+encoder_demo pokazuje testowy volume/play/station; zadanie ekranu jest
+jedynym właścicielem UI. Brak prawdziwego playera i zapisów NVS.

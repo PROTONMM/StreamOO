@@ -47,3 +47,16 @@ przechwytywaniem zboczy ANYEDGE, kolejką i diagnostyką strat.
 [ADR 0014](adr/0014-encoder-irq-diagnostics.md). Starszy opis ograniczeń
 pollingu powyżej dotyczy 05a. Półkrok potwierdzony przez użytkownika;
 odczyt B i kierunek nadal wymagają testu sprzętowego. UI bez zmian.
+
+## Część 05c — gesty sterują UI
+
+`streamoo_ui_handle_input` realizuje tabelę A/B przez jawny callback komend
+volume/toggle i istniejący callback wyboru stacji. Nie posiada stanu playera.
+Na liście pressed-rotate jest ignorowany. [ADR 0016](adr/0016-encoder-ui-command-adapter.md).
+
+Nowa opcja `STREAMOO_ENCODER_UI_TEST` domyślnie uruchamia od razu
+interaktywny HOME z testową głośnością/odtwarzaniem oraz katalogiem pięciu
+stacji. Stan widoczny w wierszu TEST; ekran działa do resetu. Wyłączenie
+tej opcji przywraca skończoną sekwencję OLED. Wejścia trafiają do zadania UI
+przez kolejkę gestów; overflow jest logowany. Integracja rzeczywistego
+playera i NVS nie została wykonana. Odbiór nowej interakcji na sprzęcie OPEN.

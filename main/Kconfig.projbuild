@@ -5,8 +5,16 @@ menu "StreamOO Configuration"
         help
             Capture both edges of A/B/button with GPIO interrupts and a bounded
             queue. Log IRQ counts once per second and decoded TEST gestures.
-            Overflow resets the decoder and is reported. No UI/player commands.
-            Disable after hardware characterization.
+            Overflow resets the decoder and is reported. Emits gestures only;
+            the interactive UI TEST option maps them to test commands.
+    config STREAMOO_ENCODER_UI_TEST
+        bool "Interactive encoder UI TEST instead of finite OLED sequence"
+        depends on STREAMOO_ENCODER_GESTURE_TEST && STREAMOO_LCD_SMOKE_TEST
+        default y
+        help
+            Start interactive HOME immediately and keep rendering until reset.
+            Synthetic catalog and visualization, TEST volume/playback only.
+            No audio, network or NVS. Disable for the finite OLED diagnostic.
     config STREAMOO_RESERVE_USB
         bool "Reserve GPIO19/20 for USB debugging"
         default y
@@ -18,7 +26,8 @@ menu "StreamOO Configuration"
             bool "Run finite SSD1322 diagnostic at startup"
             default y
             help
-                Black, white, grayscale, inverse, canvas geometry and Polish text,
+                With interactive encoder UI TEST enabled, show interactive HOME.
+                Otherwise: black, white, grayscale, inverse, geometry and Polish text,
                 then 20 seconds of full HOME snapshots with synthetic network,
                 clock and audio data, followed by 8 seconds of station-list
                 navigation. Display off

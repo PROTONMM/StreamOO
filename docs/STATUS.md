@@ -5,8 +5,8 @@
 | 01 zakres | wymagania zebrane | dokumentacja |
 | 02 schemat i profil | walidator i menuconfig zaimplementowane; HARDWARE_TEST_PENDING | ADR 0001; 5 testów hostowych, 2332 konfiguracje; build PASS |
 | 03 szkielet | baza zaimplementowana; odbiór sprzętowy i integracyjny OPEN | ESP-IDF v6.1 build PASS; ADR 0002 |
-| 04 UI/SSD1322 | pełny renderer HOME i lista; nowa kompozycja pending; fizyczne gesty w etapie 05 | ADR 0012; 83 testy PASS |
-| 05 encoder | NIEZAIMPLEMENTOWANE | — |
+| 04 UI/SSD1322 | HOME i lista odebrane na OLED; końcowe strojenie fontu OPEN | ADR 0012; odbiór użytkownika |
+| 05 encoder | dekoder/IRQ i gesty odebrane; interaktywny adapter A/B HARDWARE_TEST_PENDING; NVS OPEN | ADR 0013–0016; 91 testów PASS |
 | 06 audio | NIEZAIMPLEMENTOWANE | — |
 | 07 DSP | NIEZAIMPLEMENTOWANE | — |
 | 08 stacje | NIEZAIMPLEMENTOWANE | — |
@@ -475,3 +475,27 @@ Wcześniej zaobserwowano również ROTATE obu znaków i SHORT/LONG.
 Nie deklarujemy pomiaru maksymalnej szybkości, liczby zdarzeń na ząbek
 ani kierunku zegarowego. Następny zakres: adapter gestów A/B do UI.
 Zmiana dokumentacyjna; git diff --check PASS, bez nowego buildu/flash.
+
+## Etap 05c — interaktywne sterowanie UI (2026-10-24)
+
+- Czysty adapter gestów A/B: volume delta i toggle przez jawny callback,
+  lista przez istniejące API UI, pressed-rotate zmienia tylko widżet HOME.
+  Lista: obrót, short confirm, long cancel; pressed-rotate ignorowany.
+- Kolejka 32 gestów pomiędzy wejściem i zadaniem ekranu, nieblokujący odbiór;
+  przepełnienie jawnie logowane. Bez mutacji UI z ISR/zadania wejścia.
+- Aplikacyjny encoder_demo: katalog TEST, volume 50 ograniczone do 0..100,
+  PLAY/STOP i syntetyczny widżet, komendy kopiowane przed zastosowaniem.
+  Browse/cancel nie zmieniają źródła, confirm zmienia testowy snapshot.
+- Nowy domyślny STREAMOO_ENCODER_UI_TEST: HOME od razu, działa do resetu.
+  Wyłączenie przywraca stary pokaz 46s. GPIO 5/6/7 i półkrok bez zmian.
+- 91 testów unittest PASS (7 nowych); ASan/UBSan adaptera/demonstracji PASS,
+  1000 klatek z canary, skrajne delta, A/B, kolejka odmawiająca, pusta lista.
+  LeakSanitizer wyłączony pod ptrace (detect_leaks=0), bez testu wycieków.
+- ESP-IDF 6.1 reconfigure/build i końcowy build PASS; obraz 0x3e760 B.
+  Gałąź starego pokazu dodatkowo skompilowana kompilatorem targetu przy
+  wyłączonym makrze interaktywnym (bez osobnego pełnego linku tej konfiguracji).
+  Nową klatkę HOME obejrzano na hoście. git diff --check PASS.
+- ADR 0016. Bez flash/erase/eFuse. HARDWARE_TEST_PENDING: pełna interakcja,
+  jeden ząbek/jeden krok, kierunek, brak overflow obu kolejek, tryby A/B.
+- Nie uruchomiono realnego audio/playera, sieci ani NVS. Trwałość po 5s
+  i realne komendy playera pozostają do integracji; etap 05 częściowy.

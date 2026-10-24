@@ -109,3 +109,15 @@ jako błędami. Łącznie 84 testy; nie jest to test szybkości sprzętu GPIO.
 Regresje 05b w tym samym harnessie: stałe B nie tworzy detentów,
 krótkie sekwencje dostarczone przez capture w tej samej ms dają półkroki.
 Transport IRQ/kolejka i overflow wymagają osobnego odbioru na sprzęcie.
+
+Sterowanie 05c: 7 nowych testów, łącznie 91. Harness `controls_test.c`
+sprawdza tryby A/B, cykl widżetów bez volume, listę confirm/cancel bez
+zmiany playing_id, odrzucone komendy, puste katalogi, skrajne delta
+oraz 1000 klatek interaktywnej aplikacji z canary i wyborem stacji.
+
+```sh
+STREAMOO_CONTROLS_SANITIZE='-fsanitize=address,undefined -fno-omit-frame-pointer -g' ASAN_OPTIONS=detect_leaks=0 python3 -m unittest discover -s tests -p test_controls.py -q
+```
+
+ASan/UBSan PASS; bez deklaracji testu wycieków (LeakSanitizer pod ptrace
+wyłączony). Kolejki FreeRTOS i interaktywne sterowanie wymagają OLED/enkodera.

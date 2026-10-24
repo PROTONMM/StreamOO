@@ -34,3 +34,8 @@ W ostatniej scenie diagnostycznej trzy widżety (FFT/LR/analog) pokazują jawnie
 Na końcu diagnostyki jest automatyczny pokaz animowanej listy TEST. Właściciel UI oddziela przeglądanie od polecenia wyboru; rzeczywista lista/player oraz obsługa enkodera pozostają w dalszych etapach.
 
 HOME ma pełny układ stacji/metadanych i dolnych paneli. Diagnostyka pokazuje syntetyczne warianty TEST: komplet danych, odrzucenie starych metadanych, nowe dane i offline; nie jest to jeszcze połączenie z siecią ani playerem.
+
+Etap 05c domyślnie uruchamia interaktywny test enkodera/UI od razu zamiast
+skończonego pokazu OLED. TEST VOL/PLAY/W pokazuje skutki gestów; bez audio
+i zapisu NVS. Wyłącz STREAMOO_ENCODER_UI_TEST, aby wrócić do pokazu 46s.
+Instrukcja odbioru: [HARDWARE_BRINGUP](docs/HARDWARE_BRINGUP.md).

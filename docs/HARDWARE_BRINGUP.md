@@ -275,3 +275,26 @@ może zachować starą wartość: sprawdź Encoder B GPIO=6 w menuconfig.
 Nie ustalono z logu liczby zdarzeń na ząbek ani kierunku względem obrotu
 zegarowego. Sekwencja PRESSED_ROTATE, następnie ROTATE nie mówi, czy
 przycisk pozostawał fizycznie wciśnięty — sprawdź to przy odbiorze gestów.
+
+## Enkoder 05c — sterowanie ekranem
+
+Domyślnie `STREAMOO_ENCODER_UI_TEST=y`: HOME pojawia się od razu,
+bez 46s automatycznej sekwencji, i pozostaje do resetu. Konsola wypisuje
+`Interactive encoder TEST ready`. Wyłączenie tej opcji przywraca dawny pokaz.
+GPIO A/B/BTN=5/6/7, półkrok; tryb A domyślny.
+
+1. Obracaj na HOME: TEST VOL startuje od 50 i zatrzymuje się na 0/100.
+2. Trzymaj przycisk i obracaj: zmienia się widżet oraz W1/W2/W3,
+   volume pozostaje takie samo. Zwolnienie nie powinno otwierać listy.
+3. Krótki klik otwiera listę; obrót przemieszcza środkowy wybór z animacją.
+   Lista nie zawija się. Samo przeglądanie nie zmienia testowej stacji.
+4. Długi klik anuluje i wraca do poprzedniej stacji. Ponownie otwórz listę,
+   zmień wybór i krótko kliknij: HOME pokazuje wybraną testową stację.
+5. Długi klik na HOME przełącza TEST PLAY/STOP; w STOP poziomy syntetyczne
+   spadają do zera. Nie ma jeszcze prawdziwego odtwarzania.
+6. Opcjonalnie tryb B w menuconfig: krótki na HOME przełącza PLAY/STOP,
+   długi otwiera listę. Gesty na liście pozostają jak w punktach 3/4.
+
+Przekaż liczbę przesunięć na jeden ząbek i kierunek względem obrotu zegarowego.
+Przy `IRQ queue overflow` lub `Gesture queue full` próba transportu nie jest
+zaliczona; podaj log. NVS nie zapisuje stanu — reset przywraca dane TEST.

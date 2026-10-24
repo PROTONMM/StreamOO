@@ -14,9 +14,10 @@ static const int pins[] = {CONFIG_STREAMOO_ENCODER_GPIO_A,
                           CONFIG_STREAMOO_ENCODER_GPIO_B,
                           CONFIG_STREAMOO_ENCODER_GPIO_BUTTON};
 typedef struct { uint64_t ms; uint8_t levels; } edge_t;
-static QueueHandle_t queue;
+static QueueHandle_t queue, gestures;
 static portMUX_TYPE lock = portMUX_INITIALIZER_UNLOCKED;
 static uint32_t edges[3], lost;
+static bool consumer_active;
 static streamoo_input_t decoder;
 static edge_t current;
 
@@ -67,6 +68,11 @@ static void decode(edge_t e)
     if (event.kind != STREAMOO_INPUT_NONE) {
         static const char *const names[] = {"NONE", "ROTATE", "SHORT", "LONG", "PRESSED_ROTATE"};
         ESP_LOGI("input_probe", "TEST %s delta=%d", names[event.kind], event.delta);
+        portENTER_CRITICAL(&lock);
+        bool forward = consumer_active;
+        portEXIT_CRITICAL(&lock);
+        if (forward && xQueueSend(gestures, &event, 0) != pdTRUE)
+            ESP_LOGW("input_probe", "Gesture queue full: command dropped");
     }
 }
 
@@ -142,9 +148,11 @@ esp_err_t streamoo_input_probe_start(void)
     if (error != ESP_OK) return error;
     queue = xQueueCreate(128, sizeof(edge_t));
     if (!queue) return ESP_ERR_NO_MEM;
+    gestures = xQueueCreate(32, sizeof(streamoo_input_event_t));
+    if (!gestures) { vQueueDelete(queue); queue = NULL; return ESP_ERR_NO_MEM; }
     /* Own the service; do not silently inherit another component's flags. */
     error = gpio_install_isr_service(0);
-    if (error != ESP_OK) { vQueueDelete(queue); queue = NULL; return error; }
+    if (error != ESP_OK) { vQueueDelete(gestures); gestures = NULL; vQueueDelete(queue); queue = NULL; return error; }
     current = read_levels();
     initialize_decoder(current);
     unsigned installed = 0;
@@ -166,7 +174,18 @@ fail:
         gpio_isr_handler_remove(pins[i]);
     }
     gpio_uninstall_isr_service();
+    vQueueDelete(gestures);
+    gestures = NULL;
     vQueueDelete(queue);
     queue = NULL;
     return error;
+}
+
+bool streamoo_input_probe_receive(streamoo_input_event_t *event)
+{
+    if (!gestures || !event) return false;
+    portENTER_CRITICAL(&lock);
+    consumer_active = true;
+    portEXIT_CRITICAL(&lock);
+    return xQueueReceive(gestures, event, 0) == pdTRUE;
 }

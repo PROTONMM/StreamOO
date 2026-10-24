@@ -49,3 +49,5 @@ Etap 05a: `adr/0013-encoder-decoder-characterization.md`.
 Etap 05b: `adr/0014-encoder-irq-diagnostics.md`.
 
 Korekta sprzętu enkodera: `adr/0015-confirmed-encoder-wiring.md`.
+
+Etap 05c: `adr/0016-encoder-ui-command-adapter.md`.

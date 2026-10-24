@@ -1,4 +1,6 @@
 #include "display_smoke.h"
+#include "encoder_demo.h"
+#include "streamoo_input_probe.h"
 #include "canvas_smoke.h"
 #include "text_smoke.h"
 #include "home_probe.h"
@@ -33,6 +35,35 @@ static void display_task(void *context)
     esp_err_t error = frame ? streamoo_ssd1322_open(&config, &display) : ESP_ERR_NO_MEM;
     if (error == ESP_OK) error = streamoo_ssd1322_present(display, frame, SSD1322_FRAME_BYTES);
     if (error == ESP_OK) error = streamoo_ssd1322_enable(display, true);
+#ifdef CONFIG_STREAMOO_ENCODER_UI_TEST
+    if (error == ESP_OK) {
+        streamoo_encoder_demo_t demo;
+        if (!streamoo_encoder_demo_init(&demo)) error = ESP_ERR_INVALID_STATE;
+        streamoo_input_event_t event;
+        /* Discard input captured before this UI session was ready. */
+        while (streamoo_input_probe_receive(&event)) {}
+        TickType_t wake = xTaskGetTickCount();
+        ESP_LOGI("display_smoke", "Interactive encoder TEST ready: no audio/network/NVS");
+        while (error == ESP_OK) {
+            uint64_t now = (uint64_t)esp_timer_get_time() / 1000;
+            for (unsigned n=0; n<32 && streamoo_input_probe_receive(&event); ++n) {
+#ifdef CONFIG_STREAMOO_ENCODER_MODE_B
+                const streamoo_control_mode_t mode = STREAMOO_CONTROL_MODE_B;
+#else
+                const streamoo_control_mode_t mode = STREAMOO_CONTROL_MODE_A;
+#endif
+                if (!streamoo_encoder_demo_input(&demo,event,mode,now))
+                    ESP_LOGW("display_smoke", "TEST gesture rejected; state preserved");
+            }
+            if (!streamoo_encoder_demo_draw(&demo,frame,SSD1322_FRAME_BYTES,now)) {
+                error = ESP_ERR_INVALID_ARG;
+                break;
+            }
+            error = streamoo_ssd1322_present(display,frame,SSD1322_FRAME_BYTES);
+            vTaskDelayUntil(&wake,pdMS_TO_TICKS(40) ? pdMS_TO_TICKS(40) : 1);
+        }
+    }
+#else
     if (error == ESP_OK) {
         ESP_LOGW("display_smoke", "Experimental panel profile; verify image on OLED. RESET GPIO=%d",
                  CONFIG_STREAMOO_LCD_RST);
@@ -101,6 +132,7 @@ static void display_task(void *context)
             ESP_LOGI("display_smoke", "list diagnostic requested=%" PRIu64 " snapshot=%" PRIu64,
                      probe.requested_id, probe.ui.playing_id);
     }
+#endif
     if (error != ESP_OK) ESP_LOGE("display_smoke", "Failed: %s", esp_err_to_name(error));
     if (display) {
         const esp_err_t close_error = streamoo_ssd1322_close(display);
