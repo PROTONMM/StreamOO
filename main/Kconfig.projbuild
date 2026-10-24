@@ -14,7 +14,8 @@ menu "StreamOO Configuration"
         help
             Start interactive HOME immediately and keep rendering until reset.
             Synthetic catalog and visualization, TEST volume/playback only.
-            No audio, network or NVS. Disable for the finite OLED diagnostic.
+            No audio or network. Volume/widget saved to NVS after 5 seconds idle.
+            Disable for the finite OLED diagnostic.
     config STREAMOO_RESERVE_USB
         bool "Reserve GPIO19/20 for USB debugging"
         default y

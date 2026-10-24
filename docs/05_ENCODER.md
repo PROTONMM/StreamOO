@@ -68,3 +68,11 @@ Użytkownik zgłosił odwrócony kierunek volume i listy. Domyślnie
 lewo zmniejsza. Ta sama korekta dotyczy cyklu widżetów. Przy istniejącym
 sdkconfig sprawdź `Invert encoder direction` w menuconfig — zmiana defaults
 nie zastępuje zapisanych ustawień. Uzupełnienie ADR 0015.
+
+## Część 05d — trwałość głośności i widżetu
+
+Interaktywny test odczytuje preferencje volume/wizualizacji z NVS na starcie.
+Zmiany trafiają przez nieblokującą skrzynkę do osobnego zadania preferences:
+zapis po 5s bez zmian, tylko przy różnicy. [ADR 0017](adr/0017-deferred-ui-preferences.md).
+Testowy katalog i PLAY/STOP nie są zapisywane. Reset przed zapisem może
+utracić zmianę; flush kontrolowanego shutdown pozostaje do integracji.

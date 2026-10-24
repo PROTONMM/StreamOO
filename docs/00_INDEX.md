@@ -51,3 +51,5 @@ Etap 05b: `adr/0014-encoder-irq-diagnostics.md`.
 Korekta sprzętu enkodera: `adr/0015-confirmed-encoder-wiring.md`.
 
 Etap 05c: `adr/0016-encoder-ui-command-adapter.md`.
+
+Etap 05d / pierwszy zakres NVS: `adr/0017-deferred-ui-preferences.md`.

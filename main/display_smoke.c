@@ -1,5 +1,6 @@
 #include "display_smoke.h"
 #include "encoder_demo.h"
+#include "streamoo_preferences.h"
 #include "streamoo_input_probe.h"
 #include "canvas_smoke.h"
 #include "text_smoke.h"
@@ -39,11 +40,15 @@ static void display_task(void *context)
     if (error == ESP_OK) {
         streamoo_encoder_demo_t demo;
         if (!streamoo_encoder_demo_init(&demo)) error = ESP_ERR_INVALID_STATE;
+        streamoo_preferences_value_t restored = {50,0};
+        const bool preferences_ready = streamoo_preferences_initial(&restored);
+        demo.volume = restored.volume;
+        if (!streamoo_ui_set_visualization(&demo.ui, restored.visualization)) error = ESP_ERR_INVALID_STATE;
         streamoo_input_event_t event;
         /* Discard input captured before this UI session was ready. */
         while (streamoo_input_probe_receive(&event)) {}
         TickType_t wake = xTaskGetTickCount();
-        ESP_LOGI("display_smoke", "Interactive encoder TEST ready: no audio/network/NVS");
+        ESP_LOGI("display_smoke", "Interactive encoder TEST ready: no audio/network; volume/widget preferences enabled if available");
         while (error == ESP_OK) {
             uint64_t now = (uint64_t)esp_timer_get_time() / 1000;
             for (unsigned n=0; n<32 && streamoo_input_probe_receive(&event); ++n) {
@@ -54,6 +59,9 @@ static void display_task(void *context)
 #endif
                 if (!streamoo_encoder_demo_input(&demo,event,mode,now))
                     ESP_LOGW("display_smoke", "TEST gesture rejected; state preserved");
+                const streamoo_preferences_value_t preferences = {(uint8_t)demo.volume, (uint8_t)demo.ui.visualization};
+                if (preferences_ready && !streamoo_preferences_submit(preferences))
+                    ESP_LOGW("display_smoke", "Preferences update not accepted");
             }
             if (!streamoo_encoder_demo_draw(&demo,frame,SSD1322_FRAME_BYTES,now)) {
                 error = ESP_ERR_INVALID_ARG;

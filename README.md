@@ -36,6 +36,7 @@ Na końcu diagnostyki jest automatyczny pokaz animowanej listy TEST. Właścicie
 HOME ma pełny układ stacji/metadanych i dolnych paneli. Diagnostyka pokazuje syntetyczne warianty TEST: komplet danych, odrzucenie starych metadanych, nowe dane i offline; nie jest to jeszcze połączenie z siecią ani playerem.
 
 Etap 05c domyślnie uruchamia interaktywny test enkodera/UI od razu zamiast
-skończonego pokazu OLED. TEST VOL/PLAY/W pokazuje skutki gestów; bez audio
-i zapisu NVS. Wyłącz STREAMOO_ENCODER_UI_TEST, aby wrócić do pokazu 46s.
+skończonego pokazu OLED. TEST VOL/PLAY/W pokazuje skutki gestów, nadal bez audio.
+Od etapu 05d volume/widżet są zapisywane w NVS po 5s bez zmian.
+Wyłącz STREAMOO_ENCODER_UI_TEST, aby wrócić do pokazu 46s.
 Instrukcja odbioru: [HARDWARE_BRINGUP](docs/HARDWARE_BRINGUP.md).

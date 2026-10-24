@@ -298,3 +298,20 @@ GPIO A/B/BTN=5/6/7, półkrok; tryb A domyślny.
 Przekaż liczbę przesunięć na jeden ząbek i kierunek względem obrotu zegarowego.
 Przy `IRQ queue overflow` lub `Gesture queue full` próba transportu nie jest
 zaliczona; podaj log. NVS nie zapisuje stanu — reset przywraca dane TEST.
+
+## Preferencje 05d — zapis i restart
+
+1. Po wgraniu zmień volume na rozpoznawalną wartość, np. 37, a widżet na W2.
+2. Od ostatniej zmiany odczekaj co najmniej 5s. W monitorze oczekuj
+   `preferences: Saved volume=37 widget=2` (drobne opóźnienie harmonogramu możliwe).
+3. Zresetuj płytkę bez erase-flash. HOME powinien odtworzyć VOL 37 i W2,
+   a log startowy preferences podać te wartości. Stacja/PLAY pozostają TEST.
+4. Zmieniaj volume co 1–2s: zapis powinien nastąpić dopiero po 5s spokoju.
+5. Nie dotykaj enkodera przez kolejne 10s: bez ponownych komunikatów Saved.
+6. Zmień i wróć do poprzedniej zapisanej wartości przed upływem 5s:
+   nie powinno być zbędnego zapisu, o ile nic innego się nie zmieniło.
+
+Reset wcześniej niż Saved może przywrócić poprzednie wartości. Wersja nie
+ma jeszcze kontrolowanego shutdown/flush. Jeśli pojawi się Preferences
+unavailable lub Save failed, prześlij log; firmware nie kasuje NVS automatycznie.
+Nie testowano jeszcze zaniku w trakcie samego zapisu ani zużycia flash.

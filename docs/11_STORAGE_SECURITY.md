@@ -16,3 +16,12 @@ Lista stacji, ewentualnie WWW assets, tymczasowy staging importu. 16 MB flash po
 
 ## Testy
 NVS flash wear, restarty w trakcie importu/OTA, niskie zasoby, weryfikacja kontenera, brak hasła w serial log, zachowanie na utratę zasilania.
+
+## Pierwszy zakres implementacyjny — preferencje UI 05d
+
+Komponent preferences zapisuje wyłącznie volume/wizualizację w wersjonowanym
+blobie NVS. Polityka debounce i formatu testowana na hoście, flash wykonuje
+osobny worker; odczyt jest częścią startup. [ADR 0017](adr/0017-deferred-ui-preferences.md).
+Brak klucza daje domyślne 50/spectrum. Błędny lub nieobsługiwany rekord
+wyłącza serwis bez automatycznego kasowania. Pozostałe klucze/sekrety,
+LittleFS, OTA i kontrolowany shutdown/flush nie są zaimplementowane.

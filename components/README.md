@@ -32,4 +32,8 @@ z licznikami strat. Podstawowe gesty potwierdzono na sprzęcie 5/6/7; szybkość
 
 Etap 05c: ui_controls mapuje gesty A/B do UI i callbacku komend. Aplikacyjny
 encoder_demo pokazuje testowy volume/play/station; zadanie ekranu jest
-jedynym właścicielem UI. Brak prawdziwego playera i zapisów NVS.
+jedynym właścicielem UI. Brak prawdziwego playera; od 05d preferencje volume/widżetu zapisuje osobny serwis.
+
+`preferences`: czysty format/debounce oraz backend NVS z ESP-IDF 6.1.
+Jeden worker wykonuje zapis po 5s, UI wysyła kopie do skrzynki latest-wins.
+Inicjalizacja/odczyt przy starcie, bez automatycznego erase. Bez zależności UI.

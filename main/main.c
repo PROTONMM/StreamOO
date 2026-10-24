@@ -4,6 +4,7 @@
 #include "streamoo_platform.h"
 #include "streamoo_input_probe.h"
 #include "display_smoke.h"
+#include "streamoo_preferences.h"
 
 static const char *TAG = "StreamOO";
 
@@ -27,6 +28,11 @@ void app_main(void)
     ESP_LOGI(TAG, "Encoder: A=%d B=%d BTN=%d",
              CONFIG_STREAMOO_ENCODER_GPIO_A, CONFIG_STREAMOO_ENCODER_GPIO_B,
              CONFIG_STREAMOO_ENCODER_GPIO_BUTTON);
+#if defined(CONFIG_STREAMOO_ENCODER_UI_TEST)
+    const esp_err_t prefs_error = streamoo_preferences_start();
+    if (prefs_error != ESP_OK)
+        ESP_LOGW(TAG, "Preferences unavailable: %s; using defaults, no erase", esp_err_to_name(prefs_error));
+#endif
 #if defined(CONFIG_STREAMOO_ENCODER_GESTURE_TEST)
     if (streamoo_input_probe_start() != ESP_OK) {
         ESP_LOGE(TAG, "Input probe could not start");

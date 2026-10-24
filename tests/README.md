@@ -121,3 +121,14 @@ STREAMOO_CONTROLS_SANITIZE='-fsanitize=address,undefined -fno-omit-frame-pointer
 
 ASan/UBSan PASS; bez deklaracji testu wycieków (LeakSanitizer pod ptrace
 wyłączony). Kolejki FreeRTOS i interaktywne sterowanie wymagają OLED/enkodera.
+
+Preferencje 05d: 8 nowych testów (łącznie 99), w tym wszystkie 303
+prawidłowe pary pól, walidacja blobu, debounce, powrót do saved, sklejenie
+A→B→A, retry po błędzie i uptime ponad 32-bit ms. Adapter flash/FreeRTOS
+wymaga sprzętu; testy hostowe obejmują format i politykę.
+
+```sh
+STREAMOO_PREFERENCES_SANITIZE='-fsanitize=address,undefined -fno-omit-frame-pointer -g' ASAN_OPTIONS=detect_leaks=0 python3 -m unittest discover -s tests -p test_preferences.py -q
+```
+
+ASan/UBSan PASS, LeakSanitizer pod ptrace wyłączony, bez testu wycieków.

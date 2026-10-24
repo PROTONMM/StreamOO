@@ -6,13 +6,13 @@
 | 02 schemat i profil | walidator i menuconfig zaimplementowane; HARDWARE_TEST_PENDING | ADR 0001; 5 testów hostowych, 2332 konfiguracje; build PASS |
 | 03 szkielet | baza zaimplementowana; odbiór sprzętowy i integracyjny OPEN | ESP-IDF v6.1 build PASS; ADR 0002 |
 | 04 UI/SSD1322 | HOME i lista odebrane na OLED; końcowe strojenie fontu OPEN | ADR 0012; odbiór użytkownika |
-| 05 encoder | dekoder/IRQ i gesty odebrane; interaktywny adapter A/B HARDWARE_TEST_PENDING; NVS OPEN | ADR 0013–0016; 91 testów PASS |
+| 05 encoder | dekoder/IRQ i gesty odebrane; interaktywny adapter odebrany w trybie A; preferencje NVS HARDWARE_TEST_PENDING | ADR 0013–0017; 99 testów PASS |
 | 06 audio | NIEZAIMPLEMENTOWANE | — |
 | 07 DSP | NIEZAIMPLEMENTOWANE | — |
 | 08 stacje | NIEZAIMPLEMENTOWANE | — |
 | 09 sieć | NIEZAIMPLEMENTOWANE | — |
 | 10 WWW | NIEZAIMPLEMENTOWANE | — |
-| 11 storage/OTA | NIEZAIMPLEMENTOWANE | — |
+| 11 storage/OTA | pierwszy zakres NVS: volume/widżet; sprzęt/flush i pozostały zakres OPEN | ADR 0017; polityka/format PASS |
 | 12 testy końcowe | NIEURUCHOMIONE | — |
 
 Aktualizuj tabelę dopiero po wykonaniu i zapisaniu wyniku testów.
@@ -521,3 +521,29 @@ Nie otrzymano osobnego hasha wgranego obrazu ani logu pomiarowego.
 Potwierdzenie nie zamyka otwartych pomiarów szybkości, liczby kroków na ząbek,
 trwałości NVS ani integracji realnego playera. Zmiana dokumentacyjna;
 `git diff --check` PASS, bez nowego buildu i flashowania.
+
+## Etap 05d — preferencje volume/wizualizacji (2026-10-24)
+
+- Niezależny preferences: format 8B i polityka debounce w czystym C,
+  adapter NVS/FreeRTOS z ESP-IDF 6.1 (lokalne API/licencja sprawdzone).
+- Odczyt przed startem UI; brak klucza daje 50/spectrum bez tworzenia rekordu
+  preferencji. Błąd NVS/formatu wyłącza serwis, UI używa domyślnych;
+  brak automatycznego kasowania/reformatowania i brak sekretów.
+- UI przekazuje zmiany po każdym geście; identyczne stany są filtrowane.
+  Skrzynka latest-wins, czas ostatniej zmiany zachowany także dla A→B→A.
+  Osobny worker zapisuje po 5s bez zmian, tylko gdy stan różni się od saved;
+  retry po 5s, potwierdzenie dopiero po commit, powrót do saved anuluje zapis.
+- Persistowane tylko volume i widżet. Testowe stacje i PLAY/STOP bez zapisu;
+  prawdziwe audio/player nadal nie są uruchomione. Startup może wykonywać
+  operacje NVS; runtime set_blob/commit wyłącznie w zadaniu preferences.
+- 99 testów unittest PASS (8 nowych, w tym 303 pary pól, błędne rekordy,
+  debounce, coalescing, revert, retry i długi uptime). ASan/UBSan polityki
+  i formatu PASS; detect_leaks=0 pod ptrace, bez testu wycieków.
+- ESP-IDF 6.1 reconfigure/build i końcowy build PASS, git diff --check PASS.
+  Adapter NVS/FreeRTOS i trwałość po restarcie HARDWARE_TEST_PENDING.
+  Nie wykonano flashowania płytki ani erase/eFuse przez agenta. Nowy firmware
+  po wgraniu przez użytkownika będzie zapisywał preferencje do NVS.
+- ADR 0017. Kontrolowany shutdown/flush nie ma jeszcze właściciela/API;
+  restart przed zapisem może utracić zmiany. Test zaniku podczas zapisu,
+  zużycia flash i wpływu operacji flash/cache na przyszłe audio pozostaje OPEN.
+  Etapy 05/11 nadal częściowe. Następnie podstawowe wyjście I2S (etap 06).
