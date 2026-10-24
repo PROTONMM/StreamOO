@@ -450,3 +450,17 @@ Następny eksperyment: włączyć istniejący Kconfig wewnętrznych pull-up,
 przebudować/wgrać i porównać poziom B oraz IRQ podczas obrotu. Jeśli nadal
 stałe zero, pomiar sygnału/ciągłości toru B na sprzęcie. Przyczyna nieustalona.
 Zmiana tylko dokumentacyjna; git diff --check PASS, bez nowego buildu/flash.
+
+## Korekta fizycznej mapy enkodera (2026-10-24)
+
+- Użytkownik ustalił rzeczywiste połączenie A/B/BTN=5/6/7 i zmienił B na 6.
+  Schemat referencyjny B=16 nie odpowiada używanemu sprzętowi; przyczyna
+  braku kanału B wyjaśniona. ADR 0015 zachowuje ten wyjątek jawnie.
+- Przesłany log pokazuje IRQ obu kanałów i ROTATE delta=-1/+1, SHORT,
+  LONG, PRESSED_ROTATE. Nie ustalono liczby zdarzeń na ząbek/kierunku
+  zegarowego ani ciągłości trzymania przycisku po PRESSED_ROTATE.
+- Poprawiono domyślne GPIO B=6 w Kconfig/defaults i dokumentację sprzętu.
+  Półkrok pozostaje włączony. Nie zmieniono pull-up ani dekodera.
+- 84 testy unittest PASS; ESP-IDF 6.1 build PASS; git diff --check PASS.
+  Bez flash/erase/eFuse. Mapowanie potwierdzone przez użytkownika,
+  pełny etap 05 i adapter gestów do UI nadal nieukończone.

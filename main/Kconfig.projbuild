@@ -91,7 +91,7 @@ menu "StreamOO Configuration"
         config STREAMOO_ENCODER_GPIO_B
             int "Encoder B GPIO"
             range 0 48
-            default 16
+            default 6
         config STREAMOO_ENCODER_GPIO_BUTTON
             int "Encoder button GPIO"
             range 0 48

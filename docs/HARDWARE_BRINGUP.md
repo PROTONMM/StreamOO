@@ -14,7 +14,7 @@ Poniżej sprawdzamy nowe kontrole startowe oraz niepotwierdzone połączenia.
    Odbiór resetu EN, parametrów panelu i obrazu nadal wymaga płytki.
 2. Przy wyłączonym zasilaniu sprawdź ciągłość połączeń z tabelą
    `02_HARDWARE.md`: OLED 11/12/9/10, RESET bez osobnego GPIO; encoder
-   5/16/7; I²S 48/47/21. Potwierdź podciąganie A/B/przycisku na PCB.
+   5/6/7 (sprzęt użytkownika; schemat referencyjny różni się); I²S 48/47/21. Potwierdź podciąganie A/B/przycisku na PCB.
 3. W terminalu ESP-IDF 6.1 uruchom:
 
    ```sh
@@ -264,3 +264,14 @@ Półkrok pozostaje włączony zgodnie z potwierdzeniem użytkownika.
 Liczba IRQ nie jest liczbą ząbków (obejmuje odbicia). `IRQ queue overflow`
 unieważnia próbę: dekoder resetuje się bez wymyślania brakujących kroków.
 Sprawdź też SHORT/LONG oraz PRESSED_ROTATE bez kliku po puszczeniu.
+
+## Korekta połączenia enkodera — 5/6/7
+
+Użytkownik ustalił B na GPIO6 i po zmianie przekazał log z IRQ obu kanałów,
+ROTATE delta=-1/+1, SHORT, LONG i PRESSED_ROTATE. Poprzednia instrukcja
+05b z B=GPIO16 dotyczy błędnego dla tego sprzętu przypisania referencyjnego.
+Aktualne domyślne A/B/BTN: 5/6/7, HALF_QUADRATURE=y. Istniejący sdkconfig
+może zachować starą wartość: sprawdź Encoder B GPIO=6 w menuconfig.
+Nie ustalono z logu liczby zdarzeń na ząbek ani kierunku względem obrotu
+zegarowego. Sekwencja PRESSED_ROTATE, następnie ROTATE nie mówi, czy
+przycisk pozostawał fizycznie wciśnięty — sprawdź to przy odbiorze gestów.

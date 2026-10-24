@@ -11,7 +11,7 @@ Jesteś głównym inżynierem firmware ESP-IDF i systemów audio czasu rzeczywis
 
 ## Twarde wymagania
 - Natywny ESP-IDF, target esp32s3, profil N16R8 16 MB flash + 8 MB PSRAM.
-- Domyślne piny: SSD1322 MOSI11 SCLK12 CS9 DC10 RESET=-1; I²S DOUT48 BCLK47 WS21; enkoder A5 B16 BTN7. GPIO konfigurowalne przez menuconfig; walidacja kolizji i ograniczeń ESP32-S3/PSRAM.
+- Domyślne piny: SSD1322 MOSI11 SCLK12 CS9 DC10 RESET=-1; I²S DOUT48 BCLK47 WS21; enkoder A5 B6 BTN7 (połączenie sprzętu potwierdzone przez użytkownika; schemat referencyjny ma B16). GPIO konfigurowalne przez menuconfig; walidacja kolizji i ograniczeń ESP32-S3/PSRAM.
 - Jeden enkoder. Domyślny tryb A: obrót=volume, krótki=lista, długi=play/stop, wciśnięcie+obrót=przełączanie wizualizacji. Tryb B zamienia krótki i długi; wybór przez Kconfig. W liście: obrót przewija z animacją, krótki zatwierdza środkową stację, długi anuluje. Podczas listy bieżąca stacja gra nadal.
 - SSD1322 256×64, własny renderer 4bpp. Ekran: y0..15 nazwa stacji; y16..23 tytuł; y24..31 opis; y32..63: po lewej Wi-Fi + kodek/bitrate, w środku wymienny widget audio, po prawej kalendarz/zegar. Widżety wymienne, clipping. Używaj Krypton dla tekstów większych i bitmapowej 5×7 z polskimi literami dla linii 8px.
 - PCM5102A/I²S. MP3, AAC/HE-AAC, FLAC, Ogg Vorbis, Ogg Opus jako cele wymagające weryfikacji dekoderów/licencji/wydajności. Pipeline sieć→bufor→dekoder→PCM→ (odgałęzienie pomiarów przed volume)→volume ramp→I²S; brak FFT w gorącej ścieżce audio. Wyjście płynne bez trzasków.
