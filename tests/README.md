@@ -43,3 +43,7 @@ cc -std=c11 -Wall -Wextra -Werror -fsanitize=address,undefined \
 W środowisku blokującym LeakSanitizer przez ptrace można wykonać pozostałe
 kontrole przez `ASAN_OPTIONS=detect_leaks=0 /tmp/streamoo-canvas-sanitizer`.
 Taki wynik nie obejmuje wykrywania wycieków; sam renderer nie alokuje pamięci.
+
+Tekst: 6 kolejnych testów, łącznie 32. Walidacja Unicode/UTF-8, długości,
+bit7 glifu, clippingu i fallbacku z oryginalnym syntetycznym providerem.
+Testy nie dołączają bitmap z ZIP i nie potwierdzają fontu na OLED.

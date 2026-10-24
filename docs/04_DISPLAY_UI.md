@@ -51,3 +51,14 @@ testy, limity i wynik sanitizera.
 Scena geometryczna jest piątym obrazem testu OLED (całość około 15 s).
 Jej rasteryzacja i transfer mają osobne metryki. Nowy obraz na urządzeniu
 pozostaje HARDWARE_TEST_PENDING. Nie jest to ekran radia ani test fontów.
+
+## Część 04c-1 — zidentyfikowane polskie glify i backend tekstu
+
+Użytkownik wskazał `glcdfont.c`; potwierdzono komplet 18 polskich liter
+oraz konieczność zachowania ósmego wiersza. [ADR 0005](adr/0005-font-reference-and-utf8.md)
+zawiera mapowanie i wynik sprawdzenia licencji. Bitmap nie importowano:
+warunki polskich zmian nie są opisane w ZIP i wymagają wyjaśnienia.
+
+Niezależny `text` obsługuje ścisłe UTF-8, pomiar szerokości i provider 5×8,
+bez kopiowania konwertera yoRadio. Testy syntetyczne nie oznaczają wdrożenia
+polskiego fontu, fontu Krypton ani tekstów na urządzeniu.

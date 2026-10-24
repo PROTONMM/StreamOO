@@ -148,9 +148,33 @@ pozostają do uzupełnienia protokołem. Enkoder nie został tym potwierdzony.
 - HARDWARE_TEST_PENDING: nowa scena canvas i czas rasteryzacji na ESP32-S3;
   nie przypisujemy jej wcześniejszego potwierdzenia użytkownika.
 - ADR: `adr/0004-independent-4bpp-canvas.md`.
-- Commit: `git log -1 --format=%H --grep='^stage-04b:'` wskazuje commit
-  podetapu; własny hash nie może być częścią jego zawartości.
+- Commit: `63a9d5176cb326a76ba44ed66bc93c077f7c6823`.
 - Następny zakres 04c: fonty, tekst UTF-8 PL i marquee. D14 nadal OPEN:
   wymagany konkretny zasób małej bitmapowej czcionki 5×7 PL; wysłano pytanie
   o źródło. Nie zastąpiono go przypadkowym fontem. Krypton, teksty i właściwe
   widgety/UI nadal niezaimplementowane; pełnego etapu 04 nie zakończono.
+
+## Etap 04c-1 — źródło fontu i baza UTF-8 (2026-10-24)
+
+- Użytkownik dostarczył ZIP z `glcdfont.c`. Zweryfikowano 256 glifów 5×8
+  oraz indeksy 18 polskich liter. D14: źródło ustalone, licencja modyfikacji
+  OPEN — ZIP nie zawiera noty licencyjnej/autora; zapytano o te dane.
+- `tools/inspect_polish_font.py` tworzy raport i opcjonalny podgląd PNG
+  poza źródłami firmware. Podgląd wszystkich 18 liter obejrzany na hoście.
+- Komponent `text`: oryginalny dekoder UTF-8, pomiar szerokości i rysowanie
+  wiersza 5×8 przez provider glifów, z clippingiem i bez alokacji. Nie
+  skopiowano `utf8Rus.cpp`, kodu Arduino ani tablicy bitmap z archiwum.
+- `python3 -m unittest discover -s tests -v` — PASS, 32 testy (6 nowych:
+  Unicode PL i >1000 skalarów, błędne UTF-8, szerokość, ósmy wiersz glifu,
+  clipping i zachowanie znaków zastępczych). Glify testowe są syntetyczne.
+- `idf.py build` — PASS, ESP-IDF v6.1/esp32s3. Komponent text skompilowany;
+  obraz aplikacji nadal `0x38f50` / 233296 B, ponieważ backend tekstu nie
+  jest jeszcze używany w aplikacji. Zachowano test OLED 04b.
+- `git diff --check` — PASS. Nie wykonano flash/erase/eFuse.
+- ADR: `adr/0005-font-reference-and-utf8.md`.
+- Commit: `git log -1 --format=%H --grep='^stage-04c-1:'` rozwiązuje hash
+  tego podetapu, niemożliwy do osadzenia we własnej zawartości commita.
+- Następny krok: wyjaśnienie licencji konkretnej modyfikacji, import glifów
+  z notami, test polskich napisów na OLED, następnie marquee/Krypton.
+  Polski font nie jest jeszcze w firmware; brak tekstowego testu sprzętowego
+  pozostaje HARDWARE_TEST_PENDING. Pełny etap 04 nadal nieukończony.

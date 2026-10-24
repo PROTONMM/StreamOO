@@ -15,7 +15,7 @@
 | D11 | PROPONOWANE | FFT 1024, opcja 2048, 24 pasma, ~25 FPS, 50% overlap. |
 | D12 | OTWARTE | Czy zawsze autoplay ostatnia stacja po power-on, czy respektować zapisany STOP. |
 | D13 | OTWARTE | Finalny format importu stacji yoRadio: potrzebny rzeczywisty plik/fixtures i test round-trip. |
-| D14 | OTWARTE | Potwierdzenie biblioteki fontu 5×7 PL i mapping UTF-8. |
+| D14 | OTWARTE | Wybrano glcdfont.c z archiwum użytkownika, mapowanie 18 liter PL zweryfikowane (ADR 0005). OPEN: autor/licencja polskich modyfikacji przed importem bitmap. |
 | D15 | OTWARTE | ESP-IDF 6.1 USTALONE (v6.1 zweryfikowane, ADR 0002); nadal OTWARTE: component registry, licencje i kompatybilność kodeków. |
 | D16 | OTWARTE | Dokładne zachowanie overflow/underrun, rozmiary partycji, wybór enkodera half/full quadrature po pomiarze. |
 | D17 | OTWARTE | Model SSD1322 i R5/R8=4SPI potwierdzone przez użytkownika (ADR 0003); nadal OTWARTE: odbiór zasilania/resetu/obrazu OLED, modułu audio i kierunku enkodera na PCB. |
