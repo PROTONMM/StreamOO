@@ -1,7 +1,7 @@
 #include "display_smoke.h"
 #include "canvas_smoke.h"
 #include "text_smoke.h"
-#include "text_layout_smoke.h"
+#include "home_probe.h"
 #include "ui_list_probe.h"
 
 #include <inttypes.h>
@@ -65,12 +65,14 @@ static void display_task(void *context)
         }
     }
     if (error == ESP_OK) {
+        streamoo_home_probe_t home;
+        if (!streamoo_home_probe_init(&home)) error = ESP_ERR_INVALID_STATE;
         const int64_t animation_start = esp_timer_get_time();
         TickType_t wake = xTaskGetTickCount();
         unsigned frames = 0;
-        while (esp_timer_get_time() - animation_start < 20000000 && error == ESP_OK) {
+        while (error == ESP_OK && esp_timer_get_time() - animation_start < 20000000) {
             const uint64_t elapsed_ms = (esp_timer_get_time() - animation_start) / 1000;
-            if (!streamoo_text_layout_smoke(frame, SSD1322_FRAME_BYTES, elapsed_ms)) {
+            if (!streamoo_home_probe_draw(&home, frame, SSD1322_FRAME_BYTES, elapsed_ms)) {
                 error = ESP_ERR_INVALID_ARG;
                 break;
             }

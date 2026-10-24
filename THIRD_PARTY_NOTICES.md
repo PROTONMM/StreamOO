@@ -46,7 +46,7 @@ license of the original renderer code or resolve the small PL font's status.
 
 Files: `assets/fonts/MonaspaceKrypton-Regular.otf`, source manifest,
 `components/text/generated/streamoo_ui_16.h`, and the reference image
-`tests/fixtures/krypton_layout.4bpp`. Source hash, release URL and exact
+`tests/fixtures/home_*.4bpp`. Source hash, release URL and exact
 regeneration process are documented in `assets/fonts/README.md`.
 
 The station-list reference `tests/fixtures/station_list.4bpp` contains the same font shapes described above: StreamOO UI16 (OFL-1.1) and the user-authorized small PL font with modification license still under review.

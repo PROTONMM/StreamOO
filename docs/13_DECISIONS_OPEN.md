@@ -21,6 +21,6 @@
 | D17 | OTWARTE | Model SSD1322 i R5/R8=4SPI potwierdzone przez użytkownika (ADR 0003); nadal OTWARTE: odbiór zasilania/resetu/obrazu OLED, modułu audio i kierunku enkodera na PCB. |
 | D18 | OTWARTE | Hasło AP: konkretna wartość w prywatnej konfiguracji; uwierzytelnianie administracyjne WWW. |
 | D19 | OTWARTE | Czy lista stacji ma zawijać się (wrap-around), parametr timeout menu. |
-| D20 | OTWARTE | Typ formatu daty/godziny i strefy, ustawienie godziny przy niedostępnym SNTP. |
+| D20 | OTWARTE | Format czasu/strefa i polityka bez SNTP nadal otwarte. W HOME 04i do testu użyto YYYY-MM-DD i HH:MM:SS z jawnego czasu cywilnego; renderer nie wybiera strefy ani nie synchronizuje czasu. |
 | D21 | USTALONE | Scroll ma poruszać tekst wyłącznie od prawej do lewej; nowsza decyzja użytkownika, ADR 0009. |
 | D22 | OTWARTE | Obecny font tymczasowo zaakceptowany, polskie znaki poprawne według użytkownika; docelowy wygląd czcionki wymaga dopracowania. |

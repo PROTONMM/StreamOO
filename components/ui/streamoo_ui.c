@@ -30,7 +30,15 @@ bool streamoo_ui_set_catalog(streamoo_ui_t *ui, const streamoo_ui_station_t *sta
 
 void streamoo_ui_set_playing(streamoo_ui_t *ui, uint64_t station_id)
 {
-    if (ui && ui->post) ui->playing_id = station_id;
+    if (!ui || !ui->post || ui->playing_id == station_id) return;
+    ui->playing_id = station_id;
+    ui->home.station_id = station_id;
+    ui->home.station_name = (streamoo_ui_text_t){0};
+    ui->home.title = ui->home.description = ui->home.codec = (streamoo_ui_text_t){0};
+    ui->home.metadata_valid = ui->home.audio_info_valid = ui->home.visualization_valid = false;
+    ui->home.bitrate_kbps = 0;
+    ui->home.visualization = (streamoo_visualization_model_t){0};
+    ui->home_scroll_reset_pending = true;
 }
 
 bool streamoo_ui_open_stations(streamoo_ui_t *ui, uint64_t now)
@@ -92,5 +100,12 @@ bool streamoo_ui_confirm(streamoo_ui_t *ui)
     };
     if (!ui->post(ui->post_context, &command)) return false;
     ui->screen = STREAMOO_UI_HOME;
+    return true;
+}
+
+bool streamoo_ui_set_visualization(streamoo_ui_t *ui, streamoo_visualization_kind_t kind)
+{
+    if (!ui || !ui->post || kind < STREAMOO_VIS_SPECTRUM || kind > STREAMOO_VIS_ANALOG) return false;
+    ui->visualization = kind;
     return true;
 }

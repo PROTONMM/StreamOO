@@ -18,8 +18,8 @@ menu "StreamOO Configuration"
             default y
             help
                 Black, white, grayscale, inverse, canvas geometry and Polish text,
-                then 20 seconds of left-only marquee with synthetic visualization
-                widgets, followed by 8 seconds of synthetic station-list
+                then 20 seconds of full HOME snapshots with synthetic network,
+                clock and audio data, followed by 8 seconds of station-list
                 navigation. Display off
                 after approximately 46 seconds. No player or real station catalog.
                 User module is configured with R5/R8: BS1=0 and BS0=0.

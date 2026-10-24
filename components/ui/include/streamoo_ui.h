@@ -1,5 +1,6 @@
 #pragma once
 #include "streamoo_canvas.h"
+#include "streamoo_home_model.h"
 
 /* Borrowed immutable catalog snapshot. IDs must be nonzero and unique;
  * entries/names stay alive until the next catalog replacement. The station
@@ -29,6 +30,10 @@ typedef struct {
     uint16_t animation_ms;
     streamoo_ui_post_fn post;
     void *post_context;
+    streamoo_home_snapshot_t home;
+    uint64_t home_text_start_ms;
+    bool home_received, home_scroll_reset_pending;
+    streamoo_visualization_kind_t visualization;
 } streamoo_ui_t;
 
 /* Single UI-task ownership; no GPIO/player/network/RTOS dependency. All times
@@ -51,3 +56,13 @@ int64_t streamoo_ui_position_q16(const streamoo_ui_t *ui, uint64_t now_ms);
  * neighbours; empty catalog has a message. Only draws STATIONS screen. */
 bool streamoo_ui_draw_list(const streamoo_ui_t *ui, streamoo_canvas_t *canvas,
                             streamoo_rect_t bounds, uint64_t now_ms);
+
+/* Apply a coherent snapshot in the UI task. Obsolete stream data are cleared
+ * before storing, not left as borrowed stale pointers. Does not issue commands.
+ * Invalid active fields reject the whole update without changing state. */
+bool streamoo_ui_update_home(streamoo_ui_t *ui, const streamoo_home_snapshot_t *snapshot,
+                              uint64_t now_ms);
+bool streamoo_ui_set_visualization(streamoo_ui_t *ui, streamoo_visualization_kind_t kind);
+/* Fixed 256x64 HOME geometry, respecting inherited clipping. No device I/O,
+ * clock/network access or allocation. Unknown information has explicit placeholders. */
+bool streamoo_ui_draw_home(const streamoo_ui_t *ui, streamoo_canvas_t *canvas, uint64_t now_ms);

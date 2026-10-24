@@ -209,3 +209,24 @@ Użytkownik potwierdził działanie listy i poprawność wyboru stacji.
 Odbiór pokazu 04h na OLED zaliczony na podstawie tego zgłoszenia.
 Nie jest to test fizycznego enkodera, rzeczywistego katalogu ani audio;
 wersja 04h używa automatycznych zdarzeń i katalogu TEST.
+
+## Pełny HOME — 04i
+
+W nowym firmware 20-sekundową scenę tekstu/widżetów zastępuje kompletny
+HOME. Pozostałe obrazy i 8s lista bez zmian, razem nadal około 46s i OFF.
+Czasy poniżej odnoszą się do początku HOME (po sześciu obrazach statycznych):
+
+- 0..12s: TEST: Radio Łódź, przewijany tytuł PL, MP3/192k, ikonka i -58,
+  syntetyczna data/czas oraz widżety zmieniane co 4s.
+- 12..15s: TEST: nowa stacja; stare tagi danych są celowo niezgodne — dwa
+  wiersze metadanych mają być puste, codec/bitrate kreskami, „Brak danych”.
+  Data i Wi-Fi pozostają widoczne.
+- 15..18s: nowe metadane i FLAC/950k pojawiają się prawidłowo.
+- 18..20s: Brak stacji, OFF, czas nieznany i brak danych audio.
+
+TEST w dolnym prawym wierszu przypomina, że żadne z tych danych nie pochodzi
+jeszcze z sieci/playera/SNTP. Sprawdź separację wierszy 16/8/8/32, czytelność
+kodeka/ikonki/RSSI i zegara, brak nakładania w kolumnach 44/132/80 oraz
+całkowite zniknięcie dawnych tytułów w drugiej fazie. Po HOME lista TEST działa
+jak wcześniej. Zapisz wynik osobno jako odbiór 04i; nie zaliczać danych
+syntetycznych jako testu połączenia Wi-Fi, zegara systemowego ani audio.

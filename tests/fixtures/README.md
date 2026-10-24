@@ -11,8 +11,12 @@ it requires reviewing the intended visual change; tests do not overwrite it.
 
 `polish_text.4bpp`: 256×64, stride 128 B, scena `main/text_smoke.c`. Zawiera importowane bitmapy fontu — pochodzenie, polecenie użytkownika i nierozstrzygnięta licencja zmian PL są opisane w `THIRD_PARTY_NOTICES.md`. Wzorzec obejrzano jako PNG przed zapisaniem.
 
-`krypton_layout.4bpp`: wzorzec początkowej klatki sceny układu z nagłówkiem StreamOO UI16 (pochodny Krypton, OFL-1.1) i małymi literami PL (status z THIRD_PARTY_NOTICES.md). Wzorzec 256×64 obejrzany jako PNG.
 
-W etapie 04g wzorzec `krypton_layout.4bpp` zaktualizowano po obejrzeniu nowej sceny: nagłówek/wiersze bez zmian, dół zawiera etykietę TEST oraz syntetyczne spectrum zamiast trzech etykiet wyrównania.
 
 `station_list.4bpp`: początkowa scena `ui_list_probe`, 256×64, wzorzec obejrzany na hoście. Zawiera fonty StreamOO UI16 i mały PL opisane w THIRD_PARTY_NOTICES.md; katalog i nazwy są wyłącznie testowe.
+
+`home_connected.4bpp`, `home_waiting.4bpp`, `home_updated.4bpp` i
+`home_offline.4bpp`: cztery stany aplikacyjnego `home_probe`, 256×64.
+Wszystkie obejrzano jako PNG przed zamrożeniem. Dane są jawnie syntetyczne;
+fonty i ich licencje opisuje THIRD_PARTY_NOTICES.md. Zastępują dawną scenę
+tekstu/widżetów usuniętą w 04i; test nie odtwarza sam wzorców.

@@ -31,8 +31,7 @@ class BitmapFontTests(unittest.TestCase):
                         'components/graphics/streamoo_canvas.c', 'components/text/streamoo_text.c',
                         'components/text/streamoo_text_layout.c', 'components/text/streamoo_font5x8.c',
                         'components/text/streamoo_bitmap_font.c', 'components/text/streamoo_ui_font.c',
-                        'components/ui_widgets/streamoo_visualization.c', 'main/visualization_probe.c',
-                        'main/text_layout_smoke.c', '-o', str(library)], cwd=ROOT, check=True)
+                        '-o', str(library)], cwd=ROOT, check=True)
         cls.lib = C.CDLL(str(library))
         cls.lib.streamoo_ui_font.restype = C.POINTER(Font)
         cls.lib.streamoo_font_lookup.argtypes = [C.POINTER(Font), C.c_uint32]
@@ -48,7 +47,6 @@ class BitmapFontTests(unittest.TestCase):
         cls.lib.streamoo_canvas_alpha4.argtypes = [C.POINTER(Canvas)] + [C.c_int16] * 4 + [
             C.POINTER(C.c_uint8), C.c_size_t, C.c_uint16, C.c_uint8]
         cls.lib.streamoo_canvas_alpha4.restype = C.c_bool
-        cls.lib.streamoo_text_layout_smoke.argtypes = [C.POINTER(C.c_uint8), C.c_size_t, C.c_uint64]
 
     def test_coverage_metrics_and_bitmap_spans(self):
         font = self.lib.streamoo_ui_font().contents
@@ -118,12 +116,6 @@ class BitmapFontTests(unittest.TestCase):
             active = [x for x in range(16) if ((frame[x // 2] >> (0 if x & 1 else 4)) & 15)]
             self.assertEqual(active, expected)
 
-    def test_layout_matches_frozen_frame_and_cannot_write_outside_buffer(self):
-        guard = (C.c_uint8 * 8194)(*([0xa5] * 8194))
-        pointer = C.cast(C.byref(guard, 1), C.POINTER(C.c_uint8))
-        self.assertTrue(self.lib.streamoo_text_layout_smoke(pointer, 8192, 0))
-        self.assertEqual(bytes(guard[1:-1]), (ROOT / 'tests/fixtures/krypton_layout.4bpp').read_bytes())
-        self.assertEqual((guard[0], guard[-1]), (0xa5, 0xa5))
 
 
 class FontGeneratorTests(unittest.TestCase):

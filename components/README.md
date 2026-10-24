@@ -21,6 +21,8 @@ Nie dodawaj pustych `CMakeLists.txt` komponentów do builda: twórz je wraz z pi
 
 `text` zawiera także metryczny renderer glifów alpha 4bpp oraz zasób StreamOO UI16 na bazie Krypton (OFL); `graphics` komponuje alpha z tłem. Fonty nie zależą od sterownika ekranu.
 
-`ui_widgets` renderuje trzy wizualizacje z niemodyfikowanego snapshotu i zależy tylko od `graphics`. Nie zawiera DSP; dane syntetyczne istnieją wyłącznie w aplikacyjnym `visualization_probe`.
+`ui_widgets` renderuje trzy wizualizacje z niemodyfikowanego snapshotu i zależy tylko od `graphics`. Nie zawiera DSP; dane syntetyczne istnieją wyłącznie w aplikacyjnym `home_probe`.
 
 `ui`: pojedynczy właściciel ekranu i wyboru na liście, animacja Q16, borrowed catalog snapshot i adapter komendy SelectStation. Zależy od graphics/text, nie od playera, GPIO i RTOS.
+
+`ui` ma również pełny HOME ze spójnego snapshotu, walidację generacji i metadanych oraz cache źródeł. Pobieranie danych, synchronizacja czasu i audio nie należą do renderera.

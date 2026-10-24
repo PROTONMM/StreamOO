@@ -84,9 +84,21 @@ ID+generation, kolejka pełna/retry, retarget, granice, snapshot replacement,
 pusta lista, clipping, jasność i pełny automat diagnostyczny.
 
 ```sh
-cc -std=c11 -Wall -Wextra -Werror -fsanitize=address,undefined   -fno-omit-frame-pointer -g -Icomponents/graphics/include -Icomponents/text/include   -Icomponents/ui/include -Imain components/graphics/streamoo_canvas.c   components/text/streamoo_text.c components/text/streamoo_text_layout.c   components/text/streamoo_font5x8.c components/text/streamoo_bitmap_font.c   components/text/streamoo_ui_font.c components/ui/streamoo_ui.c   components/ui/streamoo_ui_list.c main/ui_list_probe.c tests/ui_sanitizer.c   -o /tmp/streamoo-ui-sanitizer
+cc -std=c11 -Wall -Wextra -Werror -fsanitize=address,undefined   -fno-omit-frame-pointer -g -Icomponents/graphics/include -Icomponents/text/include   -Icomponents/ui/include -Icomponents/ui_widgets/include -Imain components/graphics/streamoo_canvas.c   components/text/streamoo_text.c components/text/streamoo_text_layout.c   components/text/streamoo_font5x8.c components/text/streamoo_bitmap_font.c   components/text/streamoo_ui_font.c components/ui/streamoo_ui.c   components/ui/streamoo_ui_list.c components/ui/streamoo_ui_home.c components/ui_widgets/streamoo_visualization.c main/ui_list_probe.c tests/ui_sanitizer.c   -o /tmp/streamoo-ui-sanitizer
 ASAN_OPTIONS=detect_leaks=0 /tmp/streamoo-ui-sanitizer
 ```
 
 Jak wcześniej, niedostępny LeakSanitizer nie jest częścią wyniku; wykonano
 ASan/UBSan oraz canary. UI nie wykonuje alokacji.
+
+HOME 04i: 12 nowych testów, dwie dawne integracje zastąpione nowymi,
+łącznie 83. Cztery wzorce pełnego ekranu, stale snapshots/metadane, kalendarz,
+clock offline, reset tekstów, clipping, skrajne RSSI/bitrate i widżety.
+
+```sh
+cc -std=c11 -Wall -Wextra -Werror -fsanitize=address,undefined   -fno-omit-frame-pointer -g -Icomponents/graphics/include -Icomponents/text/include   -Icomponents/ui_widgets/include -Icomponents/ui/include -Imain   components/graphics/streamoo_canvas.c components/text/streamoo_text.c   components/text/streamoo_text_layout.c components/text/streamoo_font5x8.c   components/text/streamoo_bitmap_font.c components/text/streamoo_ui_font.c   components/ui_widgets/streamoo_visualization.c components/ui/streamoo_ui.c   components/ui/streamoo_ui_list.c components/ui/streamoo_ui_home.c   main/home_probe.c tests/home_sanitizer.c -o /tmp/streamoo-home-sanitizer
+ASAN_OPTIONS=detect_leaks=0 /tmp/streamoo-home-sanitizer
+```
+
+1000 kolejnych klatek sprawdza fazy HOME, usuwanie starych danych i canary.
+LeakSanitizer niedostępny w ptrace, bez deklaracji testu wycieków.

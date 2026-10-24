@@ -32,3 +32,5 @@ Scroll działa cyklicznie tylko od prawej do lewej. Polskie znaki potwierdzone p
 W ostatniej scenie diagnostycznej trzy widżety (FFT/LR/analog) pokazują jawnie syntetyczne dane TEST, przełączane automatycznie. To weryfikacja renderowania; analiza DSP i audio pozostają w dalszych etapach.
 
 Na końcu diagnostyki jest automatyczny pokaz animowanej listy TEST. Właściciel UI oddziela przeglądanie od polecenia wyboru; rzeczywista lista/player oraz obsługa enkodera pozostają w dalszych etapach.
+
+HOME ma pełny układ stacji/metadanych i dolnych paneli. Diagnostyka pokazuje syntetyczne warianty TEST: komplet danych, odrzucenie starych metadanych, nowe dane i offline; nie jest to jeszcze połączenie z siecią ani playerem.

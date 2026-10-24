@@ -21,5 +21,5 @@ Test na syntetycznych sinusach 100Hz/1kHz/8kHz, ciszy, impulsie i sygnale stereo
 
 `ui_widgets` rysuje trzy tryby z gotowego snapshotu poziomów 0..32767.
 Nie zależy od DSP i nie liczy FFT, RMS, dB ani smoothingu; producent danych
-zostanie podłączony w tym etapie. Syntetyczny `visualization_probe` służy
+zostanie podłączony w tym etapie. Syntetyczny `home_probe` aplikacji służy
 wyłącznie do sprawdzenia obrazu i nie zalicza żadnych testów akceptacji DSP.

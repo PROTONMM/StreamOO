@@ -20,8 +20,7 @@ class LayoutTests(unittest.TestCase):
                         'components/graphics/streamoo_canvas.c', 'components/text/streamoo_text.c',
                         'components/text/streamoo_font5x8.c', 'components/text/streamoo_text_layout.c',
                         'components/text/streamoo_bitmap_font.c', 'components/text/streamoo_ui_font.c',
-                        'components/ui_widgets/streamoo_visualization.c', 'main/visualization_probe.c',
-                        'main/text_layout_smoke.c', '-o', str(library)], cwd=ROOT, check=True)
+                        '-o', str(library)], cwd=ROOT, check=True)
         cls.lib = C.CDLL(str(library))
         cls.lib.streamoo_marquee_offset.argtypes = [C.c_uint32, C.c_uint32, C.c_uint64,
                                                    C.c_uint32, C.c_uint32]
@@ -35,7 +34,6 @@ class LayoutTests(unittest.TestCase):
         cls.lib.streamoo_text_draw_scrolled.argtypes = [C.POINTER(Canvas), C.c_int32, C.c_int32,
                                                        C.c_uint64, C.c_char_p, C.c_size_t,
                                                        C.c_uint8, GLYPH, C.c_void_p]
-        cls.lib.streamoo_text_layout_smoke.argtypes = [C.POINTER(C.c_uint8), C.c_size_t, C.c_uint64]
 
     def setUp(self):
         self.guard = (C.c_uint8 * 514)()
@@ -92,14 +90,6 @@ class LayoutTests(unittest.TestCase):
             function(100, 40, time, 30, 1000)
         self.assertEqual(function(100, 40, 2345, 30, 1000), result)
         self.assertEqual(function(100, 40, 0, 30, 1000), 0)
-
-    def test_diagnostic_header_static_and_metadata_scrolls(self):
-        frame = (C.c_uint8 * 8192)()
-        self.assertTrue(self.lib.streamoo_text_layout_smoke(frame, 8192, 0))
-        initial = bytes(frame)
-        self.assertTrue(self.lib.streamoo_text_layout_smoke(frame, 8192, 2500))
-        self.assertEqual(bytes(frame)[:16 * 128], initial[:16 * 128])
-        self.assertNotEqual(bytes(frame)[16 * 128:32 * 128], initial[16 * 128:32 * 128])
 
     def test_repeat_enters_from_right_after_gap(self):
         data = b'A' * 8  # nominal ink 47px + 24px gap = 71px period

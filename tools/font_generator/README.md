@@ -33,4 +33,4 @@ komponuje 4-bitową maskę alpha nad istniejącym framebufferem.
 Testy: `python3 -m unittest discover -s tests -v`. Regeneracja/pokrycie cmap
 wymaga zależności hostowych; testy runtime fontu wykonują skompilowany C
 niezależnie od nich. Preview PNG atlasu to narzędzie analizy, a końcowy wzór
-4bpp sceny jest w `tests/fixtures/krypton_layout.4bpp`.
+4bpp sceny jest w `tests/fixtures/home_connected.4bpp`.

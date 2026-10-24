@@ -41,3 +41,5 @@ Etap 04f, scroll tylko w lewo: `adr/0009-left-only-scroll.md`.
 Etap 04g, niezależne widżety: `adr/0010-visualization-widgets.md`.
 
 Etap 04h: `adr/0011-ui-owner-and-station-list.md`.
+
+Etap 04i: `adr/0012-home-snapshot-renderer.md`.

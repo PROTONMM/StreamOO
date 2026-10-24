@@ -5,7 +5,7 @@
 | 01 zakres | wymagania zebrane | dokumentacja |
 | 02 schemat i profil | walidator i menuconfig zaimplementowane; HARDWARE_TEST_PENDING | ADR 0001; 5 testów hostowych, 2332 konfiguracje; build PASS |
 | 03 szkielet | baza zaimplementowana; odbiór sprzętowy i integracyjny OPEN | ESP-IDF v6.1 build PASS; ADR 0002 |
-| 04 UI/SSD1322 | lista i wybór potwierdzone przez użytkownika; pełny HOME i input nadal w implementacji | ADR 0011; 73 testy PASS; odbiór pokazu 04h zaliczony |
+| 04 UI/SSD1322 | pełny renderer HOME i lista; nowa kompozycja pending; fizyczne gesty w etapie 05 | ADR 0012; 83 testy PASS |
 | 05 encoder | NIEZAIMPLEMENTOWANE | — |
 | 06 audio | NIEZAIMPLEMENTOWANE | — |
 | 07 DSP | NIEZAIMPLEMENTOWANE | — |
@@ -361,3 +361,32 @@ nie oznacza obsługi fizycznego enkodera ani odtwarzania rzeczywistych stacji.
 Kwestia docelowego wrap-around i dopracowania wyglądu czcionki pozostaje
 otwarta. Zmiana tylko dokumentacyjna; `git diff --check` — PASS, bez nowego
 buildu firmware.
+
+## Etap 04i — pełny HOME ze snapshotu (2026-10-24)
+
+- Komponent `ui`: pełna kompozycja 16/8/8/32, codec/bitrate i Wi-Fi,
+  trzy widżety, data i czas. Wybrany widżet należy do UI, nie do DSP.
+- Kopia wartości snapshotu i pożyczone napisy z jawnymi długościami. Brak
+  alokacji, I/O, odczytu zegara systemowego i bezpośredniego stanu playera.
+- Klucz stacja/generacja i text_revision: starsze snapshoty odrzucone,
+  stare metadane/codec/pomiary czyszczone; znikanie metadanych czyści wiersze.
+  Sam set_playing też usuwa poprzednie teksty. Zegar i RSSI nie resetują scrolla.
+- Brakujące dane mają placeholdery. Zegar cywilny i połączenie są niezależne.
+  ISO data/24h oraz progi ikonki RSSI są propozycją; D20 nadal OPEN.
+- W miejsce starych scen tekstu/widżetów jest spójny home_probe, dane TEST:
+  pełne, nieaktualne, zaktualizowane, offline. 20s HOME + dotychczasowa reszta
+  daje nadal około 46s, potem OFF. Nie uruchomiono sieci, SNTP, playera ani DSP.
+- Usunięto stare nieużywane sceny i klatkę; nowe 4 wzorce obejrzano na hoście.
+- `python3 -m unittest discover -s tests -q` — PASS, 83 testy, bez skipów
+  (12 nowych HOME, 2 stare integracje zastąpione nowymi scenami).
+- ASan/UBSan HOME i listy — PASS, w tym 1000 klatek HOME i dotychczasowy
+  skrypt/retargety listy. LeakSanitizer pominięty pod ptrace (detect_leaks=0);
+  nie deklarujemy testu wycieków. `git diff --check` — PASS.
+- `idf.py reconfigure build` — PASS, ESP-IDF 6.1/esp32s3, obraz 0x3dde0 /
+  253408 B. Nie wykonano flash/erase/eFuse.
+- HARDWARE_TEST_PENDING: pełny HOME, clock/Wi-Fi, 3 dolne kolumny,
+  czyszczenie starych tekstów i zmiana stanów. Wcześniejszy odbiór listy
+  nie jest potwierdzeniem tej nowej kompozycji. ADR 0012.
+- Następny zakres: odbiór HOME i fizyczny enkoder/gesty etapu 05.
+  Finalne strojenie fontów, format czasu i rzeczywiste źródła danych pozostają.
+- Hash: `git log -1 --format=%H --grep='^stage-04i:'`.

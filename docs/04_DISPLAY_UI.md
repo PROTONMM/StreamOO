@@ -111,3 +111,15 @@ opisuje własność snapshotów, zachowanie przy odmowie kolejki i animację.
 Testowa lista nie zawija się, D19 pozostaje OPEN. Automat diagnostyczny
 pokazuje ją przez 8s; pełny test około 46s. Odbiór listy OLED pending,
 sterowanie enkoderem i pełny ekran HOME nie są jeszcze zaimplementowane.
+
+## Część 04i — pełny HOME
+
+`streamoo_ui_update_home` przyjmuje pełny spójny snapshot, a draw_home składa
+widok bez dostępu do playera/sieci/RTC. [ADR 0012](adr/0012-home-snapshot-renderer.md)
+opisuje format, własność, generacje i reset tekstów. Tytuł, codec i pomiary
+nie mogą pochodzić ze starszej stacji/strumienia. Nieznane dane mają jawne
+placeholdery. UI wybiera rodzaj widżetu, a producent dostarcza poziomy.
+
+Nowy 20s pokaz HOME zastępuje poprzednią scenę i zachowuje czas całej
+sekwencji około 46s. Odbiór HOME na OLED pending. Renderery i lista są gotowe
+programowo; pełne fizyczne sterowanie wymaga etapu 05 i źródła danych dalszych etapów.

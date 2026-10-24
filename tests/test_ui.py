@@ -4,6 +4,7 @@ import subprocess
 import tempfile
 import unittest
 from test_canvas import Canvas, Rect
+from test_visualization import Model as VisualizationModel
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -19,13 +20,34 @@ class Command(C.Structure):
 POST = C.CFUNCTYPE(C.c_bool, C.c_void_p, C.POINTER(Command))
 
 
+class Text(C.Structure):
+    _fields_ = [('data', C.c_char_p), ('bytes', C.c_size_t)]
+
+
+class Clock(C.Structure):
+    _fields_ = [('year', C.c_uint16)] + [(name, C.c_uint8) for name in
+                                        ('month', 'day', 'hour', 'minute', 'second')]
+
+
+class HomeSnapshot(C.Structure):
+    _fields_ = [(name, C.c_uint64) for name in
+                ('station_id', 'stream_generation', 'data_station_id', 'data_generation', 'text_revision')] + [
+        (name, Text) for name in ('station_name', 'title', 'description', 'codec')] + [
+        ('bitrate_kbps', C.c_uint32), ('rssi_dbm', C.c_int16)] + [
+        (name, C.c_bool) for name in ('wifi_connected', 'rssi_valid', 'metadata_valid',
+                                     'audio_info_valid', 'clock_valid', 'visualization_valid')] + [
+        ('clock', Clock), ('visualization', VisualizationModel)]
+
+
 class UI(C.Structure):
     _fields_ = [('screen', C.c_int), ('stations', C.POINTER(Station)),
                 ('count', C.c_uint32), ('selected', C.c_uint32),
                 ('catalog_generation', C.c_uint64), ('playing_id', C.c_uint64),
                 ('animation_from_q16', C.c_int64), ('animation_start_ms', C.c_uint64),
                 ('selection_start_ms', C.c_uint64), ('animation_ms', C.c_uint16),
-                ('post', POST), ('post_context', C.c_void_p)]
+                ('post', POST), ('post_context', C.c_void_p), ('home', HomeSnapshot),
+                ('home_text_start_ms', C.c_uint64), ('home_received', C.c_bool),
+                ('home_scroll_reset_pending', C.c_bool), ('visualization', C.c_int)]
 
 
 class Probe(C.Structure):
@@ -39,11 +61,12 @@ class UITests(unittest.TestCase):
         cls.addClassCleanup(cls.temp.cleanup)
         library = Path(cls.temp.name) / 'ui.so'
         subprocess.run(['cc', '-std=c11', '-Wall', '-Wextra', '-Werror', '-shared', '-fPIC',
-                        '-Icomponents/graphics/include', '-Icomponents/text/include', '-Icomponents/ui/include', '-Imain',
+                        '-Icomponents/graphics/include', '-Icomponents/text/include', '-Icomponents/ui/include', '-Icomponents/ui_widgets/include', '-Imain',
                         'components/graphics/streamoo_canvas.c', 'components/text/streamoo_text.c',
                         'components/text/streamoo_text_layout.c', 'components/text/streamoo_font5x8.c',
                         'components/text/streamoo_bitmap_font.c', 'components/text/streamoo_ui_font.c',
-                        'components/ui/streamoo_ui.c', 'components/ui/streamoo_ui_list.c', 'main/ui_list_probe.c',
+                        'components/ui/streamoo_ui.c', 'components/ui/streamoo_ui_list.c',
+                        'components/ui/streamoo_ui_home.c', 'components/ui_widgets/streamoo_visualization.c', 'main/ui_list_probe.c',
                         '-o', str(library)], cwd=ROOT, check=True)
         cls.lib = C.CDLL(str(library))
         signatures = {
