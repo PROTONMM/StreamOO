@@ -51,3 +51,16 @@ Testy nie dołączają bitmap z ZIP i nie potwierdzają fontu na OLED.
 Font PL: 4 nowe testy, łącznie 36. Obejmują wszystkie 113 bitmap przez digest źródła, mapping, ogonki i pełną scenę tekstową. Zobacz `THIRD_PARTY_NOTICES.md` dla statusu importowanych bitmap.
 
 Layout: 6 nowych testów, łącznie 42. Fazy i granice marquee, wyrównanie, długi offset, reset/pominięte klatki i izolacja wierszy.
+
+Font 4bpp: 9 nowych testów, łącznie 51. Spany i pokrycie 113 glifów,
+kompozycja alpha, baseline 16px, fallback i błędne metryki, golden frame;
+generator: nieparzyste wiersze, skalary i brak glifu w cmap. Zależności hostowe
+generatora są opisane w tools/font_generator/README.md; bez nich
+kontrole generatora mogą być oznaczone skip (w bieżącym uruchomieniu nie było skipów).
+
+ASan/UBSan fontu (bez niedostępnego w środowisku LeakSanitizera):
+
+```sh
+cc -std=c11 -Wall -Wextra -Werror -fsanitize=address,undefined   -fno-omit-frame-pointer -g -Icomponents/graphics/include -Icomponents/text/include   components/graphics/streamoo_canvas.c components/text/streamoo_text.c   components/text/streamoo_text_layout.c components/text/streamoo_bitmap_font.c   components/text/streamoo_ui_font.c tests/bitmap_font_sanitizer.c   -o /tmp/streamoo-bitmap-font-sanitizer
+ASAN_OPTIONS=detect_leaks=0 /tmp/streamoo-bitmap-font-sanitizer
+```

@@ -1,105 +1,137 @@
 #!/usr/bin/env python3
-"""Convert a static TrueType font to compact, 4-bpp SSD1322 C glyph data.
-Requires Pillow >= 10. Output is a header, optional atlas preview, optional glyph report.
+"""Rasterize a reviewed TTF/OTF to row-aligned 4bpp font data. Build tool only.
+
+Requires Pillow >=10 and fontTools >=4. Coverage is checked against cmap.
 """
 import argparse
+import hashlib
 import json
-import re
 from pathlib import Path
-from PIL import Image, ImageDraw, ImageFont
+import re
 
-DEFAULT_CHARS = ''.join(chr(c) for c in range(32, 127)) + 'ĄĆĘŁŃÓŚŹŻąćęłńóśźż€°–—…„”’•→←↑↓'
+from PIL import Image, ImageDraw, ImageFont, features
+import PIL
+from fontTools.ttLib import TTFont
+import fontTools
 
-def symbol(s):
-    s = re.sub(r'\W+', '_', s).strip('_')
-    if not s or s[0].isdigit(): s = 'font_' + s
-    return s
+DEFAULT_CHARS = ''.join(chr(c) for c in range(32, 127)) + 'ĄĆĘŁŃÓŚŹŻąćęłńóśźż'
+
+
+def symbol(value):
+    value = re.sub(r'\W+', '_', value, flags=re.ASCII).strip('_')
+    return ('font_' + value) if not value or value[0].isdigit() else value
+
 
 def codepoints(spec, chars):
-    result = set(ord(x) for x in chars)
+    result = set(map(ord, chars))
     if spec:
-        for part in spec.split(','):
-            part = part.strip().upper().removeprefix('U+')
-            if not part: continue
-            if '-' in part:
-                lo, hi = part.split('-', 1)
-                lo, hi = int(lo.removeprefix('U+'),16), int(hi.removeprefix('U+'),16)
-                if hi < lo or hi-lo>8192: raise ValueError('Invalid or excessive codepoint range')
-                result.update(range(lo,hi+1))
-            else: result.add(int(part,16))
+        for item in spec.split(','):
+            parts = item.strip().upper().split('-')
+            bounds = [int(value.removeprefix('U+'), 16) for value in parts]
+            if len(bounds) == 1:
+                result.add(bounds[0])
+            elif len(bounds) == 2 and 0 <= bounds[1] - bounds[0] <= 8192:
+                result.update(range(bounds[0], bounds[1] + 1))
+            else:
+                raise ValueError('Invalid or excessive codepoint range')
+    if any(c < 0 or c > 0x10ffff or 0xd800 <= c <= 0xdfff for c in result):
+        raise ValueError('Invalid Unicode scalar')
     return sorted(result)
 
+
 def pack_4bpp(image):
-    raw = list(image.getdata()); out = bytearray()
-    for i in range(0,len(raw),2):
-        hi = (raw[i] * 15 + 127)//255
-        lo = (raw[i+1] * 15 + 127)//255 if i+1<len(raw) else 0
-        out.append((hi << 4) | lo)
-    return out
+    """High nibble first; odd-width rows have a zero padding nibble."""
+    output = bytearray()
+    raw = list(image.getdata())
+    for y in range(image.height):
+        for x in range(0, image.width, 2):
+            hi = (raw[y * image.width + x] * 15 + 127) // 255
+            lo = (raw[y * image.width + x + 1] * 15 + 127) // 255 if x + 1 < image.width else 0
+            output.append((hi << 4) | lo)
+    return output
+
 
 def emit(args):
+    if not 5 <= args.size <= 96:
+        raise ValueError('Size must be 5..96')
+    chars = args.chars_file.read_text(encoding='utf-8') if args.chars_file else DEFAULT_CHARS
+    points = codepoints(args.ranges, chars)
+    if not points:
+        raise ValueError('No characters selected')
+    with TTFont(args.ttf) as source:
+        cmap = source.getBestCmap()
+        missing = [f'U+{cp:04X}' for cp in points if cp not in cmap]
+    if missing:
+        raise ValueError('Missing source glyphs: ' + ', '.join(missing))
     font = ImageFont.truetype(str(args.ttf), args.size)
     ascent, descent = font.getmetrics()
-    chars = Path(args.chars_file).read_text(encoding='utf-8') if args.chars_file else DEFAULT_CHARS
-    points = codepoints(args.ranges, chars)
-    glyphs=[]; pixels=bytearray(); missing=[]
+    glyphs, pixels = [], bytearray()
     for cp in points:
-        char=chr(cp)
-        mask=font.getmask(char, mode='L')
-        bbox=font.getbbox(char, anchor='ls')
-        advance=round(font.getlength(char))
-        if not bbox: missing.append(cp); continue
-        x0,y0,x1,y1=bbox
-        w,h=max(0,x1-x0),max(0,y1-y0)
-        # A nonexistent glyph often renders as a tofu square; check cmap below if fontTools installed.
-        if w*h:
-            tile=Image.new('L',(w,h),0)
-            draw=ImageDraw.Draw(tile)
-            draw.text((-x0,-y0),char,font=font,anchor='ls',fill=255,stroke_width=0)
-            packed=pack_4bpp(tile)
-        else: packed=bytearray()
-        glyphs.append(dict(cp=cp,w=w,h=h,x=x0,y=y0,advance=advance,offset=len(pixels),nbytes=len(packed)))
-        pixels.extend(packed)
-    if not glyphs: raise ValueError('No glyphs')
-    out=args.out
-    out.parent.mkdir(parents=True,exist_ok=True)
-    ident=symbol(args.name or (args.ttf.stem+'_'+str(args.size)))
-    guard=ident.upper()+'_H'
-    with out.open('w',encoding='utf-8') as f:
-        f.write(f'// Generated from {args.ttf.name}; size {args.size}px.\n// Preserve the source font license and copyright notice when redistributing.\n#ifndef {guard}\n#define {guard}\n#include <stdint.h>\n\n')
-        f.write('#ifndef STREAMOO_FONT_TYPES_DEFINED\n#define STREAMOO_FONT_TYPES_DEFINED\ntypedef struct { uint32_t cp, offset; int16_t x, y, advance; uint16_t w, h; } streamoo_glyph_t;\ntypedef struct { const streamoo_glyph_t *glyphs; const uint8_t *bitmap; uint32_t count; uint16_t line_height; int16_t ascent; } streamoo_font_t;\n#endif\n\n')
-        f.write(f'static const uint8_t {ident}_bitmap[] = {{\n')
-        for i in range(0,len(pixels),16): f.write('    '+', '.join(f'0x{x:02X}' for x in pixels[i:i+16])+',\n')
-        f.write('};\n')
-        f.write(f'static const streamoo_glyph_t {ident}_glyphs[] = {{\n')
-        for g in glyphs:
-            f.write(f'    {{0x{g["cp"]:04X}, {g["offset"]}, {g["x"]}, {g["y"]}, {g["advance"]}, {g["w"]}, {g["h"]}}},\n')
-        f.write('};\n')
-        f.write(f'static const streamoo_font_t {ident} = {{ {ident}_glyphs, {ident}_bitmap, {len(glyphs)}, {ascent+descent}, {ascent} }};\n#endif\n')
-    if args.preview:
-        cols=10; cell_w=max(34,round(args.size*2.2)); cell_h=max(36,round(args.size*2.3)); rows=(len(glyphs)+cols-1)//cols
-        atlas=Image.new('RGB',(cols*cell_w,rows*cell_h),(18,18,24)); draw=ImageDraw.Draw(atlas)
-        for i,g in enumerate(glyphs):
-            x=(i%cols)*cell_w; y=(i//cols)*cell_h
-            draw.rectangle((x,y,x+cell_w-2,y+cell_h-2),outline=(45,45,52))
-            draw.text((x+5,y+5+ascent),chr(g['cp']),font=font,anchor='ls',fill=(235,235,242))
-            draw.text((x+4,y+cell_h-12),f'U+{g["cp"]:04X}',fill=(110,200,210))
-        args.preview.parent.mkdir(parents=True,exist_ok=True); atlas.save(args.preview)
+        x0, y0, x1, y1 = font.getbbox(chr(cp), anchor='ls')
+        width, height = x1 - x0, y1 - y0
+        advance = round(font.getlength(chr(cp)))
+        if not (0 < advance <= 32767 and 0 <= width <= 32767 and 0 <= height <= 32767):
+            raise ValueError(f'Invalid metrics for U+{cp:04X}')
+        if not (-32768 <= x0 <= 32767 and -32768 <= y0 <= 32767):
+            raise ValueError(f'Excessive bearing for U+{cp:04X}')
+        if y0 < -ascent or y1 > descent:
+            raise ValueError(f'Glyph U+{cp:04X} exceeds declared line metrics')
+        data = bytearray()
+        if width and height:
+            tile = Image.new('L', (width, height), 0)
+            ImageDraw.Draw(tile).text((-x0, -y0), chr(cp), font=font, anchor='ls', fill=255)
+            data = pack_4bpp(tile)
+        glyphs.append(dict(cp=cp, offset=len(pixels), x=x0, y=y0, advance=advance,
+                           w=width, h=height, nbytes=len(data)))
+        pixels.extend(data)
+    ident = symbol(args.name or 'streamoo_bitmap_font')
+    digest = hashlib.sha256(args.ttf.read_bytes()).hexdigest()
+    lines = [f'/* Generated from {args.ttf.name}, {args.size}px; source SHA256 {digest}.',
+             ' * Derived font name: StreamOO UI16. Copyright (c) 2023 GitHub.',
+             ' * Font data licensed under SIL OFL-1.1; see licenses/Monaspace-OFL.txt. */',
+             '#pragma once', '#include "streamoo_bitmap_font.h"', '',
+             f'static const uint8_t {ident}_bitmap[] = {{']
+    lines += ['    ' + ', '.join(f'0x{b:02x}' for b in pixels[i:i + 16]) + ','
+              for i in range(0, len(pixels), 16)]
+    lines += ['};', f'static const streamoo_glyph_t {ident}_glyphs[] = {{']
+    lines += [f'    {{0x{g["cp"]:04x}, {g["offset"]}, {g["x"]}, {g["y"]}, {g["advance"]}, {g["w"]}, {g["h"]}}},'
+              for g in glyphs]
+    lines += ['};', f'static const streamoo_font_t {ident} = {{',
+              f'    {ident}_glyphs, {ident}_bitmap, {len(glyphs)}, {len(pixels)}, {ascent + descent}, {ascent}',
+              '};', '']
+    args.out.parent.mkdir(parents=True, exist_ok=True)
+    args.out.write_text('\n'.join(lines), encoding='utf-8')
+    report = dict(font=args.ttf.name, source_sha256=digest, size_px=args.size,
+                  derived_name='StreamOO UI16', line_height=ascent + descent, ascent=ascent,
+                  glyph_count=len(glyphs), bitmap_bytes=len(pixels), glyphs=glyphs,
+                  generator=dict(pillow=PIL.__version__, fonttools=fontTools.__version__,
+                                 freetype=features.version('freetype2')))
     if args.report:
-        args.report.write_text(json.dumps(dict(font=str(args.ttf),size_px=args.size,line_height=ascent+descent,ascent=ascent,glyph_count=len(glyphs),bitmap_bytes=len(pixels),missing_bbox=missing,glyphs=glyphs),indent=2,ensure_ascii=False),encoding='utf-8')
-    print(f'Wrote {out}: {len(glyphs)} glyphs, {len(pixels)} bitmap bytes, line height {ascent+descent}px')
-    print('Note: verify glyph coverage in source TTF; unsupported codepoints can render replacement boxes.')
+        args.report.parent.mkdir(parents=True, exist_ok=True)
+        args.report.write_text(json.dumps(report, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+    if args.preview:
+        cell_w, cell_h, cols = 40, 40, 12
+        preview = Image.new('L', (cols * cell_w, ((len(glyphs) + cols - 1) // cols) * cell_h), 0)
+        draw = ImageDraw.Draw(preview)
+        for index, g in enumerate(glyphs):
+            x, y = (index % cols) * cell_w, (index // cols) * cell_h
+            draw.text((x + 8, y + 3 + ascent), chr(g['cp']), font=font, anchor='ls', fill=255)
+            draw.text((x + 2, y + 26), f'{g["cp"]:04X}', fill=150)
+        args.preview.parent.mkdir(parents=True, exist_ok=True)
+        preview.save(args.preview)
+    return report
+
 
 if __name__ == '__main__':
-    p=argparse.ArgumentParser(description=__doc__)
-    p.add_argument('ttf',type=Path,help='Static Monaspace Krypton TTF path')
-    p.add_argument('--size',type=int,default=14,help='Font size in pixels (default 14)')
-    p.add_argument('--out',type=Path,default=Path('monaspace_krypton_14.h'))
-    p.add_argument('--name',help='Identifier for C symbol')
-    p.add_argument('--chars-file',help='UTF-8 file specifying needed characters, replaces built-in set')
-    p.add_argument('--ranges',help='Additional hex Unicode ranges, e.g. 0020-007E,0104,0142')
-    p.add_argument('--preview',type=Path,help='Write a PNG glyph atlas')
-    p.add_argument('--report',type=Path,help='Write glyph metrics JSON')
-    a=p.parse_args()
-    if a.size<5 or a.size>96: p.error('--size must be between 5 and 96')
-    emit(a)
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('ttf', type=Path)
+    parser.add_argument('--size', type=int, default=13)
+    parser.add_argument('--out', type=Path, required=True)
+    parser.add_argument('--name', default='streamoo_ui_16')
+    parser.add_argument('--chars-file', type=Path)
+    parser.add_argument('--ranges')
+    parser.add_argument('--preview', type=Path)
+    parser.add_argument('--report', type=Path)
+    args = parser.parse_args()
+    report = emit(args)
+    print(f'{report["glyph_count"]} glyphs, {report["bitmap_bytes"]} bytes, line height {report["line_height"]}')

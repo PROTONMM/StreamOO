@@ -130,3 +130,24 @@ bool streamoo_canvas_mask(streamoo_canvas_t *c, int16_t x, int16_t y,
     }
     return true;
 }
+
+bool streamoo_canvas_alpha4(streamoo_canvas_t *c, int16_t x, int16_t y,
+                             int16_t width, int16_t height, const uint8_t *mask,
+                             size_t bytes, uint16_t stride, uint8_t gray)
+{
+    if (!c || !c->pixels || !mask || width <= 0 || height <= 0 || gray > 15 ||
+        stride < ((unsigned)width + 1) / 2 || bytes < (size_t)stride * height) return false;
+    const streamoo_rect_t visible = intersect(c->clip, (streamoo_rect_t){x, y, width, height});
+    for (int32_t py = visible.y; py < (int32_t)visible.y + visible.height; ++py) {
+        for (int32_t px = visible.x; px < (int32_t)visible.x + visible.width; ++px) {
+            const unsigned sx = px - x;
+            const uint8_t source = mask[(size_t)(py - y) * stride + sx / 2];
+            const unsigned alpha = (source >> ((sx & 1) ? 0 : 4)) & 15;
+            if (!alpha) continue;
+            const uint8_t target = c->pixels[(size_t)py * c->stride + px / 2];
+            const unsigned bg = (target >> ((px & 1) ? 0 : 4)) & 15;
+            pixel(c, px, py, (alpha * gray + (15 - alpha) * bg + 7) / 15);
+        }
+    }
+    return true;
+}

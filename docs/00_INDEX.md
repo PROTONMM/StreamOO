@@ -33,3 +33,5 @@ Etap 04c-1 i referencyjny font PL: `adr/0005-font-reference-and-utf8.md`.
 Etap 04c-2 i polecenie importu fontu: `adr/0006-provisional-polish-font-import.md`; stan licencji: `../THIRD_PARTY_NOTICES.md`.
 
 Etap 04d: `adr/0007-text-alignment-and-marquee.md`. Metryki commitów: `COMMIT_METRICS.md`.
+
+Etap 04e: `adr/0008-krypton-and-alpha-font-rendering.md`; źródło fontu `../assets/fonts/README.md`.

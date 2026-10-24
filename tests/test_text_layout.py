@@ -19,6 +19,7 @@ class LayoutTests(unittest.TestCase):
                         '-Icomponents/graphics/include', '-Icomponents/text/include', '-Imain',
                         'components/graphics/streamoo_canvas.c', 'components/text/streamoo_text.c',
                         'components/text/streamoo_font5x8.c', 'components/text/streamoo_text_layout.c',
+                        'components/text/streamoo_bitmap_font.c', 'components/text/streamoo_ui_font.c',
                         'main/text_layout_smoke.c', '-o', str(library)], cwd=ROOT, check=True)
         cls.lib = C.CDLL(str(library))
         cls.lib.streamoo_marquee_offset.argtypes = [C.c_uint32, C.c_uint32, C.c_uint64,

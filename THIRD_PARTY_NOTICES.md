@@ -31,3 +31,20 @@ No GPL/BSD/OFL license has been assigned to the unknown modifications.
 
 Decision and exact mapping: `docs/adr/0006-provisional-polish-font-import.md`
 and `docs/adr/0005-font-reference-and-utf8.md`.
+
+## StreamOO UI16 — derived from Monaspace Krypton
+
+Source: official Monaspace v1.400, static MonaspaceKrypton-Regular.otf.
+Copyright (c) 2023 GitHub. SIL Open Font License 1.1.
+The full notice, including reserved font names, is retained in
+[licenses/Monaspace-OFL.txt](licenses/Monaspace-OFL.txt).
+
+The source OTF is unmodified. The rasterized ASCII/Polish subset has the
+separate primary name **StreamOO UI16**, retaining source attribution. Font
+data and their converted subset remain OFL-1.1; this does not change the
+license of the original renderer code or resolve the small PL font's status.
+
+Files: `assets/fonts/MonaspaceKrypton-Regular.otf`, source manifest,
+`components/text/generated/streamoo_ui_16.h`, and the reference image
+`tests/fixtures/krypton_layout.4bpp`. Source hash, release URL and exact
+regeneration process are documented in `assets/fonts/README.md`.

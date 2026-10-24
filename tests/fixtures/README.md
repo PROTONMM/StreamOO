@@ -10,3 +10,5 @@ visually reviewed. No fonts, external artwork or device data.
 it requires reviewing the intended visual change; tests do not overwrite it.
 
 `polish_text.4bpp`: 256×64, stride 128 B, scena `main/text_smoke.c`. Zawiera importowane bitmapy fontu — pochodzenie, polecenie użytkownika i nierozstrzygnięta licencja zmian PL są opisane w `THIRD_PARTY_NOTICES.md`. Wzorzec obejrzano jako PNG przed zapisaniem.
+
+`krypton_layout.4bpp`: wzorzec początkowej klatki sceny układu z nagłówkiem StreamOO UI16 (pochodny Krypton, OFL-1.1) i małymi literami PL (status z THIRD_PARTY_NOTICES.md). Wzorzec 256×64 obejrzany jako PNG.

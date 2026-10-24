@@ -36,3 +36,10 @@ void streamoo_canvas_line(streamoo_canvas_t *canvas, int16_t x0, int16_t y0,
 bool streamoo_canvas_mask(streamoo_canvas_t *canvas, int16_t x, int16_t y,
                            int16_t width, int16_t height, const uint8_t *mask,
                            size_t bytes, uint16_t stride, uint8_t gray);
+
+/* Row-aligned 4bpp alpha mask, high nibble first. Composite gray over existing
+ * pixels; zero coverage is transparent. Source must not overlap destination.
+ * Invalid size/stride/color returns false before writing. */
+bool streamoo_canvas_alpha4(streamoo_canvas_t *canvas, int16_t x, int16_t y,
+                             int16_t width, int16_t height, const uint8_t *mask,
+                             size_t bytes, uint16_t stride, uint8_t gray);

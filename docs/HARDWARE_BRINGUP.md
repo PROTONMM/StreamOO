@@ -153,3 +153,13 @@ może być kontynuowana.
 ## Animacja tekstu — 04d
 
 Po sześciu obrazach dodano 8 s sceny: środkowany nagłówek, przewijane wiersze y16/24 i test LEWO/ŚRODEK/PRAWO. Łącznie około 26 s, potem panel OFF. Sprawdź pauzę przy początku i końcu, brak zapisu poza wierszem oraz brak gwałtownych skoków. Zapisz log `marquee frames=... elapsed=... us`. To pomiar testu, nie gwarancja FPS radia.
+
+## Duży font w animacji — 04e
+
+Nagłówek ostatniej sceny używa StreamOO UI16 pochodzącego z Krypton. Sprawdź
+„StreamOO - Zażółć gęślą jaźń” w wierszu y0..15: akcenty, ogonki, środek,
+kontrast oraz brak zapisu do y16. Dolne dwie linie powinny przewijać się
+z pauzami i bez wychodzenia poza swoje bounds. Sekwencja nadal trwa około
+26 s i kończy się OFF. Zdjęcie/log jest potrzebne do odbioru nowego fontu;
+wcześniejsze „działa” dotyczyło starszej wersji i nie zastępuje tego testu.
+Wzór hostowy z implementacji: `build/krypton-layout.png` (początek animacji).

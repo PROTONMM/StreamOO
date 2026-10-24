@@ -19,3 +19,5 @@ Kolejne samodzielne komponenty:
 - `streamoo_storage` — NVS/LittleFS, migracje danych
 
 Nie dodawaj pustych `CMakeLists.txt` komponentów do builda: twórz je wraz z pierwszymi plikami implementacji i testów.
+
+`text` zawiera także metryczny renderer glifów alpha 4bpp oraz zasób StreamOO UI16 na bazie Krypton (OFL); `graphics` komponuje alpha z tłem. Fonty nie zależą od sterownika ekranu.

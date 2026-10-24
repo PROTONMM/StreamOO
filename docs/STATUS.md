@@ -231,4 +231,32 @@ Zmiana dotyczy wyłącznie dokumentacji; bez zmian firmware i ponownego buildu.
 - Metryki każdego nowego commita: trailery AI-Model i AI-Tokens, według
   `COMMIT_METRICS.md`. Rodzina modelu GPT-6/Codex, wariant runtime oraz
   licznik tokenów nie są udostępnione; brakujące dane oznaczono unavailable.
-- Hash: `git log -1 --format=%H --grep='^stage-04d:'`.
+- Hash: `ce9a6ade18a43db55623917794e1c1656809c9c2`.
+
+## Etap 04e — font Krypton i alpha 4bpp (2026-10-24)
+
+- Zaimplementowano renderer glifów 4bpp z baseline/bearing/advance,
+  Unicode lookup, fallback, clippingiem i kompozycją alpha nad tłem.
+  Brak alokacji i zależności od SSD1322/DSP/RTOS.
+- Oficjalny source font Krypton v1.400, OFL z copyright zachowane. Nazwa
+  pochodnego podzbioru: StreamOO UI16. Font źródłowy jest niezmieniony.
+- 113 glifów (ASCII i 18 PL), 4448 B bitmap plus metryki, rasteryzacja 13px
+  daje kompletny wiersz 16px (ascent 13 + descent 3). Naprawiono pakowanie
+  nieparzystych wierszy generatora i sprawdzanie cmap/metryk.
+- W scenie animacji nagłówek używa większego fontu; małe wiersze nadal
+  korzystają z fontu PL i marquee. Całość diagnostyki około 26 s.
+- `python3 -m unittest discover -s tests -q` — PASS, 51 testów, bez skipów.
+  Testy rendererów i generatora, pełna zamrożona klatka obejrzana na hoście.
+- ASan/UBSan `tests/bitmap_font_sanitizer.c` — PASS. LeakSanitizer pominięty
+  z powodu ograniczeń ptrace (detect_leaks=0); nie jest to test wycieków.
+- `idf.py reconfigure build`, końcowe `idf.py build` — PASS, ESP-IDF 6.1,
+  esp32s3, obraz 0x3bf80 / 245632 B. `git diff --check` — PASS.
+- HARDWARE_TEST_PENDING: czytelność dużego fontu, akcentów i ogonków,
+  separacja wierszy, antyaliasing, centrowanie i ruch tekstu. Nie wykonano flash.
+- ADR 0008; OFL i źródło opisane w THIRD_PARTY_NOTICES.md i assets/fonts.
+  Otwarta licencja małego fontu PL pozostaje bez zmian.
+- Następnie: po potwierdzeniu czytelności fontów/layoutu na OLED — dalszy UI,
+  wymienne widgety i lista stacji. Pełnego etapu 04 nadal nie zakończono.
+- Hash: `git log -1 --format=%H --grep='^stage-04e:'`.
+- Model/tokeny: trailery commita, według COMMIT_METRICS.md; nieudostępnione
+  dane są oznaczone unavailable, nie oszacowane.

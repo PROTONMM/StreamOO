@@ -75,3 +75,10 @@ Odbiór na OLED nadal HARDWARE_TEST_PENDING, font Krypton i marquee są kolejne.
 ## Część 04d — wyrównanie i marquee
 
 Zaimplementowano wyrównanie i przewijanie opisane w [ADR 0007](adr/0007-text-alignment-and-marquee.md). Ruch zależy od czasu, ma pauzy na obu końcach i nie modyfikuje UTF-8. Na końcu testu OLED dodano 8 s animacji; pełna sekwencja trwa około 26 s. Parametry i płynność wymagają testu PCB.
+
+## Część 04e — większy font i alpha
+
+W nagłówku testu używany jest StreamOO UI16, podzbiór OFL z Monaspace Krypton
+v1.400, 113 glifów, linia 16px. [ADR 0008](adr/0008-krypton-and-alpha-font-rendering.md)
+opisuje format, licencję, baseline i kompozycję 4bpp. Wiersze y16/y24 nadal
+mają mały font PL. Wzorzec hostowy i build przechodzą, odbiór na OLED pending.
