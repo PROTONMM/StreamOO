@@ -94,7 +94,7 @@ Oczekiwany przebieg (każdy obraz około 3 s):
 3. 16 pionowych pasów od ciemnych po lewej do jasnych po prawej, ramka,
    jasny mały znacznik lewy górny i ciemniejszy prawy dolny (`step=2`).
    Pierwszy wiersz powtarza krótką rampę co 16 pikseli, wykrywając zamianę nibble.
-4. Negatyw wzoru (`step=3`), następnie panel OFF — to zamierzony koniec testu.
+4. Negatyw wzoru (`step=3`) — po nim w wersji 04b dochodzi scena canvas.
 
 Podgląd samego wzoru (liniowe mapowanie kodów, bez symulowania gamma OLED):
 
@@ -116,3 +116,17 @@ Przy błędnej orientacji raportuj położenie obu znaczników przed zmianą rem
 
 Przed dalszym odbiorem renderera należy potwierdzić ten test na rzeczywistym
 panelu. Fonty i UI nie są testowane wzorem diagnostycznym.
+
+## Potwierdzenie i dodatkowa scena 04b
+
+2026-10-24 użytkownik potwierdził, że po wgraniu firmware wyświetlacz działa.
+Zaliczamy podstawowe uruchomienie; bez logów i szczegółowego opisu nie
+zaliczamy osobno pomiarów, orientacji, gamma ani sekwencji zimnego startu.
+
+Nowy firmware po negatywie wyświetla jeszcze `step=4` przez około 3 s:
+ramki w układzie 16/8/8/32, trzy dolne kolumny, poziome linie przycięte do
+bounds, przekątne wyłącznie środkowego dolnego pola oraz strzałkę u góry.
+To test prymitywów i izolacji pól, nie ekran radia. Całość trwa około 15 s,
+potem panel gaśnie. Log `canvas scene raster=... us` podaje czas samej
+rasteryzacji; `frame transfer=... us` pozostaje pomiarem wysyłki.
+Tego nowego obrazu nie obejmuje wcześniejsze potwierdzenie użytkownika.

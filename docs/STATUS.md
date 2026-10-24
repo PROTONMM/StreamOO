@@ -5,7 +5,7 @@
 | 01 zakres | wymagania zebrane | dokumentacja |
 | 02 schemat i profil | walidator i menuconfig zaimplementowane; HARDWARE_TEST_PENDING | ADR 0001; 5 testów hostowych, 2332 konfiguracje; build PASS |
 | 03 szkielet | baza zaimplementowana; odbiór sprzętowy i integracyjny OPEN | ESP-IDF v6.1 build PASS; ADR 0002 |
-| 04 UI/SSD1322 | 04a sterownik/test gotowe; HARDWARE_TEST_PENDING; pełne UI niezaimplementowane | ADR 0003; 17 testów PASS; build PASS |
+| 04 UI/SSD1322 | OLED działa według użytkownika; 04b canvas gotowy; pełne UI niezaimplementowane | ADR 0003/0004; 26 testów PASS; build PASS; pomiary i nowy obraz pending |
 | 05 encoder | NIEZAIMPLEMENTOWANE | — |
 | 06 audio | NIEZAIMPLEMENTOWANE | — |
 | 07 DSP | NIEZAIMPLEMENTOWANE | — |
@@ -111,9 +111,46 @@ pełny UI i dekoder gestów nie zostały jeszcze zaimplementowane.
   pomiary sygnałów/zasilania. ESP_OK w write-only SPI nie jest ACK z panelu.
 - ADR: `adr/0003-ssd1322-msalamon-spi-bringup.md`. Instrukcja:
   `HARDWARE_BRINGUP.md`, sekcja odbioru SSD1322.
-- Commit: `git log -1 --format=%H --grep='^stage-04a:'` wskazuje hash
-  podetapu, niemożliwy do zapisania we własnej zawartości commita.
+- Commit: `2b7d0b4c2eb4e1051930b31caa204753b9793ef6`.
 - Następny zakres: po odbiorze obrazu 04b — niezależny renderer 4bpp,
   clipping i testy referencyjne. Pełny etap 04 wymaga również rozwiązania
   D14 (konkretny zasób czcionki 5×7 PL), fontu Krypton i UI/widgetów.
   Odbioru sprzętowego 04a nie pominięto i nie oznaczono jako zaliczony.
+
+## Potwierdzenie użytkownika — 2026-10-24
+
+Użytkownik zgłosił: „Wgrałem firmware na płytkę, wyświetlacz działa”.
+Dowód: raport użytkownika w rozmowie, po przekazaniu commita 04a
+`2b7d0b4`. Nie otrzymano osobno hasha wgranego obrazu ani logów.
+Zaliczono podstawowe uruchomienie OLED na jego płytce, co odblokowuje
+pracę nad rendererem. Nie dopisano nieprzekazanych wyników: orientacja,
+obie krawędzie, pełna skala szarości, zimny start i konkretne czasy SPI
+pozostają do uzupełnienia protokołem. Enkoder nie został tym potwierdzony.
+
+## Etap 04b — niezależny canvas 4bpp (2026-10-24)
+
+- Komponenty: `graphics`, aplikacyjna scena `canvas_smoke`, istniejące zadanie
+  `display_smoke`, testy i wzorzec klatki. Brak nowych bibliotek zewnętrznych.
+- Funkcje: piksel, fill/outline, linie integer, maski transparentne 1bpp,
+  clip i canvas potomny. Brak zależności od SSD1322/RTOS/DSP, brak alokacji;
+  bufor i jego własność pozostają po stronie aplikacji.
+- Testy: `python3 -m unittest discover -s tests -v` — PASS (26 testów).
+  9 nowych testów, w tym 600 konfiguracji prostokątów względem niezależnej
+  wyroczni, pełne porównanie golden frame, canary i skrajne współrzędne.
+- ASan/UBSan: PASS, 10000 sekwencji `tests/canvas_sanitizer.c`.
+  LeakSanitizer nie działa w środowisku ptrace; użyto detect_leaks=0,
+  więc nie deklarujemy testu wycieków. Renderer nie wykonuje malloc/free.
+- `idf.py reconfigure build` — PASS, ESP-IDF v6.1/esp32s3,
+  obraz `0x38f50` / 233296 B (końcowe `idf.py build`). `git diff --check` — PASS.
+- Do testu OLED dodano piąty obraz: geometria 16/8/8/32, clipping i maska,
+  osobny pomiar czasu rasteryzacji. Cała diagnostyka trwa teraz około 15 s,
+  następnie wyłącza ekran. Wzór obejrzano na hoście; nie jest docelowym UI.
+- HARDWARE_TEST_PENDING: nowa scena canvas i czas rasteryzacji na ESP32-S3;
+  nie przypisujemy jej wcześniejszego potwierdzenia użytkownika.
+- ADR: `adr/0004-independent-4bpp-canvas.md`.
+- Commit: `git log -1 --format=%H --grep='^stage-04b:'` wskazuje commit
+  podetapu; własny hash nie może być częścią jego zawartości.
+- Następny zakres 04c: fonty, tekst UTF-8 PL i marquee. D14 nadal OPEN:
+  wymagany konkretny zasób małej bitmapowej czcionki 5×7 PL; wysłano pytanie
+  o źródło. Nie zastąpiono go przypadkowym fontem. Krypton, teksty i właściwe
+  widgety/UI nadal niezaimplementowane; pełnego etapu 04 nie zakończono.

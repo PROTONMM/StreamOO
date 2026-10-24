@@ -25,3 +25,21 @@ adresowanie, odrzucenie błędnego profilu/bufora, enable/disable oraz
 wzór 4bpp z canary przed i za pamięcią. Łącznie 17 testów.
 Nie są testem fizycznego SPI ani panelu. Podgląd: `python3
 tools/preview_ssd1322.py build/ssd1322-smoke.png`.
+
+Canvas: 9 nowych testów; łącznie 26 testów hostowych. Oprócz pełnego
+obrazu referencyjnego obejmują niezależną wyrocznię dla 600 prostokątów,
+clipping widżetów, skrajne współrzędne, maski, nibbles i padding.
+
+Test pamięci renderera (ASan i UBSan, 10000 sekwencji):
+
+```sh
+cc -std=c11 -Wall -Wextra -Werror -fsanitize=address,undefined \
+  -fno-omit-frame-pointer -g -Icomponents/graphics/include -Imain \
+  components/graphics/streamoo_canvas.c main/canvas_smoke.c \
+  tests/canvas_sanitizer.c -o /tmp/streamoo-canvas-sanitizer
+/tmp/streamoo-canvas-sanitizer
+```
+
+W środowisku blokującym LeakSanitizer przez ptrace można wykonać pozostałe
+kontrole przez `ASAN_OPTIONS=detect_leaks=0 /tmp/streamoo-canvas-sanitizer`.
+Taki wynik nie obejmuje wykrywania wycieków; sam renderer nie alokuje pamięci.

@@ -39,3 +39,15 @@ Można go wyłączyć przez `STREAMOO_LCD_SMOKE_TEST` w menuconfig.
 
 Renderer, fonty i docelowe widgety nie zostały tym etapem zaimplementowane.
 Odbiór SPI/obrazu: [HARDWARE_TEST_PENDING](HARDWARE_BRINGUP.md).
+
+## Część 04b — canvas
+
+Użytkownik potwierdził podstawowe działanie OLED po wgraniu firmware 04a.
+Zaimplementowano niezależny `graphics`: 4bpp, stride/padding, prymitywy,
+maski 1bpp, clipping i canvas potomny dla widżetów. Bez zależności od sterownika,
+RTOS i DSP. [ADR 0004](adr/0004-independent-4bpp-canvas.md) opisuje kontrakt,
+testy, limity i wynik sanitizera.
+
+Scena geometryczna jest piątym obrazem testu OLED (całość około 15 s).
+Jej rasteryzacja i transfer mają osobne metryki. Nowy obraz na urządzeniu
+pozostaje HARDWARE_TEST_PENDING. Nie jest to ekran radia ani test fontów.

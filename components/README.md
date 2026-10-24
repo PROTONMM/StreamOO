@@ -2,7 +2,7 @@
 
 Zaimplementowane: `board_config` (walidator), `platform` (metryki/start),
 `hardware_probe` (opcjonalny surowy pomiar wejść), `ssd1322` (protokół i
-transport SPI). Aplikacja ma skończony test `display_smoke`. Nie zawierają
+transport SPI), `graphics` (canvas 4bpp, clipping i prymitywy). Aplikacja ma skończony test `display_smoke`. Nie zawierają
 funkcji radia.
 
 Kolejne samodzielne komponenty:
