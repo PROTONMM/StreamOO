@@ -1,5 +1,15 @@
 menu "StreamOO Configuration"
+    config STREAMOO_RESERVE_USB
+        bool "Reserve GPIO19/20 for USB debugging"
+        default y
+        help
+            Disable only when USB is disconnected and is not used for console,
+            USB devices or JTAG. Flash/PSRAM and strapping pins are always rejected.
     menu "Hardware: SSD1322"
+        config STREAMOO_LCD_SPI_HOST
+            int "SPI host (2=SPI2, 3=SPI3)"
+            range 2 3
+            default 2
         config STREAMOO_LCD_MOSI
             int "MOSI GPIO"
             range 0 48

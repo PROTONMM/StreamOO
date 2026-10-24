@@ -27,3 +27,12 @@
 
 ## Test zakończenia
 `idf.py menuconfig` umożliwia zmianę wszystkich przypisań; wszystkie ustawienia trafiają do sterowników; kolizja pinów jest wykrywana; test podłączenia na PCB potwierdza sygnały.
+
+## Implementacja etapu 02 (2026-10-24)
+
+`board_config` oraz `tools/check_config.py` walidują mapę przed użyciem GPIO.
+CMake odrzuca błędną konfigurację; firmware ma niezależną kontrolę startową.
+Polityka rezerwacji i źródła: [ADR 0001](adr/0001-n16r8-gpio-policy.md).
+Host SPI jest konfigurowalny (2/3), domyślnie SPI2; USB19/20 zarezerwowane.
+Zmiana GPIO nie świadczy o dostępności sygnału na złączu konkretnej PCB.
+Odbiór połączeń, resetu i zasilania OLED nadal HARDWARE_TEST_PENDING.

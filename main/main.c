@@ -1,10 +1,15 @@
 #include "sdkconfig.h"
 #include "esp_log.h"
+#include "streamoo_board.h"
 
 static const char *TAG = "StreamOO";
 
 void app_main(void)
 {
+    if (streamoo_board_validate() != ESP_OK) {
+        ESP_LOGE(TAG, "Invalid hardware configuration; peripherals remain disabled");
+        return;
+    }
     ESP_LOGI(TAG, "StreamOO scaffold (no radio functionality yet)");
     ESP_LOGI(TAG, "SSD1322 SPI: MOSI=%d SCLK=%d CS=%d DC=%d",
              CONFIG_STREAMOO_LCD_MOSI, CONFIG_STREAMOO_LCD_SCLK,

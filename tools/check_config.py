@@ -1,31 +1,63 @@
 #!/usr/bin/env python3
-"""Early sanity check for StreamOO sdkconfig. Not a substitute for chip-level validator."""
+"""Validate StreamOO N16R8 GPIO assignments before touching peripherals."""
 import sys
 from pathlib import Path
 
-PINS = ['LCD_MOSI','LCD_SCLK','LCD_CS','LCD_DC',
-        'I2S_DOUT','I2S_BCLK','I2S_LRCLK',
-        'ENCODER_GPIO_A','ENCODER_GPIO_B','ENCODER_GPIO_BUTTON']
+PINS = ['LCD_MOSI', 'LCD_SCLK', 'LCD_CS', 'LCD_DC', 'LCD_RST',
+        'I2S_DOUT', 'I2S_BCLK', 'I2S_LRCLK',
+        'ENCODER_GPIO_A', 'ENCODER_GPIO_B', 'ENCODER_GPIO_BUTTON']
+
+
 def parse(path):
     data = {}
-    for ln in Path(path).read_text().splitlines():
-        if ln.startswith('CONFIG_STREAMOO_') and '=' in ln:
-            k,v=ln.split('=',1); data[k.removeprefix('CONFIG_STREAMOO_')]=v
+    for line in Path(path).read_text().splitlines():
+        if line.startswith('CONFIG_') and '=' in line:
+            key, value = line.split('=', 1)
+            data[key.removeprefix('CONFIG_').removeprefix('STREAMOO_')] = value
     return data
 
-def check(d):
-    seen={};errors=[]
-    for name in PINS:
-        if name not in d: errors.append(f'Missing {name}');continue
-        try:p=int(d[name])
-        except ValueError: errors.append(f'Non-numeric {name}');continue
-        if p < 0 or p > 48: errors.append(f'Invalid GPIO{p}: {name}')
-        if p in range(33,38):errors.append(f'GPIO{p} may be reserved by N16R8 PSRAM: {name}')
-        if p in seen:errors.append(f'GPIO{p} conflict: {seen[p]} vs {name}')
-        seen[p]=name
+
+def check(data):
+    seen, errors = {}, []
+    usb = any(data.get(key) == 'y' for key in (
+        'RESERVE_USB', 'ESP_CONSOLE_USB_SERIAL_JTAG', 'ESP_CONSOLE_USB_CDC',
+        'ESP_CONSOLE_SECONDARY_USB_SERIAL_JTAG'))
+    uart = data.get('ESP_CONSOLE_UART_DEFAULT') == 'y'
+    names = list(PINS)
+    if data.get('ESP_CONSOLE_UART_CUSTOM') == 'y':
+        names += ['ESP_CONSOLE_UART_TX_GPIO', 'ESP_CONSOLE_UART_RX_GPIO']
+    for name in names:
+        if name not in data:
+            errors.append(f'Missing {name}')
+            continue
+        try:
+            pin = int(data[name])
+        except (ValueError, TypeError):
+            errors.append(f'Non-numeric {name}')
+            continue
+        if pin == -1 and name in ('LCD_RST', 'ESP_CONSOLE_UART_RX_GPIO'):
+            continue
+        if pin < 0 or pin > 48 or 22 <= pin <= 25:
+            errors.append(f'Invalid GPIO{pin}: {name}')
+        elif 26 <= pin <= 37:
+            errors.append(f'GPIO{pin} reserved for N16R8 flash/PSRAM: {name}')
+        elif pin in (0, 3, 45, 46):
+            errors.append(f'GPIO{pin} boot-strapping forbidden by board policy: {name}')
+        elif usb and pin in (19, 20):
+            errors.append(f'GPIO{pin} owned by USB: {name}')
+        elif uart and pin in (43, 44):
+            errors.append(f'GPIO{pin} owned by UART console: {name}')
+        elif pin in seen:
+            errors.append(f'GPIO{pin} conflict: {seen[pin]} vs {name}')
+        seen[pin] = name
     return errors
+
+
 if __name__ == '__main__':
-    p=sys.argv[1] if len(sys.argv)>1 else 'sdkconfig'
-    errors=check(parse(p))
-    if errors: print('\n'.join('ERROR: '+e for e in errors));sys.exit(1)
-    print('Basic GPIO map check passed')
+    try:
+        errors = check(parse(sys.argv[1] if len(sys.argv) > 1 else 'sdkconfig'))
+    except OSError as error:
+        sys.exit(str(error))
+    if errors:
+        sys.exit('\n'.join('ERROR: ' + error for error in errors))
+    print('N16R8 GPIO map check passed')
