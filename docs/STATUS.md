@@ -5,7 +5,7 @@
 | 01 zakres | wymagania zebrane | dokumentacja |
 | 02 schemat i profil | walidator i menuconfig zaimplementowane; HARDWARE_TEST_PENDING | ADR 0001; 5 testów hostowych, 2332 konfiguracje; build PASS |
 | 03 szkielet | baza zaimplementowana; odbiór sprzętowy i integracyjny OPEN | ESP-IDF v6.1 build PASS; ADR 0002 |
-| 04 UI/SSD1322 | font i PL zaakceptowane tymczasowo; nowy scroll tylko w lewo; pełne UI niezaimplementowane | ADR 0009; 55 testów PASS; odbiór nowego cyklu pending |
+| 04 UI/SSD1322 | scroll i PL potwierdzone; trzy widżety gotowe do testu; pełne UI niezaimplementowane | ADR 0010; 62 testy PASS; nowe widżety pending |
 | 05 encoder | NIEZAIMPLEMENTOWANE | — |
 | 06 audio | NIEZAIMPLEMENTOWANE | — |
 | 07 DSP | NIEZAIMPLEMENTOWANE | — |
@@ -281,5 +281,33 @@ Zmiana dotyczy wyłącznie dokumentacji; bez zmian firmware i ponownego buildu.
   Nie wykonywano flash/erase/eFuse. ADR: 0009.
 - Następny zakres: widgety i lista stacji; osobno dalsze strojenie wyglądu
   czcionki. Poprawność PL z poprzedniej wersji jest potwierdzona przez użytkownika.
-- Hash: `git log -1 --format=%H --grep='^stage-04f:'`.
+- Hash: `30df2e2593f616d7862e1923f4a6b79d2f92e9ef`.
 - Model i tokeny w trailerach commita według COMMIT_METRICS.md.
+
+## Odbiór 04f i etap 04g — wizualizacje (2026-10-24)
+
+- Użytkownik potwierdził prawidłowe działanie ostatniej wersji, po 30df2e2.
+  Zapisano funkcjonalny odbiór pętli scrolla. Dokładnego hasha urządzenia,
+  zdjęć i pomiarów nie przekazano. Font nadal tymczasowo akceptowany.
+- Nowy komponent `ui_widgets`: spectrum, bargraph L/R z peak i dwa mierniki
+  wskazówkowe. Wspólny snapshot i bounds, clipping, bez zależności od
+  sterownika/DSP i bez alokacji. Zakresy danych prezentacji są jawne.
+- Aplikacyjny `visualization_probe` dostarcza wyłącznie dane syntetyczne,
+  oznaczone TEST. Tryb zmienia się co 6 s w dotychczasowej animacji 20 s.
+  Nagłówek, polskie znaki i scroll pozostają. Pełny test nadal około 38 s.
+- Nie zaimplementowano FFT/Hann/analizy audio ani gestu zmiany trybu.
+  Te zadania pozostają w etapach 05/07; nie uznano ich za wykonane przez UI.
+- `python3 -m unittest discover -s tests -q` — PASS, 62 testy (7 nowych).
+  Granice/clip, kanały, peak, 0..64 pasm, needle endpoints, invalid inputs,
+  minimalne i nieparzyste bounds. Model po renderze pozostaje niezmieniony.
+- ASan/UBSan `tests/visualization_sanitizer.c` — PASS; LeakSanitizer pominięty
+  pod ptrace (detect_leaks=0), bez deklaracji testu wycieków.
+- `idf.py reconfigure build` — PASS; obraz ESP32-S3 0x3c700 / 247552 B.
+  `git diff --check` — PASS.
+- HARDWARE_TEST_PENDING: trzy nowe widżety, czytelność podwójnego miernika,
+  pasm i peak oraz brak artefaktów przy przełączeniu. Nie wykonano flash.
+- ADR 0010. Następnie: animowana lista i właściciel stanu UI, integracja
+  gestów dopiero przy sterowniku wejścia; dane audio dopiero po DSP.
+- Hash: `git log -1 --format=%H --grep='^stage-04g:'`.
+- Model/tokeny w trailerach zgodnie z COMMIT_METRICS.md; niedostępnych
+  liczników nie oszacowano.

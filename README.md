@@ -28,3 +28,5 @@ Podstawowe działanie OLED potwierdzone przez użytkownika; nowa scena renderera
 Model i tokeny nowych commitów: [procedura i dostępność danych](docs/COMMIT_METRICS.md). Źródło większego fontu: [assets/fonts](assets/fonts/README.md).
 
 Scroll działa cyklicznie tylko od prawej do lewej. Polskie znaki potwierdzone przez użytkownika; wygląd czcionki zaakceptowany tymczasowo, do późniejszego dopracowania.
+
+W ostatniej scenie diagnostycznej trzy widżety (FFT/LR/analog) pokazują jawnie syntetyczne dane TEST, przełączane automatycznie. To weryfikacja renderowania; analiza DSP i audio pozostają w dalszych etapach.

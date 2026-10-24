@@ -90,3 +90,12 @@ font tymczasowo akceptuje, ale jego wygląd pozostaje do dopracowania.
 [ADR 0009](adr/0009-left-only-scroll.md) ustala scroll wyłącznie w lewo.
 Tekst powtarza się z prawej po proponowanym odstępie 24px, bez cofania.
 Animacja testu trwa teraz 20 s (całość około 38 s). Nowy cykl wymaga testu OLED.
+
+## Część 04g — wymienne widżety
+
+Nowa warstwa `ui_widgets` renderuje spectrum, bargraph L/R z peak oraz dwa
+mierniki analogowe przez wspólny canvas/bounds/model. [ADR 0010](adr/0010-visualization-widgets.md)
+określa API i granice odpowiedzialności. Rysowanie nie wykonuje analizy DSP.
+Aplikacyjna diagnostyka automatycznie zmienia widżet co 6 s, z jawnymi danymi
+TEST; to nie jest jeszcze wybór gestem ani działająca wizualizacja audio.
+Użytkownik potwierdził starszy scroll 04f; nowe widżety oczekują odbioru OLED.

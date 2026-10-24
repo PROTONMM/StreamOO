@@ -2,6 +2,7 @@
 #include "streamoo_font5x8.h"
 #include "streamoo_text_layout.h"
 #include "streamoo_bitmap_font.h"
+#include "visualization_probe.h"
 #include <string.h>
 
 bool streamoo_text_layout_smoke(uint8_t *frame, size_t bytes, uint64_t elapsed_ms)
@@ -12,9 +13,6 @@ bool streamoo_text_layout_smoke(uint8_t *frame, size_t bytes, uint64_t elapsed_m
     const struct { streamoo_rect_t bounds; const char *text; streamoo_text_align_t align; } lines[] = {
         {{0, 16, 256, 8}, "Długi tytuł: Zażółć gęślą jaźń - StreamOO radio", STREAMOO_TEXT_LEFT},
         {{0, 24, 256, 8}, "Opis: polskie znaki i przewijanie bez skoków - test", STREAMOO_TEXT_LEFT},
-        {{0, 40, 80, 8}, "LEWO", STREAMOO_TEXT_LEFT},
-        {{80, 40, 96, 8}, "ŚRODEK", STREAMOO_TEXT_CENTER},
-        {{176, 40, 80, 8}, "PRAWO", STREAMOO_TEXT_RIGHT},
     };
     const char *station = "StreamOO - Zażółć gęślą jaźń";
     if (!streamoo_bitmap_text_line(&canvas, (streamoo_rect_t){0, 0, 256, 16},
@@ -25,5 +23,5 @@ bool streamoo_text_layout_smoke(uint8_t *frame, size_t bytes, uint64_t elapsed_m
                                  strlen(lines[i].text), lines[i].align, elapsed_ms,
                                  30, 1000, 15, streamoo_font5x8, NULL)) return false;
     }
-    return true;
+    return streamoo_visualization_probe(&canvas, elapsed_ms);
 }

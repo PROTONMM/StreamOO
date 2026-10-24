@@ -174,3 +174,17 @@ Ostatnia scena trwa teraz 20 s, więc cały test około 38 s, potem panel OFF.
 Sprawdź co najmniej jedno wejście kolejnej kopii tekstu z prawej i brak
 wychodzenia poza wiersze. Tę nową wersję należy odebrać osobno; nie jest
 objęta wcześniejszym potwierdzeniem działania.
+
+## Odbiór scrolla 04f i widżety 04g
+
+Użytkownik potwierdził prawidłowe działanie wersji po 04f. Nie przypisujemy
+tego potwierdzenia jeszcze nieuruchomionym nowym widżetom ani pomiarom.
+
+W nowej wersji w ostatniej 20-sekundowej scenie środek dolnego panelu
+(x44/y32/132×32) zmienia się co 6 s: pasma FFT, bargraph L/R z markerami peak,
+dwa wskaźniki analogowe. Oznaczenie TEST wskazuje, że dane są syntetyczne;
+firmware nie odtwarza jeszcze audio i nie liczy FFT. Pełny test nadal około
+38 s, potem OFF. Sprawdź wszystkie trzy tryby, czytelność obu kanałów,
+brak wychodzenia poza środkowy panel i brak pozostałości przy zmianie trybu.
+Scroll w lewo i fonty pozostają bez zmian. Zapisz zdjęcia/wynik jako odbiór
+04g, oddzielnie od wcześniejszego potwierdzenia.

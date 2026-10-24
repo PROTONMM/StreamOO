@@ -37,3 +37,5 @@ Etap 04d: `adr/0007-text-alignment-and-marquee.md`. Metryki commitów: `COMMIT_M
 Etap 04e: `adr/0008-krypton-and-alpha-font-rendering.md`; źródło fontu `../assets/fonts/README.md`.
 
 Etap 04f, scroll tylko w lewo: `adr/0009-left-only-scroll.md`.
+
+Etap 04g, niezależne widżety: `adr/0010-visualization-widgets.md`.

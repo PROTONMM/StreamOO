@@ -66,3 +66,15 @@ ASAN_OPTIONS=detect_leaks=0 /tmp/streamoo-bitmap-font-sanitizer
 ```
 
 Scroll tylko w lewo: 4 nowe testy, łącznie 55. Monotoniczny offset, następna kopia wchodząca z prawej (oba fonty), wrap bez cofania, granice uint64. Sanitizer obejmuje teraz oba renderery.
+
+Wizualizacje: 7 nowych testów, łącznie 62. Izolacja bounds/clip, brak mutacji
+modelu, oba kanały i peak, empty/full spectrum, needle endpoints, invalid
+snapshots oraz małe/nieparzyste bounds.
+
+```sh
+cc -std=c11 -Wall -Wextra -Werror -fsanitize=address,undefined   -fno-omit-frame-pointer -g -Icomponents/graphics/include -Icomponents/ui_widgets/include   components/graphics/streamoo_canvas.c components/ui_widgets/streamoo_visualization.c   tests/visualization_sanitizer.c -o /tmp/streamoo-visualization-sanitizer
+ASAN_OPTIONS=detect_leaks=0 /tmp/streamoo-visualization-sanitizer
+```
+
+LeakSanitizer jest niedostępny w obecnym środowisku ptrace; powyższy wynik
+nie jest testem wycieków. Komponent nie wykonuje alokacji.

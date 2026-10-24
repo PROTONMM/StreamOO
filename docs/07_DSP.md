@@ -16,3 +16,10 @@
 
 ## Akceptacja
 Test na syntetycznych sinusach 100Hz/1kHz/8kHz, ciszy, impulsie i sygnale stereo; porównanie z NumPy FFT, wykres okna Hann; amplitudy przy ustawieniach volume 0/50/100 powinny być identyczne dla wizualizacji; pomiar obciążenia i FPS.
+
+## Zaimplementowana warstwa prezentacji (04g)
+
+`ui_widgets` rysuje trzy tryby z gotowego snapshotu poziomów 0..32767.
+Nie zależy od DSP i nie liczy FFT, RMS, dB ani smoothingu; producent danych
+zostanie podłączony w tym etapie. Syntetyczny `visualization_probe` służy
+wyłącznie do sprawdzenia obrazu i nie zalicza żadnych testów akceptacji DSP.
