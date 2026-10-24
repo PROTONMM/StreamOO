@@ -1,0 +1,18 @@
+#include "sdkconfig.h"
+#include "esp_log.h"
+
+static const char *TAG = "StreamOO";
+
+void app_main(void)
+{
+    ESP_LOGI(TAG, "StreamOO scaffold (no radio functionality yet)");
+    ESP_LOGI(TAG, "SSD1322 SPI: MOSI=%d SCLK=%d CS=%d DC=%d",
+             CONFIG_STREAMOO_LCD_MOSI, CONFIG_STREAMOO_LCD_SCLK,
+             CONFIG_STREAMOO_LCD_CS, CONFIG_STREAMOO_LCD_DC);
+    ESP_LOGI(TAG, "I2S: DATA=%d BCLK=%d WS=%d",
+             CONFIG_STREAMOO_I2S_DOUT, CONFIG_STREAMOO_I2S_BCLK,
+             CONFIG_STREAMOO_I2S_LRCLK);
+    ESP_LOGI(TAG, "Encoder: A=%d B=%d BTN=%d",
+             CONFIG_STREAMOO_ENCODER_GPIO_A, CONFIG_STREAMOO_ENCODER_GPIO_B,
+             CONFIG_STREAMOO_ENCODER_GPIO_BUTTON);
+}

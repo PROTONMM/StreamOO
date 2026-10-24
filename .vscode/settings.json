@@ -1,0 +1,9 @@
+{
+    "idf.currentSetup": "/home/mariuszk/.espressif/v6.1/esp-idf",
+    "clangd.path": "/home/mariuszk/.espressif/tools/esp-clangd/esp-21.1.3_20260408/esp-clangd/bin/clangd",
+    "clangd.arguments": [
+      "--background-index",
+      "--query-driver=**",
+      "--compile-commands-dir=/home/mariuszk/YR/StreamOO/build"
+    ]
+}

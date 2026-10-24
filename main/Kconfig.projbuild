@@ -1,0 +1,90 @@
+menu "StreamOO Configuration"
+    menu "Hardware: SSD1322"
+        config STREAMOO_LCD_MOSI
+            int "MOSI GPIO"
+            range 0 48
+            default 11
+        config STREAMOO_LCD_SCLK
+            int "SCLK GPIO"
+            range 0 48
+            default 12
+        config STREAMOO_LCD_CS
+            int "CS GPIO"
+            range 0 48
+            default 9
+        config STREAMOO_LCD_DC
+            int "DC GPIO"
+            range 0 48
+            default 10
+        config STREAMOO_LCD_RST
+            int "RESET GPIO (-1 for no GPIO-controlled reset)"
+            range -1 48
+            default -1
+        config STREAMOO_LCD_SPI_CLOCK_MHZ
+            int "SPI clock (MHz)"
+            range 1 40
+            default 10
+    endmenu
+    menu "Hardware: PCM5102A (I2S)"
+        config STREAMOO_I2S_DOUT
+            int "I2S DATA OUT GPIO"
+            range 0 48
+            default 48
+        config STREAMOO_I2S_BCLK
+            int "I2S BCLK GPIO"
+            range 0 48
+            default 47
+        config STREAMOO_I2S_LRCLK
+            int "I2S LRCLK GPIO"
+            range 0 48
+            default 21
+    endmenu
+    menu "Hardware: Encoder"
+        config STREAMOO_ENCODER_GPIO_A
+            int "Encoder A GPIO"
+            range 0 48
+            default 5
+        config STREAMOO_ENCODER_GPIO_B
+            int "Encoder B GPIO"
+            range 0 48
+            default 16
+        config STREAMOO_ENCODER_GPIO_BUTTON
+            int "Encoder button GPIO"
+            range 0 48
+            default 7
+        config STREAMOO_ENCODER_INTERNAL_PULLUP
+            bool "Enable internal pull-ups"
+            default n
+        config STREAMOO_ENCODER_REVERSED
+            bool "Invert encoder direction"
+            default n
+        config STREAMOO_ENCODER_HALF_QUADRATURE
+            bool "Use half-quadrature detents"
+            default y
+        choice STREAMOO_ENCODER_MODE
+            prompt "Encoder interaction mode"
+            default STREAMOO_ENCODER_MODE_A
+            config STREAMOO_ENCODER_MODE_A
+                bool "Mode A: short=stations, long=play/stop"
+            config STREAMOO_ENCODER_MODE_B
+                bool "Mode B: short=play/stop, long=stations"
+        endchoice
+    endmenu
+    menu "Audio and DSP"
+        config STREAMOO_STREAM_BUFFER_KIB
+            int "Compressed stream ring size (KiB)"
+            range 64 2048
+            default 256
+        choice STREAMOO_FFT_SIZE
+            prompt "FFT size"
+            default STREAMOO_FFT_1024
+            config STREAMOO_FFT_1024
+                bool "1024"
+            config STREAMOO_FFT_2048
+                bool "2048"
+        endchoice
+        config STREAMOO_DSP_ENABLE_SIMD
+            bool "Prefer optimized ESP32-S3 DSP routines"
+            default y
+    endmenu
+endmenu

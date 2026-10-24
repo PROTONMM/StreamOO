@@ -1,0 +1,18 @@
+# 11 — Przechowywanie, OTA, bezpieczeństwo
+
+## NVS (USTALONE)
+- Wi-Fi credentials, wybrany wariant runtime jeśli dopuszczony, aktualna głośność, ostatnia stacja stable_id, wizualizacja, własna nazwa mDNS, stan startowy.
+- Każda zmiana głośności lub wizualizacji zeruje timer; **zapis po 5 sekundach bez nowych zmian**, gdy różni się od ostatniego trwałego stanu. Flush podczas kontrolowanego restartu; przy nagłym zaniku zasilania można utracić ostatnie 5 s zmian.
+- Wybór trybu enkodera A/B jest domyślnie build-time `menuconfig`, nie opcją dynamiczną.
+
+## LittleFS
+Lista stacji, ewentualnie WWW assets, tymczasowy staging importu. 16 MB flash pozwala przewidzieć partycje 2×OTA + filesystem, ale podział przestrzeni ustalać po zmierzeniu firmware i potrzeb komponentów. Zastosuj wersjonowanie formatu stacji i kopię/rollback.
+
+## Sekrety i sieć
+- Hasło AP stałe w produktach, ale NIE commitowane do `sdkconfig.defaults` ani logowane. Dobór metody injekcji sekretów musi uwzględnić, że firmware może być wyciągnięte z urządzenia — wspólne hasło nie stanowi silnego zabezpieczenia.
+- Wybierz tryb admin authentication (hasło sesyjne lub tokeny) przed wystawieniem API w LAN; bez uwierzytelnienia nie wolno dopuścić zmian ustawień.
+- TLS w HTTP streams z weryfikacją certyfikatu; sprawdź synchronizację czasu.
+- OTA: dwie partycje app, walidacja podpisów/hash, rollback po nieudanym starcie; Secure Boot/Flash Encryption jako ewentualny profil produkcyjny, nie udawaj że są włączone na starcie.
+
+## Testy
+NVS flash wear, restarty w trakcie importu/OTA, niskie zasoby, weryfikacja kontenera, brak hasła w serial log, zachowanie na utratę zasilania.
