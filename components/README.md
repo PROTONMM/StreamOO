@@ -1,7 +1,9 @@
-# Przyszłe komponenty ESP-IDF
+# Komponenty ESP-IDF
 
-Etapowo utwórz samodzielne komponenty:
-- `streamoo_hal_config` — wyjście z Kconfig, walidator pinów, interfejs konfiguracji
+Zaimplementowane: `board_config` (walidator), `platform` (metryki/start),
+`hardware_probe` (opcjonalny surowy pomiar wejść). Nie zawierają funkcji radia.
+
+Kolejne samodzielne komponenty:
 - `streamoo_display` — sterownik SSD1322, SPI transfer
 - `streamoo_ui` — framebuffer 4bpp, renderer, fonty, widgety
 - `streamoo_input` — enkoder, debounce i rozpoznawanie gestów

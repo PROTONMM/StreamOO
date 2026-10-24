@@ -53,9 +53,25 @@ def check(data):
     return errors
 
 
+def check_platform(data):
+    required = {
+        'IDF_TARGET': '"esp32s3"',
+        'ESPTOOLPY_FLASHSIZE_16MB': 'y',
+        'SPIRAM': 'y',
+        'SPIRAM_MODE_OCT': 'y',
+        'SPIRAM_SPEED_80M': 'y',
+        'SPIRAM_USE_MALLOC': 'y',
+        'SPIRAM_MEMTEST': 'y',
+        'ESP_DEFAULT_CPU_FREQ_MHZ_240': 'y',
+    }
+    return [f'N16R8 requires CONFIG_{key}={value}'
+            for key, value in required.items() if data.get(key) != value]
+
+
 if __name__ == '__main__':
     try:
-        errors = check(parse(sys.argv[1] if len(sys.argv) > 1 else 'sdkconfig'))
+        data = parse(sys.argv[1] if len(sys.argv) > 1 else 'sdkconfig')
+        errors = check(data) + (check_platform(data) if '--platform' in sys.argv else [])
     except OSError as error:
         sys.exit(str(error))
     if errors:

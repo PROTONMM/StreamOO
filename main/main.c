@@ -1,6 +1,8 @@
 #include "sdkconfig.h"
 #include "esp_log.h"
 #include "streamoo_board.h"
+#include "streamoo_platform.h"
+#include "streamoo_input_probe.h"
 
 static const char *TAG = "StreamOO";
 
@@ -8,6 +10,10 @@ void app_main(void)
 {
     if (streamoo_board_validate() != ESP_OK) {
         ESP_LOGE(TAG, "Invalid hardware configuration; peripherals remain disabled");
+        return;
+    }
+    if (streamoo_platform_start() != ESP_OK) {
+        ESP_LOGE(TAG, "Platform startup failed; peripherals remain disabled");
         return;
     }
     ESP_LOGI(TAG, "StreamOO scaffold (no radio functionality yet)");
@@ -20,4 +26,9 @@ void app_main(void)
     ESP_LOGI(TAG, "Encoder: A=%d B=%d BTN=%d",
              CONFIG_STREAMOO_ENCODER_GPIO_A, CONFIG_STREAMOO_ENCODER_GPIO_B,
              CONFIG_STREAMOO_ENCODER_GPIO_BUTTON);
+#if defined(CONFIG_STREAMOO_INPUT_PROBE)
+    if (streamoo_input_probe_start() != ESP_OK) {
+        ESP_LOGE(TAG, "Input probe could not start");
+    }
+#endif
 }

@@ -22,3 +22,25 @@ Startowe założenie: zadania Wi-Fi/stack zgodnie z konfiguracją ESP-IDF, cię�
 
 ## Test zakończenia
 Diagram zależności i właścicieli stanów, uruchomione podstawowe zadania, metryki heap/PSRAM, pomiar latencji i scenariusz braku Wi-Fi.
+
+## Baza zaimplementowana 2026-10-24
+
+ESP-IDF 6.1 i target esp32s3 są kontrolowane w CMake; profil pamięci/CPU
+w walidatorze. `platform` sprawdza model i pamięć oraz uruchamia zadanie
+metryk heap/stosu. `hardware_probe` jest opcjonalnym eksperymentem A/B/BTN.
+Patrz [ADR 0002](adr/0002-platform-and-bringup-gate.md).
+
+```mermaid
+flowchart LR
+    app[app_main] --> board[board_config: walidacja]
+    app --> platform[platform: kontrola pamięci i health task]
+    app --> probe[hardware_probe: opcjonalny test wejść]
+    board --> config[Kconfig]
+    probe --> config
+    probe --> gpio[ESP-IDF GPIO]
+    platform --> idf[ESP-IDF heap / flash / PSRAM / RTOS]
+```
+
+Obecnie nie ma właścicieli stanów player/network/UI: zostaną dodani razem
+z implementacją funkcji. Metryki po nowym flashu, latencja i scenariusz utraty
+sieci pozostają niezmierzone. Pełny etap 03 nie jest jeszcze odebrany.
