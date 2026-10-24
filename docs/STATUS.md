@@ -511,3 +511,13 @@ ADR 0015 uzupełniony. Piny 5/6/7 i półkrok zachowane.
 91 testów unittest PASS (w tym istniejący test odwróconego dekodera).
 Odbiór nowego kierunku HARDWARE_TEST_PENDING; bez flash/erase/eFuse.
 ESP-IDF 6.1 build PASS; git diff --check PASS.
+
+## Odbiór poprawionego kierunku enkodera (2026-10-24)
+
+Użytkownik potwierdził „Teraz jest OK” po korekcie kierunku w `628ad97`.
+Zapisano pozytywny odbiór kierunku w interaktywnym UI: prawo zwiększa
+volume/przesuwa do następnej stacji, lewo zmniejsza/przesuwa do poprzedniej.
+Nie otrzymano osobnego hasha wgranego obrazu ani logu pomiarowego.
+Potwierdzenie nie zamyka otwartych pomiarów szybkości, liczby kroków na ząbek,
+trwałości NVS ani integracji realnego playera. Zmiana dokumentacyjna;
+`git diff --check` PASS, bez nowego buildu i flashowania.
