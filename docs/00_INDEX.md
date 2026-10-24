@@ -23,3 +23,5 @@ Statusy: **USTALONE** = użytkownik podjął decyzję; **PROPONOWANE** = sugesti
 Materiały dowodowe: `references/YR.kicad_sch`, `references/myoptions.h`, `references/SOURCE_NOTES.md`. Materiał źródłowy nie jest częścią docelowego firmware.
 
 Implementacyjne ADR: `adr/0001-n16r8-gpio-policy.md`, `adr/0002-platform-and-bringup-gate.md`. Procedura odbioru PCB: `HARDWARE_BRINGUP.md`.
+
+Etap 04a i moduł msalamon: `adr/0003-ssd1322-msalamon-spi-bringup.md`.

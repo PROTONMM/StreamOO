@@ -3,6 +3,7 @@
 #include "streamoo_board.h"
 #include "streamoo_platform.h"
 #include "streamoo_input_probe.h"
+#include "display_smoke.h"
 
 static const char *TAG = "StreamOO";
 
@@ -29,6 +30,11 @@ void app_main(void)
 #if defined(CONFIG_STREAMOO_INPUT_PROBE)
     if (streamoo_input_probe_start() != ESP_OK) {
         ESP_LOGE(TAG, "Input probe could not start");
+    }
+#endif
+#if defined(CONFIG_STREAMOO_LCD_SMOKE_TEST)
+    if (streamoo_display_smoke_start() != ESP_OK) {
+        ESP_LOGE(TAG, "Display smoke task could not start");
     }
 #endif
 }

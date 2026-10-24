@@ -13,6 +13,29 @@ menu "StreamOO Configuration"
             Disable only when USB is disconnected and is not used for console,
             USB devices or JTAG. Flash/PSRAM and strapping pins are always rejected.
     menu "Hardware: SSD1322"
+        config STREAMOO_LCD_SMOKE_TEST
+            bool "Run finite SSD1322 diagnostic at startup"
+            default y
+            help
+                Experimental panel profile: black, white, grayscale and inverse,
+                then display off after approximately 12 seconds. No radio UI.
+                User module is configured with R5/R8: BS1=0 and BS0=0.
+                Cold power-on/reset must be provided by the board if RESET=-1.
+        config STREAMOO_LCD_COLUMN_OFFSET
+            int "Experimental panel column offset (four-pixel units)"
+            range 0 56
+            default 28
+            help
+                Centered 256-pixel window in 480-pixel controller RAM.
+                Must be verified against the image on the actual panel.
+        config STREAMOO_LCD_REMAP
+            int "Experimental A0 remap byte (decimal)"
+            range 0 22
+            default 20
+            help
+                20 = 0x14: nibble remap and reversed COM scan. Only bits
+                1, 2 and 4 are accepted. Dual COM and horizontal increment
+                are fixed for this 256x64 test profile. Verify orientation.
         config STREAMOO_LCD_SPI_HOST
             int "SPI host (2=SPI2, 3=SPI3)"
             range 2 3
@@ -39,7 +62,7 @@ menu "StreamOO Configuration"
             default -1
         config STREAMOO_LCD_SPI_CLOCK_MHZ
             int "SPI clock (MHz)"
-            range 1 40
+            range 1 10
             default 10
     endmenu
     menu "Hardware: PCM5102A (I2S)"

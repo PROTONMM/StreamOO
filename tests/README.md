@@ -18,3 +18,10 @@ z 8 błędnych opcji i brakujących opcji). Łącznie 8 testów.
 Kontrola pełnego profilu: `python3 tools/check_config.py sdkconfig --platform`.
 Telemetryczne zadania i pomiary elektryczne wymagają PCB — patrz
 `docs/HARDWARE_BRINGUP.md`; nie są symulowane testem hostowym.
+
+SSD1322: 9 dodatkowych testów wykonujących firmware C na hoście. Obejmują
+D/C i inicjalizację, każdą awarię init/present, ujemny błąd transportu,
+adresowanie, odrzucenie błędnego profilu/bufora, enable/disable oraz
+wzór 4bpp z canary przed i za pamięcią. Łącznie 17 testów.
+Nie są testem fizycznego SPI ani panelu. Podgląd: `python3
+tools/preview_ssd1322.py build/ssd1322-smoke.png`.

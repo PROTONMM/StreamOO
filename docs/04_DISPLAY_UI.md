@@ -27,3 +27,15 @@ Szerokości kolumn dolnego panelu 44/132/80 są **PROPONOWANE** — dopasuj po t
 
 ## Testy
 Golden-image framebuffer, napisy PL `ąćęłńóśźż`, clipping, wyrównanie 4bpp, scroll, 3 wizualizacje, gest przełączania, pomiar czasu pełnego transferu SSD1322.
+
+## Część 04a — sterownik i eksperyment sprzętowy
+
+Zaimplementowano `ssd1322`: protokół host-testable z callbackiem transportu,
+adapter natywnego SPI ESP-IDF i API pełnej klatki 4bpp. Zadanie aplikacji
+`display_smoke` pokazuje skończoną sekwencję testową i raportuje czas transferu.
+Moduł użytkownika i profil do akceptacji: [ADR 0003](adr/0003-ssd1322-msalamon-spi-bringup.md).
+Domyślnie test startuje po walidacji platformy, następnie wyłącza panel.
+Można go wyłączyć przez `STREAMOO_LCD_SMOKE_TEST` w menuconfig.
+
+Renderer, fonty i docelowe widgety nie zostały tym etapem zaimplementowane.
+Odbiór SPI/obrazu: [HARDWARE_TEST_PENDING](HARDWARE_BRINGUP.md).

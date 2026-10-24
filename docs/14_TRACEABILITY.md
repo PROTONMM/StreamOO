@@ -3,7 +3,7 @@
 | Wymaganie | Dokument | Test |
 |---|---|---|
 | HW-01 piny menuconfig | 02 | build Kconfig + gpio validator |
-| HW-02 SSD1322 grayscale | 02,04 | framebuffer gradient + odczyt na OLED |
+| HW-02 SSD1322 grayscale | 02,04 | test_ssd1322 + display_smoke; odbiór OLED HARDWARE_TEST_PENDING |
 | UI-01 teksty ekran 16/8/8/32 | 04 | golden PNG + OLED |
 | UI-02 trzy wymienne wizualizacje | 04,07 | przełączanie bez restartu |
 | INPUT-01 gest A/B | 05 | zestaw sekwencji enkodera |

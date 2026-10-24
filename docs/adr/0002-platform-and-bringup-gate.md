@@ -50,3 +50,10 @@ bramy etapu 02 ani pełnego etapu 03. Procedura: `docs/HARDWARE_BRINGUP.md`.
 
 Źródło komend do przyszłego eksperymentu (bez importu kodu):
 [SSD1322 datasheet, Solomon Systech rev. 1.2](https://crystalfontz.com/controllers/uploaded/Solomon_Systech_SSD1322_Datasheet_v1.2_July_2010.pdf).
+
+## Aktualizacja 2026-10-24 — identyfikacja modułu
+
+Identyfikację OLED i ustawienie R5/R8 użytkownik uzupełnił po etapie 03.
+[ADR 0003](0003-ssd1322-msalamon-spi-bringup.md) zastępuje blokadę wynikającą
+z braku modelu i definiuje testowy profil sterownika. Akceptacja resetu,
+zasilania i obrazu na PCB nadal oczekuje; nie jest wynikiem testu hostowego.

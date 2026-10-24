@@ -36,3 +36,11 @@ Polityka rezerwacji i źródła: [ADR 0001](adr/0001-n16r8-gpio-policy.md).
 Host SPI jest konfigurowalny (2/3), domyślnie SPI2; USB19/20 zarezerwowane.
 Zmiana GPIO nie świadczy o dostępności sygnału na złączu konkretnej PCB.
 Odbiór połączeń, resetu i zasilania OLED nadal HARDWARE_TEST_PENDING.
+
+## Zidentyfikowany OLED (2026-10-24)
+
+Moduł użytkownika: msalamon 3,12 cala OLED_312_YELLOW, 256×64, SSD1322.
+Użytkownik potwierdził R5/R8, odpowiadające BS1=0/BS0=0 (4-wire SPI).
+Nie zmieniono GPIO ani RESET=-1. Dane źródłowe, sprzeczność podpisów zdjęć
+sprzedawcy i profil eksperymentalny opisuje [ADR 0003](adr/0003-ssd1322-msalamon-spi-bringup.md).
+Test połączeń, zasilania/resetu i obrazu nadal HARDWARE_TEST_PENDING.
