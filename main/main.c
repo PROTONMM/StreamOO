@@ -27,7 +27,7 @@ void app_main(void)
     ESP_LOGI(TAG, "Encoder: A=%d B=%d BTN=%d",
              CONFIG_STREAMOO_ENCODER_GPIO_A, CONFIG_STREAMOO_ENCODER_GPIO_B,
              CONFIG_STREAMOO_ENCODER_GPIO_BUTTON);
-#if defined(CONFIG_STREAMOO_INPUT_PROBE)
+#if defined(CONFIG_STREAMOO_ENCODER_GESTURE_TEST)
     if (streamoo_input_probe_start() != ESP_OK) {
         ESP_LOGE(TAG, "Input probe could not start");
     }

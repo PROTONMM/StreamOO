@@ -1,11 +1,12 @@
 menu "StreamOO Configuration"
-    config STREAMOO_INPUT_PROBE
-        bool "Diagnostic raw encoder GPIO probe (no gesture decoding)"
-        default n
+    config STREAMOO_ENCODER_GESTURE_TEST
+        bool "Diagnostic encoder GPIO and gesture probe"
+        default y
         help
             Sample A/B/button every RTOS tick and log levels and edge counts
             once per second. This measures wiring and pull-ups only; pulses
-            may be missed and counts must not be interpreted as detents.
+            may be missed. Also log decoded gestures for slow manual tests only.
+            No UI/player commands. Disable after hardware characterization.
     config STREAMOO_RESERVE_USB
         bool "Reserve GPIO19/20 for USB debugging"
         default y

@@ -1,6 +1,8 @@
 #include "streamoo_input_probe.h"
 
 #include "sdkconfig.h"
+#include "streamoo_input.h"
+#include "esp_timer.h"
 #include "driver/gpio.h"
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
@@ -15,6 +17,21 @@ static void probe_task(void *context)
     int previous[3] = {gpio_get_level(pins[0]), gpio_get_level(pins[1]),
                        gpio_get_level(pins[2])};
     unsigned edges[3] = {0};
+    streamoo_input_t decoder;
+    streamoo_input_init(&decoder, previous[0], previous[1], !previous[2],
+#ifdef CONFIG_STREAMOO_ENCODER_HALF_QUADRATURE
+                        true,
+#else
+                        false,
+#endif
+#ifdef CONFIG_STREAMOO_ENCODER_REVERSED
+                        true,
+#else
+                        false,
+#endif
+                        (uint64_t)esp_timer_get_time() / 1000);
+    ESP_LOGI("input_probe", "TEST gestures: tick=%u ms; slow turns only; no UI/player commands",
+             (unsigned)portTICK_PERIOD_MS);
     TickType_t last_log = xTaskGetTickCount();
     ESP_LOGI("input_probe", "Raw sampling only: edges are not detents; pulses may be missed");
     for (;;) {
@@ -25,6 +42,13 @@ static void probe_task(void *context)
                 ++edges[i];
                 previous[i] = level;
             }
+        }
+        const streamoo_input_event_t event = streamoo_input_sample(
+            &decoder, previous[0], previous[1], !previous[2],
+            (uint64_t)esp_timer_get_time() / 1000);
+        if (event.kind != STREAMOO_INPUT_NONE) {
+            static const char *const names[] = {"NONE", "ROTATE", "SHORT", "LONG", "PRESSED_ROTATE"};
+            ESP_LOGI("input_probe", "TEST %s delta=%d", names[event.kind], event.delta);
         }
         const TickType_t now = xTaskGetTickCount();
         if ((TickType_t)(now - last_log) >= pdMS_TO_TICKS(1000)) {

@@ -43,3 +43,5 @@ Etap 04g, niezależne widżety: `adr/0010-visualization-widgets.md`.
 Etap 04h: `adr/0011-ui-owner-and-station-list.md`.
 
 Etap 04i: `adr/0012-home-snapshot-renderer.md`.
+
+Etap 05a: `adr/0013-encoder-decoder-characterization.md`.

@@ -102,3 +102,6 @@ ASAN_OPTIONS=detect_leaks=0 /tmp/streamoo-home-sanitizer
 
 1000 kolejnych klatek sprawdza fazy HOME, usuwanie starych danych i canary.
 LeakSanitizer niedostępny w ptrace, bez deklaracji testu wycieków.
+
+Enkoder 05a: `test_input.py` kompiluje i wykonuje `input_test.c` z ostrzeżeniami
+jako błędami. Łącznie 84 testy; nie jest to test szybkości sprzętu GPIO.

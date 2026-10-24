@@ -26,3 +26,7 @@ Nie dodawaj pustych `CMakeLists.txt` komponentów do builda: twórz je wraz z pi
 `ui`: pojedynczy właściciel ekranu i wyboru na liście, animacja Q16, borrowed catalog snapshot i adapter komendy SelectStation. Zależy od graphics/text, nie od playera, GPIO i RTOS.
 
 `ui` ma również pełny HOME ze spójnego snapshotu, walidację generacji i metadanych oraz cache źródeł. Pobieranie danych, synchronizacja czasu i audio nie należą do renderera.
+
+Etap 05a: rzeczywisty komponent `input` to czysty dekoder gestów;
+`hardware_probe` jest adapterem diagnostycznym GPIO z pollingiem co tick.
+Docelowy transport szybkich zboczy oraz adapter sterowania pozostają otwarte.

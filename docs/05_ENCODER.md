@@ -30,3 +30,12 @@ Przyszły adapter gestów ma wywoływać je w jednym zadaniu UI; callback GPIO
 nie może rysować ani mutować UI bezpośrednio. Kursor i animacja są oddzielone
 (Q16 zamiast float). Sam ten interfejs nie jest implementacją enkodera,
 debounce ani mapowania A/B. W teście granice są clamped; finalny wrap to D19.
+
+## Część 05a — dekoder i charakterystyka sprzętu
+
+Komponent `input` implementuje przejścia A/B oraz abstrakcyjne gesty.
+[ADR 0013](adr/0013-encoder-decoder-characterization.md) opisuje semantykę.
+Domyślnie włączony `STREAMOO_ENCODER_GESTURE_TEST` wypisuje w konsoli TEST
+ROTATE/SHORT/LONG/PRESSED_ROTATE i delta. Obecny adapter próbkuje co tick,
+więc należy testować wolne ruchy; szybkie mogą gubić zbocza. Nie steruje UI.
+Półkrok, kierunek, pull-up i timing wymagają odbioru. Etap 05 pozostaje częściowy.

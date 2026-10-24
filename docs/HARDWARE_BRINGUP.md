@@ -230,3 +230,20 @@ kodeka/ikonki/RSSI i zegara, brak nakładania w kolumnach 44/132/80 oraz
 całkowite zniknięcie dawnych tytułów w drugiej fazie. Po HOME lista TEST działa
 jak wcześniej. Zapisz wynik osobno jako odbiór 04i; nie zaliczać danych
 syntetycznych jako testu połączenia Wi-Fi, zegara systemowego ani audio.
+
+## Enkoder 05a — diagnostyka wolnych ruchów
+
+Po wgraniu wersji stage-05a otwórz `idf.py monitor`. Nowy przełącznik
+`STREAMOO_ENCODER_GESTURE_TEST` domyślnie włączony; pokaz OLED pozostaje
+bez zmian i gaśnie po około 46s, diagnostyka konsoli działa nadal.
+
+- W spoczynku sprawdź A/B/BTN i brak samoczynnych zdarzeń.
+- Obracaj powoli po jednym ząbku: zapisz kierunek i liczbę ROTATE na ząbek.
+  Sekwencja 11→01→00→10→11 jest dodatnia przed opcjonalnym odwróceniem.
+- Krótkie naciśnięcie daje jeden SHORT przy zwolnieniu; przytrzymanie
+  wyraźnie ponad 600ms daje jeden LONG przy zwolnieniu.
+- Trzymaj i obracaj powoli: PRESSED_ROTATE, po zwolnieniu bez SHORT/LONG.
+- Podaj wyniki, zwłaszcza dwa zdarzenia na ząbek, odwrotny kierunek lub szum.
+
+To próbnik co tick RTOS (okres wypisany w logu), bez gwarancji szybkich ruchów.
+Nie zmienia stacji, volume ani wizualizacji. NVS i audio nie są uruchamiane.

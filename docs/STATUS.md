@@ -401,3 +401,21 @@ rzeczywistej sieci, zegara, playera i DSP pozostaje w dalszych etapach.
 Kolejny zakres: fizyczny enkoder i gesty etapu 05. Dopracowanie czcionki
 i otwarte decyzje pozostają aktualne. Zmiana tylko dokumentacyjna;
 `git diff --check` — PASS, bez ponownego buildu firmware.
+
+## Etap 05a — enkoder: czysty dekoder i diagnostyka (2026-10-24)
+
+- Własny input: legalne przejścia A/B, pół/pełne kroki, odwrócenie,
+  debounce 20ms, short/long 600ms przy zwolnieniu, pressed-rotate tłumi klik.
+- Adapter GPIO wypisuje gesty TEST; nowy domyślny przełącznik
+  STREAMOO_ENCODER_GESTURE_TEST. GPIO/pull-up niezmienione, bez komend UI.
+- Ograniczenie jawne: polling co tick, szybkie ruchy mogą ginąć.
+  To charakterystyka wolnych ruchów, nie gotowy transport produkcyjny.
+- 84 testy unittest PASS (nowy harness C sprawdza kierunki, kroki, bounce,
+  nielegalne przejścia, debounce, long, boot-held i obrót z przyciskiem).
+- ADR 0013. HARDWARE_TEST_PENDING: kroki/ząbek, kierunek, pull-up, gesty.
+- Dalej: przechwytywanie zboczy/overflow, pomiary i mapowanie A/B do UI;
+  trwałość NVS i player zgodnie z ich etapami. Cały etap 05 częściowy.
+- Build ESP-IDF 6.1 — PASS; ASan/UBSan dekodera — PASS
+  (detect_leaks=0 z powodu środowiska ptrace, bez testu wycieków).
+  `git diff --check` — PASS. Bez flash/erase/eFuse.
+- Obecny profil RTOS 100Hz daje 10ms próbkowania; szybki transport wejść OPEN.
