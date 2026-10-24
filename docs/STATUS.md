@@ -547,3 +547,13 @@ trwałości NVS ani integracji realnego playera. Zmiana dokumentacyjna;
   restart przed zapisem może utracić zmiany. Test zaniku podczas zapisu,
   zużycia flash i wpływu operacji flash/cache na przyszłe audio pozostaje OPEN.
   Etapy 05/11 nadal częściowe. Następnie podstawowe wyjście I2S (etap 06).
+
+## Odbiór preferencji 05d (2026-10-24)
+
+Użytkownik potwierdził „Działa” po instrukcji testu zapisu volume/widżetu,
+odczekania komunikatu Saved i restartu. Zapisano pozytywny odbiór tej
+funkcji według kontekstu wersji `215d49a`; bez osobnego hasha wgranego
+obrazu i logu pomiarowego. Nie rozszerzamy odbioru na test zaniku podczas
+zapisu, zużycie flash, błędy NVS ani kontrolowany shutdown/flush.
+Kolejny zakres: podstawowe wyjście I2S/PCM5102A etapu 06.
+Zmiana dokumentacyjna; git diff --check PASS, bez nowego buildu/flash.
