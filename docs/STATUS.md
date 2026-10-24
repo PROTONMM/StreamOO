@@ -7,7 +7,7 @@
 | 03 szkielet | baza zaimplementowana; odbiór sprzętowy i integracyjny OPEN | ESP-IDF v6.1 build PASS; ADR 0002 |
 | 04 UI/SSD1322 | HOME i lista odebrane na OLED; końcowe strojenie fontu OPEN | ADR 0012; odbiór użytkownika |
 | 05 encoder | dekoder/IRQ i gesty odebrane; interaktywny adapter odebrany w trybie A; preferencje NVS odebrane; shutdown/flush OPEN | ADR 0013–0017; 99 testów PASS |
-| 06 audio | natywne wyjście I2S i skończony test kanałów; HARDWARE_TEST_PENDING | ADR 0018; 107 testów PASS |
+| 06 audio | podstawowy test I2S/PCM5102A odebrany; gain/player/pipeline OPEN | ADR 0018; 107 testów PASS; odbiór użytkownika |
 | 07 DSP | NIEZAIMPLEMENTOWANE | — |
 | 08 stacje | NIEZAIMPLEMENTOWANE | — |
 | 09 sieć | NIEZAIMPLEMENTOWANE | — |
@@ -583,3 +583,15 @@ Zmiana dokumentacyjna; git diff --check PASS, bez nowego buildu/flash.
   kanały i dźwięk, clock/jitter, brak słyszalnych zakłóceń podczas UI/NVS,
   max_fill i liczba buforów. Statystyki callbacku nie są testem underrun.
 - Pipeline/kodeki/player, rzeczywisty volume ramp, FIFO i DSP nadal OPEN.
+
+## Odbiór testu audio 06a (2026-10-24)
+
+Użytkownik potwierdził „działa” po instrukcji odsłuchu skończonej sekwencji
+L1k/R2k/oba1k w kontekście wersji `edb7c63`. Zapisano pozytywny odbiór
+podstawowego wyjścia I2S/PCM5102A. Nie otrzymano osobnego hasha obrazu,
+końcowego logu audio_probe ani wyników pomiarów zegara/czasów callbacku.
+Potwierdzenie nie jest pomiarem jitter, underrun, obciążenia, zachowania
+przy zapisach NVS ani dowodem działania pełnego pipeline/playera.
+Następny zakres audio: rzeczywista regulacja gain z rampą oraz sterowanie
+start/stop przez oddzielnego właściciela stanu. Zmiana dokumentacyjna;
+git diff --check PASS, bez nowego buildu/flash.
