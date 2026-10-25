@@ -1,6 +1,6 @@
 # ADR0022 — AAC-LC ADTS przed I2S
 
-Data:2026-10-25. Status: wdrożone; decode/PCM na S3 potwierdzone, odsłuch OPEN.
+Data:2026-10-25. Status: PoC odebrane logiem i odsłuchem na ESP32-S3.
 
 ## Kontekst
 
@@ -53,3 +53,9 @@ Log użytkownika dla e73523d:37039B→193536 ramek,48kHz/stereo16, peak1043,
 decode309922us/wall406630us, stack_hwm22552B. Do36s queued28/ACTIVE,
 low0/hard0/starts1, invalid0, tap_drop/gaps0, max_fill129us i stabilny heap.
 Dekodowanie/PCM PASS; log nie zastępuje odsłuchu L/R/oba (OPEN).
+
+### Odbiór odsłuchu
+
+Użytkownik potwierdził czysty odsłuch L/R/oba: „tak, wszystko grało ładnie”.
+Odbiór06e zaliczony. Następny zakres to streaming decode z backpressure;
+HE-AAC, resampling i sieć pozostają poza tym odbiorem.

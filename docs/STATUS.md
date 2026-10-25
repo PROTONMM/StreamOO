@@ -9,7 +9,7 @@ Bieżący punkt wznowienia: [RESUME.md](RESUME.md).
 | 03 szkielet | baza zaimplementowana; odbiór sprzętowy i integracyjny OPEN | ESP-IDF v6.1 build PASS; ADR 0002 |
 | 04 UI/SSD1322 | HOME i lista odebrane na OLED; końcowe strojenie fontu OPEN | ADR 0012; odbiór użytkownika |
 | 05 encoder | dekoder/IRQ i gesty odebrane; interaktywny adapter odebrany w trybie A; preferencje NVS odebrane; shutdown/flush OPEN | ADR 0013–0017; 99 testów PASS |
-| 06 audio | I2S/gain/PCM stress odebrane; MP3 decode/PCM potwierdzone logiem; AAC-LC decode/PCM potwierdzone logiem, odsłuch OPEN; streaming/player OPEN | ADR 0018–0022; 142 testy hostowe PASS; build trzech źródeł PASS |
+| 06 audio | I2S/gain/PCM stress odebrane; MP3 decode/PCM potwierdzone logiem; AAC-LC decode/PCM i odsłuch odebrane; streaming/player OPEN | ADR 0018–0022; 142 testy hostowe PASS; build trzech źródeł PASS |
 | 07 DSP | NIEZAIMPLEMENTOWANE | — |
 | 08 stacje | NIEZAIMPLEMENTOWANE | — |
 | 09 sieć | NIEZAIMPLEMENTOWANE | — |
@@ -849,3 +849,12 @@ minimum internal188236B, PSRAM7293140B. Zmienny peak0..1043 odpowiada
 klipowi z ciszą. Brak błędów w dostarczonym logu; nie jest to pomiar jitter
 ani test długotrwały. Odsłuch L/R/oba i brak słyszalnych zakłóceń OPEN.
 Zmiana wyłącznie dokumentacji; nie powtarzano buildu/testów kodu.
+
+## Odbiór odsłuchu06e — AAC-LC (2026-10-25)
+
+Po pytaniu o czysty odsłuch kanałów lewy/prawy/oba użytkownik potwierdził:
+„tak, wszystko grało ładnie”. Odsłuch AAC-LC zaliczony. W połączeniu
+z wcześniejszym logiem zamyka odbiór PoC06e; nie jest to odbiór streaming
+ani HE-AAC. Następny zakres: dekodowanie w trakcie odtwarzania z backpressure,
+bez przechowywania całego rozkodowanego klipu w PSRAM.
+Zmiana dokumentacyjna; kod i obraz firmware bez zmian, bez powtarzania testów.

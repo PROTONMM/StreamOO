@@ -1,6 +1,6 @@
 # Punkt wznowienia StreamOO
 
-Aktualizacja: **2026-10-25, AAC-LC06e decode/PCM potwierdzone logiem; odsłuch OPEN**.
+Aktualizacja: **2026-10-25, AAC-LC06e odebrane logiem i czystym odsłuchem**.
 PCM/rebuffer/tap stress potwierdzone logiem i odsłuchem (`5664a90`).
 Gałąź feature/streamoo-implementation, szczegóły STATUS i ADR0022.
 
@@ -97,15 +97,14 @@ z przerwami. Start STOP, głośność NVS, PLAY może wejść w dowolną fazę.
 
 1. Log AAC-LC PoC ESP_OK już odebrany:37039B→193536 ramek,48kHz/stereo16,
    peak1043, decode309922us/wall406630us, stack_hwm22552B. Nie powtarzać.
-2. VOL80–100, PLAY, odsłuch kilku cykli L/R/oba. Sprawdź PLAY/STOP/VOL.
+2. Odsłuch L/R/oba zaliczony: użytkownik potwierdził „tak, wszystko grało ładnie”.
    Liczniki już potwierdzone do36s: queued28/ACTIVE, low0/hard0/starts1,
-   invalid0, tap_drop/gaps0, max_fill129us. Heap stabilny; odsłuch OPEN.
-3. Po odbiorze AAC: streaming decode/backpressure bez całego PCM w PSRAM.
+   invalid0, tap_drop/gaps0, max_fill129us. Heap stabilny; nie powtarzać zaliczonego odsłuchu.
+3. Następny zakres: streaming decode/backpressure bez całego PCM w PSRAM.
    Sieć, resampling, HE-AAC, produkcyjny player i DSP nadal OPEN.
 
 Weryfikacja06e: **142 testy hostowe PASS**, ESP-IDF6.1 build/link AAC-LC,
-MP3 i sinus PASS. Końcowy obraz AAC0x808b0B. Runtime AAC na S3 potwierdzony logiem; odsłuch
-OPEN. Dotychczasowy runtime MP3 potwierdzony logiem, bez osobnego opisu
+MP3 i sinus PASS. Końcowy obraz AAC0x808b0B. Runtime AAC na S3 potwierdzony logiem i czystym odsłuchem. Dotychczasowy runtime MP3 potwierdzony logiem, bez osobnego opisu
 odsłuchu MP3. Nie powtarzać zaliczonego PCM stress. Wcześniejszy ASan/UBSan
 adaptera/pętli PASS (nie wykonywano ponownie w06e; bez LeakSanitizer).
 Przy pierwszej konfiguracji wymagany dostęp do rejestru Component Manager;
