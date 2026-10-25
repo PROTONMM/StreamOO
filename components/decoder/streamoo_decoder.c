@@ -1,40 +1,48 @@
-#include "streamoo_mp3_decoder.h"
+#include "streamoo_decoder.h"
 #include "esp_mp3_dec.h"
+#include "esp_aac_dec.h"
 #include "esp_log.h"
 #include "esp_audio_simple_dec.h"
 #include <stdlib.h>
 #include <limits.h>
 
-struct streamoo_mp3_decoder { esp_audio_simple_dec_handle_t handle; };
-static bool registered;
-esp_err_t streamoo_mp3_open(streamoo_mp3_decoder_t **out)
+struct streamoo_decoder { esp_audio_simple_dec_handle_t handle; esp_aac_dec_cfg_t aac; };
+static bool registered[2];
+esp_err_t streamoo_decoder_open(streamoo_codec_t codec, streamoo_decoder_t **out)
 {
     if (!out) return ESP_ERR_INVALID_ARG;
     *out=NULL;
-    if (!registered) {
-        esp_audio_err_t e=esp_mp3_dec_register();
+    if (codec<STREAMOO_CODEC_MP3 || codec>STREAMOO_CODEC_AAC_LC) return ESP_ERR_INVALID_ARG;
+    if (!registered[codec]) {
+        esp_audio_err_t e=codec==STREAMOO_CODEC_MP3 ? esp_mp3_dec_register() : esp_aac_dec_register();
         if (e!=ESP_AUDIO_ERR_OK && e!=ESP_AUDIO_ERR_ALREADY_EXIST) {
-            ESP_LOGE("mp3_decoder","Register failed: vendor=%d",(int)e);
+            ESP_LOGE("decoder","Register failed: vendor=%d",(int)e);
             return ESP_FAIL;
         }
-        registered=true;
+        registered[codec]=true;
     }
-    streamoo_mp3_decoder_t *d=calloc(1,sizeof(*d));
+    streamoo_decoder_t *d=calloc(1,sizeof(*d));
     if (!d) return ESP_ERR_NO_MEM;
-    esp_audio_simple_dec_cfg_t config={.dec_type=ESP_AUDIO_SIMPLE_DEC_TYPE_MP3};
+    esp_audio_simple_dec_cfg_t config={.dec_type=codec==STREAMOO_CODEC_MP3 ?
+        ESP_AUDIO_SIMPLE_DEC_TYPE_MP3 : ESP_AUDIO_SIMPLE_DEC_TYPE_AAC};
+    if (codec==STREAMOO_CODEC_AAC_LC) {
+        d->aac=(esp_aac_dec_cfg_t)ESP_AAC_DEC_CONFIG_DEFAULT();
+        d->aac.channel=2; d->aac.no_adts_header=false; d->aac.aac_plus_enable=false;
+        config.dec_cfg=&d->aac; config.cfg_size=sizeof d->aac;
+    }
     esp_audio_err_t error=esp_audio_simple_dec_open(&config,&d->handle);
     if (error!=ESP_AUDIO_ERR_OK) {
-        ESP_LOGE("mp3_decoder","Open failed: vendor=%d",(int)error);
+        ESP_LOGE("decoder","Open failed: vendor=%d",(int)error);
         free(d); return error==ESP_AUDIO_ERR_MEM_LACK ? ESP_ERR_NO_MEM : ESP_FAIL;
     }
     *out=d; return ESP_OK;
 }
-esp_err_t streamoo_mp3_process(streamoo_mp3_decoder_t *d,uint8_t *input,size_t bytes,
-    bool eos,uint8_t *pcm,size_t capacity,streamoo_mp3_result_t *result)
+esp_err_t streamoo_decoder_process(streamoo_decoder_t *d,uint8_t *input,size_t bytes,
+    bool eos,uint8_t *pcm,size_t capacity,streamoo_decode_result_t *result)
 {
     if (!d || !input || !bytes || !pcm || !capacity || !result || bytes>UINT32_MAX || capacity>UINT32_MAX)
         return ESP_ERR_INVALID_ARG;
-    *result=(streamoo_mp3_result_t){0};
+    *result=(streamoo_decode_result_t){0};
     esp_audio_simple_dec_raw_t raw={.buffer=input,.len=bytes,.eos=eos};
     esp_audio_simple_dec_out_t out={.buffer=pcm,.len=capacity};
     esp_audio_err_t error=esp_audio_simple_dec_process(d->handle,&raw,&out);
@@ -50,7 +58,7 @@ esp_err_t streamoo_mp3_process(streamoo_mp3_decoder_t *d,uint8_t *input,size_t b
     }
     return ESP_OK;
 }
-void streamoo_mp3_close(streamoo_mp3_decoder_t *d)
+void streamoo_decoder_close(streamoo_decoder_t *d)
 {
     if (d) { esp_audio_simple_dec_close(d->handle); free(d); }
 }

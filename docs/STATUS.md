@@ -9,7 +9,7 @@ Bieżący punkt wznowienia: [RESUME.md](RESUME.md).
 | 03 szkielet | baza zaimplementowana; odbiór sprzętowy i integracyjny OPEN | ESP-IDF v6.1 build PASS; ADR 0002 |
 | 04 UI/SSD1322 | HOME i lista odebrane na OLED; końcowe strojenie fontu OPEN | ADR 0012; odbiór użytkownika |
 | 05 encoder | dekoder/IRQ i gesty odebrane; interaktywny adapter odebrany w trybie A; preferencje NVS odebrane; shutdown/flush OPEN | ADR 0013–0017; 99 testów PASS |
-| 06 audio | I2S/gain/PCM stress odebrane; MP3 decode/PCM potwierdzone logiem, odsłuch MP3 OPEN; AAC/player OPEN | ADR 0018–0021; 141 testów hostowych PASS; log S3 |
+| 06 audio | I2S/gain/PCM stress odebrane; MP3 decode/PCM potwierdzone logiem; AAC-LC PoC gotowy, odbiór sprzętowy OPEN; streaming/player OPEN | ADR 0018–0022; 142 testy hostowe PASS; build trzech źródeł PASS |
 | 07 DSP | NIEZAIMPLEMENTOWANE | — |
 | 08 stacje | NIEZAIMPLEMENTOWANE | — |
 | 09 sieć | NIEZAIMPLEMENTOWANE | — |
@@ -819,3 +819,19 @@ w tym przebiegu. Użytkownik nie opisał jeszcze odsłuchu kanałów/cyklu.
 Nie deklarujemy bitowej identyczności PCM, pomiaru jitter ani gotowego
 streamingu/obsługi kolejnych formatów. Bez osobnego hasha wgranego obrazu.
 Zmiana dokumentacyjna; git diff --check PASS, bez nowego buildu/flash.
+
+## Etap06e — AAC-LC ADTS (2026-10-25)
+
+- Użytkownik wyjaśnił nieczytelny fragment wcześniejszego UART: poruszył przewodem.
+  Polecił kontynuować; nie zmieniano UART ani nie powtarzano testu MP3.
+- Wspólny adapter decoder dla MP3 i AAC-LC, esp_audio_codec nadal dokładnie2.6.2.
+  AAC z ADTS, AAC-Plus wyłączony. Wybór jednego źródła w Kconfig: AAC-LC
+  (domyślny), MP3 lub sinus. Lokalny obraz końcowy: AAC-LC, stress n/0.
+- Własny klip AAC37039B,189 ramek ADTS, referencja193536 ramek PCM.
+  Nadal batch decode przed I2S do1MiB PSRAM; bez streaming decode/resamplingu.
+  ISR/FIFO/gain bez zmian. HE-AAC i pozostałe formaty OPEN.
+- 142 testy hostowe PASS. ESP-IDF6.1 build/link wszystkich trzech źródeł PASS:
+  MP3 0x87400B, sinus 0x4acd0B, końcowy AAC 0x808b0B; partycja1MiB.
+- Licencje i attribution AAC sprawdzone w przypiętym pakiecie i oficjalnym
+  COPYRIGHT Espressif; zachowane Espressif Modified MIT ESP-only i Apache2.0.
+- ADR0022. Odbiór AAC na ESP32-S3/odsłuch OPEN. Nie wykonano flash/erase.

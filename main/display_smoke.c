@@ -51,6 +51,9 @@ static void display_task(void *context)
 #ifdef CONFIG_STREAMOO_MP3_FIXTURE_TEST
         static const uint8_t mp3_title[]="TEST: plik MP3, widżety TEST";
         demo.audio_title=(streamoo_ui_text_t){mp3_title,sizeof mp3_title-1};
+#elif defined(CONFIG_STREAMOO_AAC_FIXTURE_TEST)
+        static const uint8_t aac_title[]="TEST: AAC-LC, widżety TEST";
+        demo.audio_title=(streamoo_ui_text_t){aac_title,sizeof aac_title-1};
 #endif
         uint32_t volume_revision=0;
 #endif

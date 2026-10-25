@@ -12,11 +12,11 @@ products and prohibits redistribution for non-Espressif products. This is
 not unrestricted MIT. StreamOO targets ESP32-S3; the vendor binary is not
 used in native host tests, which test only our original adapter/model code.
 
-The vendor's official copyright list attributes the MP3 implementation to
+The vendor's official copyright list attributes the MP3 and AAC implementations to
 The Android Open Source Project, copyright2005–2008, under Apache License2.0.
-Retain Apache-2.0.txt alongside this notice. Only MP3 is registered by this
-stage; AAC/other codecs are not enabled through our adapter. The ELF audit
-found MP3 open/decode symbols and no AAC/Opus/FLAC open/decode symbols.
+Retain Apache-2.0.txt alongside this notice. The adapter supports MP3 and AAC-LC/ADTS. Both backends are linked in file
+fixture builds; only the selected codec is registered. AAC-Plus is disabled.
+Other codecs and HE-AAC have not been validated by StreamOO.
 No GPL code was imported into target firmware by this integration.
 
 Sources checked2026-10-25:
@@ -26,4 +26,4 @@ Sources checked2026-10-25:
 
 Dependencies are installed unmodified by ESP-IDF Component Manager into
 ignored managed_components; firmware distributions need the retained notices.
-The original generated MP3 signal is not third-party recorded material.
+The original generated MP3/AAC signals is not third-party recorded material.

@@ -51,14 +51,15 @@ regeneration process are documented in `assets/fonts/README.md`.
 
 The station-list reference `tests/fixtures/station_list.4bpp` contains the same font shapes described above: StreamOO UI16 (OFL-1.1) and the user-authorized small PL font with modification license still under review.
 
-## Espressif audio codec 2.6.2 — MP3 PoC
+## Espressif audio codec 2.6.2 — MP3/AAC-LC PoC
 
 Pinned managed component, used only on ESP32-S3 under **Espressif Modified
 MIT** (Espressif-only restriction, not unrestricted MIT). Complete license:
 [Espressif notice](licenses/Espressif-Audio-Codec-Modified-MIT.txt).
-Vendor attribution for MP3: Android Open Source Project2005–2008, Apache2.0;
+Vendor attribution for MP3 and AAC: Android Open Source Project2005–2008, Apache2.0;
 [Apache text](licenses/Apache-2.0.txt) and [version/audit/source details](licenses/ESP-Audio-Codec-NOTICE.md).
-Only MP3 is registered; other codecs remain unimplemented by StreamOO.
+MP3 and AAC-LC/ADTS are supported by the adapter; only the selected codec
+is registered. AAC-Plus is disabled; HE-AAC remains unverified.
 Host tests do not use the vendor binaries. FFmpeg/libmp3lame are host fixture
 generation/reference tools, not linked target dependencies. No GPL implementation
-is copied to firmware. The synthetic MP3 contains no external recording.
+is copied to firmware. The synthetic MP3/AAC fixtures contain no external recording.

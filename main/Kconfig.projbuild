@@ -82,23 +82,30 @@ menu "StreamOO Configuration"
     endmenu
     menu "Hardware: PCM5102A (I2S)"
         config STREAMOO_AUDIO_CONTROL_TEST
-            bool "Continuous tone controlled by encoder VOL/PLAY TEST"
+            bool "PCM source controlled by encoder VOL/PLAY TEST"
             depends on STREAMOO_ENCODER_UI_TEST
             default y
             select I2S_ISR_IRAM_SAFE
             help
-                Starts in STOP with restored volume. PLAY sends a continuous
-                stereo 1kHz test tone, source peak -30dBFS before volume gain.
-                50ms gain ramps. Overrides the finite I2S smoke sequence.
+                Starts in STOP with restored volume. PLAY sends the selected
+                synthetic file or sine source through 50ms gain ramps.
+                Overrides the finite I2S smoke sequence.
                 Widgets remain synthetic. Not a network stream player.
-        config STREAMOO_MP3_FIXTURE_TEST
-            bool "Decode embedded MP3 file to PSRAM and play TEST clip"
+        choice STREAMOO_AUDIO_TEST_SOURCE
+            prompt "Controlled audio TEST source"
             depends on STREAMOO_AUDIO_CONTROL_TEST
-            default y
-            help
-                Use original L/R 48kHz MP3 fixture instead of continuous sine.
-                Decode once at startup outside I2S, then loop the PCM in PSRAM.
-                No network streaming or resampling. Initial STOP, real VOL/PLAY.
+            default STREAMOO_AAC_FIXTURE_TEST
+            config STREAMOO_AAC_FIXTURE_TEST
+                bool "AAC-LC/ADTS file decoded to PSRAM"
+            config STREAMOO_MP3_FIXTURE_TEST
+                bool "MP3 file decoded to PSRAM"
+            config STREAMOO_SINE_FIXTURE_TEST
+                bool "Continuous 1kHz sine"
+        endchoice
+        config STREAMOO_CODEC_FIXTURE_TEST
+            bool
+            default y if STREAMOO_MP3_FIXTURE_TEST || STREAMOO_AAC_FIXTURE_TEST
+            default n
         config STREAMOO_PCM_STALL_TEST
             bool "TEST: pause PCM producer 400ms once after first PLAY"
             depends on STREAMOO_AUDIO_CONTROL_TEST

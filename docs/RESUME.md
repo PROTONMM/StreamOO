@@ -1,8 +1,8 @@
 # Punkt wznowienia StreamOO
 
-Aktualizacja: **2026-10-25, dekoder MP3/PCM06d potwierdzone logiem z płytki; odsłuch OPEN**.
+Aktualizacja: **2026-10-25, AAC-LC06e gotowy do testu na płytce**.
 PCM/rebuffer/tap stress potwierdzone logiem i odsłuchem (`5664a90`).
-Gałąź feature/streamoo-implementation, szczegóły STATUS i ADR0021.
+Gałąź feature/streamoo-implementation, szczegóły STATUS i ADR0022.
 
 ## Odebrane na płytce
 
@@ -78,28 +78,34 @@ przygotowaniu. Producent/pcm_adapter konwertuje do istniejącego SRAM FIFO
 stereo32/48kHz. ISR nie dotyka PSRAM ani dekodera. To batch predecode,
 nie streaming ani benchmark czasu rzeczywistego. Brak resamplingu. Start STOP z NVS.
 Klip zawiera ciszę, więc peak tap jest teraz zmienny — nie oczekuj1036.
-Widżety/katalog nadal TEST. Wyłączenie MP3_FIXTURE_TEST wraca do sinusa.
+Widżety/katalog nadal TEST. Obecnie źródło wybiera choice w menuconfig: AAC-LC, MP3 lub sinus.
 
 Log użytkownika dla3f761ae: MP3 PoC ESP_OK,64512B→193536 ramek
 (dokładnie referencja),48kHz/stereo16, peak985, decode337274us, wall501083us,
 stack_hwm22744. PCM low0/hard0/starts1, invalid0, tap_drop/gaps0, max_fill133us.
 Stabilny heap, zapis NVS volume83. Jednorazowo nieczytelny fragment konsoli
-około16s — przyczyna OPEN, zapytać o powtarzalność przy dalszych testach.
+około16s — użytkownik wyjaśnił, że poruszył przewodem UART i polecił kontynuować.
 
-## Następny krok
+## Nowe06e i następny krok
 
-1. Nie powtarzać zaliczonych pomiarów MP3/PCM. Dopytać o czysty odsłuch
-   kanałów L/R/oba i powtarzanego cyklu (log tego nie zastępuje).
-2. Flagi stress nadal n/0. Przy powrocie nieczytelnych znaków konsoli
-   zebrać nowy log; nie przypisywać przyczyny bez danych.
-3. Po odbiorze AAC-LC PoC, potem streaming decode/backpressure bez
-   przechowywania całego PCM i adapter kolejnych formatów/resamplingu.
-   Nie powtarzać odebranego testu PCM stress ani nie ogłaszać radia/DSP.
+Domyślny i lokalny profil to AAC_FIXTURE_TEST=y, MP3/SINE=n, stress n/0.
+Wspólny codec_fixture/decoder zachowuje architekturę batch predecode.
+AAC-LC w ADTS, AAC-Plus wyłączony; HE-AAC nadal OPEN. Oba backendy są
+linkowane w wariantach plikowych, rejestrowany tylko wybrany kodek.
+Klip37039B, referencja193536 ramek stereo16/48kHz, cichy sygnał L/R/oba
+z przerwami. Start STOP, głośność NVS, PLAY może wejść w dowolną fazę.
 
-Weryfikacja: **141 testów hostowych PASS**, ASan/UBSan adaptera/pętli PASS,
-ESP-IDF6.1 build/link PASS. Vendor decoder nie działa na hoście; jego runtime
-na S3 został już potwierdzony logiem. Odsłuch wciąż OPEN. LeakSanitizer wyłączony, bez testu wycieków.
-Licencje/API sprawdzone, manifest/lock przypięte, fixture oryginalny.
+1. Po wgraniu oczekuj `codec_fixture: AAC-LC PoC ESP_OK`; prześlij tę linię.
+2. VOL80–100, PLAY, odsłuch kilku cykli L/R/oba. Sprawdź PLAY/STOP/VOL.
+   Podeślij liczniki PCM i buffers: low0/hard0/invalid0 bez niezamierzonych przerw.
+3. Po odbiorze AAC: streaming decode/backpressure bez całego PCM w PSRAM.
+   Sieć, resampling, HE-AAC, produkcyjny player i DSP nadal OPEN.
+
+Weryfikacja06e: **142 testy hostowe PASS**, ESP-IDF6.1 build/link AAC-LC,
+MP3 i sinus PASS. Końcowy obraz AAC0x808b0B. Runtime AAC na S3 i odsłuch
+OPEN. Dotychczasowy runtime MP3 potwierdzony logiem, bez osobnego opisu
+odsłuchu MP3. Nie powtarzać zaliczonego PCM stress. Wcześniejszy ASan/UBSan
+adaptera/pętli PASS (nie wykonywano ponownie w06e; bez LeakSanitizer).
 Przy pierwszej konfiguracji wymagany dostęp do rejestru Component Manager;
 managed_components ignorowane przez Git, dependencies.lock śledzony.
 

@@ -10,7 +10,7 @@ import wave
 
 ROOT = Path(__file__).resolve().parents[1]
 
-def main():
+def synthetic_pcm():
     rate = 48000
     pcm = bytearray()
     for index in range(rate*4):
@@ -24,6 +24,10 @@ def main():
                 right = value if channels & 2 else 0
         pcm.extend(left.to_bytes(2,'little',signed=True))
         pcm.extend(right.to_bytes(2,'little',signed=True))
+    return rate, pcm
+
+def main():
+    rate, pcm = synthetic_pcm()
     out = ROOT/'assets/audio/channels_48k_stereo.mp3'
     with tempfile.TemporaryDirectory() as directory:
         wav = Path(directory)/'original.wav'

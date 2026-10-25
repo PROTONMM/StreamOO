@@ -416,9 +416,9 @@ oczekiwane liczniki i przywrócenie normalnych flag: [PCM_STRESS_TEST](PCM_STRES
 
 ## Audio06d — MP3 z pliku
 
-Normalne flagi stresu n/0. Nowe MP3_FIXTURE_TEST domyślnie y:
+Normalne flagi stresu n/0. MP3 wybierany obecnie w choice źródła testowego:
 
-1. Po wgraniu poczekaj na `mp3_fixture: MP3 PoC ESP_OK` oraz gotowość
+1. Po wgraniu poczekaj na `codec_fixture: MP3 PoC ESP_OK` oraz gotowość
    audio_control. Podeślij tę linię: input, pcm_frames, rate/channels/bits,
    peak16, decode_us i wall_us. Próbę decode wykonuje ESP32-S3, nie host.
 2. Ustaw VOL80–100, włącz PLAY. Powtarza się około4s klip z ciszą,
@@ -434,4 +434,17 @@ Plik ma64512B. Referencja hosta193536 ramek stereo16/48kHz; PoC dopuszcza
 192000..194688 ze względu na priming/padding i sprawdza cichy peak<=2048.
 Jeśli `MP3 PoC` kończy się błędem, prześlij poprzedzające wiersze mp3_decoder/
 Decode error/vendor — nie włączamy po cichu zastępczego tonu. Adapter na
-razie nie resampluje44100Hz. Wyłączenie MP3_FIXTURE_TEST wraca do sinusa.
+razie nie resampluje44100Hz. Źródło wybierz przez menuconfig: AAC-LC, MP3 albo sinus.
+
+## Audio06e — AAC-LC ADTS (bieżący obraz)
+
+AAC_FIXTURE_TEST=y, stress n/0. Procedura odsłuchu i sterowania jak06d,
+ale oczekuj `codec_fixture: AAC-LC PoC ESP_OK`, input37039B. Referencja
+193536 ramek stereo16/48kHz; dozwolony zakres192000..194560, peak1..2048.
+Prześlij linię PoC i liczniki PCM/buffers po kilku cyklach. Cykliczne cisze
+w klipie są zamierzone. Runtime AAC, kanały i brak zakłóceń wymagają odbioru.
+AAC-Plus jest wyłączony; to nie test HE-AAC ani strumienia sieciowego.
+Profil config/pcm_stress.defaults jawnie wybiera sinus; po stresie wróć
+w menuconfig do AAC-LC oraz stress n/0. Nie powtarzaj odebranego stress
+bez nowego powodu. Wcześniejsze uszkodzenie tekstu UART użytkownik powiązał
+z poruszeniem przewodu; nie zmieniano konfiguracji konsoli.

@@ -76,4 +76,13 @@ realtime. Wymaga odbioru logu MP3 PoC i odsłuchu na ESP32-S3.
 Start nadal STOP, volume z NVS; PLAY odtwarza powtarzaną sekwencję kanałów
 z wbudowanymi przerwami. Widżety/katalog TEST. Peak tap zmienny, nie stałe1036.
 Adapter odrzuca inne rate/bits/channels niż wspierane, bez resamplingu.
-Wyłączenie MP3_FIXTURE_TEST przywraca sinus. AAC i pozostałe kodeki OPEN.
+W06e wybór źródła zastępuje dawny przełącznik MP3.
+
+## Część06e — AAC-LC ADTS
+
+Wspólny adapter MP3/AAC-LC, bez zmiany wersji zależności. AAC-Plus jawnie
+wyłączony; HE-AAC/SBR/PS OPEN. Domyślny wybór źródła to AAC-LC, alternatywy
+MP3 i sinus. Batch decode przed I2S, ten sam adapter PCM/FIFO/tap/gain.
+[ADR0022](adr/0022-aac-lc-adts-file-poc.md). Build trzech wariantów PASS,
+odbiór AAC na sprzęcie OPEN. Następny krok po odbiorze: streaming decode
+z backpressure; aktualny PoC nie mierzy deadline dekodera czasu rzeczywistego.

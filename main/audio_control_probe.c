@@ -1,6 +1,6 @@
 #include "audio_control_probe.h"
 #include "audio_tone.h"
-#include "mp3_fixture.h"
+#include "codec_fixture.h"
 #include "streamoo_audio_gain.h"
 #include "streamoo_pcm.h"
 #include "streamoo_audio_output.h"
@@ -23,7 +23,7 @@ static DRAM_ATTR streamoo_pcm_pipeline_t render;
 static streamoo_pcm_stats_t pcm_stats;
 static streamoo_pcm_block_t producer_block;
 static uint32_t producer_sequence, tap_blocks, tap_peak, tap_gaps;
-#ifndef CONFIG_STREAMOO_MP3_FIXTURE_TEST
+#ifndef CONFIG_STREAMOO_CODEC_FIXTURE_TEST
 static uint32_t producer_phase;
 #endif
 #ifndef CONFIG_STREAMOO_PCM_TAP_DELAY_MS
@@ -35,8 +35,8 @@ static bool tap_alive;
 static bool produce_pcm(void)
 {
     for (unsigned i=0;i<32 && streamoo_pcm_count(&pcm_ring)<32;++i) {
-#ifdef CONFIG_STREAMOO_MP3_FIXTURE_TEST
-        if (!streamoo_mp3_fixture_read(producer_block.samples,STREAMOO_PCM_FRAMES)) return false;
+#ifdef CONFIG_STREAMOO_CODEC_FIXTURE_TEST
+        if (!streamoo_codec_fixture_read(producer_block.samples,STREAMOO_PCM_FRAMES)) return false;
 #else
         if (!streamoo_audio_sine_fill(&producer_phase,producer_block.samples,STREAMOO_PCM_FRAMES)) return false;
 #endif
@@ -89,8 +89,8 @@ static void control_task(void *context)
     streamoo_audio_output_t *output=NULL;
     const streamoo_audio_pins_t pins={CONFIG_STREAMOO_I2S_DOUT,CONFIG_STREAMOO_I2S_BCLK,CONFIG_STREAMOO_I2S_LRCLK};
     esp_err_t error=ESP_OK;
-#ifdef CONFIG_STREAMOO_MP3_FIXTURE_TEST
-    error=streamoo_mp3_fixture_prepare();
+#ifdef CONFIG_STREAMOO_CODEC_FIXTURE_TEST
+    error=streamoo_codec_fixture_prepare();
 #endif
     if (error==ESP_OK && !produce_pcm()) error=ESP_FAIL;
     if (error==ESP_OK) error=streamoo_audio_output_open(pins,controlled_fill,&render,&output);
@@ -98,7 +98,9 @@ static void control_task(void *context)
     portENTER_CRITICAL(&lock);
     state.ready=error==ESP_OK; state.error=error;
     portEXIT_CRITICAL(&lock);
-#ifdef CONFIG_STREAMOO_MP3_FIXTURE_TEST
+#if defined(CONFIG_STREAMOO_AAC_FIXTURE_TEST)
+    const char *source="embedded AAC-LC/ADTS L/R clip";
+#elif defined(CONFIG_STREAMOO_MP3_FIXTURE_TEST)
     const char *source="embedded MP3 L/R clip";
 #else
     const char *source="1kHz stereo sine";
@@ -167,8 +169,8 @@ static void control_task(void *context)
         esp_err_t close_error=streamoo_audio_output_close(output);
         if (close_error!=ESP_OK) ESP_LOGE("audio_control","Close failed: %s",esp_err_to_name(close_error));
     }
-#ifdef CONFIG_STREAMOO_MP3_FIXTURE_TEST
-    streamoo_mp3_fixture_release();
+#ifdef CONFIG_STREAMOO_CODEC_FIXTURE_TEST
+    streamoo_codec_fixture_release();
 #endif
     ESP_LOGE("audio_control","TEST stopped on error: %s",esp_err_to_name(error));
     vTaskDelete(NULL);
@@ -185,7 +187,7 @@ esp_err_t streamoo_audio_control_start(uint8_t volume)
     streamoo_pcm_ring_init(&tap_ring,tap_storage,4);
     streamoo_pcm_pipeline_init(&render,&pcm_ring,&tap_ring);
     tap_alive=true;
-#ifdef CONFIG_STREAMOO_MP3_FIXTURE_TEST
+#ifdef CONFIG_STREAMOO_CODEC_FIXTURE_TEST
     const uint32_t stack_bytes=24576;
 #else
     const uint32_t stack_bytes=4096;

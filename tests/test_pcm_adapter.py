@@ -91,3 +91,25 @@ class PCMAdapterTests(unittest.TestCase):
         clip.cursor=1; before=bytes(clip)
         self.assertFalse(self.lib.streamoo_pcm_clip_read(C.byref(clip),out,1))
         self.assertEqual(bytes(clip),before); self.assertEqual(list(out),[17,19])
+
+    def test_aac_lc_adts_fixture_integrity(self):
+        manifest=json.loads((ROOT/'assets/audio/channels_48k_stereo_aac.json').read_text())
+        data=(ROOT/'assets/audio/channels_48k_stereo.aac').read_bytes()
+        self.assertEqual(hashlib.sha256(data).hexdigest(),manifest['aac_sha256'])
+        self.assertEqual(len(data),manifest['aac_bytes'])
+        offset=frames=0
+        while offset<len(data):
+            h=data[offset:offset+7]
+            self.assertEqual(len(h),7)
+            self.assertEqual(h[0],255); self.assertEqual(h[1]&0xf6,0xf0)
+            self.assertEqual(h[1]&8,0)  # MPEG4
+            self.assertEqual((h[2]>>6)+1,2)  # AAC-LC object type
+            self.assertEqual((h[2]>>2)&15,3)  # 48kHz
+            self.assertEqual(((h[2]&1)<<2)|(h[3]>>6),2)
+            length=((h[3]&3)<<11)|(h[4]<<3)|(h[5]>>5)
+            self.assertGreaterEqual(length,7 if h[1]&1 else 9)
+            self.assertEqual(h[6]&3,0)
+            offset+=length; frames+=1
+        self.assertEqual(offset,len(data))
+        self.assertEqual(frames,189)
+        self.assertEqual(frames*1024,manifest['reference_frames'])
