@@ -896,3 +896,11 @@ Odbiór AAC decode/reset podczas DMA i odsłuch zaliczone. To krótki test,
 nie test długotrwały; MP3 incremental, nowe próby VOL/STOP, sieć i HE-AAC
 nie wynikają z tego logu. Następny zakres: oddzielny interfejs źródła
 skompresowanego i bufor z backpressure. Nie powtarzano buildu/testów kodu.
+
+## Koniec dnia — checkpoint 2026-10-25
+
+Na prośbę użytkownika zakończono pracę po odbiorze AAC incremental06f.
+Kod3b18324, odbiór cfd4917. Szczegóły i kolejność wznowienia w RESUME.md.
+Lokalny profil AAC-LC, stress OFF/tap_delay0. Kolejny etap nie rozpoczęty:
+interfejs źródła skompresowanego i bufor z backpressure, potem reader sieciowy.
+Checkpoint wyłącznie dokumentacyjny; poprzednie wyniki testów bez zmian.

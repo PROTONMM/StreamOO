@@ -4,6 +4,24 @@ Aktualizacja: **2026-10-25, AAC incremental decode06f odebrane logiem i odsłuch
 PCM/rebuffer/tap stress potwierdzone logiem i odsłuchem (`5664a90`).
 Gałąź feature/streamoo-implementation, szczegóły STATUS i ADR0023.
 
+## Checkpoint na koniec dnia — 2026-10-25
+
+Praca zatrzymana na prośbę użytkownika po odbiorze AAC06f.
+Kod: `3b18324`; zapis odbioru: `cfd4917`. Gałąź:
+`feature/streamoo-implementation`. Brak rozpoczętej implementacji kolejnego etapu.
+
+Przy wznowieniu zacznij od interfejsu źródła skompresowanego i ograniczonego
+bufora z backpressure, najpierw z deterministycznym źródłem testowym;
+reader sieciowy będzie następnym krokiem. Zachowaj pojedynczych właścicieli,
+obsługę końca danych/błędu i brak blokowania/alokacji w callbacku I2S.
+Nie powtarzaj odebranych testów AAC06f ani PCM stress bez nowego powodu.
+
+Pozostawiona konfiguracja i obraz: AAC-LC incremental, stress OFF,
+tap_delay0; start STOP i volume/widżet z NVS. Płytka przetestowana przez
+użytkownika, dźwięk OK. Ostatnia weryfikacja kodu:152 testy hostowe,
+ASan/UBSan i build wariantów PASS. Checkpoint zmienia tylko dokumentację;
+nie wykonywano ponownie buildu ani flashowania.
+
 ## Odebrane na płytce
 
 - OLED: HOME/lista, polskie znaki, scroll wyłącznie w lewo, trzy widżety.
