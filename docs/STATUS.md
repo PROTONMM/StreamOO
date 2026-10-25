@@ -9,7 +9,7 @@ Bieżący punkt wznowienia: [RESUME.md](RESUME.md).
 | 03 szkielet | baza zaimplementowana; odbiór sprzętowy i integracyjny OPEN | ESP-IDF v6.1 build PASS; ADR 0002 |
 | 04 UI/SSD1322 | HOME i lista odebrane na OLED; końcowe strojenie fontu OPEN | ADR 0012; odbiór użytkownika |
 | 05 encoder | dekoder/IRQ i gesty odebrane; interaktywny adapter odebrany w trybie A; preferencje NVS odebrane; shutdown/flush OPEN | ADR 0013–0017; 99 testów PASS |
-| 06 audio | I2S/gain odebrane; PCM/rebuffer/tap stress potwierdzone licznikami, odsłuch stress OPEN; dekodery/player OPEN | ADR 0018–0020; 132 testy PASS; log użytkownika |
+| 06 audio | I2S/gain odebrane; PCM/rebuffer/tap stress potwierdzone logiem i odsłuchem; dekodery/player OPEN | ADR 0018–0020; 132 testy PASS; log użytkownika |
 | 07 DSP | NIEZAIMPLEMENTOWANE | — |
 | 08 stacje | NIEZAIMPLEMENTOWANE | — |
 | 09 sieć | NIEZAIMPLEMENTOWANE | — |
@@ -743,3 +743,14 @@ Lokalny sdkconfig przywrócono do PCM_STALL_TEST=n / TAP_DELAY_MS=0;
 fragment stresu pozostaje opcjonalny, NVS nie kasowano. Firmware wgrany
 na płytkę nie został przez agenta zmieniony. Zmiana dokumentacyjna;
 git diff --check PASS. Normalny profil przebudowany bez nowych zmian kodu.
+
+## Odbiór odsłuchu PCM stress (2026-10-25)
+
+Na pytanie, czy była tylko jedna łagodna przerwa, a potem ton grał czysto,
+użytkownik potwierdził: „Tak, grał czysto”. Łącznie z poprzednim logiem
+zamknięto odbiór tego scenariusza: kontrolowany niedobór/powrót oraz
+przeciążony tap bez kolejnych słyszalnych zakłóceń. Nie jest to pomiar
+jitter/latencji, test wielogodzinny ani gwarancja dla dowolnego obciążenia.
+Normalny lokalny profil n/0 pozostaje przywrócony. Dalej: wybór/PoC dekodera
+i adapter PCM po audycie API/licencji/ESP-IDF6.1. Zmiana dokumentacyjna;
+git diff --check PASS, bez nowego buildu/flash.

@@ -1,7 +1,6 @@
 # Punkt wznowienia StreamOO
 
-Aktualizacja: **2026-10-25, PCM/rebuffer/tap potwierdzone licznikami;
-odsłuch stress nadal OPEN**.
+Aktualizacja: **2026-10-25, PCM/rebuffer/tap potwierdzone logiem i odsłuchem**.
 Odebrany06b: kod `a62eeb6`, potwierdzenie „Działa, ładnie”, odbiór `eaad2e9`.
 Gałąź feature/streamoo-implementation; szczegóły w STATUS i ADR0020.
 
@@ -58,8 +57,8 @@ NVS volume38. To nie jest test VOL0/50/100 ani wymuszonych awarii.
 Log użytkownika dla3659b69: stall16.202–16.602s (400ms), potem do70.882s
 mode ACTIVE/queued28, low1/hard0/starts2 bez kolejnych zdarzeń. max_fill113us,
 invalid0; tap_drop/tap_gaps rosną przy tap-delay100ms, tap_peak16=1036.
-Przyrost1000 buforów/5s zachowany. Test liczników zaliczony; odsłuch jednej
-łagodnej przerwy i późniejszego czystego tonu niepotwierdzony słownie.
+Przyrost1000 buforów/5s zachowany. Test liczników i odsłuch zaliczone: użytkownik potwierdził jedną łagodną
+przerwę i potem czysty ton („Tak, grał czysto”).
 
 Lokalny sdkconfig przywrócono do **PCM_STALL_TEST=n / PCM_TAP_DELAY_MS=0**
 i przebudowano zwykły profil. Płytka użytkownika nadal może mieć firmware
@@ -69,9 +68,8 @@ NVS pozostaje bez zmian; nie włączać stresu przypadkowo przy dekoderach.
 
 ## Następny krok
 
-1. Zapytać tylko o brakujące potwierdzenie odsłuchu stress: czy była jedna
-   łagodna przerwa i potem ciągły ton. Nie powtarzać zaliczonych liczników.
-2. Następnie wybór/PoC dekodera i adapter PCM z audytem API/licencji oraz
+1. Nie powtarzać odebranego PCM stress: log i odsłuch zostały potwierdzone.
+2. Wybór/PoC dekodera i adapter PCM z audytem API/licencji oraz
    kompatybilności ESP-IDF6.1. Nie deklarować gotowego streamingu/DSP.
 
 Ostatnia weryfikacja: **132 testy PASS**, ASan/UBSan 11 testów PCM PASS,

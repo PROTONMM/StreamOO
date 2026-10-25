@@ -58,5 +58,6 @@ mierzy pełnego jitter, latencji IRQ lub wykrywania wszystkich DMA replay.
 
 Stall trwał400ms; po powrocie low1/hard0/starts2 pozostały stałe do70.882s,
 max_fill113us i invalid0. Tap celowo tracił bloki, peak wrócił do1036.
-Odbiór licznikowy pozytywny; odsłuch nie został jeszcze potwierdzony słownie.
+Odbiór licznikowy pozytywny. Użytkownik następnie potwierdził odsłuch:
+jedna łagodna przerwa, potem czysty ton („Tak, grał czysto”).
 Po próbie lokalny sdkconfig przywrócono do n/0 i przebudowano normalny profil.
