@@ -9,7 +9,7 @@ Punkt wznowienia po zakończeniu pracy 2026-10-24: [RESUME.md](RESUME.md).
 | 03 szkielet | baza zaimplementowana; odbiór sprzętowy i integracyjny OPEN | ESP-IDF v6.1 build PASS; ADR 0002 |
 | 04 UI/SSD1322 | HOME i lista odebrane na OLED; końcowe strojenie fontu OPEN | ADR 0012; odbiór użytkownika |
 | 05 encoder | dekoder/IRQ i gesty odebrane; interaktywny adapter odebrany w trybie A; preferencje NVS odebrane; shutdown/flush OPEN | ADR 0013–0017; 99 testów PASS |
-| 06 audio | I2S odebrane; gain/rampa i sterowanie tonem 06b HARDWARE_TEST_PENDING; player/pipeline OPEN | ADR 0018–0019; 121 testów PASS |
+| 06 audio | I2S oraz gain/rampa i PLAY/STOP na tonie odebrane; player/pipeline OPEN | ADR 0018–0019; 121 testów PASS; odbiór użytkownika |
 | 07 DSP | NIEZAIMPLEMENTOWANE | — |
 | 08 stacje | NIEZAIMPLEMENTOWANE | — |
 | 09 sieć | NIEZAIMPLEMENTOWANE | — |
@@ -641,3 +641,13 @@ Zmiana dokumentacyjna; git diff --check PASS, bez nowego buildu/flash.
   Brak pomiaru jitter/latencji/underrun; etap06 i cały projekt nieukończone.
 - Kolejno: odbiór06b, następnie PCM FIFO/tap przed gain i przygotowanie
   źródła PCM/dekoderów; pełny player, sieć i DSP nadal OPEN.
+
+## Odbiór sterowanego audio 06b (2026-10-25)
+
+Użytkownik potwierdził „Działa, ładnie” po instrukcji testu rzeczywistego
+VOL/gain z rampą i PLAY/STOP na źródle testowym, w kontekście `a62eeb6`.
+Zapisano pozytywny odbiór funkcjonalny. Bez osobnego hasha wgranego obrazu,
+logu max_fill i pomiarów latencji/jitter/underrun; nie rozszerzamy odbioru
+na testy obciążenia ani niezależny pomiar braku trzasków.
+Kolejny zakres: PCM FIFO i tap przed gain, przygotowanie źródła PCM/dekoderów.
+Zmiana dokumentacyjna; git diff --check PASS, bez nowego buildu/flash.

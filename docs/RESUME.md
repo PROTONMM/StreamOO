@@ -1,6 +1,7 @@
 # Punkt wznowienia StreamOO
 
-Aktualizacja: **2026-10-25, etap 06b gotowy programowo, odbiór sprzętowy OPEN**.
+Aktualizacja: **2026-10-25, etap 06b odebrany funkcjonalnie przez użytkownika**.
+Kod: `a62eeb6`; potwierdzenie: „Działa, ładnie”.
 Gałąź: feature/streamoo-implementation. Szczegóły i wyniki w STATUS.md.
 
 ## Odebrane na płytce
@@ -13,7 +14,7 @@ Gałąź: feature/streamoo-implementation. Szczegóły i wyniki w STATUS.md.
 - Audio06a: skończony test L1k/R2k/oba1k na I2S DOUT48/BCLK47/WS21,
   Philips stereo32/48kHz, bez MCLK. Kod edb7c63, odbiór80e146c.
 
-## Nowe w06b — jeszcze do sprawdzenia na sprzęcie
+## Nowe w06b — odebrane funkcjonalnie
 
 Nowy domyślny STREAMOO_AUDIO_CONTROL_TEST zastępuje skończony test
 ciągłym tonem1kHz stereo. Start w **STOP**, volume wraca z NVS.
@@ -36,10 +37,10 @@ radia nie rozstrzygnięte; kontrolowany shutdown/flush NVS nadal OPEN.
 
 ## Następny krok
 
-1. Odbiór06b według HARDWARE_BRINGUP: VOL, mute0, PLAY/STOP, brak trzasków,
-   widget/lista bez wpływu na ton, NVS/reset oraz log audio_control max_fill.
-2. Dopiero po odbiorze kolejny mały zakres: PCM FIFO i tap przed gain,
-   przygotowanie źródła PCM/dekoderów, bez deklarowania gotowego streamingu.
+1. Kolejny mały zakres: PCM FIFO i tap przed gain, przygotowanie źródła
+   PCM/dekoderów, bez deklarowania gotowego streamingu.
+2. Nie powtarzać odbioru funkcjonalnego06b od zera. Pomiary max_fill,
+   jitter/latencji/underrun i próby obciążeniowe nadal pozostają OPEN.
 
 Ostatnia weryfikacja: **121 testów PASS**, ASan/UBSan gain/model/source
 i UI/control PASS, ESP-IDF6.1 build PASS. LeakSanitizer pod ptrace wyłączony;
