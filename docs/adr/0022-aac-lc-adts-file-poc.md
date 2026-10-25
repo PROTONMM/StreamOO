@@ -1,6 +1,6 @@
 # ADR0022 — AAC-LC ADTS przed I2S
 
-Data:2026-10-25. Status: wdrożone; odbiór sprzętowy AAC OPEN.
+Data:2026-10-25. Status: wdrożone; decode/PCM na S3 potwierdzone, odsłuch OPEN.
 
 ## Kontekst
 
@@ -46,3 +46,10 @@ Końcowy lokalny obraz AAC, stress n/0. Nie flashowano urządzenia.
 Odbiór: AAC-LC PoC ESP_OK, poprawny odsłuch L/R/oba kilku cykli,
 PLAY/STOP/VOL i stabilne PCM low0/hard0/invalid0. Potem streaming decode
 z backpressure zamiast przechowywania całego PCM.
+
+### Wynik runtime
+
+Log użytkownika dla e73523d:37039B→193536 ramek,48kHz/stereo16, peak1043,
+decode309922us/wall406630us, stack_hwm22552B. Do36s queued28/ACTIVE,
+low0/hard0/starts1, invalid0, tap_drop/gaps0, max_fill129us i stabilny heap.
+Dekodowanie/PCM PASS; log nie zastępuje odsłuchu L/R/oba (OPEN).

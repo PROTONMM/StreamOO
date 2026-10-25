@@ -9,7 +9,7 @@ Bieżący punkt wznowienia: [RESUME.md](RESUME.md).
 | 03 szkielet | baza zaimplementowana; odbiór sprzętowy i integracyjny OPEN | ESP-IDF v6.1 build PASS; ADR 0002 |
 | 04 UI/SSD1322 | HOME i lista odebrane na OLED; końcowe strojenie fontu OPEN | ADR 0012; odbiór użytkownika |
 | 05 encoder | dekoder/IRQ i gesty odebrane; interaktywny adapter odebrany w trybie A; preferencje NVS odebrane; shutdown/flush OPEN | ADR 0013–0017; 99 testów PASS |
-| 06 audio | I2S/gain/PCM stress odebrane; MP3 decode/PCM potwierdzone logiem; AAC-LC PoC gotowy, odbiór sprzętowy OPEN; streaming/player OPEN | ADR 0018–0022; 142 testy hostowe PASS; build trzech źródeł PASS |
+| 06 audio | I2S/gain/PCM stress odebrane; MP3 decode/PCM potwierdzone logiem; AAC-LC decode/PCM potwierdzone logiem, odsłuch OPEN; streaming/player OPEN | ADR 0018–0022; 142 testy hostowe PASS; build trzech źródeł PASS |
 | 07 DSP | NIEZAIMPLEMENTOWANE | — |
 | 08 stacje | NIEZAIMPLEMENTOWANE | — |
 | 09 sieć | NIEZAIMPLEMENTOWANE | — |
@@ -835,3 +835,17 @@ Zmiana dokumentacyjna; git diff --check PASS, bez nowego buildu/flash.
 - Licencje i attribution AAC sprawdzone w przypiętym pakiecie i oficjalnym
   COPYRIGHT Espressif; zachowane Espressif Modified MIT ESP-only i Apache2.0.
 - ADR0022. Odbiór AAC na ESP32-S3/odsłuch OPEN. Nie wykonano flash/erase.
+
+## Odbiór logu06e — AAC-LC na ESP32-S3 (2026-10-25)
+
+Firmware e73523d, log użytkownika: AAC-LC PoC ESP_OK, input37039B,
+pcm_frames193536 (dokładnie referencja),48000Hz/stereo16, peak1043,
+decode_us309922, wall_us406630, stack_hwm22552B. Dekodowanie pliku PASS.
+Profil normalny: producer_stall OFF, tap_delay0, start STOP, volume83 z NVS;
+LONG w8.255s. Do36.335s PCM queued28/ACTIVE, low0/hard0/starts1,
+invalid0, tap_drop0/tap_gaps0, max_fill129us. Bufory rosną1000/5s.
+Heap internal235415B i PSRAM7328984B stabilne w próbkach10–30s;
+minimum internal188236B, PSRAM7293140B. Zmienny peak0..1043 odpowiada
+klipowi z ciszą. Brak błędów w dostarczonym logu; nie jest to pomiar jitter
+ani test długotrwały. Odsłuch L/R/oba i brak słyszalnych zakłóceń OPEN.
+Zmiana wyłącznie dokumentacji; nie powtarzano buildu/testów kodu.
