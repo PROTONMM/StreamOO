@@ -53,6 +53,16 @@ Log użytkownika dla368c724: max_fill129us, invalid0, queued28/ACTIVE,
 low0/hard0/starts1, tap_drop0/tap_gaps0, peak1036; stabilnie także po zapisie
 NVS volume38. To nie jest test VOL0/50/100 ani wymuszonych awarii.
 
+## Aktywny lokalny profil testowy — UWAGA przy wznowieniu
+
+Bieżący sdkconfig ma PCM_STALL_TEST=y i PCM_TAP_DELAY_MS=100, przygotowane
+na odbiór sprzętowy. Normalne domyślne n/0 nie są zmienione. Po flash
+oczekiwany komunikat producer_stall=ON tap_delay_ms=100; po około3s od
+pierwszego PLAY jedna celowa przerwa i samoczynny powrót. Po rebuffer:
+low1/hard0/starts2, a tap_drop/tap_gaps rosną bez kolejnych przerw dźwięku.
+Instrukcja PCM_STRESS_TEST.md. Po odbiorze przywrócić lokalnie n/0 przed
+kolejnym zwykłym buildem/dekoderem; NVS nie kasować.
+
 ## Następny krok
 
 1. Odbiór06c według HARDWARE_BRINGUP: zwykły ton/VOL/PLAY/UI/NVS, log

@@ -705,3 +705,18 @@ odsłuchu i testów wymuszonego niedoboru/tap-delay; pozostają OPEN.
 129us to maksimum mierzonego callbacku renderowania w tym przebiegu, nie
 WCET całego systemu ani pomiar latencji IRQ, jitter i DMA replay.
 Zmiana dokumentacyjna; git diff --check PASS, bez nowego buildu/flash.
+
+## Profil odbioru PCM stress (2026-10-25)
+
+- Po stabilnym logu06c przygotowano bieżący lokalny sdkconfig/build z
+  PCM_STALL_TEST=y oraz PCM_TAP_DELAY_MS=100. Normalne domyślne n/0
+  pozostają niezmienione; odtwarzalny fragment config/pcm_stress.defaults.
+- Algorytm PCM/gain bez zmian. Dodano startowy komunikat jawnie pokazujący
+  flagi testu, instrukcję PCM_STRESS_TEST.md i ostrzeżenie w RESUME o aktywnym
+  lokalnym profilu. Rozszerzono istniejący ADR0020 o sposób odbioru.
+- Oczekiwane po pierwszym PLAY: jedna celowa przerwa, samoczynny powrót,
+  low1/hard0/starts2, potem stabilny ton przy rosnących tap_drop/tap_gaps.
+  Wymaga odsłuchu i logu użytkownika; HARDWARE_TEST_PENDING.
+- 132 testy unittest PASS, ESP-IDF6.1 build z obiema flagami PASS,
+  git diff --check PASS. Bez flash/erase/eFuse. Po teście przywrócić lokalnie
+  n/0 przed zwykłym buildem i rozpoczęciem dekoderów; NVS pozostawić.

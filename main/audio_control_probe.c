@@ -85,6 +85,13 @@ static void control_task(void *context)
     state.ready=error==ESP_OK; state.error=error;
     portEXIT_CRITICAL(&lock);
     ESP_LOGI("audio_control","TEST 1kHz stereo, source -30dBFS peak; initial STOP; gain 0..100, ramp 50ms; %s",esp_err_to_name(error));
+#ifdef CONFIG_STREAMOO_PCM_STALL_TEST
+    const char *stall_profile="ON";
+#else
+    const char *stall_profile="OFF";
+#endif
+    ESP_LOGI("audio_control","PCM test profile: producer_stall=%s tap_delay_ms=%d",
+             stall_profile,CONFIG_STREAMOO_PCM_TAP_DELAY_MS);
     int64_t last_log=esp_timer_get_time();
     uint32_t last_buffers=0;
 #ifdef CONFIG_STREAMOO_PCM_STALL_TEST

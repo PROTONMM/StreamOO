@@ -83,3 +83,12 @@ polityki. Potrzebne są pomiary max_fill, obciążenia i ciągłości na sprzęc
 Brak dekoderów, sieci, adaptive buffer, runtime zmiany formatu i generacji
 źródeł/flush przy zmianie stacji. Reset aktywnego pierścienia jest zabroniony;
 przyszły player musi skoordynować producenta/konsumenta i stale-response guard.
+
+## Profil odbioru sprzętowego
+
+Po pozytywnym logu stabilnej pracy przygotowano fragment
+config/pcm_stress.defaults i lokalny build z pause400ms oraz tap-delay100ms.
+Połączony scenariusz ma dać jedną celową przerwę, a następnie stabilny
+powrót przy stale przeciążonym tap. Komunikat startowy ujawnia obie flagi,
+żeby odróżnić profil od normalnego firmware. Nie zmieniono domyślnych n/0
+ani algorytmu PCM; instrukcja i granice odbioru w PCM_STRESS_TEST.md.

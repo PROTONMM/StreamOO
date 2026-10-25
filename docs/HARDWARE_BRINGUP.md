@@ -406,3 +406,10 @@ Podeślij log PCM oraz `buffers/max_fill/invalid`. Wzrost low bez celowego
 stall, hard>0 lub słyszalne zakłócenia wymagają analizy. Sam max_fill<5ms
 nie dowodzi braku jitter/DMA replay. Testy zaniku danych i obciążenia są
 osobnym odbiorem, nie wynikają z wcześniejszego potwierdzenia06b.
+
+## Gotowy połączony profil PCM stress
+
+Po logu stabilnego06c przygotowano bieżący lokalny build z producer_stall=ON
+oraz tap_delay_ms=100. Jedna celowa przerwa po pierwszym PLAY jest oczekiwana;
+później ton powinien być ciągły pomimo strat analizy. Pełna instrukcja,
+oczekiwane liczniki i przywrócenie normalnych flag: [PCM_STRESS_TEST](PCM_STRESS_TEST.md).
