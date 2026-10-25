@@ -50,3 +50,15 @@ Files: `assets/fonts/MonaspaceKrypton-Regular.otf`, source manifest,
 regeneration process are documented in `assets/fonts/README.md`.
 
 The station-list reference `tests/fixtures/station_list.4bpp` contains the same font shapes described above: StreamOO UI16 (OFL-1.1) and the user-authorized small PL font with modification license still under review.
+
+## Espressif audio codec 2.6.2 — MP3 PoC
+
+Pinned managed component, used only on ESP32-S3 under **Espressif Modified
+MIT** (Espressif-only restriction, not unrestricted MIT). Complete license:
+[Espressif notice](licenses/Espressif-Audio-Codec-Modified-MIT.txt).
+Vendor attribution for MP3: Android Open Source Project2005–2008, Apache2.0;
+[Apache text](licenses/Apache-2.0.txt) and [version/audit/source details](licenses/ESP-Audio-Codec-NOTICE.md).
+Only MP3 is registered; other codecs remain unimplemented by StreamOO.
+Host tests do not use the vendor binaries. FFmpeg/libmp3lame are host fixture
+generation/reference tools, not linked target dependencies. No GPL implementation
+is copied to firmware. The synthetic MP3 contains no external recording.

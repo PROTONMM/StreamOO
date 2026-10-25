@@ -55,3 +55,8 @@ Etap06c dodaje FIFO PCM160ms i niezależne odgałęzienie przed gain.
 Brak zapasu uruchamia wyciszenie/rebuffer; przeciążony tap odrzuca bloki
 bez zatrzymywania audio. Konsola podaje liczniki i debug peak przed volume.
 Opcje testowe stall/tap-delay są domyślnie wyłączone. Widżety nadal TEST.
+
+Etap06d domyślnie wybiera własny plik MP3 zamiast sinusa. Na starcie
+ESP32-S3 dekoduje klip do PSRAM; PLAY odtwarza zapętlone sygnały kanałów
+z przerwami. Log MP3 PoC i odsłuch są nowym testem sprzętowym. Brak sieci
+i resamplingu; widżety TEST. Licencje komponentu w THIRD_PARTY_NOTICES.

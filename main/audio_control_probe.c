@@ -1,5 +1,6 @@
 #include "audio_control_probe.h"
 #include "audio_tone.h"
+#include "mp3_fixture.h"
 #include "streamoo_audio_gain.h"
 #include "streamoo_pcm.h"
 #include "streamoo_audio_output.h"
@@ -21,19 +22,28 @@ static DRAM_ATTR streamoo_pcm_ring_t pcm_ring, tap_ring;
 static DRAM_ATTR streamoo_pcm_pipeline_t render;
 static streamoo_pcm_stats_t pcm_stats;
 static streamoo_pcm_block_t producer_block;
-static uint32_t producer_phase, producer_sequence, tap_blocks, tap_peak, tap_gaps;
+static uint32_t producer_sequence, tap_blocks, tap_peak, tap_gaps;
+#ifndef CONFIG_STREAMOO_MP3_FIXTURE_TEST
+static uint32_t producer_phase;
+#endif
 #ifndef CONFIG_STREAMOO_PCM_TAP_DELAY_MS
 #define CONFIG_STREAMOO_PCM_TAP_DELAY_MS 0
 #endif
 _Static_assert(STREAMOO_PCM_FRAMES==STREAMOO_AUDIO_DMA_FRAMES,"PCM and DMA blocks must match");
 static bool tap_alive;
 
-static void produce_pcm(void)
+static bool produce_pcm(void)
 {
     for (unsigned i=0;i<32 && streamoo_pcm_count(&pcm_ring)<32;++i) {
-        streamoo_audio_sine_fill(&producer_phase,producer_block.samples,STREAMOO_PCM_FRAMES);
-        streamoo_pcm_push(&pcm_ring,producer_block.samples,producer_sequence++);
+#ifdef CONFIG_STREAMOO_MP3_FIXTURE_TEST
+        if (!streamoo_mp3_fixture_read(producer_block.samples,STREAMOO_PCM_FRAMES)) return false;
+#else
+        if (!streamoo_audio_sine_fill(&producer_phase,producer_block.samples,STREAMOO_PCM_FRAMES)) return false;
+#endif
+        if (!streamoo_pcm_push(&pcm_ring,producer_block.samples,producer_sequence)) return false;
+        ++producer_sequence;
     }
+    return true;
 }
 static void tap_task(void *context)
 {
@@ -78,13 +88,22 @@ static void control_task(void *context)
     (void)context;
     streamoo_audio_output_t *output=NULL;
     const streamoo_audio_pins_t pins={CONFIG_STREAMOO_I2S_DOUT,CONFIG_STREAMOO_I2S_BCLK,CONFIG_STREAMOO_I2S_LRCLK};
-    produce_pcm();
-    esp_err_t error=streamoo_audio_output_open(pins,controlled_fill,&render,&output);
+    esp_err_t error=ESP_OK;
+#ifdef CONFIG_STREAMOO_MP3_FIXTURE_TEST
+    error=streamoo_mp3_fixture_prepare();
+#endif
+    if (error==ESP_OK && !produce_pcm()) error=ESP_FAIL;
+    if (error==ESP_OK) error=streamoo_audio_output_open(pins,controlled_fill,&render,&output);
     if (error==ESP_OK && xTaskCreate(tap_task,"pcm_tap",4096,NULL,1,NULL)!=pdPASS) error=ESP_ERR_NO_MEM;
     portENTER_CRITICAL(&lock);
     state.ready=error==ESP_OK; state.error=error;
     portEXIT_CRITICAL(&lock);
-    ESP_LOGI("audio_control","TEST 1kHz stereo, source -30dBFS peak; initial STOP; gain 0..100, ramp 50ms; %s",esp_err_to_name(error));
+#ifdef CONFIG_STREAMOO_MP3_FIXTURE_TEST
+    const char *source="embedded MP3 L/R clip";
+#else
+    const char *source="1kHz stereo sine";
+#endif
+    ESP_LOGI("audio_control","TEST source=%s; initial STOP; gain 0..100, ramp 50ms; %s",source,esp_err_to_name(error));
 #ifdef CONFIG_STREAMOO_PCM_STALL_TEST
     const char *stall_profile="ON";
 #else
@@ -124,7 +143,7 @@ static void control_task(void *context)
             if (!stall) { stall_done=true; ESP_LOGI("audio_control","TEST PCM producer resumed"); }
         }
 #endif
-        if (!stall) produce_pcm();
+        if (!stall && !produce_pcm()) error=ESP_FAIL;
         if (now-last_log>=5000000) {
             streamoo_audio_stats_t stats;
             streamoo_audio_output_stats(output,&stats);
@@ -148,6 +167,9 @@ static void control_task(void *context)
         esp_err_t close_error=streamoo_audio_output_close(output);
         if (close_error!=ESP_OK) ESP_LOGE("audio_control","Close failed: %s",esp_err_to_name(close_error));
     }
+#ifdef CONFIG_STREAMOO_MP3_FIXTURE_TEST
+    streamoo_mp3_fixture_release();
+#endif
     ESP_LOGE("audio_control","TEST stopped on error: %s",esp_err_to_name(error));
     vTaskDelete(NULL);
 }
@@ -163,7 +185,12 @@ esp_err_t streamoo_audio_control_start(uint8_t volume)
     streamoo_pcm_ring_init(&tap_ring,tap_storage,4);
     streamoo_pcm_pipeline_init(&render,&pcm_ring,&tap_ring);
     tap_alive=true;
-    if (xTaskCreate(control_task,"audio_control",4096,NULL,4,NULL)!=pdPASS) {
+#ifdef CONFIG_STREAMOO_MP3_FIXTURE_TEST
+    const uint32_t stack_bytes=24576;
+#else
+    const uint32_t stack_bytes=4096;
+#endif
+    if (xTaskCreate(control_task,"audio_control",stack_bytes,NULL,4,NULL)!=pdPASS) {
         vQueueDelete(commands); commands=NULL; return ESP_ERR_NO_MEM;
     }
     return ESP_OK;

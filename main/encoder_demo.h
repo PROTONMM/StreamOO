@@ -10,6 +10,7 @@ typedef struct {
     streamoo_control_command_t control;
     streamoo_control_post_fn audio_post;
     void *audio_context;
+    streamoo_ui_text_t audio_title;
 } streamoo_encoder_demo_t;
 bool streamoo_encoder_demo_init(streamoo_encoder_demo_t *demo);
 bool streamoo_encoder_demo_input(streamoo_encoder_demo_t *demo,

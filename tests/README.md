@@ -174,3 +174,17 @@ Test dwóch wątków nie jest dowodem wykrywania wszystkich wyścigów; ThreadSa
 nie był uruchamiany. Na target sprawdzono natywne load/store z barierami,
 brak helperów __atomic, IRAM funkcji i wewnętrzny RAM tablic. Odbiór FreeRTOS,
 DMA, słyszalnego rebuffer i przeciążenia tap pozostaje sprzętowy.
+
+MP3/adapter06d: 9 nowych testów, łącznie141. Wszystkie65536 wartości s16,
+mono/stereo/endianness/unaligned, błędne formaty i granice, zawijanie pętli
+w bloku, hash/168 nagłówków ramek fixture. Nie wykonują vendorowego dekodera
+na hoście. Jego działanie/metadane i odsłuch wymagają ESP32-S3.
+
+```sh
+cc -std=c11 -Wall -Wextra -Werror -fsanitize=address,undefined -fno-omit-frame-pointer -g -Icomponents/pcm_adapter/include components/pcm_adapter/streamoo_pcm_adapter.c tests/pcm_adapter_sanitizer.c -o /tmp/streamoo-pcm-adapter-sanitizer
+ASAN_OPTIONS=detect_leaks=0 /tmp/streamoo-pcm-adapter-sanitizer
+```
+
+ASan/UBSan konwersji i pętli PASS; LeakSanitizer wyłączony pod ptrace, bez
+testu wycieków. FFmpeg służy do generowania/referencji własnego klipu,
+nie jest linkowany do firmware. Licencje vendor sprawdzone, binaria ESP-only.

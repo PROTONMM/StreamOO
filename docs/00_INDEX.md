@@ -63,3 +63,5 @@ Etap06b: `adr/0019-controlled-audio-gain-ramp.md`.
 Etap06c: `adr/0020-pcm-fifo-and-pre-gain-tap.md`.
 
 Odbiór niedoboru/przeciążenia PCM: `PCM_STRESS_TEST.md`, fragment `../config/pcm_stress.defaults`.
+
+Etap06d — pierwszy MP3: `adr/0021-mp3-decoder-file-poc.md`, `../assets/audio/README.md`.

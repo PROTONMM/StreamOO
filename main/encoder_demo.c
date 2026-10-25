@@ -78,6 +78,7 @@ bool streamoo_encoder_demo_draw(streamoo_encoder_demo_t *d, uint8_t *frame,
     static const char audible[]="TEST: ton 1kHz, widżety TEST";
     s.title=d->audio_post ? (streamoo_ui_text_t){(const uint8_t *)audible,sizeof audible-1} :
                             (streamoo_ui_text_t){(const uint8_t *)silent,sizeof silent-1};
+    if (d->audio_post && d->audio_title.data) s.title=d->audio_title;
     for (unsigned i=0; i<24; ++i) {
         unsigned phase=(unsigned)(now%2000+i*61)%2000;
         s.visualization.bands[i]=d->running ? (phase<1000 ? phase : 2000-phase)*32 : 0;

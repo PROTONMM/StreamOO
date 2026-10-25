@@ -413,3 +413,25 @@ Po logu stabilnego06c przygotowano bieżący lokalny build z producer_stall=ON
 oraz tap_delay_ms=100. Jedna celowa przerwa po pierwszym PLAY jest oczekiwana;
 później ton powinien być ciągły pomimo strat analizy. Pełna instrukcja,
 oczekiwane liczniki i przywrócenie normalnych flag: [PCM_STRESS_TEST](PCM_STRESS_TEST.md).
+
+## Audio06d — MP3 z pliku
+
+Normalne flagi stresu n/0. Nowe MP3_FIXTURE_TEST domyślnie y:
+
+1. Po wgraniu poczekaj na `mp3_fixture: MP3 PoC ESP_OK` oraz gotowość
+   audio_control. Podeślij tę linię: input, pcm_frames, rate/channels/bits,
+   peak16, decode_us i wall_us. Próbę decode wykonuje ESP32-S3, nie host.
+2. Ustaw VOL80–100, włącz PLAY. Powtarza się około4s klip z ciszą,
+   lewym1kHz, prawym2kHz i obiema stronami1kHz. PLAY może wejść w dowolne
+   miejsce cyklu — źródło biegnie również w STOP. Posłuchaj kilku cykli.
+3. VOL/PLAY/STOP i lista/widżety działają jak poprzednio. Nazwy stacji nadal
+   testowe, zmiana nazwy nie wybiera innego pliku. NVS pozostaje zachowane.
+4. Podaj `audio_control: buffers...` i `PCM queued...`. Oczekiwane ACTIVE,
+   low0/hard0, invalid0, brak niezamierzonych przerw. Cisza zakodowana w
+   klipie jest oczekiwana; peak tap zmienia się, nie oczekuj stałego1036.
+
+Plik ma64512B. Referencja hosta193536 ramek stereo16/48kHz; PoC dopuszcza
+192000..194688 ze względu na priming/padding i sprawdza cichy peak<=2048.
+Jeśli `MP3 PoC` kończy się błędem, prześlij poprzedzające wiersze mp3_decoder/
+Decode error/vendor — nie włączamy po cichu zastępczego tonu. Adapter na
+razie nie resampluje44100Hz. Wyłączenie MP3_FIXTURE_TEST wraca do sinusa.

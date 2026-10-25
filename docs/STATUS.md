@@ -9,7 +9,7 @@ Bieżący punkt wznowienia: [RESUME.md](RESUME.md).
 | 03 szkielet | baza zaimplementowana; odbiór sprzętowy i integracyjny OPEN | ESP-IDF v6.1 build PASS; ADR 0002 |
 | 04 UI/SSD1322 | HOME i lista odebrane na OLED; końcowe strojenie fontu OPEN | ADR 0012; odbiór użytkownika |
 | 05 encoder | dekoder/IRQ i gesty odebrane; interaktywny adapter odebrany w trybie A; preferencje NVS odebrane; shutdown/flush OPEN | ADR 0013–0017; 99 testów PASS |
-| 06 audio | I2S/gain odebrane; PCM/rebuffer/tap stress potwierdzone logiem i odsłuchem; dekodery/player OPEN | ADR 0018–0020; 132 testy PASS; log użytkownika |
+| 06 audio | I2S/gain/PCM stress odebrane; MP3 z pliku 06d HARDWARE_TEST_PENDING; AAC/player OPEN | ADR 0018–0021; 141 testów hostowych PASS |
 | 07 DSP | NIEZAIMPLEMENTOWANE | — |
 | 08 stacje | NIEZAIMPLEMENTOWANE | — |
 | 09 sieć | NIEZAIMPLEMENTOWANE | — |
@@ -754,3 +754,43 @@ jitter/latencji, test wielogodzinny ani gwarancja dla dowolnego obciążenia.
 Normalny lokalny profil n/0 pozostaje przywrócony. Dalej: wybór/PoC dekodera
 i adapter PCM po audycie API/licencji/ESP-IDF6.1. Zmiana dokumentacyjna;
 git diff --check PASS, bez nowego buildu/flash.
+
+## Etap06d — pierwszy MP3 i konwersja PCM (2026-10-25)
+
+- Zakończono badanie wersji/API/licencji przed integracją: oficjalny
+  espressif/esp_audio_codec2.6.2, wymóg IDF>=4.4, biblioteki S3, dokładny
+  pin i dependencies.lock (hash a5b9275af74247e3ce536d16a7080e4d77207a185b63e1bea368eb4d57176c2b).
+  Licencja Espressif Modified MIT (ESP-only), MP3 wg vendor Apache2/Android.
+  Zachowano notices/teksty; bez kodu GPL w tej integracji.
+- Własny decoder rejestruje tylko MP3 i używa Simple Decoder; fragmenty
+  nie muszą pokrywać ramek. Jawne consumed/produced/needed/vendor status,
+  metadane i close, jeden właściciel zadania. ELF zawiera MP3 open/decode,
+  bez AAC/Opus/FLAC open/decode. Build/link to nie test działania dekodera.
+- Własny pcm_adapter:16LE mono/stereo48kHz do stereo32, wszystkie wartości
+  s16 bez signed-shift UB, byte loads dla unaligned, odrzucanie unsupported
+  rate/bits/channels bez resamplingu. Pętla PCM zawija także w środku bloku.
+- Oryginalny klip matematyczny4s, MP3 CBR128k/48k stereo,64512B/168 ramek.
+  FFmpeg/libmp3lame wyłącznie narzędziami hosta; brak cudzych nagrań/kodu
+  w firmware. Manifest z hashami/narzędziem, źródło generatora zachowane.
+- Domyślny MP3_FIXTURE_TEST=y: przygotowanie PCM w1MiB PSRAM przed I2S,
+  chunk257B/scratch8192B, stos24576B, potem close dekodera. Producent
+  konwertuje do SRAM FIFO; ISR bez dekodera/PSRAM/flash/allocacji. To batch
+  predecode, nie test realtime streamingu. Log ramek, formatu, peak, czasów
+  i stack_hwm wymaga sprzętu. Błąd nie maskuje się zastępczym tonem.
+- UI start STOP/volume NVS, tytuł TEST plik MP3, sekwencja L/R/stereo z
+  zakodowaną ciszą zapętlana zamiast sinusa. Tap peak zmienny, widżety
+  i stacje nadal TEST. Flagi stress pozostają n/0.
+- 141 testów hostowych PASS (9 nowych), w tym cały zakres65536 s16,
+  mono/stereo/bounds/unaligned, pętla i hash/nagłówki fixture. ASan/UBSan
+  adaptera i pętli PASS; detect_leaks=0 pod ptrace, bez testu wycieków.
+  Vendorowe binaria nie są uruchamiane na hoście.
+- ESP-IDF6.1 reconfigure/build i końcowy build PASS, git diff --check PASS.
+  Sieć ograniczonego środowiska wymagała pobrania pakietu przez Component
+  Manager z dostępem do oficjalnego rejestru; zależność zainstalowana
+  niezmieniona, LICENSE porównany z audytowaną paczką. Bez flash/erase/eFuse.
+- ADR0021. HARDWARE_TEST_PENDING: MP3 PoC ESP_OK, frame count/metadane,
+  czas/stack/heap, odsłuch kilku cykli i działanie VOL/PLAY/STOP/UI/NVS.
+  Nie deklarujemy jeszcze AAC/HE-AAC ani innych kodeków,44100/resamplingu,
+  streamingu/CPU realtime, generacji/seek/cancel i pełnego playera.
+- Dalej po odbiorze: AAC-LC PoC, następnie dekodowanie porcjami bez
+  przechowywania całego PCM pliku oraz adapter resamplingu według pomiarów.

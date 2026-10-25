@@ -63,3 +63,17 @@ Tap ma osobny odbiór i odrzuca nowe bloki przy przeciążeniu; numery sekwencji
 pozwalają wykrywać luki. Tylko debug peak, bez FFT/RMS i rzeczywistych widżetów.
 Opcjonalne eksperymenty stall/tap-delay opisane w HARDWARE_BRINGUP.
 Format jest na razie stały stereo32/48kHz; dekodery/generacje źródeł OPEN.
+
+## Część06d — MP3 z wbudowanego pliku
+
+Dokładnie przypięty esp_audio_codec2.6.2 z licencją Espressif Modified MIT
+(ESP-only) i notice Apache dla MP3. [ADR0021](adr/0021-mp3-decoder-file-poc.md).
+Nowy domyślny MP3_FIXTURE_TEST dekoduje przed I2S4s oryginalny plik do
+PSRAM; producent konwertuje PCM16LE do FIFO stereo32/48kHz. Brak dekodera,
+PSRAM i odczytu flash w ISR. Batch predecode nie jest streamingiem/benchmarkiem
+realtime. Wymaga odbioru logu MP3 PoC i odsłuchu na ESP32-S3.
+
+Start nadal STOP, volume z NVS; PLAY odtwarza powtarzaną sekwencję kanałów
+z wbudowanymi przerwami. Widżety/katalog TEST. Peak tap zmienny, nie stałe1036.
+Adapter odrzuca inne rate/bits/channels niż wspierane, bez resamplingu.
+Wyłączenie MP3_FIXTURE_TEST przywraca sinus. AAC i pozostałe kodeki OPEN.

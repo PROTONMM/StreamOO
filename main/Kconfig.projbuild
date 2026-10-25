@@ -91,6 +91,14 @@ menu "StreamOO Configuration"
                 stereo 1kHz test tone, source peak -30dBFS before volume gain.
                 50ms gain ramps. Overrides the finite I2S smoke sequence.
                 Widgets remain synthetic. Not a network stream player.
+        config STREAMOO_MP3_FIXTURE_TEST
+            bool "Decode embedded MP3 file to PSRAM and play TEST clip"
+            depends on STREAMOO_AUDIO_CONTROL_TEST
+            default y
+            help
+                Use original L/R 48kHz MP3 fixture instead of continuous sine.
+                Decode once at startup outside I2S, then loop the PCM in PSRAM.
+                No network streaming or resampling. Initial STOP, real VOL/PLAY.
         config STREAMOO_PCM_STALL_TEST
             bool "TEST: pause PCM producer 400ms once after first PLAY"
             depends on STREAMOO_AUDIO_CONTROL_TEST

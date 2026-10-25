@@ -1,8 +1,8 @@
 # Punkt wznowienia StreamOO
 
-Aktualizacja: **2026-10-25, PCM/rebuffer/tap potwierdzone logiem i odsłuchem**.
-Odebrany06b: kod `a62eeb6`, potwierdzenie „Działa, ładnie”, odbiór `eaad2e9`.
-Gałąź feature/streamoo-implementation; szczegóły w STATUS i ADR0020.
+Aktualizacja: **2026-10-25, etap06d MP3 z pliku gotowy do odbioru na płytce**.
+PCM/rebuffer/tap stress potwierdzone logiem i odsłuchem (`5664a90`).
+Gałąź feature/streamoo-implementation, szczegóły STATUS i ADR0021.
 
 ## Odebrane na płytce
 
@@ -29,8 +29,9 @@ i gain są w IRAM, stan/tablice w DRAM; brak helperów flash w obliczeniach.
 UI jest jedynym producentem preferencji; revision zachowuje reset debounce
 przy sklejonych zmianach. ADR0019 opisuje architekturę i granice.
 
-**Katalog i widżety nadal są syntetyczne. Nie ma sieci, strumieni,
-dekoderów, produkcyjnego playera, analizy DSP ani WWW.**
+**Katalog i widżety nadal są syntetyczne. MP3 z pliku jest nowym PoC06d;
+nie ma sieci, strumieni, pozostałych kodeków, produkcyjnego playera,
+analizy DSP ani WWW.**
 Potwierdzenie testowej stacji zmienia nazwę, ton pozostaje1kHz.
 STOP pozostawia I2S z zerami, nie jest pauzą strumienia. D12 autoplay
 radia nie rozstrzygnięte; kontrolowany shutdown/flush NVS nadal OPEN.
@@ -66,19 +67,36 @@ stress, dopóki sam nie wgra normalnego. Opcjonalny fragment stresu oraz
 instrukcja pozostają w config/pcm_stress.defaults i PCM_STRESS_TEST.md.
 NVS pozostaje bez zmian; nie włączać stresu przypadkowo przy dekoderach.
 
+## Nowy domyślny profil06d — MP3
+
+MP3_FIXTURE_TEST=y zastępuje sinus własnym plikiem4s MP3 L/R/stereo,
+przypięty esp_audio_codec2.6.2. Licencja Espressif Modified MIT (ESP-only),
+Apache notice MP3 zachowane w licenses. Zarejestrowany tylko MP3.
+
+Decoder działa przed I2S, daje PCM16 do1MiB PSRAM, handle zamykany po
+przygotowaniu. Producent/pcm_adapter konwertuje do istniejącego SRAM FIFO
+stereo32/48kHz. ISR nie dotyka PSRAM ani dekodera. To batch predecode,
+nie streaming ani benchmark czasu rzeczywistego. Brak resamplingu. Start STOP z NVS.
+Klip zawiera ciszę, więc peak tap jest teraz zmienny — nie oczekuj1036.
+Widżety/katalog nadal TEST. Wyłączenie MP3_FIXTURE_TEST wraca do sinusa.
+
 ## Następny krok
 
-1. Nie powtarzać odebranego PCM stress: log i odsłuch zostały potwierdzone.
-2. Wybór/PoC dekodera i adapter PCM z audytem API/licencji oraz
-   kompatybilności ESP-IDF6.1. Nie deklarować gotowego streamingu/DSP.
+1. Odbiór06d: po wgraniu czekaj na MP3 PoC ESP_OK. Podeślij input/frame
+   count/rate/channels/bits/peak/decode_us/wall_us/stack_hwm. Referencja hosta
+   193536 ramek, firmware akceptuje192000..194688 (padding/priming).
+2. VOL80–100 i PLAY: kilka powtórzeń sygnałów L/R/oba z wbudowaną ciszą.
+   Sprawdź VOL/PLAY/STOP i PCM low/hard/invalid. Flagi stress n/0.
+3. Po odbiorze AAC-LC PoC, potem streaming decode/backpressure bez
+   przechowywania całego PCM i adapter kolejnych formatów/resamplingu.
+   Nie powtarzać odebranego testu PCM stress ani nie ogłaszać radia/DSP.
 
-Ostatnia weryfikacja: **132 testy PASS**, ASan/UBSan 11 testów PCM PASS,
-w tym stress20k bloków, ESP-IDF6.1 build PASS. LeakSanitizer wyłączony
-pod ptrace; bez testu wycieków. ThreadSanitizer nie był uruchamiany.
-Wyrównane atomic load/store są natywne z barierami, bez __atomic helperów;
-nie przywracać ATOMIC_INT_LOCK_FREE==2 bez analizy flag toolchainu
-(-mdisable-hardware-atomics). Kod IRAM/dane RAM sprawdzone w ELF/objdump.
-Jitter/DMA replay, latencja, słyszalne przejścia i obciążenie wymagają sprzętu.
+Weryfikacja: **141 testów hostowych PASS**, ASan/UBSan adaptera/pętli PASS,
+ESP-IDF6.1 build/link PASS. Vendor decoder nie działa na hoście — runtime
+MP3 i odsłuch wciąż OPEN. LeakSanitizer wyłączony, bez testu wycieków.
+Licencje/API sprawdzone, manifest/lock przypięte, fixture oryginalny.
+Przy pierwszej konfiguracji wymagany dostęp do rejestru Component Manager;
+managed_components ignorowane przez Git, dependencies.lock śledzony.
 
 ```sh
 python3 -m unittest discover -s tests -q

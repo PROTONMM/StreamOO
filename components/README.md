@@ -51,3 +51,9 @@ Nie jest to jeszcze produkcyjny player ani analiza DSP.
 i numery sekwencji. Polityka rezerwy/rebuffer oraz tap przed gain; bez RTOS,
 heap i zależności UI. Aplikacja zapewnia RAM i pojedynczych właścicieli,
 produkuje ton w zadaniu i odbiera tap w osobnym zadaniu.
+
+`decoder`: cienki adapter Simple Decoder, tylko MP3 z esp_audio_codec2.6.2,
+przypięty manifestem/lockiem. `pcm_adapter`: własna konwersja16LE mono/stereo
+48kHz do stereo32 oraz pętla PCM. Aplikacyjny mp3_fixture dekoduje przed I2S
+do PSRAM, a producent podaje przekonwertowane bloki do SRAM FIFO.
+Nie jest to jeszcze streaming ani obsługa AAC.
