@@ -17,7 +17,8 @@ Nie wymagamy bitowej identyczności różnych implementacji dekodera.
 Firmware kontroluje metadane, progres, zakres liczby ramek oraz peak,
 a właściwy dekoder Espressif wymaga uruchomienia na ESP32-S3.
 
-Klip w firmware jest zapętlany z PCM przygotowanego w PSRAM; START/STOP to
+Od06f klip jest dekodowany przy uzupełnianiu FIFO i zapętlany resetem
+dekodera w EOF; wcześniejszy06d/e przygotowywał cały PCM w PSRAM. START/STOP to
 sterowanie gainem źródła testowego, nie pełny player plików/radia. PLAY
 może zacząć w dowolnym miejscu cyklu, bo źródło biegnie także w STOP.
 

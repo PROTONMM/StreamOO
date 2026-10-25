@@ -96,9 +96,9 @@ menu "StreamOO Configuration"
             depends on STREAMOO_AUDIO_CONTROL_TEST
             default STREAMOO_AAC_FIXTURE_TEST
             config STREAMOO_AAC_FIXTURE_TEST
-                bool "AAC-LC/ADTS file decoded to PSRAM"
+                bool "AAC-LC/ADTS file decoded during playback"
             config STREAMOO_MP3_FIXTURE_TEST
-                bool "MP3 file decoded to PSRAM"
+                bool "MP3 file decoded during playback"
             config STREAMOO_SINE_FIXTURE_TEST
                 bool "Continuous 1kHz sine"
         endchoice

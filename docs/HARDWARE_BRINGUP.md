@@ -448,3 +448,18 @@ Profil config/pcm_stress.defaults jawnie wybiera sinus; po stresie wróć
 w menuconfig do AAC-LC oraz stress n/0. Nie powtarzaj odebranego stress
 bez nowego powodu. Wcześniejsze uszkodzenie tekstu UART użytkownik powiązał
 z poruszeniem przewodu; nie zmieniano konfiguracji konsoli.
+
+## Audio06f — bieżący test incremental decode
+
+Źródło AAC-LC, stress OFF/0. `AAC-LC streaming source ESP_OK` zastępuje
+jednorazową linię PoC. Po każdym cyklu oczekuj `stream ok=1 cycles=N
+frames=193536 max_read_us=... stack_hwm=...`. Decode działa teraz równolegle
+z DMA w zadaniu, nie przygotowuje całego PCM przed startem.
+
+PLAY, VOL80–100, kilka cykli L/R/oba z zamierzoną ciszą; sprawdź regulację
+VOL i STOP/PLAY. Prześlij linie stream, PCM, buffers i platform heap oraz
+wynik odsłuchu. Oczekuj rosnących cycles, low0/hard0/starts1, invalid0,
+tap_drop/gaps0, stabilnej pamięci. max_read_us dotyczy jednego pull240,
+nie ISR. PSRAM nie powinna zawierać poprzedniej alokacji1MiB całego klipu;
+pamięć wewnętrzna i własne bufory vendora mogą różnić się od batch PoC.
+W razie błędu lub niedoboru zachowaj log; bez automatycznego fallbacku.

@@ -9,7 +9,7 @@ Bieżący punkt wznowienia: [RESUME.md](RESUME.md).
 | 03 szkielet | baza zaimplementowana; odbiór sprzętowy i integracyjny OPEN | ESP-IDF v6.1 build PASS; ADR 0002 |
 | 04 UI/SSD1322 | HOME i lista odebrane na OLED; końcowe strojenie fontu OPEN | ADR 0012; odbiór użytkownika |
 | 05 encoder | dekoder/IRQ i gesty odebrane; interaktywny adapter odebrany w trybie A; preferencje NVS odebrane; shutdown/flush OPEN | ADR 0013–0017; 99 testów PASS |
-| 06 audio | I2S/gain/PCM stress odebrane; MP3 decode/PCM potwierdzone logiem; AAC-LC decode/PCM i odsłuch odebrane; streaming/player OPEN | ADR 0018–0022; 142 testy hostowe PASS; build trzech źródeł PASS |
+| 06 audio | I2S/gain/PCM stress odebrane; MP3 decode/PCM potwierdzone logiem; AAC-LC PoC odebrane; incremental file decode06f gotowy, odbiór S3 OPEN; sieć/player OPEN | ADR 0018–0023; 152 testy hostowe PASS; build źródeł PASS |
 | 07 DSP | NIEZAIMPLEMENTOWANE | — |
 | 08 stacje | NIEZAIMPLEMENTOWANE | — |
 | 09 sieć | NIEZAIMPLEMENTOWANE | — |
@@ -858,3 +858,22 @@ z wcześniejszym logiem zamyka odbiór PoC06e; nie jest to odbiór streaming
 ani HE-AAC. Następny zakres: dekodowanie w trakcie odtwarzania z backpressure,
 bez przechowywania całego rozkodowanego klipu w PSRAM.
 Zmiana dokumentacyjna; kod i obraz firmware bez zmian, bez powtarzania testów.
+
+## Etap06f — incremental file decode (2026-10-25)
+
+- Zamiast1MiB rozkodowanego PCM:257B wejścia i8192B wyrównanego PCM,
+  stan/cursory w internal RAM. Jedyny właściciel w zadaniu audio_control.
+  Producent pobiera240 ramek tylko przy miejscu w FIFO; zachowuje ogony
+  wejścia/pakietu i resetuje parser/dekoder w EOF, bez ponownego open.
+- API reset sprawdzone w nagłówku esp_audio_codec2.6.2; zależności i licencje
+  bez zmian. Nadal plik we flash, bez sieci/resamplingu/HE-AAC. ISR/FIFO/
+  gain/tap bez zmian; STOP nadal konsumuje źródło z wyciszeniem.
+- Kontrole błędów/progresu/formatu/liczby ramek, błąd zatrzaskiwany; niepełny
+  blok nie trafia do FIFO. Diagnostyka cycles/frames/calls/max_read_us/stos.
+- 152 testy hostowe PASS (10 nowych przypadków kontrolowanego backendu),
+  ASan/UBSan pump/konwertera PASS, LeakSanitizer wyłączony (brak testu wycieków).
+  ESP-IDF6.1 build/link AAC-LC, MP3 i sinus PASS; końcowy lokalny profil AAC,
+  stress n/0. Walidator GPIO/platform i diff --check PASS.
+- ADR0023. Odbiór06f na S3 OPEN: stabilny FIFO/heap/stos, czas read i reset
+  podczas DMA oraz odsłuch kilku cykli L/R/oba, VOL/PLAY/STOP. Wynik06e batch
+  nie zalicza tych nowych warunków. Nie wykonywano flash/erase.

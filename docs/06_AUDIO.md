@@ -86,3 +86,12 @@ MP3 i sinus. Batch decode przed I2S, ten sam adapter PCM/FIFO/tap/gain.
 [ADR0022](adr/0022-aac-lc-adts-file-poc.md). Build trzech wariantów PASS,
 odbiór AAC na sprzęcie OPEN. Następny krok po odbiorze: streaming decode
 z backpressure; aktualny PoC nie mierzy deadline dekodera czasu rzeczywistego.
+
+## Część06f — decode podczas odtwarzania
+
+Pełny PCM klipu zastąpiony małym buforem roboczym: wejście257B, PCM8192B,
+ogony wejścia/wyjścia i pull240 ramek. Decoder pozostaje otwarty w zadaniu,
+pełne FIFO zatrzymuje decode; EOF resetuje parser/dekoder. Początkowy zapas
+FIFO przed I2S, potem praca podczas DMA. ISR/gain/tap bez zmian.
+[ADR0023](adr/0023-incremental-file-decode.md). Źródło nadal we flash,
+bez sieci/resamplingu/HE-AAC. Odbiór wydajności i zapętlenia na S3 OPEN.

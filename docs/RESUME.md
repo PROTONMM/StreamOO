@@ -1,8 +1,8 @@
 # Punkt wznowienia StreamOO
 
-Aktualizacja: **2026-10-25, AAC-LC06e odebrane logiem i czystym odsłuchem**.
+Aktualizacja: **2026-10-25, incremental decode06f gotowy do odbioru; AAC PoC06e odebrane**.
 PCM/rebuffer/tap stress potwierdzone logiem i odsłuchem (`5664a90`).
-Gałąź feature/streamoo-implementation, szczegóły STATUS i ADR0022.
+Gałąź feature/streamoo-implementation, szczegóły STATUS i ADR0023.
 
 ## Odebrane na płytce
 
@@ -67,7 +67,7 @@ stress, dopóki sam nie wgra normalnego. Opcjonalny fragment stresu oraz
 instrukcja pozostają w config/pcm_stress.defaults i PCM_STRESS_TEST.md.
 NVS pozostaje bez zmian; nie włączać stresu przypadkowo przy dekoderach.
 
-## Nowy domyślny profil06d — MP3
+## Historia06d — MP3 batch PoC (zastąpione w06f)
 
 MP3_FIXTURE_TEST=y zastępuje sinus własnym plikiem4s MP3 L/R/stereo,
 przypięty esp_audio_codec2.6.2. Licencja Espressif Modified MIT (ESP-only),
@@ -86,27 +86,31 @@ stack_hwm22744. PCM low0/hard0/starts1, invalid0, tap_drop/gaps0, max_fill133us.
 Stabilny heap, zapis NVS volume83. Jednorazowo nieczytelny fragment konsoli
 około16s — użytkownik wyjaśnił, że poruszył przewodem UART i polecił kontynuować.
 
-## Nowe06e i następny krok
+## Bieżące06f — decode w trakcie odtwarzania
 
-Domyślny i lokalny profil to AAC_FIXTURE_TEST=y, MP3/SINE=n, stress n/0.
-Wspólny codec_fixture/decoder zachowuje architekturę batch predecode.
-AAC-LC w ADTS, AAC-Plus wyłączony; HE-AAC nadal OPEN. Oba backendy są
-linkowane w wariantach plikowych, rejestrowany tylko wybrany kodek.
-Klip37039B, referencja193536 ramek stereo16/48kHz, cichy sygnał L/R/oba
-z przerwami. Start STOP, głośność NVS, PLAY może wejść w dowolną fazę.
+AAC06e odebrane logiem i czystym odsłuchem („tak, wszystko grało ładnie”).
+Referencja193536 ramek,48kHz/stereo16. Dotychczasowy runtime MP3 także
+potwierdzony logiem. Nie powtarzać testu batch decode ani PCM stress.
 
-1. Log AAC-LC PoC ESP_OK już odebrany:37039B→193536 ramek,48kHz/stereo16,
-   peak1043, decode309922us/wall406630us, stack_hwm22552B. Nie powtarzać.
-2. Odsłuch L/R/oba zaliczony: użytkownik potwierdził „tak, wszystko grało ładnie”.
-   Liczniki już potwierdzone do36s: queued28/ACTIVE, low0/hard0/starts1,
-   invalid0, tap_drop/gaps0, max_fill129us. Heap stabilny; nie powtarzać zaliczonego odsłuchu.
-3. Następny zakres: streaming decode/backpressure bez całego PCM w PSRAM.
-   Sieć, resampling, HE-AAC, produkcyjny player i DSP nadal OPEN.
+Nowy streamoo_decode_stream:257B input +8192B PCM, przechowuje ogony,
+wydaje240 ramek na żądanie producenta tylko przy miejscu w SRAM FIFO.
+Usunięto alokację1MiB całego PCM w PSRAM. Dekoder żyje w zadaniu audio_control,
+EOF resetuje parser/dekoder. ISR/gain/tap bez zmian; NVS i start STOP zachowane.
+Źródło nadal testowy plik we flash, nie sieć; HE-AAC/resampling/player/DSP OPEN.
 
-Weryfikacja06e: **142 testy hostowe PASS**, ESP-IDF6.1 build/link AAC-LC,
-MP3 i sinus PASS. Końcowy obraz AAC0x808b0B. Runtime AAC na S3 potwierdzony logiem i czystym odsłuchem. Dotychczasowy runtime MP3 potwierdzony logiem, bez osobnego opisu
-odsłuchu MP3. Nie powtarzać zaliczonego PCM stress. Wcześniejszy ASan/UBSan
-adaptera/pętli PASS (nie wykonywano ponownie w06e; bez LeakSanitizer).
+Lokalny profil AAC-LC, stress n/0, encoder A5/B6/BTN7 REVERSED=y.
+Po wgraniu oczekuj `AAC-LC streaming source ESP_OK`, następnie
+`AAC-LC stream ok=1 cycles=... frames=193536 max_read_us=...`.
+VOL80–100, PLAY i kilka cykli L/R/oba z ciszą. Sprawdź VOL/PLAY/STOP.
+Prześlij log stream + PCM/buffers/heap i odsłuch. Oczekuj rosnących cycles,
+low0/hard0/invalid0 i braku niezamierzonych przerw. max_read_us nie jest
+pomiarem ISR ani całego burst producenta. Odbiór runtime06f OPEN.
+
+152 testy hostowe PASS; ASan/UBSan pump/konwertera PASS (bez LeakSanitizer).
+Build/link AAC-LC, MP3 i sinus PASS. Testy hostowe używają sztucznego
+backendu; prawdziwy dekoder wymaga S3.
+Następny krok zależy od tego odbioru: pomiary kosztu i dalsze oddzielenie
+źródła skompresowanego, potem bufor/reader sieciowy. Nie ogłaszać pełnego radia.
 Przy pierwszej konfiguracji wymagany dostęp do rejestru Component Manager;
 managed_components ignorowane przez Git, dependencies.lock śledzony.
 

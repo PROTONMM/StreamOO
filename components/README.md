@@ -54,6 +54,9 @@ produkuje ton w zadaniu i odbiera tap w osobnym zadaniu.
 
 `decoder`: cienki adapter Simple Decoder, MP3 i AAC-LC/ADTS z esp_audio_codec2.6.2,
 przypięty manifestem/lockiem. `pcm_adapter`: własna konwersja16LE mono/stereo
-48kHz do stereo32 oraz pętla PCM. Aplikacyjny codec_fixture dekoduje przed I2S
-do PSRAM, a producent podaje przekonwertowane bloki do SRAM FIFO.
-Nie jest to jeszcze streaming; AAC-Plus wyłączony, HE-AAC OPEN.
+48kHz do stereo32 oraz pętla PCM. Aplikacyjny codec_fixture dekoduje podczas
+uzupełniania SRAM FIFO; AAC-Plus wyłączony, HE-AAC i źródło sieciowe OPEN.
+
+06f: codec_fixture używa streamoo_decode_stream (257B input/8192B PCM),
+nie pełnego klipu PCM w PSRAM. Decode/reset w zadaniu na żądanie miejsca
+w FIFO; ogony pakietów zachowane, EOF resetuje decoder. ISR bez zmian.

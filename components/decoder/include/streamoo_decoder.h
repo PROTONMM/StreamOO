@@ -15,4 +15,5 @@ typedef struct {
 esp_err_t streamoo_decoder_open(streamoo_codec_t codec, streamoo_decoder_t **out);
 esp_err_t streamoo_decoder_process(streamoo_decoder_t *decoder, uint8_t *input,
     size_t bytes, bool eos, uint8_t *pcm, size_t capacity, streamoo_decode_result_t *result);
+esp_err_t streamoo_decoder_reset(streamoo_decoder_t *decoder);
 void streamoo_decoder_close(streamoo_decoder_t *decoder);

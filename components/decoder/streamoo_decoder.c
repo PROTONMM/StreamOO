@@ -58,6 +58,11 @@ esp_err_t streamoo_decoder_process(streamoo_decoder_t *d,uint8_t *input,size_t b
     }
     return ESP_OK;
 }
+esp_err_t streamoo_decoder_reset(streamoo_decoder_t *d)
+{
+    if (!d) return ESP_ERR_INVALID_ARG;
+    return esp_audio_simple_dec_reset(d->handle)==ESP_AUDIO_ERR_OK ? ESP_OK : ESP_FAIL;
+}
 void streamoo_decoder_close(streamoo_decoder_t *d)
 {
     if (d) { esp_audio_simple_dec_close(d->handle); free(d); }
