@@ -1,7 +1,7 @@
 # Punkt wznowienia StreamOO
 
-Aktualizacja: **2026-10-25, stabilna praca PCM/tap06c potwierdzona logiem;
-wymuszony rebuffer i przeciążenie tap nadal OPEN**.
+Aktualizacja: **2026-10-25, PCM/rebuffer/tap potwierdzone licznikami;
+odsłuch stress nadal OPEN**.
 Odebrany06b: kod `a62eeb6`, potwierdzenie „Działa, ładnie”, odbiór `eaad2e9`.
 Gałąź feature/streamoo-implementation; szczegóły w STATUS i ADR0020.
 
@@ -53,24 +53,25 @@ Log użytkownika dla368c724: max_fill129us, invalid0, queued28/ACTIVE,
 low0/hard0/starts1, tap_drop0/tap_gaps0, peak1036; stabilnie także po zapisie
 NVS volume38. To nie jest test VOL0/50/100 ani wymuszonych awarii.
 
-## Aktywny lokalny profil testowy — UWAGA przy wznowieniu
+## Wynik testu stress i aktualna konfiguracja
 
-Bieżący sdkconfig ma PCM_STALL_TEST=y i PCM_TAP_DELAY_MS=100, przygotowane
-na odbiór sprzętowy. Normalne domyślne n/0 nie są zmienione. Po flash
-oczekiwany komunikat producer_stall=ON tap_delay_ms=100; po około3s od
-pierwszego PLAY jedna celowa przerwa i samoczynny powrót. Po rebuffer:
-low1/hard0/starts2, a tap_drop/tap_gaps rosną bez kolejnych przerw dźwięku.
-Instrukcja PCM_STRESS_TEST.md. Po odbiorze przywrócić lokalnie n/0 przed
-kolejnym zwykłym buildem/dekoderem; NVS nie kasować.
+Log użytkownika dla3659b69: stall16.202–16.602s (400ms), potem do70.882s
+mode ACTIVE/queued28, low1/hard0/starts2 bez kolejnych zdarzeń. max_fill113us,
+invalid0; tap_drop/tap_gaps rosną przy tap-delay100ms, tap_peak16=1036.
+Przyrost1000 buforów/5s zachowany. Test liczników zaliczony; odsłuch jednej
+łagodnej przerwy i późniejszego czystego tonu niepotwierdzony słownie.
+
+Lokalny sdkconfig przywrócono do **PCM_STALL_TEST=n / PCM_TAP_DELAY_MS=0**
+i przebudowano zwykły profil. Płytka użytkownika nadal może mieć firmware
+stress, dopóki sam nie wgra normalnego. Opcjonalny fragment stresu oraz
+instrukcja pozostają w config/pcm_stress.defaults i PCM_STRESS_TEST.md.
+NVS pozostaje bez zmian; nie włączać stresu przypadkowo przy dekoderach.
 
 ## Następny krok
 
-1. Odbiór06c według HARDWARE_BRINGUP: zwykły ton/VOL/PLAY/UI/NVS, log
-   PCM queued/mode/low/hard/starts/tap_drop/tap_peak16 i max_fill.
-2. Opcjonalnie włącz pause producer400ms i sprawdź łagodną przerwę/powrót,
-   potem tap-delay100ms: straty analizy mają nie zmieniać dźwięku.
-   Te eksperymenty są oddzielnym odbiorem, nie wynikają z normalnego odsłuchu.
-3. Następnie wybór/PoC dekodera i adapter PCM z audytem API/licencji oraz
+1. Zapytać tylko o brakujące potwierdzenie odsłuchu stress: czy była jedna
+   łagodna przerwa i potem ciągły ton. Nie powtarzać zaliczonych liczników.
+2. Następnie wybór/PoC dekodera i adapter PCM z audytem API/licencji oraz
    kompatybilności ESP-IDF6.1. Nie deklarować gotowego streamingu/DSP.
 
 Ostatnia weryfikacja: **132 testy PASS**, ASan/UBSan 11 testów PCM PASS,

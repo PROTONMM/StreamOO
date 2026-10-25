@@ -4,7 +4,7 @@ Przygotowany 2026-10-25 po stabilnym przebiegu06c. Nie zmienia algorytmu
 PCM/gain. Łączy dwa istniejące eksperymenty w jednym firmware, żeby odebrać
 powrót po niedoborze i niezależność analizy pod obciążeniem.
 
-Aktualny lokalny build ma:
+Profil eksperymentalny wymaga:
 
 ```text
 CONFIG_STREAMOO_PCM_STALL_TEST=y
@@ -53,3 +53,10 @@ w sdkconfig.defaults; bieżący sdkconfig jest lokalny i ignorowany przez Git.
 Build i testy hostowe nie zastępują tej próby. Bez odsłuchu/logu nie
 potwierdzamy rebuffer ani odporności na przeciążenie analizy. Test nie
 mierzy pełnego jitter, latencji IRQ lub wykrywania wszystkich DMA replay.
+
+## Wynik przekazany 2026-10-25
+
+Stall trwał400ms; po powrocie low1/hard0/starts2 pozostały stałe do70.882s,
+max_fill113us i invalid0. Tap celowo tracił bloki, peak wrócił do1036.
+Odbiór licznikowy pozytywny; odsłuch nie został jeszcze potwierdzony słownie.
+Po próbie lokalny sdkconfig przywrócono do n/0 i przebudowano normalny profil.

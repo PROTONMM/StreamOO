@@ -9,7 +9,7 @@ Bieżący punkt wznowienia: [RESUME.md](RESUME.md).
 | 03 szkielet | baza zaimplementowana; odbiór sprzętowy i integracyjny OPEN | ESP-IDF v6.1 build PASS; ADR 0002 |
 | 04 UI/SSD1322 | HOME i lista odebrane na OLED; końcowe strojenie fontu OPEN | ADR 0012; odbiór użytkownika |
 | 05 encoder | dekoder/IRQ i gesty odebrane; interaktywny adapter odebrany w trybie A; preferencje NVS odebrane; shutdown/flush OPEN | ADR 0013–0017; 99 testów PASS |
-| 06 audio | I2S/gain i stabilny PCM/tap potwierdzone; wymuszony rebuffer/tap-overload OPEN; dekodery/player OPEN | ADR 0018–0020; 132 testy PASS; log użytkownika |
+| 06 audio | I2S/gain odebrane; PCM/rebuffer/tap stress potwierdzone licznikami, odsłuch stress OPEN; dekodery/player OPEN | ADR 0018–0020; 132 testy PASS; log użytkownika |
 | 07 DSP | NIEZAIMPLEMENTOWANE | — |
 | 08 stacje | NIEZAIMPLEMENTOWANE | — |
 | 09 sieć | NIEZAIMPLEMENTOWANE | — |
@@ -720,3 +720,26 @@ Zmiana dokumentacyjna; git diff --check PASS, bez nowego buildu/flash.
 - 132 testy unittest PASS, ESP-IDF6.1 build z obiema flagami PASS,
   git diff --check PASS. Bez flash/erase/eFuse. Po teście przywrócić lokalnie
   n/0 przed zwykłym buildem i rozpoczęciem dekoderów; NVS pozostawić.
+
+## Wynik profilu PCM stress na sprzęcie (2026-10-25)
+
+Użytkownik przekazał log w kontekście `3659b69`:
+
+- Przed wymuszeniem (15.882s): mode1/queued28, low0/hard0/starts1.
+- TEST producer stall16.202s → resumed16.602s: dokładnie400ms według logu.
+- Od20.882s do70.882s: mode1/queued28, low1/hard0/starts2 bez narastania.
+  buffers4005→14005, co1000/5s. max_fill113us, invalid0.
+- tap_drop3201→11201, tap_blocks800→2800, tap_gaps3183→11183:
+  celowo przeciążony odbiorca traci bloki, PCM nie zgłasza kolejnych low/hard.
+  tap_peak16 po powrocie stałe1036, także po LONG51.172s. Różnica drop/gaps
+  nie jest błędem: luki wykrywamy przy odebraniu kolejnej sekwencji.
+- Saved volume85/widget1 przy14.112s. Heap internal free258663B,
+  min222428B/largest180224B stabilne; PSRAM free8377564B; health stack1920B.
+
+Potwierdzono licznikami rebuffer/powrót i izolację przeciążonego tap w tym
+przebiegu. Brak słownego potwierdzenia odsłuchu; nie uznajemy jeszcze braku
+trzasków/dodatkowych przerw ani pełnych pomiarów jitter/latencji/DMA replay.
+Lokalny sdkconfig przywrócono do PCM_STALL_TEST=n / TAP_DELAY_MS=0;
+fragment stresu pozostaje opcjonalny, NVS nie kasowano. Firmware wgrany
+na płytkę nie został przez agenta zmieniony. Zmiana dokumentacyjna;
+git diff --check PASS. Normalny profil przebudowany bez nowych zmian kodu.
