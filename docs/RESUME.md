@@ -1,8 +1,8 @@
 # Punkt wznowienia StreamOO
 
-Aktualizacja: **2026-10-25, etap 06b odebrany funkcjonalnie przez użytkownika**.
-Kod: `a62eeb6`; potwierdzenie: „Działa, ładnie”.
-Gałąź: feature/streamoo-implementation. Szczegóły i wyniki w STATUS.md.
+Aktualizacja: **2026-10-25, etap06c gotowy programowo; odbiór sprzętowy OPEN**.
+Odebrany06b: kod `a62eeb6`, potwierdzenie „Działa, ładnie”, odbiór `eaad2e9`.
+Gałąź feature/streamoo-implementation; szczegóły w STATUS i ADR0020.
 
 ## Odebrane na płytce
 
@@ -30,21 +30,41 @@ UI jest jedynym producentem preferencji; revision zachowuje reset debounce
 przy sklejonych zmianach. ADR0019 opisuje architekturę i granice.
 
 **Katalog i widżety nadal są syntetyczne. Nie ma sieci, strumieni,
-dekoderów, PCM FIFO, produkcyjnego playera, analizy DSP ani WWW.**
+dekoderów, produkcyjnego playera, analizy DSP ani WWW.**
 Potwierdzenie testowej stacji zmienia nazwę, ton pozostaje1kHz.
 STOP pozostawia I2S z zerami, nie jest pauzą strumienia. D12 autoplay
 radia nie rozstrzygnięte; kontrolowany shutdown/flush NVS nadal OPEN.
 
+## Nowe06c — PCM FIFO/tap, odbiór OPEN
+
+Producent tonu działa w zadaniu. Raw PCM FIFO ma32 bloki/160ms, callback
+pobiera blok, kopiuje do niezależnego tap przed gain i nakłada rampę.
+Tap4 bloki/20ms, odrzuca nowe przy pełnej kolejce i numeruje bloki,
+żeby analiza wykryła luki. Wewnętrzny RAM, SPSC acquire/release, bez
+alokacji/blokowania/FFT/flash w próbkach. Właściwy DSP nadal niegotowy;
+odbiorca liczy tylko debug peak (dla tonu1036 niezależnie od VOL).
+
+Przy rezerwie10 bloków pipeline schodzi rampą50ms do ciszy, BUFFERING
+czeka na24 bloki/120ms i wraca płynnie. BUF w UI podczas tej ochrony.
+Opcje testowe domyślnie n/0: PCM_STALL_TEST i PCM_TAP_DELAY_MS.
+
 ## Następny krok
 
-1. Kolejny mały zakres: PCM FIFO i tap przed gain, przygotowanie źródła
-   PCM/dekoderów, bez deklarowania gotowego streamingu.
-2. Nie powtarzać odbioru funkcjonalnego06b od zera. Pomiary max_fill,
-   jitter/latencji/underrun i próby obciążeniowe nadal pozostają OPEN.
+1. Odbiór06c według HARDWARE_BRINGUP: zwykły ton/VOL/PLAY/UI/NVS, log
+   PCM queued/mode/low/hard/starts/tap_drop/tap_peak16 i max_fill.
+2. Opcjonalnie włącz pause producer400ms i sprawdź łagodną przerwę/powrót,
+   potem tap-delay100ms: straty analizy mają nie zmieniać dźwięku.
+   Te eksperymenty są oddzielnym odbiorem, nie wynikają z normalnego odsłuchu.
+3. Następnie wybór/PoC dekodera i adapter PCM z audytem API/licencji oraz
+   kompatybilności ESP-IDF6.1. Nie deklarować gotowego streamingu/DSP.
 
-Ostatnia weryfikacja: **121 testów PASS**, ASan/UBSan gain/model/source
-i UI/control PASS, ESP-IDF6.1 build PASS. LeakSanitizer pod ptrace wyłączony;
-bez testu wycieków. Brak pomiarów hardware jitter/underrun/latencji.
+Ostatnia weryfikacja: **132 testy PASS**, ASan/UBSan 11 testów PCM PASS,
+w tym stress20k bloków, ESP-IDF6.1 build PASS. LeakSanitizer wyłączony
+pod ptrace; bez testu wycieków. ThreadSanitizer nie był uruchamiany.
+Wyrównane atomic load/store są natywne z barierami, bez __atomic helperów;
+nie przywracać ATOMIC_INT_LOCK_FREE==2 bez analizy flag toolchainu
+(-mdisable-hardware-atomics). Kod IRAM/dane RAM sprawdzone w ELF/objdump.
+Jitter/DMA replay, latencja, słyszalne przejścia i obciążenie wymagają sprzętu.
 
 ```sh
 python3 -m unittest discover -s tests -q

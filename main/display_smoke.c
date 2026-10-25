@@ -61,6 +61,7 @@ static void display_task(void *context)
             streamoo_audio_control_state_t audio;
             if (streamoo_audio_control_state(&audio)) {
                 streamoo_encoder_demo_audio_state(&demo,audio.model.volume,audio.model.running);
+                demo.buffering=audio.buffering;
                 if (preferences_ready && volume_revision!=audio.model.volume_revision) {
                     const streamoo_preferences_value_t changed={audio.model.volume,(uint8_t)demo.ui.visualization};
                     if (streamoo_preferences_submit_changed(changed)) volume_revision=audio.model.volume_revision;

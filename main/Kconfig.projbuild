@@ -91,6 +91,21 @@ menu "StreamOO Configuration"
                 stereo 1kHz test tone, source peak -30dBFS before volume gain.
                 50ms gain ramps. Overrides the finite I2S smoke sequence.
                 Widgets remain synthetic. Not a network stream player.
+        config STREAMOO_PCM_STALL_TEST
+            bool "TEST: pause PCM producer 400ms once after first PLAY"
+            depends on STREAMOO_AUDIO_CONTROL_TEST
+            default n
+            help
+                Three seconds after first PLAY, starve the PCM FIFO deliberately.
+                Exercise reserve fade, buffering and smooth recovery.
+        config STREAMOO_PCM_TAP_DELAY_MS
+            int "TEST: extra delay of pre-gain PCM tap consumer (ms)"
+            depends on STREAMOO_AUDIO_CONTROL_TEST
+            range 0 1000
+            default 0
+            help
+                0 processes every RTOS tick. Larger values force tap drops;
+                analysis must never block the PCM audio consumer.
         config STREAMOO_I2S_SMOKE_TEST
             bool "Run finite left/right I2S tone TEST at startup"
             default y

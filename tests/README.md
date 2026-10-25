@@ -159,3 +159,18 @@ ASAN_OPTIONS=detect_leaks=0 /tmp/streamoo-gain-sanitizer
 ASan/UBSan gain/source/model oraz 8 testów UI/control PASS; LeakSanitizer pod
 ptrace wyłączony, bez testu wycieków. Objdump/ELF: gain i callbacki IRAM,
 dane DRAM, bez helperów z flash w gain. Bez pomiaru hardware WCET/jitter.
+
+PCM06c: 11 nowych testów (łącznie132). Pełny/pusty FIFO bez nadpisywania,
+wrap liczników/sekwencji, 20000 bloków między dwoma wątkami, tap przed
+gain0/50/100, rezerwa/rampa/powrót, STOP konsumujący źródło, przeciążony
+tap bez zmiany PCM audio, startup i awaryjny brak danych.
+
+```sh
+STREAMOO_PCM_SANITIZE='-fsanitize=address,undefined -fno-omit-frame-pointer -g' ASAN_OPTIONS=detect_leaks=0 python3 -m unittest discover -s tests -p test_pcm.py -q
+```
+
+ASan/UBSan PASS; LeakSanitizer pod ptrace wyłączony, bez testu wycieków.
+Test dwóch wątków nie jest dowodem wykrywania wszystkich wyścigów; ThreadSanitizer
+nie był uruchamiany. Na target sprawdzono natywne load/store z barierami,
+brak helperów __atomic, IRAM funkcji i wewnętrzny RAM tablic. Odbiór FreeRTOS,
+DMA, słyszalnego rebuffer i przeciążenia tap pozostaje sprzętowy.

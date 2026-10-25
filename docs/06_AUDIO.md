@@ -51,3 +51,15 @@ Gain 0..100 i PLAY/STOP mają rampę50ms w próbkach; VOL0 mute, VOL100 unity.
 i aktualizacje NVS. Widżety/katalog są nadal syntetyczne. STOP podaje zera
 bez wyłączania zegarów; nie jest pauzą odtwarzanego strumienia. Polityka
 autoplay rzeczywistego radia pozostaje OPEN. Pełny pipeline nadal niegotowy.
+
+## Część 06c — raw PCM FIFO i tap
+
+Źródło testowe napełnia FIFO w zadaniu; callback I2S już nie generuje tonu.
+Obecny wariant: raw PCM FIFO → tap → gain → DMA (uzasadnienie położenia
+FIFO w [ADR0020](adr/0020-pcm-fifo-and-pre-gain-tap.md)). Pojemność źródła
+160ms, rampa ochronna przy rezerwie50ms, restart po odbudowaniu120ms.
+Brak danych daje ciszę, nie restart sieci (sieć nadal niezaimplementowana).
+Tap ma osobny odbiór i odrzuca nowe bloki przy przeciążeniu; numery sekwencji
+pozwalają wykrywać luki. Tylko debug peak, bez FFT/RMS i rzeczywistych widżetów.
+Opcjonalne eksperymenty stall/tap-delay opisane w HARDWARE_BRINGUP.
+Format jest na razie stały stereo32/48kHz; dekodery/generacje źródeł OPEN.

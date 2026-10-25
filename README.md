@@ -50,3 +50,8 @@ Etap06b domyślnie zastępuje skończony ton testem sterowanym enkoderem:
 start w STOP, rzeczywiste VOL i PLAY/STOP z rampą50ms. Źródło to ciągły
 cichy ton1kHz stereo; katalog i widżety nadal TEST. Wyłącz
 STREAMOO_AUDIO_CONTROL_TEST, aby przywrócić test06a.
+
+Etap06c dodaje FIFO PCM160ms i niezależne odgałęzienie przed gain.
+Brak zapasu uruchamia wyciszenie/rebuffer; przeciążony tap odrzuca bloki
+bez zatrzymywania audio. Konsola podaje liczniki i debug peak przed volume.
+Opcje testowe stall/tap-delay są domyślnie wyłączone. Widżety nadal TEST.

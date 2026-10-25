@@ -99,7 +99,7 @@ bool streamoo_encoder_demo_draw(streamoo_encoder_demo_t *d, uint8_t *frame,
     if (!streamoo_ui_draw_home(&d->ui,&canvas,now)) return false;
     char status[44];
     int length=snprintf(status,sizeof(status),"TEST VOL %d  %s  W%u",d->volume,
-                        d->running ? "PLAY" : "STOP",(unsigned)d->ui.visualization+1);
+                        d->running ? (d->buffering ? "BUF" : "PLAY") : "STOP",(unsigned)d->ui.visualization+1);
     if (length<0 || (size_t)length>=sizeof(status)) return false;
     /* Explicit test status in description row, outside production renderer. */
     streamoo_canvas_fill(&canvas,(streamoo_rect_t){0,24,256,8},0);

@@ -4,7 +4,7 @@
 /* Diagnostic owner, not the future network player. Single UI producer. */
 typedef struct {
     streamoo_audio_control_model_t model;
-    bool ready;
+    bool ready, buffering;
     esp_err_t error;
 } streamoo_audio_control_state_t;
 esp_err_t streamoo_audio_control_start(uint8_t volume);

@@ -5,7 +5,7 @@ typedef struct {
     streamoo_ui_t ui;
     uint64_t station_id, generation;
     int volume;
-    bool running, selection_pending, control_pending;
+    bool running, selection_pending, control_pending, buffering;
     streamoo_ui_select_command_t selection;
     streamoo_control_command_t control;
     streamoo_control_post_fn audio_post;

@@ -23,3 +23,12 @@ Test na syntetycznych sinusach 100Hz/1kHz/8kHz, ciszy, impulsie i sygnale stereo
 Nie zależy od DSP i nie liczy FFT, RMS, dB ani smoothingu; producent danych
 zostanie podłączony w tym etapie. Syntetyczny `home_probe` aplikacji służy
 wyłącznie do sprawdzenia obrazu i nie zalicza żadnych testów akceptacji DSP.
+
+## Podstawa transportu próbek — 06c
+
+Tap przed gain ma niezależny pierścień SPSC i numery bloków ujawniające
+odrzucenia. Audio nie czeka na analizę. Obecny odbiorca liczy tylko debug
+peak ostatniego bloku; widżety wciąż TEST. Dla tonu peak1036 ma pozostać
+stały przy VOL0/50/100. FFT/RMS, kalibracja i prawdziwy model wizualizacji
+nie są zaimplementowane. Przyszły DSP powinien rozpoznawać luki przed
+składaniem okien FFT. [ADR0020](adr/0020-pcm-fifo-and-pre-gain-tap.md).

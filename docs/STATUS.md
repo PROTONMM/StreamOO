@@ -1,6 +1,6 @@
 # Status implementacji
 
-Punkt wznowienia po zakończeniu pracy 2026-10-24: [RESUME.md](RESUME.md).
+Bieżący punkt wznowienia: [RESUME.md](RESUME.md).
 
 | Etap | Stan | Dowód |
 |---|---|---|
@@ -9,7 +9,7 @@ Punkt wznowienia po zakończeniu pracy 2026-10-24: [RESUME.md](RESUME.md).
 | 03 szkielet | baza zaimplementowana; odbiór sprzętowy i integracyjny OPEN | ESP-IDF v6.1 build PASS; ADR 0002 |
 | 04 UI/SSD1322 | HOME i lista odebrane na OLED; końcowe strojenie fontu OPEN | ADR 0012; odbiór użytkownika |
 | 05 encoder | dekoder/IRQ i gesty odebrane; interaktywny adapter odebrany w trybie A; preferencje NVS odebrane; shutdown/flush OPEN | ADR 0013–0017; 99 testów PASS |
-| 06 audio | I2S oraz gain/rampa i PLAY/STOP na tonie odebrane; player/pipeline OPEN | ADR 0018–0019; 121 testów PASS; odbiór użytkownika |
+| 06 audio | I2S/gain odebrane; PCM FIFO/tap i rebuffer 06c HARDWARE_TEST_PENDING; dekodery/player OPEN | ADR 0018–0020; 132 testy PASS |
 | 07 DSP | NIEZAIMPLEMENTOWANE | — |
 | 08 stacje | NIEZAIMPLEMENTOWANE | — |
 | 09 sieć | NIEZAIMPLEMENTOWANE | — |
@@ -651,3 +651,41 @@ logu max_fill i pomiarów latencji/jitter/underrun; nie rozszerzamy odbioru
 na testy obciążenia ani niezależny pomiar braku trzasków.
 Kolejny zakres: PCM FIFO i tap przed gain, przygotowanie źródła PCM/dekoderów.
 Zmiana dokumentacyjna; git diff --check PASS, bez nowego buildu/flash.
+
+## Etap 06c — PCM FIFO i tap przed gain (2026-10-25)
+
+- Nowy własny pcm: stałe bloki stereo32/48kHz, SPSC release/acquire,
+  numery sekwencji i poprawne wrap liczników. Brak nowej biblioteki/kodu
+  zewnętrznego. GCC/ESP-IDF6.1: wyrównane 32-bit load/store audytowane
+  w assemblerze; ogólny ATOMIC_INT_LOCK_FREE był zbyt szerokim warunkiem
+  przy fladze -mdisable-hardware-atomics i został zastąpiony właściwym
+  sprawdzeniem rozmiaru/wyrównania plus audytem kodu wynikowego.
+- Producent tonu poza ISR. Raw FIFO32 bloków/160ms (61440B PCM+128B tagów),
+  tap4 bloki/20ms (7680B PCM+16B tagów), wszystko w wewnętrznym RAM.
+  Tap jest po raw FIFO, przed gain. Po gain pozostaje DMA20ms.
+- Rezerwa10 bloków rozpoczyna 50ms fade na rzeczywistym PCM, potem zera
+  i BUFFERING; powrót po >=24 blokach/120ms. Awaryjny twardy brak ma
+  osobny licznik i podtrzymanie ostatniej próbki tylko na czas fade.
+- Tap drop-newest nie czeka na analizę. Sequence ujawnia luki; osobny
+  odbiorca liczy debug peak, bez FFT/RMS. Brak podłączenia realnych widżetów.
+  Przy aktywnym źródle tap_peak16=1036 niezależnie od VOL i STOP.
+- UI pokazuje BUF podczas ochronnego wyciszenia/podbuforowania przy PLAY.
+  Opcjonalny PCM_STALL_TEST (pauza400ms po3s pierwszego PLAY) oraz
+  PCM_TAP_DELAY_MS (wymuszenie strat analizy) domyślnie n/0.
+- 132 testy unittest PASS (11 nowych), w tym 20000 bloków w dwóch wątkach,
+  full/empty/wrap, tap0/50/100, fade/rebuffer, STOP, dropout tap bez zmiany
+  audio i awaryjny brak. ASan/UBSan 11 testów pcm PASS; detect_leaks=0
+  pod ptrace, bez testu wycieków. ThreadSanitizer nie uruchomiony.
+- ESP-IDF6.1 końcowy build PASS, obraz0x4ac10 B; git diff --check PASS.
+  Gałęzie stall/tap-delay oraz wyłączonego control skompilowano dodatkowo
+  kompilatorem targetu, bez osobnego pełnego linku tych konfiguracji.
+  ELF: pcm_fill0x403775a8, count0x403793e0, push0x403793fc, pop0x40379484
+  w IRAM. storage tap/PCM0x3fc9a530/0x3fc9c340 w wewnętrznym BSS, meta
+  w DRAM. Brak helperów __atomic w obiekcie. Memset/memcpy dostępne w ROM.
+- ADR0020, RESUME zaktualizowany. Bez flash/erase/eFuse. HARDWARE_TEST_PENDING:
+  zwykły odsłuch/UI/NVS, celowe zagłodzenie i przeciążenie tap, max_fill,
+  brak nieoczekiwanych low/hard. Nie deklarujemy detekcji każdego DMA replay,
+  jitter ani zmierzonej latencji. Pipeline stałego formatu, bez generacji/flush
+  źródeł, dekoderów, sieci i pełnego playera.
+- Dalej: odbiór06c, następnie wybór i PoC dekodera z przeglądem API/licencji
+  ESP-IDF6.1 oraz adapter formatu PCM. DSP właściwy pozostaje etapem07.

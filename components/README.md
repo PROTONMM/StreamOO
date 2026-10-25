@@ -46,3 +46,8 @@ tworzą skończony test kanałów; nie są playerem, dekoderem ani DSP.
 bez float/heap/IO w próbkach. Aplikacyjny audio_control_probe ma osobnego
 właściciela komend VolumeDelta/Toggle i testowy model; UI odczytuje snapshot.
 Nie jest to jeszcze produkcyjny player ani analiza DSP.
+
+`pcm`: własne pierścienie SPSC z acquire/release, stałe bloki stereo32/48kHz
+i numery sekwencji. Polityka rezerwy/rebuffer oraz tap przed gain; bez RTOS,
+heap i zależności UI. Aplikacja zapewnia RAM i pojedynczych właścicieli,
+produkuje ton w zadaniu i odbiera tap w osobnym zadaniu.

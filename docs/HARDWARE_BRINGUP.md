@@ -377,3 +377,32 @@ To nie jest pomiar całego ISR, jitter ani dowód braku dropout.
 TrybB: krótki klik PLAY/STOP, długi lista (gesty na liście bez zmian).
 Wyłącz AUDIO_CONTROL_TEST, aby wrócić do wcześniejszej sekwencji06a
 (przy nadal włączonym I2S_SMOKE_TEST).
+
+## Audio06c — PCM FIFO i niezależny tap
+
+Domyślne użycie jak06b: STOP na starcie, długi klik PLAY w trybieA,
+VOL80–100 do odsłuchu cichego tonu. Sprawdź VOL/PLAY/STOP i UI/NVS.
+Konsola co5s dodaje `PCM queued=... mode=... low=... hard=... starts=...`
+oraz `tap_drop`, `tap_blocks`, `tap_gaps`, `tap_peak16`.
+
+- Tryby:0 BUFFERING,1 ACTIVE,2 FADING. Normalnie ACTIVE, low/hard bez
+  narastania, starts1 po starcie. Kolejka ma maksymalnie32 bloki.
+- Porównaj VOL0/50/100: tap_peak16 dla stabilnego tonu ma wynosić1036,
+  bo mierzymy przed gain. Dotyczy również STOP przy działającym generatorze.
+- Widżety nadal TEST; debug peak nie jest RMS ani kalibrowanym poziomem.
+
+Opcjonalny test niedoboru: menuconfig → StreamOO Configuration → Hardware:
+PCM5102A → `TEST: pause PCM producer 400ms once after first PLAY`.
+Po wgraniu włącz PLAY i odczekaj3s. Oczekiwana jedna łagodna przerwa,
+chwilowe BUF, potem powrót. Log TEST producer stall/resumed, low powinno
+wzrosnąć o1, starts o1 względem wartości sprzed próby, hard pozostać0.
+Pauza jest jednorazowa na boot. Po teście wyłącz opcję.
+
+Opcjonalny test przeciążenia analizy: ustaw `extra delay ... tap consumer`
+na100ms. Oczekuj wzrostu tap_drop/tap_gaps i stabilnego dźwięku. Przywróć0.
+Te dwie opcje są domyślnie wyłączone/0; odsłuch podstawowy ich nie zalicza.
+
+Podeślij log PCM oraz `buffers/max_fill/invalid`. Wzrost low bez celowego
+stall, hard>0 lub słyszalne zakłócenia wymagają analizy. Sam max_fill<5ms
+nie dowodzi braku jitter/DMA replay. Testy zaniku danych i obciążenia są
+osobnym odbiorem, nie wynikają z wcześniejszego potwierdzenia06b.

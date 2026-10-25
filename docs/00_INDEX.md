@@ -59,3 +59,5 @@ Etap 05d / pierwszy zakres NVS: `adr/0017-deferred-ui-preferences.md`.
 Etap 06a: `adr/0018-i2s-output-tone-bringup.md`.
 
 Etap06b: `adr/0019-controlled-audio-gain-ramp.md`.
+
+Etap06c: `adr/0020-pcm-fifo-and-pre-gain-tap.md`.
