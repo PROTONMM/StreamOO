@@ -9,7 +9,7 @@ Bieżący punkt wznowienia: [RESUME.md](RESUME.md).
 | 03 szkielet | baza zaimplementowana; odbiór sprzętowy i integracyjny OPEN | ESP-IDF v6.1 build PASS; ADR 0002 |
 | 04 UI/SSD1322 | HOME i lista odebrane na OLED; końcowe strojenie fontu OPEN | ADR 0012; odbiór użytkownika |
 | 05 encoder | dekoder/IRQ i gesty odebrane; interaktywny adapter odebrany w trybie A; preferencje NVS odebrane; shutdown/flush OPEN | ADR 0013–0017; 99 testów PASS |
-| 06 audio | I2S/gain odebrane; PCM FIFO/tap i rebuffer 06c HARDWARE_TEST_PENDING; dekodery/player OPEN | ADR 0018–0020; 132 testy PASS |
+| 06 audio | I2S/gain i stabilny PCM/tap potwierdzone; wymuszony rebuffer/tap-overload OPEN; dekodery/player OPEN | ADR 0018–0020; 132 testy PASS; log użytkownika |
 | 07 DSP | NIEZAIMPLEMENTOWANE | — |
 | 08 stacje | NIEZAIMPLEMENTOWANE | — |
 | 09 sieć | NIEZAIMPLEMENTOWANE | — |
@@ -689,3 +689,19 @@ Zmiana dokumentacyjna; git diff --check PASS, bez nowego buildu/flash.
   źródeł, dekoderów, sieci i pełnego playera.
 - Dalej: odbiór06c, następnie wybór i PoC dekodera z przeglądem API/licencji
   ESP-IDF6.1 oraz adapter formatu PCM. DSP właściwy pozostaje etapem07.
+
+## Wynik pracy PCM/tap 06c na sprzęcie (2026-10-25)
+
+Użytkownik przesłał log w kontekście wersji `368c724`, zakres około35–51s
+od boot: buffers7005→10005 (po1000/5s), max_fill129us, invalid0;
+queued28, mode1 ACTIVE, low0, hard0, starts1; tap_drop0, tap_gaps0,
+tap_blocks7003→10003, tap_peak16 stałe1036. Zapis NVS volume38/widget1
+przy39.472s nie zmienił powyższych liczników w przesłanym fragmencie.
+Heap internal free258663B/min222428B/largest180224B stabilny w dwóch
+odczytach; PSRAM free8377564B, health stack high-water1920B.
+Potwierdzono stabilną pracę PCM/tap w tym przedziale oraz poprawny poziom
+przed gain przy zaobserwowanym ustawieniu. Brak osobnych porównań VOL0/50/100,
+odsłuchu i testów wymuszonego niedoboru/tap-delay; pozostają OPEN.
+129us to maksimum mierzonego callbacku renderowania w tym przebiegu, nie
+WCET całego systemu ani pomiar latencji IRQ, jitter i DMA replay.
+Zmiana dokumentacyjna; git diff --check PASS, bez nowego buildu/flash.

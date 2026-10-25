@@ -1,6 +1,7 @@
 # Punkt wznowienia StreamOO
 
-Aktualizacja: **2026-10-25, etap06c gotowy programowo; odbiór sprzętowy OPEN**.
+Aktualizacja: **2026-10-25, stabilna praca PCM/tap06c potwierdzona logiem;
+wymuszony rebuffer i przeciążenie tap nadal OPEN**.
 Odebrany06b: kod `a62eeb6`, potwierdzenie „Działa, ładnie”, odbiór `eaad2e9`.
 Gałąź feature/streamoo-implementation; szczegóły w STATUS i ADR0020.
 
@@ -35,7 +36,7 @@ Potwierdzenie testowej stacji zmienia nazwę, ton pozostaje1kHz.
 STOP pozostawia I2S z zerami, nie jest pauzą strumienia. D12 autoplay
 radia nie rozstrzygnięte; kontrolowany shutdown/flush NVS nadal OPEN.
 
-## Nowe06c — PCM FIFO/tap, odbiór OPEN
+## Nowe06c — PCM FIFO/tap, praca podstawowa potwierdzona
 
 Producent tonu działa w zadaniu. Raw PCM FIFO ma32 bloki/160ms, callback
 pobiera blok, kopiuje do niezależnego tap przed gain i nakłada rampę.
@@ -47,6 +48,10 @@ odbiorca liczy tylko debug peak (dla tonu1036 niezależnie od VOL).
 Przy rezerwie10 bloków pipeline schodzi rampą50ms do ciszy, BUFFERING
 czeka na24 bloki/120ms i wraca płynnie. BUF w UI podczas tej ochrony.
 Opcje testowe domyślnie n/0: PCM_STALL_TEST i PCM_TAP_DELAY_MS.
+
+Log użytkownika dla368c724: max_fill129us, invalid0, queued28/ACTIVE,
+low0/hard0/starts1, tap_drop0/tap_gaps0, peak1036; stabilnie także po zapisie
+NVS volume38. To nie jest test VOL0/50/100 ani wymuszonych awarii.
 
 ## Następny krok
 
