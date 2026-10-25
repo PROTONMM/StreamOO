@@ -145,3 +145,17 @@ ASAN_OPTIONS=detect_leaks=0 /tmp/streamoo-audio-tone-sanitizer
 ASan/UBSan PASS, 2100 bloków z canary, końcowa cisza. LeakSanitizer pod
 ptrace wyłączony, bez testu wycieków. ELF/objdump użyto do sprawdzenia
 IRAM generatora/callbacków i DRAM tablicy/stanu; nie jest to test hardware.
+
+Audio06b: 14 nowych testów (łącznie121): krzywa/gain0..100, rampy/retarget,
+unity dla ekstremów int32, chunk invariance, kanały/canary, czysty właściciel
+komend, clamp/revision i zewnętrzny właściciel w UI oraz źródło ciągłe.
+Adaptery FreeRTOS/DMA i słyszalne przejścia nadal wymagają sprzętu.
+
+```sh
+cc -std=c11 -Wall -Wextra -Werror -fsanitize=address,undefined -fno-omit-frame-pointer -g -Imain -Icomponents/audio_gain/include -Icomponents/ui/include -Icomponents/ui_widgets/include -Icomponents/graphics/include -Icomponents/input/include components/audio_gain/streamoo_audio_gain.c main/audio_control_model.c main/audio_tone.c tests/gain_sanitizer.c -o /tmp/streamoo-gain-sanitizer
+ASAN_OPTIONS=detect_leaks=0 /tmp/streamoo-gain-sanitizer
+```
+
+ASan/UBSan gain/source/model oraz 8 testów UI/control PASS; LeakSanitizer pod
+ptrace wyłączony, bez testu wycieków. Objdump/ELF: gain i callbacki IRAM,
+dane DRAM, bez helperów z flash w gain. Bez pomiaru hardware WCET/jitter.

@@ -41,3 +41,8 @@ Inicjalizacja/odczyt przy starcie, bez automatycznego erase. Bez zależności UI
 `audio_output`: natywny I2S0 48kHz stereo32, callback IRAM wypełnia DMA,
 bez blokującego write w ścieżce próbek. Aplikacyjne audio_tone/audio_probe
 tworzą skończony test kanałów; nie są playerem, dekoderem ani DSP.
+
+`audio_gain`: oryginalna tablica Q16 i rampa50ms dla PCM stereo32/48kHz,
+bez float/heap/IO w próbkach. Aplikacyjny audio_control_probe ma osobnego
+właściciela komend VolumeDelta/Toggle i testowy model; UI odczytuje snapshot.
+Nie jest to jeszcze produkcyjny player ani analiza DSP.

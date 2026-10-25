@@ -25,3 +25,7 @@ osobny worker; odczyt jest częścią startup. [ADR 0017](adr/0017-deferred-ui-p
 Brak klucza daje domyślne 50/spectrum. Błędny lub nieobsługiwany rekord
 wyłącza serwis bez automatycznego kasowania. Pozostałe klucze/sekrety,
 LittleFS, OTA i kontrolowany shutdown/flush nie są zaimplementowane.
+
+06b: UI obserwuje volume_revision właściciela audio i może zgłosić
+submit_changed nawet przy tej samej wartości końcowej po sklejeniu zmian.
+Zachowano jednego producenta skrzynki NVS i zapis po5s od obserwacji zmiany.

@@ -1,52 +1,49 @@
 # Punkt wznowienia StreamOO
 
-Zapis na koniec pracy: 2026-10-24. Użytkownik zakończył pracę na dziś.
+Aktualizacja: **2026-10-25, etap 06b gotowy programowo, odbiór sprzętowy OPEN**.
+Gałąź: feature/streamoo-implementation. Szczegóły i wyniki w STATUS.md.
 
-## Gdzie jesteśmy
+## Odebrane na płytce
 
-Etap **06a — podstawowe wyjście I2S/PCM5102A** zaimplementowany i odebrany
-przez użytkownika („działa”). Kod: `edb7c63`, odbiór: `80e146c`.
-Gałąź: `feature/streamoo-implementation`.
+- OLED: HOME/lista, polskie znaki, scroll wyłącznie w lewo, trzy widżety.
+  Wygląd czcionki do dopracowania później.
+- Enkoder półkrokowy **A5/B6/BTN7**, REVERSED=y: prawo zwiększa. B6 to
+  potwierdzony sprzęt użytkownika, wyjątek od B16 w schemacie referencyjnym.
+- Gesty trybu A i interaktywny UI. NVS volume/widżetu po5s i restart.
+- Audio06a: skończony test L1k/R2k/oba1k na I2S DOUT48/BCLK47/WS21,
+  Philips stereo32/48kHz, bez MCLK. Kod edb7c63, odbiór80e146c.
 
-Działające i odebrane na płytce:
+## Nowe w06b — jeszcze do sprawdzenia na sprzęcie
 
-- SSD1322: HOME, lista stacji, polskie znaki, scroll wyłącznie w lewo,
-  trzy widżety z danymi syntetycznymi. Wygląd czcionki do dopracowania później.
-- Enkoder półkrokowy: **A=5, B=6, BTN=7**, REVERSED=y — prawo zwiększa.
-  Schemat referencyjny ma B16, ale rzeczywisty sprzęt użytkownika ma B6.
-- Gesty trybu A i interaktywny test UI: volume, lista/confirm/cancel,
-  PLAY/STOP, pressed-rotate zmienia widżet bez zmiany volume.
-- NVS: volume i widżet zapisują się po 5s bez zmian i wracają po restarcie.
-- I2S: DOUT48/BCLK47/WS21, 48kHz stereo32, Philips, bez MCLK.
-  Jednorazowa sekwencja około10s: cisza/L1k/R2k/oba1k/cisza, peak ~-30dBFS,
-  rampy50ms. Wydawanie próbek przez callback DMA w IRAM, stan/tablica w DRAM.
+Nowy domyślny STREAMOO_AUDIO_CONTROL_TEST zastępuje skończony test
+ciągłym tonem1kHz stereo. Start w **STOP**, volume wraca z NVS.
+Długi klik (tryb A) przełącza rzeczywiste PLAY/STOP, obrót zmienia gain,
+VOL0 to cisza. Rampa50ms, gain100 unity. Źródło ma peak~-30dBFS przed
+gain; przy VOL50 dochodzi około30dB tłumienia — do odsłuchu ustaw80–100.
+Wyłącz AUDIO_CONTROL_TEST, aby wrócić do starego testu06a.
 
-**Obecny TEST VOL/PLAY nie steruje jeszcze rzeczywistym dźwiękiem.**
-Ton jest niezależną skończoną sekwencją startową. UI nadal używa testowego
-katalogu i syntetycznych poziomów. Nie ma sieci, strumieni, dekoderów,
-produkcyjnego playera, analizy DSP ani WWW.
+Osobny właściciel przyjmuje VolumeDelta/Toggle przez kolejkę16, UI czyta
+snapshot. Czysty audio_gain używa Q16 i rampy2400 ramek bez float. Callbacki
+i gain są w IRAM, stan/tablice w DRAM; brak helperów flash w obliczeniach.
+UI jest jedynym producentem preferencji; revision zachowuje reset debounce
+przy sklejonych zmianach. ADR0019 opisuje architekturę i granice.
 
-## Od czego zacząć jutro
+**Katalog i widżety nadal są syntetyczne. Nie ma sieci, strumieni,
+dekoderów, PCM FIFO, produkcyjnego playera, analizy DSP ani WWW.**
+Potwierdzenie testowej stacji zmienia nazwę, ton pozostaje1kHz.
+STOP pozostawia I2S z zerami, nie jest pauzą strumienia. D12 autoplay
+radia nie rozstrzygnięte; kontrolowany shutdown/flush NVS nadal OPEN.
 
-Kolejny mały zakres: **06b — rzeczywisty gain z rampą i PLAY/STOP**.
+## Następny krok
 
-1. Przeczytać AGENTS.md, CODEX_MASTER_PROMPT.md, indeks, STATUS oraz
-   docs/06_AUDIO.md i ADR0018. Nie powtarzać odebranego bring-upu od zera.
-2. Zaprojektować oddzielnego właściciela stanu audio/komend; UI wysyła
-   nieblokujące kopie poleceń. Dotychczasowy encoder_demo to tylko test.
-3. Dodać i przetestować gain 0..100 (0 mute,100 unity), zmianę bez skoków
-   przez rampę w próbkach oraz płynne PLAY/STOP na źródle testowym.
-   Krzywa -60..0dB i czas rampy30–100ms są propozycjami do strojenia.
-4. Połączyć sterowanie enkodera i przywrócony volume z rzeczywistym testowym
-   audio; nadal nie twierdzić, że jest streaming lub gotowy pełny player.
-5. Build/testy, STATUS/ADR, osobny commit; potem odbiór na płytce.
+1. Odbiór06b według HARDWARE_BRINGUP: VOL, mute0, PLAY/STOP, brak trzasków,
+   widget/lista bez wpływu na ton, NVS/reset oraz log audio_control max_fill.
+2. Dopiero po odbiorze kolejny mały zakres: PCM FIFO i tap przed gain,
+   przygotowanie źródła PCM/dekoderów, bez deklarowania gotowego streamingu.
 
-## Zweryfikowany stan i polecenia
-
-Ostatnia weryfikacja firmware: **107 testów PASS**, ASan/UBSan generatora PASS,
-ESP-IDF6.1 reconfigure/build PASS. LeakSanitizer wyłączony pod ptrace;
-nie deklarować testu wycieków. Ostatni odbiór audio jest potwierdzeniem
-użytkownika, bez końcowego logu/pomiarów max_fill, jitter i underrun.
+Ostatnia weryfikacja: **121 testów PASS**, ASan/UBSan gain/model/source
+i UI/control PASS, ESP-IDF6.1 build PASS. LeakSanitizer pod ptrace wyłączony;
+bez testu wycieków. Brak pomiarów hardware jitter/underrun/latencji.
 
 ```sh
 python3 -m unittest discover -s tests -q
@@ -55,15 +52,12 @@ export PATH=/usr/bin:$PATH
 idf.py build
 ```
 
-Domyślnie włączone STREAMOO_ENCODER_UI_TEST oraz STREAMOO_I2S_SMOKE_TEST.
-Wyłączenie pierwszego przywraca skończony pokaz OLED; drugiego — usuwa
-ton przy boot. NVS nie kasować przy wgrywaniu. Agent nie flashuje płytki.
+Przed zmianami czytaj AGENTS, CODEX_MASTER_PROMPT, indeks, właściwy etap
+i STATUS. Nie powtarzaj odebranych kroków. Małe commity + test/build/ADR.
+Bez Arduino i kopiowania API yoRadio. Nie kasuj NVS ani nie flashuj płytki
+za użytkownika. Bez AI-Model/AI-Tokens i wymyślonych metryk w commitach.
+Nie wykonuj alokacji, flash, FFT, logowania ani blokującego I/O w próbkach.
 
-Pozostałe otwarte kwestie: finalna czcionka/licencja zmian PL, wrap listy,
-format czasu/strefa, liczba kroków na ząbek i graniczna szybkość wejść,
-kontrolowany shutdown/flush NVS, testy zaniku podczas zapisu, dokładny
-model/zwory DAC i pomiary audio. Nie traktować ich jako zakończonych.
-
-Nie dodawać trailerów AI-Model/AI-Tokens do commitów ani wymyślonych metryk.
-Nie wykonywać alokacji, flash, FFT, logowania ani blokującego I/O w ścieżce
-wydawania próbek. Bez Arduino i kopiowania API yoRadio.
+Pozostają otwarte: finalna czcionka/licencja zmian PL, wrap listy, format
+czasu/strefa, kroki/ząbek i graniczna szybkość wejść, shutdown/flush NVS,
+zanik podczas zapisu, dokładny model/zwory DAC i pełne pomiary audio.

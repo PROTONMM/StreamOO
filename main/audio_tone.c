@@ -38,3 +38,14 @@ bool TONE_IRAM streamoo_audio_tone_fill(streamoo_audio_tone_t *tone, int32_t *lr
     }
     return true;
 }
+
+bool TONE_IRAM streamoo_audio_sine_fill(uint32_t *phase, int32_t *lr, size_t frames)
+{
+    if (!phase || !lr || *phase>=48 || frames>STREAMOO_TONE_BLOCK_MAX) return false;
+    for (size_t i=0;i<frames;++i) {
+        int32_t value=(int32_t)wave[*phase]*65536;
+        lr[i*2]=lr[i*2+1]=value;
+        if (++*phase==48) *phase=0;
+    }
+    return true;
+}

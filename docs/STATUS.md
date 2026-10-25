@@ -9,7 +9,7 @@ Punkt wznowienia po zakończeniu pracy 2026-10-24: [RESUME.md](RESUME.md).
 | 03 szkielet | baza zaimplementowana; odbiór sprzętowy i integracyjny OPEN | ESP-IDF v6.1 build PASS; ADR 0002 |
 | 04 UI/SSD1322 | HOME i lista odebrane na OLED; końcowe strojenie fontu OPEN | ADR 0012; odbiór użytkownika |
 | 05 encoder | dekoder/IRQ i gesty odebrane; interaktywny adapter odebrany w trybie A; preferencje NVS odebrane; shutdown/flush OPEN | ADR 0013–0017; 99 testów PASS |
-| 06 audio | podstawowy test I2S/PCM5102A odebrany; gain/player/pipeline OPEN | ADR 0018; 107 testów PASS; odbiór użytkownika |
+| 06 audio | I2S odebrane; gain/rampa i sterowanie tonem 06b HARDWARE_TEST_PENDING; player/pipeline OPEN | ADR 0018–0019; 121 testów PASS |
 | 07 DSP | NIEZAIMPLEMENTOWANE | — |
 | 08 stacje | NIEZAIMPLEMENTOWANE | — |
 | 09 sieć | NIEZAIMPLEMENTOWANE | — |
@@ -604,3 +604,40 @@ Na prośbę użytkownika zakończono pracę na dziś. Aktualny stan i kolejny
 zakres 06b (rzeczywisty gain/rampa i PLAY/STOP) zapisano w RESUME.md.
 Ostatni odebrany firmware: 06a `edb7c63`, odbiór `80e146c`.
 Zmiana dokumentacyjna; git diff --check PASS, bez nowego buildu/flash.
+
+## Etap 06b — gain z rampą i sterowanie tonem (2026-10-25)
+
+- Wznowiono z RESUME: odebranego testu I2S nie powtarzano od zera.
+- Nowy własny audio_gain: tabela Q16 0..100, 0 mute/100 unity, proponowana
+  krzywa -59.4..0dB dla 1..100, liniowa rampa amplitudy 2400 ramek/50ms.
+  Retarget od aktualnej wartości; powtarzany cel nie resetuje rampy.
+  PCM stereo32, wspólny gain L/R, bez przesterowania/UB dla ekstremów int32.
+- Osobny aplikacyjny właściciel audio_control: czysty model i kolejka16
+  VolumeDelta/Toggle. UI dostaje snapshot, nie zmienia rzeczywistego stanu
+  optymistycznie. Pełna kolejka odmawia. ISR posiada wyłącznie fazę/rampę,
+  z zadania pobiera chroniony target; bez heap/flash/IO/FFT/float/logów.
+- Nowy STREAMOO_AUDIO_CONTROL_TEST domyślnie y: start STOP z volume z NVS,
+  ciągły ton1kHz stereo o peak~-30dBFS przed gain. PLAY/STOP i VOL są teraz
+  rzeczywiste dla tego źródła. STOP rampuje do ciszy przy włączonym I2S.
+  D12 autoplay radia nadal OPEN. Wyłączenie przywraca stary test06a.
+- Katalog i widżety nadal TEST, nie analiza PCM ani prawdziwe stacje.
+  Browse/cancel/widżety nie zmieniają gain; confirm zmienia testową nazwę.
+- NVS nadal ma jednego producenta UI. volume_revision zachowuje informację
+  o sklejonych zmianach A→B→A; submit_changed resetuje debounce także dla
+  tej samej wartości końcowej, start terminu przy obserwacji przez UI.
+- 121 testów unittest PASS (14 nowych): model/komendy i clamp/revision,
+  krzywa, retarget, 2400 ramek, ekstremalne PCM, stereo/chunk/canary, źródło
+  ciągłe i zewnętrzny właściciel UI bez optymistycznych zmian. ASan/UBSan
+  gain/model/source oraz 8 testów UI/control PASS; detect_leaks=0 pod ptrace,
+  bez testu wycieków. FreeRTOS/DMA i odsłuch wymagają sprzętu.
+- ESP-IDF6.1 reconfigure/build i końcowy build PASS, obraz0x4a5f0 B.
+  Gałąź bez AUDIO_CONTROL_TEST: main/display dodatkowo skompilowane
+  kompilatorem targetu (bez osobnego pełnego linku tej konfiguracji).
+  ELF: controlled_fill0x403774fc, sine_fill0x40377534, gain_target0x40377598,
+  gain_process0x403775f4 w IRAM; render/wave/volume_gain w DRAM. Objdump:
+  brak wywołań helperów w gain. git diff --check PASS. Bez flash/erase/eFuse.
+- ADR0019; RESUME zaktualizowany. HARDWARE_TEST_PENDING: rzeczywisty poziom,
+  płynność zmian i PLAY/STOP, max_fill, działanie UI/NVS podczas audio.
+  Brak pomiaru jitter/latencji/underrun; etap06 i cały projekt nieukończone.
+- Kolejno: odbiór06b, następnie PCM FIFO/tap przed gain i przygotowanie
+  źródła PCM/dekoderów; pełny player, sieć i DSP nadal OPEN.

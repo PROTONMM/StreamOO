@@ -45,3 +45,8 @@ Etap06a domyślnie dodaje jednorazowy test dźwięku PCM5102A przy boot:
 około10s, lewy1kHz, prawy2kHz i oba kanały, z przerwami i rampami.
 Stały niski poziom, niezależny od TEST VOL/PLAY. Wyłącz
 STREAMOO_I2S_SMOKE_TEST, aby nie uruchamiać tonu. To nie jest streaming radia.
+
+Etap06b domyślnie zastępuje skończony ton testem sterowanym enkoderem:
+start w STOP, rzeczywiste VOL i PLAY/STOP z rampą50ms. Źródło to ciągły
+cichy ton1kHz stereo; katalog i widżety nadal TEST. Wyłącz
+STREAMOO_AUDIO_CONTROL_TEST, aby przywrócić test06a.

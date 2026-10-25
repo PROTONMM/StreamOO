@@ -35,3 +35,5 @@ class ControlsTests(unittest.TestCase):
     def test_rejected_commands_preserve_state(self): self.run_case(4)
     def test_invalid_and_empty(self): self.run_case(5)
     def test_demo_1000_frames_and_station_selection(self): self.run_case(6)
+
+    def test_external_audio_owner_and_rejection(self): self.run_case(7)

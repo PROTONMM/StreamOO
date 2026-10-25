@@ -352,3 +352,28 @@ tamtego modułu. Jeśli sygnału brak, potrzebny model/zdjęcie zworek modułu.
 
 Dla analizatora: WS nominalnie48kHz, BCLK3.072MHz, Philips bit-shift1,
 stereo32. Rzeczywisty rate/jitter i amplituda analogowa wymagają pomiaru.
+
+## Audio06b — rzeczywiste VOL i PLAY/STOP
+
+Domyślnie STREAMOO_AUDIO_CONTROL_TEST=y ma pierwszeństwo nad jednorazowym
+testem06a. Po boot HOME ma pokazać STOP i volume zapisane w NVS. Brak tonu
+na starcie jest oczekiwany. Tryb A: długi klik przełącza PLAY/STOP.
+
+1. Ustaw np. VOL80–100 i włącz PLAY długim kliknięciem. Oczekiwany ciągły
+   ton1kHz na obu kanałach. Jego maksimum przy100 jest tak niskie jak w06a;
+   przy50 dochodzi około30dB tłumienia, więc może być słabo słyszalny.
+2. Obrót w prawo/lewo ma rzeczywiście zmieniać poziom; VOL0 ma być ciszą.
+3. Kilka szybkich zmian volume oraz PLAY/STOP: słuchaj, czy nie ma trzasków.
+   Profil rampy to50ms plus opóźnienie DMA/sterowania, jeszcze niezmierzone.
+4. Trzymaj i obracaj: widżet się zmienia, poziom tonu pozostaje taki sam.
+   Przeglądaj/anuluj listę: ton trwa. Wybór testowej stacji zmienia jej nazwę,
+   nie częstotliwość ani prawdziwy strumień. Widżety są syntetyczne.
+5. Po zmianie volume/widżetu odczekaj Saved, zresetuj. Volume/widżet wracają,
+   ale audio startuje w STOP. Nie kasuj NVS.
+
+Podeślij wynik odsłuchu i log `audio_control: buffers=... max_fill=... invalid=...`.
+Oczekiwany postęp buforów, invalid0 i max_fill wyraźnie poniżej5000us.
+To nie jest pomiar całego ISR, jitter ani dowód braku dropout.
+TrybB: krótki klik PLAY/STOP, długi lista (gesty na liście bez zmian).
+Wyłącz AUDIO_CONTROL_TEST, aby wrócić do wcześniejszej sekwencji06a
+(przy nadal włączonym I2S_SMOKE_TEST).

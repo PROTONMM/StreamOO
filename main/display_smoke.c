@@ -1,5 +1,6 @@
 #include "display_smoke.h"
 #include "encoder_demo.h"
+#include "audio_control_probe.h"
 #include "streamoo_preferences.h"
 #include "streamoo_input_probe.h"
 #include "canvas_smoke.h"
@@ -44,13 +45,28 @@ static void display_task(void *context)
         const bool preferences_ready = streamoo_preferences_initial(&restored);
         demo.volume = restored.volume;
         if (!streamoo_ui_set_visualization(&demo.ui, restored.visualization)) error = ESP_ERR_INVALID_STATE;
+#ifdef CONFIG_STREAMOO_AUDIO_CONTROL_TEST
+        if (!streamoo_encoder_demo_bind_audio(&demo,streamoo_audio_control_post,NULL)) error=ESP_ERR_INVALID_STATE;
+        streamoo_encoder_demo_audio_state(&demo,restored.volume,false);
+        uint32_t volume_revision=0;
+#endif
         streamoo_input_event_t event;
         /* Discard input captured before this UI session was ready. */
         while (streamoo_input_probe_receive(&event)) {}
         TickType_t wake = xTaskGetTickCount();
-        ESP_LOGI("display_smoke", "Interactive encoder TEST ready: no audio/network; volume/widget preferences enabled if available");
+        ESP_LOGI("display_smoke", "Interactive encoder TEST ready; synthetic catalog/widgets; no network");
         while (error == ESP_OK) {
             uint64_t now = (uint64_t)esp_timer_get_time() / 1000;
+#ifdef CONFIG_STREAMOO_AUDIO_CONTROL_TEST
+            streamoo_audio_control_state_t audio;
+            if (streamoo_audio_control_state(&audio)) {
+                streamoo_encoder_demo_audio_state(&demo,audio.model.volume,audio.model.running);
+                if (preferences_ready && volume_revision!=audio.model.volume_revision) {
+                    const streamoo_preferences_value_t changed={audio.model.volume,(uint8_t)demo.ui.visualization};
+                    if (streamoo_preferences_submit_changed(changed)) volume_revision=audio.model.volume_revision;
+                }
+            }
+#endif
             for (unsigned n=0; n<32 && streamoo_input_probe_receive(&event); ++n) {
 #ifdef CONFIG_STREAMOO_ENCODER_MODE_B
                 const streamoo_control_mode_t mode = STREAMOO_CONTROL_MODE_B;

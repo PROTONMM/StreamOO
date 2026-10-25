@@ -21,6 +21,8 @@ class AudioToneTests(unittest.TestCase):
         cls.lib = C.CDLL(library)
         cls.lib.streamoo_audio_tone_fill.argtypes = [C.POINTER(Tone), C.POINTER(C.c_int32), C.c_size_t]
         cls.lib.streamoo_audio_tone_fill.restype = C.c_bool
+        cls.lib.streamoo_audio_sine_fill.argtypes = [C.POINTER(C.c_uint32), C.POINTER(C.c_int32), C.c_size_t]
+        cls.lib.streamoo_audio_sine_fill.restype = C.c_bool
 
     def render(self, start, count, chunk=240):
         tone = Tone(start)
@@ -99,3 +101,14 @@ class AudioToneTests(unittest.TestCase):
         self.assertEqual(end,480000)
         self.assertLessEqual(max(abs(v) for v in samples),1036*65536)
         self.assertTrue(all(v%65536==0 for v in samples))
+
+    def test_continuous_source_phase_and_invalid_state(self):
+        phase=C.c_uint32(0); samples=(C.c_int32*192)()
+        self.assertTrue(self.lib.streamoo_audio_sine_fill(C.byref(phase),samples,96))
+        self.assertEqual(phase.value,0)
+        self.assertEqual(list(samples[:96]),list(samples[96:]))
+        self.assertEqual(list(samples[::2]),list(samples[1::2]))
+        self.assertEqual(max(samples),1036*65536)
+        phase.value=48; old=bytes(samples)
+        self.assertFalse(self.lib.streamoo_audio_sine_fill(C.byref(phase),samples,96))
+        self.assertEqual(bytes(samples),old); self.assertEqual(phase.value,48)

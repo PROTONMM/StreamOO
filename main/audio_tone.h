@@ -13,3 +13,7 @@ typedef struct { uint32_t position; } streamoo_audio_tone_t;
 /* Bounded integer fill, 32-bit interleaved L/R. Saturates at end to silence.
  * No allocation/IO/libm. Reset position only while output disabled. */
 bool streamoo_audio_tone_fill(streamoo_audio_tone_t *tone, int32_t *lr, size_t frames);
+
+/* Continuous original -30dBFS 1kHz stereo test source. phase in 0..47.
+ * Same bounded/IRAM rules as the finite generator. */
+bool streamoo_audio_sine_fill(uint32_t *phase, int32_t *lr, size_t frames);

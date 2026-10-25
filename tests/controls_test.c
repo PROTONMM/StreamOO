@@ -60,6 +60,22 @@ int main(int argc, char **argv)
         assert(streamoo_ui_set_catalog(&ui,NULL,0,9)); assert(streamoo_ui_open_stations(&ui,0));
         assert(send(&ui,STREAMOO_INPUT_ROTATE,1,0)); assert(!send(&ui,STREAMOO_INPUT_SHORT,0,0));
         assert(send(&ui,STREAMOO_INPUT_LONG,0,0));
+    } else if (scenario==7) {
+        streamoo_encoder_demo_t d; assert(streamoo_encoder_demo_init(&d));
+        assert(streamoo_encoder_demo_bind_audio(&d,post,NULL));
+        assert(streamoo_encoder_demo_audio_state(&d,37,false));
+        assert(streamoo_encoder_demo_input(&d,(streamoo_input_event_t){STREAMOO_INPUT_ROTATE,1},0,1));
+        assert(commands==1 && command.kind==STREAMOO_CONTROL_VOLUME_DELTA && command.delta==1);
+        assert(d.volume==37 && !d.running); /* wait for owner snapshot */
+        assert(streamoo_encoder_demo_audio_state(&d,38,true));
+        assert(streamoo_encoder_demo_input(&d,(streamoo_input_event_t){STREAMOO_INPUT_LONG,0},0,2));
+        assert(command.kind==STREAMOO_CONTROL_TOGGLE && d.running);
+        assert(streamoo_encoder_demo_audio_state(&d,38,false));
+        accept=false;
+        assert(!streamoo_encoder_demo_input(&d,(streamoo_input_event_t){STREAMOO_INPUT_ROTATE,1},0,3));
+        assert(d.volume==38 && !d.running && !d.control_pending);
+        assert(!streamoo_encoder_demo_audio_state(&d,101,true));
+        assert(d.volume==38 && !d.running);
     } else {
         streamoo_encoder_demo_t d; assert(streamoo_encoder_demo_init(&d));
         uint8_t frame[8194]; memset(frame,0xa5,sizeof frame);

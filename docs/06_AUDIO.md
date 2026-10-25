@@ -39,3 +39,15 @@ TEST VOL/PLAY nie sterują tym sygnałem. DAC musi sprzętowo mieć ustawiony
 format I2S, być odmutowany i obsługiwać PLL bez MCLK; model/zwory użytkownika
 nie są jeszcze potwierdzone. Sterownik, zegary i dźwięk wymagają odbioru.
 Pełny pipeline, volume gain, dekodery i odtwarzanie strumieni nadal OPEN.
+
+## Część 06b — rzeczywisty gain i PLAY/STOP na tonie
+
+Nowy domyślny STREAMOO_AUDIO_CONTROL_TEST uruchamia sterowany ciągły ton
+1kHz stereo zamiast sekwencji 06a. Start w STOP z volume z NVS. Enkoder
+wysyła komendy do osobnego właściciela, a UI odczytuje jego snapshot.
+Gain 0..100 i PLAY/STOP mają rampę50ms w próbkach; VOL0 mute, VOL100 unity.
+Źródło ma peak~-30dBFS przed gain, więc przy niskim volume będzie bardzo ciche.
+[ADR0019](adr/0019-controlled-audio-gain-ramp.md) opisuje Q16, IRAM, komendy
+i aktualizacje NVS. Widżety/katalog są nadal syntetyczne. STOP podaje zera
+bez wyłączania zegarów; nie jest pauzą odtwarzanego strumienia. Polityka
+autoplay rzeczywistego radia pozostaje OPEN. Pełny pipeline nadal niegotowy.

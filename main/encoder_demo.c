@@ -21,6 +21,7 @@ static bool select_station(void *context, const streamoo_ui_select_command_t *cm
 static bool post_control(void *context, const streamoo_control_command_t *cmd)
 {
     streamoo_encoder_demo_t *d = context;
+    if (d->audio_post) return d->audio_post(d->audio_context,cmd);
     if (d->control_pending) return false;
     d->control = *cmd;
     d->control_pending = true;
@@ -73,8 +74,10 @@ bool streamoo_encoder_demo_draw(streamoo_encoder_demo_t *d, uint8_t *frame,
     for (unsigned i=0; i<5; ++i)
         if (stations[i].stable_id == d->station_id)
             s.station_name=(streamoo_ui_text_t){stations[i].name,stations[i].name_bytes};
-    const char *title="TEST sterowania - bez audio";
-    s.title=(streamoo_ui_text_t){(const uint8_t *)title, sizeof("TEST sterowania - bez audio")-1};
+    static const char silent[]="TEST sterowania - bez audio";
+    static const char audible[]="TEST: ton 1kHz, widżety TEST";
+    s.title=d->audio_post ? (streamoo_ui_text_t){(const uint8_t *)audible,sizeof audible-1} :
+                            (streamoo_ui_text_t){(const uint8_t *)silent,sizeof silent-1};
     for (unsigned i=0; i<24; ++i) {
         unsigned phase=(unsigned)(now%2000+i*61)%2000;
         s.visualization.bands[i]=d->running ? (phase<1000 ? phase : 2000-phase)*32 : 0;
@@ -102,4 +105,17 @@ bool streamoo_encoder_demo_draw(streamoo_encoder_demo_t *d, uint8_t *frame,
     streamoo_canvas_fill(&canvas,(streamoo_rect_t){0,24,256,8},0);
     return streamoo_text_line(&canvas,(streamoo_rect_t){0,24,256,8},
         (const uint8_t *)status,(size_t)length,STREAMOO_TEXT_CENTER,0,0,0,12,streamoo_font5x8,NULL);
+}
+
+bool streamoo_encoder_demo_bind_audio(streamoo_encoder_demo_t *d, streamoo_control_post_fn post, void *context)
+{
+    if (!d || !d->ui.post || !post || d->control_pending) return false;
+    d->audio_post=post; d->audio_context=context;
+    return true;
+}
+bool streamoo_encoder_demo_audio_state(streamoo_encoder_demo_t *d, uint8_t volume, bool running)
+{
+    if (!d || !d->audio_post || volume>100) return false;
+    d->volume=volume; d->running=running;
+    return true;
 }

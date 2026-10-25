@@ -13,8 +13,9 @@ menu "StreamOO Configuration"
         default y
         help
             Start interactive HOME immediately and keep rendering until reset.
-            Synthetic catalog and visualization, TEST volume/playback only.
-            No audio or network. Volume/widget saved to NVS after 5 seconds idle.
+            Synthetic catalog and visualization. Continuous audio control TEST
+            optionally connects VOL/PLAY to a test tone; otherwise UI-only.
+            No network. Volume/widget saved to NVS after 5 seconds idle.
             Disable for the finite OLED diagnostic.
     config STREAMOO_RESERVE_USB
         bool "Reserve GPIO19/20 for USB debugging"
@@ -80,11 +81,22 @@ menu "StreamOO Configuration"
             default 10
     endmenu
     menu "Hardware: PCM5102A (I2S)"
+        config STREAMOO_AUDIO_CONTROL_TEST
+            bool "Continuous tone controlled by encoder VOL/PLAY TEST"
+            depends on STREAMOO_ENCODER_UI_TEST
+            default y
+            select I2S_ISR_IRAM_SAFE
+            help
+                Starts in STOP with restored volume. PLAY sends a continuous
+                stereo 1kHz test tone, source peak -30dBFS before volume gain.
+                50ms gain ramps. Overrides the finite I2S smoke sequence.
+                Widgets remain synthetic. Not a network stream player.
         config STREAMOO_I2S_SMOKE_TEST
             bool "Run finite left/right I2S tone TEST at startup"
             default y
             select I2S_ISR_IRAM_SAFE
             help
+                Ignored while continuous audio control TEST is enabled.
                 About 10 seconds: silence, left 1kHz, right 2kHz, both 1kHz.
                 Fixed approximately -30dBFS peak, independent of UI volume.
                 48kHz/32-bit Philips I2S, no MCLK. Requires DAC configured

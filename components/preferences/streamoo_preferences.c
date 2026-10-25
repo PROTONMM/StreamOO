@@ -62,12 +62,18 @@ bool streamoo_preferences_initial(streamoo_preferences_value_t *out)
     *out=initial;
     return true;
 }
-bool streamoo_preferences_submit(streamoo_preferences_value_t value)
+bool streamoo_preferences_submit_changed(streamoo_preferences_value_t value)
 {
     if (!updates || !streamoo_preferences_value_valid(value)) return false;
-    if (streamoo_preferences_equal(last_submitted,value)) return true;
     update_t update={value,now_ms()};
     if (xQueueOverwrite(updates,&update)!=pdTRUE) return false;
     last_submitted=value;
     return true;
+}
+
+bool streamoo_preferences_submit(streamoo_preferences_value_t value)
+{
+    if (!updates || !streamoo_preferences_value_valid(value)) return false;
+    if (streamoo_preferences_equal(last_submitted,value)) return true;
+    return streamoo_preferences_submit_changed(value);
 }
