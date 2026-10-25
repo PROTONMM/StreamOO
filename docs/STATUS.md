@@ -9,7 +9,7 @@ Bieżący punkt wznowienia: [RESUME.md](RESUME.md).
 | 03 szkielet | baza zaimplementowana; odbiór sprzętowy i integracyjny OPEN | ESP-IDF v6.1 build PASS; ADR 0002 |
 | 04 UI/SSD1322 | HOME i lista odebrane na OLED; końcowe strojenie fontu OPEN | ADR 0012; odbiór użytkownika |
 | 05 encoder | dekoder/IRQ i gesty odebrane; interaktywny adapter odebrany w trybie A; preferencje NVS odebrane; shutdown/flush OPEN | ADR 0013–0017; 99 testów PASS |
-| 06 audio | I2S/gain/PCM stress odebrane; MP3 z pliku 06d HARDWARE_TEST_PENDING; AAC/player OPEN | ADR 0018–0021; 141 testów hostowych PASS |
+| 06 audio | I2S/gain/PCM stress odebrane; MP3 decode/PCM potwierdzone logiem, odsłuch MP3 OPEN; AAC/player OPEN | ADR 0018–0021; 141 testów hostowych PASS; log S3 |
 | 07 DSP | NIEZAIMPLEMENTOWANE | — |
 | 08 stacje | NIEZAIMPLEMENTOWANE | — |
 | 09 sieć | NIEZAIMPLEMENTOWANE | — |
@@ -794,3 +794,28 @@ git diff --check PASS, bez nowego buildu/flash.
   streamingu/CPU realtime, generacji/seek/cancel i pełnego playera.
 - Dalej po odbiorze: AAC-LC PoC, następnie dekodowanie porcjami bez
   przechowywania całego PCM pliku oraz adapter resamplingu według pomiarów.
+
+## Wynik MP3 PoC06d na ESP32-S3 (2026-10-25)
+
+Użytkownik przekazał log w kontekście `3f761ae`:
+
+- MP3 PoC ESP_OK przy1.378s: input64512B, pcm_frames193536 — dokładnie
+  referencja hosta/168 ramek MPEG. rate48000, channels2, bits16, peak16=985.
+  Ta próba potwierdza także fragmentację257B i koniec tego pliku.
+- decode_us337274, wall_us501083, stack_hwm22744. To metryki batch PoC,
+  nie pomiar CPU streamingu ani wymiarowanie stosu pozostałych kodeków.
+- Profil producer_stall=OFF/tap_delay0, source embedded MP3, początkowy STOP.
+  buffers1006→11008 do56.428s; max_fill104→133us, invalid0; queued28,
+  mode1, low0/hard0/starts1, tap_drop0/tap_gaps0. Peak tap0/984/985
+  jest zgodny z ciszą i tonami w stratnym pliku.
+- Heap internal free237203B/min176440B/largest131072B stabilny w próbkach;
+  PSRAM free/min7328984B, largest7208960B. Saved volume83/widget1 przy50.638s
+  bez wzrostu liczników niedoboru w późniejszym odczycie.
+- Około15.9–16.9s jest fragment nieczytelnego tekstu konsoli, przyczyna
+  nieustalona (OPEN). Dalsze logi i liczniki działają; obserwować powtarzalność.
+
+Potwierdzono wykonanie dekodera na6.1/S3 i stabilną pracę przygotowanego PCM
+w tym przebiegu. Użytkownik nie opisał jeszcze odsłuchu kanałów/cyklu.
+Nie deklarujemy bitowej identyczności PCM, pomiaru jitter ani gotowego
+streamingu/obsługi kolejnych formatów. Bez osobnego hasha wgranego obrazu.
+Zmiana dokumentacyjna; git diff --check PASS, bez nowego buildu/flash.

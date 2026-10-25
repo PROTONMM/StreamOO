@@ -1,6 +1,6 @@
 # Punkt wznowienia StreamOO
 
-Aktualizacja: **2026-10-25, etap06d MP3 z pliku gotowy do odbioru na płytce**.
+Aktualizacja: **2026-10-25, dekoder MP3/PCM06d potwierdzone logiem z płytki; odsłuch OPEN**.
 PCM/rebuffer/tap stress potwierdzone logiem i odsłuchem (`5664a90`).
 Gałąź feature/streamoo-implementation, szczegóły STATUS i ADR0021.
 
@@ -80,20 +80,25 @@ nie streaming ani benchmark czasu rzeczywistego. Brak resamplingu. Start STOP z 
 Klip zawiera ciszę, więc peak tap jest teraz zmienny — nie oczekuj1036.
 Widżety/katalog nadal TEST. Wyłączenie MP3_FIXTURE_TEST wraca do sinusa.
 
+Log użytkownika dla3f761ae: MP3 PoC ESP_OK,64512B→193536 ramek
+(dokładnie referencja),48kHz/stereo16, peak985, decode337274us, wall501083us,
+stack_hwm22744. PCM low0/hard0/starts1, invalid0, tap_drop/gaps0, max_fill133us.
+Stabilny heap, zapis NVS volume83. Jednorazowo nieczytelny fragment konsoli
+około16s — przyczyna OPEN, zapytać o powtarzalność przy dalszych testach.
+
 ## Następny krok
 
-1. Odbiór06d: po wgraniu czekaj na MP3 PoC ESP_OK. Podeślij input/frame
-   count/rate/channels/bits/peak/decode_us/wall_us/stack_hwm. Referencja hosta
-   193536 ramek, firmware akceptuje192000..194688 (padding/priming).
-2. VOL80–100 i PLAY: kilka powtórzeń sygnałów L/R/oba z wbudowaną ciszą.
-   Sprawdź VOL/PLAY/STOP i PCM low/hard/invalid. Flagi stress n/0.
+1. Nie powtarzać zaliczonych pomiarów MP3/PCM. Dopytać o czysty odsłuch
+   kanałów L/R/oba i powtarzanego cyklu (log tego nie zastępuje).
+2. Flagi stress nadal n/0. Przy powrocie nieczytelnych znaków konsoli
+   zebrać nowy log; nie przypisywać przyczyny bez danych.
 3. Po odbiorze AAC-LC PoC, potem streaming decode/backpressure bez
    przechowywania całego PCM i adapter kolejnych formatów/resamplingu.
    Nie powtarzać odebranego testu PCM stress ani nie ogłaszać radia/DSP.
 
 Weryfikacja: **141 testów hostowych PASS**, ASan/UBSan adaptera/pętli PASS,
-ESP-IDF6.1 build/link PASS. Vendor decoder nie działa na hoście — runtime
-MP3 i odsłuch wciąż OPEN. LeakSanitizer wyłączony, bez testu wycieków.
+ESP-IDF6.1 build/link PASS. Vendor decoder nie działa na hoście; jego runtime
+na S3 został już potwierdzony logiem. Odsłuch wciąż OPEN. LeakSanitizer wyłączony, bez testu wycieków.
 Licencje/API sprawdzone, manifest/lock przypięte, fixture oryginalny.
 Przy pierwszej konfiguracji wymagany dostęp do rejestru Component Manager;
 managed_components ignorowane przez Git, dependencies.lock śledzony.
