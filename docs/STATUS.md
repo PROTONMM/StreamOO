@@ -9,7 +9,7 @@ Bieżący punkt wznowienia: [RESUME.md](RESUME.md).
 | 03 szkielet | baza zaimplementowana; odbiór sprzętowy i integracyjny OPEN | ESP-IDF v6.1 build PASS; ADR 0002 |
 | 04 UI/SSD1322 | HOME i lista odebrane na OLED; końcowe strojenie fontu OPEN | ADR 0012; odbiór użytkownika |
 | 05 encoder | dekoder/IRQ i gesty odebrane; interaktywny adapter odebrany w trybie A; preferencje NVS odebrane; shutdown/flush OPEN | ADR 0013–0017; 99 testów PASS |
-| 06 audio | I2S/gain/PCM stress odebrane; MP3 decode/PCM potwierdzone logiem; AAC-LC PoC odebrane; incremental file decode06f gotowy, odbiór S3 OPEN; sieć/player OPEN | ADR 0018–0023; 152 testy hostowe PASS; build źródeł PASS |
+| 06 audio | I2S/gain/PCM stress odebrane; MP3 decode/PCM potwierdzone logiem; AAC-LC PoC odebrane; AAC incremental file decode06f odebrane logiem i odsłuchem; sieć/player OPEN | ADR 0018–0023; 152 testy hostowe PASS; build źródeł PASS |
 | 07 DSP | NIEZAIMPLEMENTOWANE | — |
 | 08 stacje | NIEZAIMPLEMENTOWANE | — |
 | 09 sieć | NIEZAIMPLEMENTOWANE | — |
@@ -877,3 +877,22 @@ Zmiana dokumentacyjna; kod i obraz firmware bez zmian, bez powtarzania testów.
 - ADR0023. Odbiór06f na S3 OPEN: stabilny FIFO/heap/stos, czas read i reset
   podczas DMA oraz odsłuch kilku cykli L/R/oba, VOL/PLAY/STOP. Wynik06e batch
   nie zalicza tych nowych warunków. Nie wykonywano flash/erase.
+
+## Odbiór06f — AAC incremental decode (2026-10-25)
+
+Użytkownik przekazał log dla3b18324 i potwierdził „Dżwięk OK”.
+AAC-LC streaming source ESP_OK, input37039B, work_bytes8528 bez pełnego
+klipu PCM. cycles1..5, każdy frames193536, ok1; max_read_us4034,
+stack_hwm22728B. LONG w6.005s, volume83 z NVS, stress OFF/0.
+Do20.955s queued27..30/ACTIVE, low0/hard0/starts1, invalid0,
+tap_drop0/tap_gaps0, max_fill130us. Zmienny peak z ciszą zgodny z klipem.
+Heap internal211223B (min175568, largest131072) i PSRAM8341720B
+(min8341720, largest8257536) stabilne w próbkach10.845/20.845s.
+Względem batch06e wolna PSRAM wzrosła o1012736B; internal zmalała
+z235415 do211223B (dekoder pozostaje otwarty i ma stan roboczy).
+max_read4034us dotyczy pull240 w zadaniu, max_fill130us callbacku render;
+nie są pomiarem całego ISR/jitter ani dowodem deadline przy innym obciążeniu.
+Odbiór AAC decode/reset podczas DMA i odsłuch zaliczone. To krótki test,
+nie test długotrwały; MP3 incremental, nowe próby VOL/STOP, sieć i HE-AAC
+nie wynikają z tego logu. Następny zakres: oddzielny interfejs źródła
+skompresowanego i bufor z backpressure. Nie powtarzano buildu/testów kodu.

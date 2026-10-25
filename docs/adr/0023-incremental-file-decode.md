@@ -1,6 +1,6 @@
 # ADR0023 — dekodowanie pliku podczas odtwarzania
 
-Data:2026-10-25. Status: zaimplementowane; odbiór sprzętowy06f OPEN.
+Data:2026-10-25. Status: AAC06f odebrane logiem i odsłuchem; MP3 incremental OPEN.
 
 ## Kontekst i decyzja
 
@@ -47,3 +47,13 @@ frames193536 zgodne z referencją, PCM low0/hard0/invalid0, stabilne heap/stos,
 czysty odsłuch kilku cykli oraz VOL/PLAY/STOP. max_read_us mierzy pojedynczy
 pull240 ramek (włącznie z resetem), nie cały burst producenta ani ISR.
 EOF/reset i koszt dekodowania w trakcie DMA wymagają tego nowego odbioru.
+
+## Wynik odbioru AAC
+
+Log3b18324: streaming source ESP_OK, work_bytes8528, cycles1..5/ok1,
+frames193536, max_read4034us, stack_hwm22728B. PCM queued27..30/ACTIVE,
+low0/hard0/starts1, invalid0, tap_drop/gaps0, max_fill130us.
+Heap internal211223B i PSRAM8341720B stabilne w próbkach10–20s.
+Użytkownik potwierdził „Dżwięk OK”. Decode/reset podczas DMA i odsłuch AAC
+zaliczone. MP3 incremental, nowe próby VOL/STOP oraz długotrwałe obciążenie
+pozostają osobnymi testami; wyniki AAC ich nie zastępują.

@@ -1,6 +1,6 @@
 # Punkt wznowienia StreamOO
 
-Aktualizacja: **2026-10-25, incremental decode06f gotowy do odbioru; AAC PoC06e odebrane**.
+Aktualizacja: **2026-10-25, AAC incremental decode06f odebrane logiem i odsłuchem**.
 PCM/rebuffer/tap stress potwierdzone logiem i odsłuchem (`5664a90`).
 Gałąź feature/streamoo-implementation, szczegóły STATUS i ADR0023.
 
@@ -99,18 +99,19 @@ EOF resetuje parser/dekoder. ISR/gain/tap bez zmian; NVS i start STOP zachowane.
 Źródło nadal testowy plik we flash, nie sieć; HE-AAC/resampling/player/DSP OPEN.
 
 Lokalny profil AAC-LC, stress n/0, encoder A5/B6/BTN7 REVERSED=y.
-Po wgraniu oczekuj `AAC-LC streaming source ESP_OK`, następnie
-`AAC-LC stream ok=1 cycles=... frames=193536 max_read_us=...`.
-VOL80–100, PLAY i kilka cykli L/R/oba z ciszą. Sprawdź VOL/PLAY/STOP.
-Prześlij log stream + PCM/buffers/heap i odsłuch. Oczekuj rosnących cycles,
-low0/hard0/invalid0 i braku niezamierzonych przerw. max_read_us nie jest
-pomiarem ISR ani całego burst producenta. Odbiór runtime06f OPEN.
+Odbiór AAC06f zaliczony: użytkownik potwierdził „Dżwięk OK”.
+Log3b18324: work_bytes8528, cycles1..5/ok1, frames193536/cykl,
+max_read4034us, stack_hwm22728B. PCM queued27..30/ACTIVE, low0/hard0,
+starts1, invalid0, tap_drop/gaps0, max_fill130us. Heap internal211223B,
+PSRAM8341720B stabilne10–20s. max_read to pull240 w zadaniu, nie ISR.
+Nie powtarzać zaliczonego odsłuchu. MP3 incremental i nowe próby VOL/STOP
+nie zostały osobno potwierdzone; test długotrwały i sieć nadal OPEN.
 
 152 testy hostowe PASS; ASan/UBSan pump/konwertera PASS (bez LeakSanitizer).
 Build/link AAC-LC, MP3 i sinus PASS. Testy hostowe używają sztucznego
 backendu; prawdziwy dekoder wymaga S3.
-Następny krok zależy od tego odbioru: pomiary kosztu i dalsze oddzielenie
-źródła skompresowanego, potem bufor/reader sieciowy. Nie ogłaszać pełnego radia.
+Następny krok: oddzielny interfejs źródła skompresowanego i bufor
+z backpressure, potem reader sieciowy. Nie ogłaszać pełnego radia.
 Przy pierwszej konfiguracji wymagany dostęp do rejestru Component Manager;
 managed_components ignorowane przez Git, dependencies.lock śledzony.
 
