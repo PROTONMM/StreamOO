@@ -163,3 +163,10 @@ ADR0048: data na polecenie użytkownika DD.MM.YYYY, nieznana --.--.----. Godzina
 ADR0049: pole bitrate używa poprawnego nagłówka icy-br serwera (np.192k),
 bez nagłówka nadal --. Jest to deklarowany nominalny bitrate, nie pomiar VBR.
 Czyszczenie razem z kodekiem przy STOP/retry/braku sieci.
+
+## Logo startowe — ADR0063
+
+Propozycja znaku StreamOO w native256×64/4bpp: dwa O/fale, linia sygnału,
+napisKrypton i podpis. Pierwsze present po boot/resecie,1500ms, potem
+normalne UI. Brak powtórzeń po PLAY/reconnect/zmianie stacji, brak opóźnienia
+zadań sieciowych. Podgląd assets/branding/startup-256x64.png; odbiórOLED OPEN.

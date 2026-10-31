@@ -2,6 +2,7 @@
 #include "encoder_demo.h"
 #include "streamoo_settings.h"
 #include "streamoo_ui_ap.h"
+#include "streamoo_ui_boot.h"
 #include "streamoo_network.h"
 #include "streamoo_config_store.h"
 #include "streamoo_player.h"
@@ -25,6 +26,8 @@ _Static_assert(sizeof(time_t)>=8,"Clock requires 64-bit time_t through2099");
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "streamoo_ssd1322.h"
+
+static bool boot_logo_presented;
 
 #ifdef CONFIG_STREAMOO_ENCODER_UI_TEST
 static bool sync_catalog(streamoo_encoder_demo_t *demo,streamoo_catalog_snapshot_t **held,streamoo_ui_station_t **entries)
@@ -62,8 +65,11 @@ static void display_task(void *context)
     uint8_t *frame = heap_caps_calloc(1, SSD1322_FRAME_BYTES,
                                      MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
     esp_err_t error = frame ? streamoo_ssd1322_open(&config, &display) : ESP_ERR_NO_MEM;
+    const bool show_logo=!boot_logo_presented;
+    if(error==ESP_OK&&show_logo&&!streamoo_ui_boot_draw(frame,SSD1322_FRAME_BYTES))error=ESP_ERR_INVALID_STATE;
     if (error == ESP_OK) error = streamoo_ssd1322_present(display, frame, SSD1322_FRAME_BYTES);
     if (error == ESP_OK) error = streamoo_ssd1322_enable(display, true);
+    if(error==ESP_OK&&show_logo){boot_logo_presented=true;vTaskDelay(pdMS_TO_TICKS(1500));}
 #ifdef CONFIG_STREAMOO_ENCODER_UI_TEST
     if (error == ESP_OK) {
         streamoo_catalog_snapshot_t *catalog_snapshot=NULL;

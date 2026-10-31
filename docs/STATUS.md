@@ -1,7 +1,7 @@
 # Status implementacji
 
 
-## Bieżące — 2026-10-31 / FLAC recovery ADR0062
+## Bieżące — 2026-10-31 / FLAC recovery ADR0062 i logo ADR0063
 
 Użytkownik: po ADR0061 gra gorzej. Log bca642b2: memory/NO_MEM,
 compressed1, low/starts około2/s, potem raw adapter INVALID_RESPONSE/vendor0.
@@ -12,7 +12,14 @@ wewnętrzny ring PCM rezerwowany przed codec_open. FLAC start/refill~500ms
 z icy-br, fallback64KiB, clamp32..192KiB w istniejącym ring256KiB; bez
 restartu TCP/generation. MP3/AAC próg8KiB bez zmian. Odbiór S3 OPEN.
 
-370 testów hostowych PASS, live/actor ASanUBSan (LSan off), GPIO/diff i native ESP-IDF6.1 PASS0x17a8a0,90% app wolne.
+Logo propozycja: dwa O/fale + StreamOO + linia sygnału, native256×64/4bpp,
+assets/branding/startup-256x64.png. Pokazywane1,5s tylko po power/reset,
+nie na wybudzenie STOP, reconnect ani zmianę stacji; Wi-Fi łączy równolegle.
+Renderer bez heap/drugiego framebuffer; tools/preview_boot_logo.py odtwarza
+natywny obraz i powiększenie. Ocena wyglądu/timingu OLED OPEN.
+
+370 testów hostowych PASS, live/actor ASanUBSan (LSan off), renderer guards/
+podgląd, GPIO/diff i native ESP-IDF6.1 PASS0x17a8a0,90% app wolne.
 Teraz zwykły flash bez erase/FS/reimport; nowy log FLAC live frame: supplied
 validated STREAMINFO, bez CRC-checked single frames. Sprawdzić FLAC kilka
 minut i zmianę utworu: low/hard/starts, compressed/PCM, heap/min/largest.

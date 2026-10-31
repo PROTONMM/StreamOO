@@ -146,3 +146,4 @@ HLS audio: `adr/0060-hls-audio-segments.md`, `HLS_BRINGUP.md`.
 
 ADR0061 odrzucone po odsłuchu S3: `adr/0061-single-frame-live-flac.md`.
 FLAC parser/PCM/rebuffer: `adr/0062-flac-parser-recovery-and-buffer-reserve.md`.
+Logo OLED: `adr/0063-native-oled-boot-mark.md`, `../assets/branding/README.md`.
