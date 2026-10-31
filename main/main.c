@@ -7,6 +7,7 @@
 #include "audio_probe.h"
 #include "audio_control_probe.h"
 #include "streamoo_preferences.h"
+#include "streamoo_network.h"
 
 static const char *TAG = "StreamOO";
 
@@ -53,5 +54,10 @@ void app_main(void)
     if (streamoo_display_smoke_start() != ESP_OK) {
         ESP_LOGE(TAG, "Display smoke task could not start");
     }
+#endif
+#if defined(CONFIG_STREAMOO_NETWORK_AP_TEST)
+    esp_err_t network_error=streamoo_network_start();
+    if (network_error!=ESP_OK)
+        ESP_LOGW(TAG,"AP test inactive: %s; see docs/NETWORK_BRINGUP.md",esp_err_to_name(network_error));
 #endif
 }

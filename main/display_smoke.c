@@ -61,7 +61,7 @@ static void display_task(void *context)
         /* Discard input captured before this UI session was ready. */
         while (streamoo_input_probe_receive(&event)) {}
         TickType_t wake = xTaskGetTickCount();
-        ESP_LOGI("display_smoke", "Interactive encoder TEST ready; synthetic catalog/widgets; no network");
+        ESP_LOGI("display_smoke", "Interactive encoder TEST ready; synthetic catalog/widgets; no stream player");
         while (error == ESP_OK) {
             uint64_t now = (uint64_t)esp_timer_get_time() / 1000;
 #ifdef CONFIG_STREAMOO_AUDIO_CONTROL_TEST

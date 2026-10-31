@@ -29,3 +29,8 @@ LittleFS, OTA i kontrolowany shutdown/flush nie są zaimplementowane.
 06b: UI obserwuje volume_revision właściciela audio i może zgłosić
 submit_changed nawet przy tej samej wartości końcowej po sklejeniu zmian.
 Zachowano jednego producenta skrzynki NVS i zapis po5s od obserwacji zmiany.
+
+09a: prywatny AP JSON poza repo, getpass i uprawnienia0600. W firmware klucz
+build-time, nie secret Kconfig ani zapis credentials do NVS. Brak klucza
+nie otwiera AP. Nowa factory1500KiB przy tym samym NVS/PHY i offsetach;
+nie kasować NVS. Portal/STA/admin auth, OTA i szyfrowanie nadal OPEN.

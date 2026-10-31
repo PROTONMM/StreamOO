@@ -1,0 +1,25 @@
+idf_component_register(SRCS "streamoo_network.c" "streamoo_network_policy.c"
+                       INCLUDE_DIRS "include" REQUIRES esp_common
+                       PRIV_REQUIRES esp_wifi esp_netif esp_event esp_hw_support nvs_flash freertos log)
+set(STREAMOO_NETWORK_SECRETS_FILE "" CACHE FILEPATH "Private AP JSON outside the repository")
+set(secret_args)
+if(STREAMOO_NETWORK_SECRETS_FILE)
+    list(APPEND secret_args --file "${STREAMOO_NETWORK_SECRETS_FILE}")
+    set(secret_path "${STREAMOO_NETWORK_SECRETS_FILE}")
+elseif(NOT "$ENV{XDG_CONFIG_HOME}" STREQUAL "")
+    set(secret_path "$ENV{XDG_CONFIG_HOME}/streamoo/network.json")
+else()
+    set(secret_path "$ENV{HOME}/.config/streamoo/network.json")
+endif()
+set(secret_header "${CMAKE_CURRENT_BINARY_DIR}/private/network_secret.h")
+execute_process(COMMAND "${PYTHON}" "${PROJECT_DIR}/tools/configure_network.py"
+                ${secret_args} --generate-header "${secret_header}"
+                RESULT_VARIABLE secret_result OUTPUT_QUIET ERROR_QUIET)
+if(NOT secret_result EQUAL 0)
+    message(FATAL_ERROR "Invalid private AP build configuration; values omitted. See docs/NETWORK_BRINGUP.md")
+endif()
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${PROJECT_DIR}/tools/configure_network.py")
+if(EXISTS "${secret_path}")
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${secret_path}")
+endif()
+target_include_directories(${COMPONENT_LIB} PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/private")

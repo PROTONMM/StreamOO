@@ -12,7 +12,7 @@ Bieżący punkt wznowienia: [RESUME.md](RESUME.md).
 | 06 audio | I2S/gain/PCM stress odebrane; MP3 decode/PCM potwierdzone logiem; AAC-LC PoC odebrane; AAC incremental file decode06f odebrane logiem i odsłuchem; źródło/bufor AAC06g odebrane logiem, odsłuchem i sterowaniem; niezależny reader AAC06h odebrany logiem i odsłuchem; sieć/player OPEN | ADR 0018–0025; 168 testów hostowych PASS; build źródeł PASS |
 | 07 DSP | NIEZAIMPLEMENTOWANE | — |
 | 08 stacje | NIEZAIMPLEMENTOWANE | — |
-| 09 sieć | NIEZAIMPLEMENTOWANE | — |
+| 09 sieć | SoftAP09a zaimplementowany; RF/DHCP/audio OPEN; portal/STA/mDNS OPEN | ADR0026; 179 testów hostowych PASS; native AP build PASS |
 | 10 WWW | NIEZAIMPLEMENTOWANE | — |
 | 11 storage/OTA | NVS volume/widżet odebrane; flush i pozostały zakres OPEN | ADR 0017; odbiór użytkownika |
 | 12 testy końcowe | NIEURUCHOMIONE | — |
@@ -1006,3 +1006,36 @@ readerem i sieć pozostają osobno OPEN. WAIT w granicy EOF nie zastępuje
 wymuszonego niedoboru w środku strumienia ani testu jitter/deadline.
 Zapis tylko dokumentacji, bez powtarzania buildu/testów i bez flashowania.
 Następny zakres: konfiguracja Wi-Fi według09 przed readerem HTTP/HTTPS.
+
+## Etap09a — zabezpieczony SoftAP i prywatny build (2026-10-31)
+
+- Nowy network worker: esp_wifi/esp_netif/esp_event z ESP-IDF6.1, AP WPA2,
+  StreamOO-XXXXXX z MAC SoftAP, DHCP192.168.4.1/24, max4 klientów, kanał1.
+  Priorytet3/stos6144B, log liczby klientów/stosu co10s. UI network snapshot
+  pozostaje syntetyczny. Brak STA/portalu/mDNS/HTTP; to pierwszy test RF/audio.
+- API i licencje zweryfikowane w lokalnym SDK (Apache2.0, w tym esp_wifi/lib),
+  notice w licenses. Brak nowego pakietu, kopiowania kodu i zmian locka.
+- Narzędzie getpass zapisuje wspólne hasło AP do zewnętrznego JSONv1 (0600,
+  atomowo). CMake generuje prywatny header w ignorowanym build/. Bez pliku
+  nie uruchamia Wi-Fi; jawny błędny plik blokuje konfigurację. Brak hasła
+  zastępczego/logowania kluczy. WIFI_STORAGE_RAM, NVS init bez erase.
+- Native obraz początkowo0x10dab0B przekroczył1MiB. Profil partycji zmieniony
+  na gotowy SDK SINGLE_APP_LARGE1500KiB (0x177000); NVS0x9000/0x6000,
+  PHY0xf000/0x1000, factory0x10000 bez zmian położenia. Potrzebny zwykły flash
+  wraz z nową tablicą partycji, nie app-flash. OTA/LittleFS nadal OPEN.
+- 179 testów hostowych PASS,11 nowych przypadków polityki AP i prywatnego
+  procesu budowania, w tym redakcja błędów i zakaz sekretów w repo.
+- Native build AAC+AP i MP3+AP z losowym kluczem testowym poza repo PASS;
+  końcowy lokalny profil AAC bez sekretu AP (Wi-Fi wyłączone) PASS.
+  To nie test docelowego hasła ani pracy radia na płytce. Testowy klucz nie
+  trafił do repo ani logów; przed normalnym flash wymagany prywatny build.
+- ADR0026 i NETWORK_BRINGUP. Odbiór09a OPEN: WPA2 association/zły klucz,
+  DHCP/klienci, czyste AAC i stabilne PCM/heap przy RF. Nie flashowano,
+  nie kasowano NVS i nie zapisywano sekretów użytkownika.
+
+Końcowe build09a ESP-IDF6.1: AAC+AP0x10da90B, MP3+AP0x1145d0B PASS
+przy factory0x177000B; wariant bez klucza AAC0x812b0B PASS. Końcowa
+konfiguracja: sekret testowy usunięty, cache ścieżki pusty, header AVAILABLE0,
+Wi-Fi nie uruchomi się przed lokalną konfiguracją użytkownika. Sprawdzono
+brak testowego hasła w logach i końcowym obrazie. Walidator GPIO/platform,
+diff --check PASS; callback render/pcm_fill nadal w IRAM.

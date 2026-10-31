@@ -1,4 +1,12 @@
 menu "StreamOO Configuration"
+    config STREAMOO_NETWORK_AP_TEST
+        bool "Secured SoftAP bring-up TEST (private build password required)"
+        default y
+        help
+            Starts StreamOO-XXXXXX WPA2 AP using a private external JSON file.
+            Missing secret leaves Wi-Fi disabled. No portal/STA/HTTP yet.
+            Run tools/configure_network.py locally, then idf.py reconfigure build.
+
     config STREAMOO_ENCODER_GESTURE_TEST
         bool "Diagnostic encoder GPIO and gesture probe"
         default y
@@ -15,7 +23,7 @@ menu "StreamOO Configuration"
             Start interactive HOME immediately and keep rendering until reset.
             Synthetic catalog and visualization. Continuous audio control TEST
             optionally connects VOL/PLAY to a test tone; otherwise UI-only.
-            No network. Volume/widget saved to NVS after 5 seconds idle.
+            Network labels remain synthetic. Volume/widget saved after 5s idle.
             Disable for the finite OLED diagnostic.
     config STREAMOO_RESERVE_USB
         bool "Reserve GPIO19/20 for USB debugging"

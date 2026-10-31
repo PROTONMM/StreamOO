@@ -1,10 +1,40 @@
 # Punkt wznowienia StreamOO
 
-Aktualizacja: **2026-10-31, niezależny reader AAC06h odebrany logiem i odsłuchem**.
+Aktualizacja: **2026-10-31, SoftAP09a przygotowany do prywatnego buildu i odbioru**.
 PCM/rebuffer/tap stress potwierdzone logiem i odsłuchem (`5664a90`).
-Gałąź feature/streamoo-implementation, szczegóły STATUS i ADR0025.
+Gałąź feature/streamoo-implementation, szczegóły STATUS i ADR0026.
 
-## Bieżący06h — niezależne zadanie czytnika
+## Bieżący09a — zabezpieczony SoftAP
+
+AAC06h odebrane (kod6031941, odbiór ed32109); nie powtarzać. Nowy komponent
+network uruchamia AP WPA2 StreamOO-XXXXXX z MAC, DHCP192.168.4.1/24,
+max4 klientów. Oddzielny task3/6144B, kod SDKESP-IDF6.1. Brak portalu/STA/
+mDNS/HTTP. Prywatny wspólny klucz potrzebny lokalnie, nie w czacie/repo.
+
+Przed flash użytkownik uruchamia `python3 tools/configure_network.py`
+i potem `idf.py reconfigure build` w aktywnym SDK. JSON poza repo,
+0600; domyślnie ~/.config/streamoo/network.json (XDG_CONFIG_HOME obsługiwany).
+Bez niego build działa, ale AP test inactive/ESP_ERR_NOT_FOUND: Wi-Fi off.
+Końcowy lokalny obraz celowo bez losowego klucza testowego. Nie wgrywać go
+z oczekiwaniem AP; najpierw prywatny build. Narzędzie nie loguje haseł,
+nie przyjmuje ich w argumentach, nie wpisuje do sdkconfig/defaults.
+
+Nowa factory1500KiB przez SDK SINGLE_APP_LARGE. NVS/PHY i offset factory
+bez zmian. Pierwszy flash09a musi objąć tablicę (`idf.py -p PORT flash`),
+bez erase-flash, nie sam app-flash. Instrukcja NETWORK_BRINGUP.md, ADR0026.
+179 testów hostowych PASS; natywny build AAC+AP0x10da90B, MP3+AP0x1145d0B
+i brak sekretu AAC0x812b0B PASS, factory1500KiB. Klucz testowy usunięty,
+cache prywatnej ścieżki pusty, header AVAILABLE0. Brak testowego klucza
+w logach i końcowym obrazie potwierdzony.
+
+Odbiór S3 OPEN: AP ready, telefon/komputer z DHCP192.168.4.x i clients>=1,
+złe hasło odrzucone, po rozłączeniu clients0. Współbieżnie AAC PLAY/VOL/STOP,
+czysty odsłuch i low0/hard0/invalid0, stabilne heap/stosy. HOME wciąż syntetyczne
+w zakresie sieci; nie oczekiwać strony WWW. Nie kasować NVS ani flashować
+za użytkownika. Następny krok po odbiorze: portal/STA z rollback, potem
+reader HTTP/HTTPS. Wartość hasła i admin auth D18 nadal prywatne/OPEN.
+
+## Odebrane06h — niezależne zadanie czytnika
 
 AAC06g odebrane (kod c451643, log3c3ee3f, odsłuch/sterowanie fa20f2c).
 Nie powtarzać tego odbioru. Nowy fixture_reader priorytet3/stos4096B posiada

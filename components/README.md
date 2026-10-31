@@ -72,3 +72,8 @@ write/finish wymagają tokena generacji, rewind czyści bufor i zmienia token.
 Read jest nieblokujący, contention→WAIT. Decoder/pump nadal jeden właściciel;
 fixture_reader osobno kopiuje dane z flash i publikuje z tokenem. Mutex nigdy
 nie obejmuje I/O źródła ani ścieżki I2S. Destroy po zatrzymaniu producenta.
+
+09a network: oddzielny worker natywnego SoftAP WPA2/DHCP, bez portalu/STA.
+Private build JSON poza repo, header tylko jako artefakt build. Polityka SSID/
+klucza niezależna od SDK, testowana na hoście. Brak klucza→brak Wi-Fi.
+Źródło audio, render i NVS preferencji niezależne od managera sieci.

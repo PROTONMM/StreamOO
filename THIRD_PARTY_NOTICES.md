@@ -63,3 +63,9 @@ is registered. AAC-Plus is disabled; HE-AAC remains unverified.
 Host tests do not use the vendor binaries. FFmpeg/libmp3lame are host fixture
 generation/reference tools, not linked target dependencies. No GPL implementation
 is copied to firmware. The synthetic MP3/AAC fixtures contain no external recording.
+
+## Native ESP-IDF Wi-Fi09a
+
+esp_wifi/esp_netif/esp_event from pinned ESP-IDF6.1; local public headers and
+esp_wifi/lib/LICENSE reviewed as Apache2.0. Retained Apache-2.0.txt and
+[Wi-Fi SDK notice](licenses/ESP-IDF-WiFi-NOTICE.md). No SDK code copied.

@@ -70,3 +70,9 @@ Bieżący test i punkt wznowienia: [RESUME](docs/RESUME.md).
 06h przenosi testowy czytnik pliku do osobnego zadania. Mutex i token generacji
 chronią pierścień przed współbieżnym dostępem i spóźnionymi danymi po rewind.
 Dekoder nadal ma jednego właściciela; sieć nie jest jeszcze zaimplementowana.
+
+09a dodaje natywny zabezpieczony SoftAP z DHCP, jeszcze bez portalu/STA.
+Przed buildem ustaw wspólne hasło lokalnie: `python3 tools/configure_network.py`,
+następnie `idf.py reconfigure build`. Brak prywatnego klucza pozostawia Wi-Fi
+wyłączone. Factory rośnie do1500KiB z zachowaniem NVS; pierwszy flash musi
+objąć tablicę partycji. Pełna procedura: [NETWORK_BRINGUP](docs/NETWORK_BRINGUP.md).

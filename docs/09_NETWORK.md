@@ -15,3 +15,13 @@
 
 ## Bezpieczeństwo
 Wspólne hasło AP zwiększa ryzyko nieautoryzowanego dostępu; ogranicz czas/warunki aktywacji AP, nie ujawniaj hasła w logach, zabezpiecz panel administracyjny. Preferuj proces build/secrets dla wartości wspólnej, bez umieszczania jej w Git.
+
+## Pierwszy zakres09a — test SoftAP
+
+Natywny AP WPA2 i DHCP w osobnym zadaniu; hasło podawane lokalnie przez
+`tools/configure_network.py`, plik poza repo. Bez klucza Wi-Fi pozostaje
+wyłączone. Na tym etapie brak portalu/STA/mDNS i zapisu credentials do NVS;
+pełny przepływ powyżej pozostaje wymaganiem. Instrukcja:
+[NETWORK_BRINGUP](NETWORK_BRINGUP.md), [ADR0026](adr/0026-secured-softap-bringup.md).
+Nowy profil partycji SDK1500KiB zachowuje położenie NVS/PHY/factory.
+Odbiór RF/DHCP i współpracy z audio OPEN.
