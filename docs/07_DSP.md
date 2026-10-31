@@ -52,3 +52,11 @@ Bargraph/analog pokazują rzeczywiste RMS/peak przed gain; FFT pozostaje
 „Brak danych”. Obecnie liniowa amplituda Q15 bez smoothing/peak-hold/VU.
 Błędy alokacji pomiarów nie przerywają audio. ADR0038; odbiór sprzętowy
 według DSP_BRINGUP OPEN. 284 testy i build PASS; bez nowych zależności.
+
+## 07c — spokojniejsze wskaźniki
+
+ADR0039: prezentacja10Hz, RMS attack160ms/release500ms, peak hold400ms
+i release800ms. Okna RMS nadal40ms, UI/gesty bez spowalniania. Krótkie
+luki tap nie kasują ostatniego kompletnego pomiaru; expiry200ms nadal
+obowiązuje od ostatniego kompletnego okna, a STOP/generation czyści od razu.
+To skala liniowa Q15, nie docelowa kalibracja dB/VU.

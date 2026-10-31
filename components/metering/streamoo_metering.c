@@ -1,4 +1,5 @@
 #include "streamoo_metering.h"
+#include "streamoo_ballistics.h"
 #include "esp_heap_caps.h"
 #include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
@@ -16,6 +17,8 @@ static portMUX_TYPE lock = portMUX_INITIALIZER_UNLOCKED;
 static void analyze(void *context) {
     streamoo_metering_t *m = context;
     streamoo_metering_state_t current = {.generation = m->state.generation};
+    streamoo_ballistics_t ballistics;
+    streamoo_ballistics_init(&ballistics, esp_timer_get_time());
     for (;;) {
         if (atomic_load_explicit(&m->stop, memory_order_acquire)) break;
         int64_t start = esp_timer_get_time();
@@ -24,10 +27,16 @@ static void analyze(void *context) {
             uint64_t previous = m->analyzer.result.windows;
             streamoo_levels_process(&m->analyzer, m->block.samples,
                                      STREAMOO_PCM_FRAMES, m->block.sequence);
-            current.levels = m->analyzer.result;
-            if (current.levels.windows != previous)
+            current.levels.windows = m->analyzer.result.windows;
+            current.levels.discontinuities = m->analyzer.result.discontinuities;
+            if (m->analyzer.result.valid && m->analyzer.result.windows != previous) {
+                streamoo_ballistics_feed(&ballistics, &m->analyzer.result);
                 current.completed_us = esp_timer_get_time();
+                current.levels.valid = true;
+            }
         }
+        streamoo_ballistics_update(&ballistics, esp_timer_get_time(),
+                                   current.levels.rms, current.levels.peak);
         uint32_t elapsed = (uint32_t)(esp_timer_get_time() - start);
         if (elapsed > current.max_work_us) current.max_work_us = elapsed;
         current.stack_hwm = uxTaskGetStackHighWaterMark(NULL);

@@ -1330,3 +1330,19 @@ HARDWARE_TEST_PENDING: DSP_BRINGUP — reakcja obu mierników, VOL0/50/100,
 STOP/zmiany stacji, heap/stack/max_fill/low/hard i nowe logi meters.
 Rzeczywisty koszt kopii tap i CPU/DMA/SMP wymaga urządzenia. Smoothing,
 peak-hold, skala dB/VU i FFT to dalsze kroki.
+
+## 07c — wygładzanie mierników i miganie (2026-10-31)
+
+Użytkownik potwierdził07b, zgłosił zbyt szybki ruch i migające „Brak danych”.
+Log PLAYING44100/PCM32, invalid/low/hard0, max_fill133us. gaps23/drop28
+wyjaśniają reset ważności między oknami; nie dowodzą przerwy audio.
+HWM metering min3280B, heap internal min35136B, max_work14252us.
+
+Poziomy prezentowane10Hz, RMS attack160/release500ms, peak hold400/release800ms.
+Ostatni kompletny pomiar zachowany po krótkiej luce, bez odświeżania timestampu
+przez samą lukę; expiry200ms oraz STOP/generation bez zmian. ADR0039.
+286 testów PASS; ballistics/metering ASan/UBSan PASS (LSan off).
+Bez zmian audio/ISR, nowych zależności, flash/erase/eFuse. Odbiór OLED OPEN.
+
+Native ESP-IDF6.1 build PASS, obraz0x15bf20 (7% wolne);
+check_config --platform i diff --check PASS. Bez flash/erase/eFuse.

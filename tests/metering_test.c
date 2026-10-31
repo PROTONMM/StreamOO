@@ -74,8 +74,8 @@ int main(int argc,char **argv){
     for(unsigned seq=0;seq<8;++seq){push(m,seq);if(seq%4==3)step();}
     assert(streamoo_metering_state(m,&state));
     assert(state.levels.valid&&state.levels.windows==1&&state.generation==17);
-    assert(state.levels.rms[0]==16000&&state.levels.rms[1]==8000);
-    assert(state.levels.peak[0]==16000&&state.completed_us==10000&&state.stack_hwm==3000);
+    assert(state.levels.rms[0]==0&&state.levels.rms[1]==0); /* 10Hz publication not due yet. */
+    assert(state.completed_us==10000&&state.stack_hwm==3000);
     if(test==1){close_meter(m);}
     else if(test==2){
         atomic_fetch_add(&now,200001);
@@ -86,7 +86,7 @@ int main(int argc,char **argv){
         for(unsigned seq=8;seq<12;++seq)push(m,seq);
         assert(!streamoo_pcm_push(streamoo_metering_tap(m),lr,12)); /* drop newest */
         step();push(m,13);step();assert(streamoo_metering_state(m,&state));
-        assert(!state.levels.valid&&state.levels.discontinuities==1);
+        assert(state.levels.valid&&state.levels.discontinuities==1); /* retain last complete window, not partial data */
         for(unsigned seq=14;seq<=20;++seq){push(m,seq);step();}
         assert(streamoo_metering_state(m,&state));
         assert(state.levels.valid&&state.levels.windows==2&&state.levels.discontinuities==1);
@@ -95,6 +95,12 @@ int main(int argc,char **argv){
         close_meter(m);assert(streamoo_metering_open(18,&m)==ESP_OK);
         assert(streamoo_metering_state(m,&state));
         assert(state.generation==18&&!state.levels.valid&&!state.levels.windows);
+        close_meter(m);
+    }else if(test==6){
+        atomic_store(&now,100000);step();
+        assert(streamoo_metering_state(m,&state));
+        assert(state.levels.valid&&state.levels.rms[0]>5000&&state.levels.rms[0]<7000);
+        assert(state.levels.peak[0]==16000);
         close_meter(m);
     }else if(test==5){
         atomic_store(&now,1);

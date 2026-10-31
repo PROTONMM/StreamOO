@@ -99,3 +99,5 @@ Start STA przed AP i IP/VOL/belka: `adr/0036-sta-first-and-volume-row.md`.
 Rdzeń pomiarów stereo07a: `adr/0037-stereo-level-analysis-core.md`.
 
 Pomiary stereo na OLED07b: `adr/0038-live-stereo-meter-task.md`, `DSP_BRINGUP.md`.
+
+Wygładzanie mierników07c: `adr/0039-meter-ballistics-and-gap-hold.md`.

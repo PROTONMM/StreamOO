@@ -1,6 +1,6 @@
 # Punkt wznowienia StreamOO
 
-Aktualizacja: **2026-10-31, 07b — rzeczywiste bargraph/analog gotowe do odbioru**.
+Aktualizacja: **2026-10-31, 07c — wolniejsze, wygładzone mierniki i usunięcie migania po krótkich lukach**.
 Gałąź feature/streamoo-implementation. ADR0034–0035, STATUS i HTTP_PLAYER_BRINGUP.
 
 ## Potwierdzone przez użytkownika
@@ -112,3 +112,13 @@ Metering około10KiB internal +4096B stos/TCB na sesję; brak pamięci wyłącza
 metry bez zatrzymania audio. Lifecycle: I2S-close, STOP worker, ACK, free;
 wyniki tylko PLAYING z aktualną generation i wiekiem<=200ms.
 Do sprawdzenia heap i deadline na sprzęcie; agent nie wykonywał flash.
+
+Najnowszy krok07c (ADR0039): użytkownik potwierdził działanie07b, ale ruch
+za szybki i krótkie „Brak danych”. Log wskazuje gaps23/drop28 przy PCM32
+i invalid/low/hard0. Wprowadzono10Hz, attack160/release500ms i peak hold400/
+release800ms. Podtrzymanie ostatniego kompletnego wyniku po luce do200ms,
+bez zmiany zasad STOP/generation. 286 testów i targeted ASan/UBSan PASS.
+Teraz zwykły flash i ocena spokojniejszego ruchu/braku migania na OLED.
+
+Native ESP-IDF6.1 build PASS, obraz0x15bf20 (7% wolne);
+check_config --platform i diff --check PASS. Bez flash/erase/eFuse.

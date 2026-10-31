@@ -30,7 +30,7 @@ typedef pthread_mutex_t portMUX_TYPE;
             for n in ('metering', 'levels', 'pcm', 'audio_gain')]
         subprocess.run(['cc', '-std=c11', '-Wall', '-Wextra', '-Werror', '-pthread',
             *os.environ.get('STREAMOO_METERING_SANITIZE', '').split(), *includes,
-            'components/metering/streamoo_metering.c', 'components/levels/streamoo_levels.c',
+            'components/metering/streamoo_metering.c', 'components/levels/streamoo_ballistics.c', 'components/levels/streamoo_levels.c',
             'components/pcm/streamoo_pcm.c', 'components/audio_gain/streamoo_audio_gain.c',
             'tests/metering_test.c', '-o', cls.binary], cwd=ROOT, check=True)
     def case(self, n): subprocess.run([self.binary, str(n)], check=True, timeout=10)
@@ -40,3 +40,5 @@ typedef pthread_mutex_t portMUX_TYPE;
     def test_slow_consumer_drops_and_resets_window(self): self.case(3)
     def test_new_session_has_no_old_levels(self): self.case(4)
     def test_backward_clock_invalidates_result(self): self.case(5)
+
+    def test_display_cadence_uses_smoothed_levels(self): self.case(6)

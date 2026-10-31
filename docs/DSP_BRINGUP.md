@@ -27,5 +27,8 @@ Błąd `Audio meters disabled` oznacza brak pamięci/zadania; audio ma grać
 dalej. Sprawdź wtedy heap. Około10KiB kontekstu i4096B stosu plus TCB
 tworzone na sesję; po STOP kontekst zwalniany po ACK, stos przez idle task.
 
-Obecne poziomy są liniowe Q15 z okna40ms. Strojenie smoothing/peak-hold
-i skali dB/VU oraz FFT/Hann/ESP-DSP to następne kroki, nie odbiór07b.
+07c: okna pomiarowe40ms, prezentacja10Hz, RMS attack160/release500ms,
+peak hold400/release800ms. Sprawdź spokojniejszy ruch i brak migania przy
+krótkich lukach tap. STOP/zmiana stacji nadal czyści od razu, a brak nowych
+kompletnych pomiarów przez200ms daje placeholder. Dalsze strojenie skali
+dB/VU oraz FFT/Hann/ESP-DSP pozostają kolejne.
