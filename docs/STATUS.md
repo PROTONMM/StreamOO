@@ -1065,3 +1065,12 @@ logiem. Nie wprowadzano pozornej poprawki firmware. Następna krótka próba:
 stabilne TX/GND, bez dotykania przewodów. Jeśli objaw wróci, surowy zapis
 bajtów i porównanie z natywną konsolą USB Serial/JTAG, jeśli jest dostępna;
 secondary USB output już włączony. Zmiana wyłącznie dokumentacyjna.
+
+## Zamknięcie obserwacji UART (2026-10-31)
+
+Użytkownik powtórzył próbę i potwierdził: „Jest OK, to efekt poruszenia
+przewodów przy dotykaniu enkodera, sprawdziłem jeszcze raz”. Przyczyna
+nieczytelnego fragmentu konsoli potwierdzona jako połączenie UART poruszane
+przy obsłudze enkodera. Obserwacja zamknięta; bez poprawki firmware i bez
+powtarzania diagnostyki UART. Nie jest to osobne potwierdzenie odsłuchu
+przy AP, próby złego klucza ani rozłączenia klienta. Zmiana dokumentacyjna.

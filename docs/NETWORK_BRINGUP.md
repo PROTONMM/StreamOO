@@ -84,3 +84,8 @@ replacement traci dane. Jeśli płytka udostępnia natywne USB Serial/JTAG,
 secondary output jest włączony: porównanie obu wyjść pomoże oddzielić tor
 UART/adapter od wspólnej ścieżki logowania. Przyczyny nie uznajemy za dowiedzioną
 ani nie zmieniamy firmware wyłącznie na podstawie takiego fragmentu.
+
+Ponowna próba użytkownika2026-10-31 potwierdziła przyczynę: poruszanie
+przewodów UART przy dotykaniu enkodera. Po sprawdzeniu „Jest OK”. Obserwacja
+zamknięta, bez zmiany firmware; opis porównania konsol pozostaje tylko
+procedurą na wypadek nowego, niezależnego objawu.
