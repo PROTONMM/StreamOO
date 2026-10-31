@@ -12,7 +12,7 @@ typedef struct {
     uint32_t remaining;
 } streamoo_audio_gain_t;
 void streamoo_audio_gain_init(streamoo_audio_gain_t *gain);
-/* 0=mute, 100=unity, 1..100 proposed -59.4..0dB curve, table Q16. */
+/* 0=mute, 100=unity; quadratic amplitude (volume/100)^2, table Q16. */
 bool streamoo_audio_gain_volume(uint8_t volume, uint32_t *out);
 bool streamoo_audio_gain_target(streamoo_audio_gain_t *gain, uint32_t target);
 bool streamoo_audio_gain_process(streamoo_audio_gain_t *gain, int32_t *lr, size_t frames);

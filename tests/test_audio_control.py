@@ -44,7 +44,7 @@ class AudioControlTests(unittest.TestCase):
         self.apply(m,1); self.assertFalse(m.running)
         self.assertEqual(m.volume,100); self.assertEqual(m.volume_revision,0)
         self.apply(m,0,-50); self.assertEqual(self.gain(m),0)
-        self.apply(m,1); self.assertEqual(self.gain(m),2072)
+        self.apply(m,1); self.assertEqual(self.gain(m),16384)
     def test_coalesced_changes_are_observable(self):
         m=Model(50,False,0); self.apply(m,0,1); self.apply(m,0,-1)
         self.assertEqual(m.volume,50); self.assertEqual(m.volume_revision,2)

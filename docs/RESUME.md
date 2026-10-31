@@ -261,3 +261,12 @@ MDNS_BRINGUP: .local, audio, reconnect/reboot, heap. Odbiór multicast na
 płytce OPEN. Własna nazwa WWW/NVS następny mały krok, jeszcze OPEN.
 Nie stroić FFT/RMS ani wyglądu WWW teraz. NVS timezone power-cycle
 użytkownik sprawdza osobno. Bez flash/erase/eFuse przez agenta.
+
+Najnowsze ADR0053: użytkownik zgłosił zbyt ciche VOL0..33. Krzywa
+teraz kwadratowa amplitudowo `(VOL/100)^2`, zamiast-60..0dB. VOL33
+około-19dB,50-12dB; mute/unity/rampa50ms zachowane. Wspólne WWW/enkoder.
+Zapisana liczba VOL bez migracji, więc po flash gra głośniej: rozpocząć
+odsłuch od niskiego poziomu.335 testów i native build PASS, rozmiar
+0x16dd00,2% app wolne. Teraz odbiór odsłuchowy zakresu10/20/33/50.
+Odbiór mDNS z ADR0052 nadal OPEN, nie zakładać go z tego zgłoszenia.
+FFT/RMS/wygląd WWW odłożone. Bez flash/erase/eFuse przez agenta.

@@ -39,7 +39,7 @@ class AudioGainTests(unittest.TestCase):
         for volume in range(101):
             value=C.c_uint32()
             self.assertTrue(self.lib.streamoo_audio_gain_volume(volume,C.byref(value)))
-            expected=0 if volume==0 else round(65536*10**((60*(volume/100-1))/20))
+            expected=0 if volume==0 else round(65536*(volume/100)**2)
             self.assertEqual(value.value,expected)
             self.assertGreater(value.value,previous); previous=value.value
         self.assertEqual(previous,65536)

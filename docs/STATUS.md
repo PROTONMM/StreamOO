@@ -1536,3 +1536,17 @@ Weryfikacja:335 testów hostowych PASS, discovery ASan/UBSan PASS
 diff --check PASS. pcm_fill nadal IRAM0x40377a90. Logi testów/build
 `/tmp/streamoo-mdns-{tests,build,sanitize}.log`. Bez flash/erase/eFuse.
 Fizyczny test NVS strefy nadal osobno, nie uznany za zaliczony.
+
+## Korekta charakterystyki głośności — ADR0053 (2026-10-31)
+
+Zgłoszenie użytkownika: do1/3 skali bardzo cicho. Zastąpiono eksponencjalną
+amplitudę-60..0dB krzywą `(VOL/100)^2`, Q16 offline. VOL33 około-19,3dB
+zamiast-40,2dB, VOL50-12dB zamiast-30dB.0 mute/100 unity, rampa50ms,
+sterowanie WWW/enkoder i zapis wartości NVS zachowane. Zapisany VOL gra
+teraz głośniej; odsłuch zacząć od małej wartości. Odbiór odsłuchowy OPEN.
+
+335 testów PASS (w tym101 punktów krzywej, monotoniczność, rampy, PCM
+stereo i STOP/PLAY modelu). Native ESP-IDF6.1 build PASS:0x16dd00,
+0x9300 wolne/2%. GPIO validator i diff --check PASS. pcm_fill IRAM
+0x40377a90. Logi /tmp/streamoo-volume-{tests,build}.log.
+Bez nowych zależności, flash/erase/eFuse i zmian partycji.
