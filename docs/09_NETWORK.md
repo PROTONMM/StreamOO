@@ -101,3 +101,13 @@ Konfiguracja WWW/NVS pozwala wybrać etykietę DNS1..63 znaków: małe litery,
 cyfry, łącznik wewnątrz. Puste pole przywraca nazwę MAC. Worker sieci
 restartuje tylko mDNS po zmianie; Wi-Fi i audio działają dalej. Konflikt
 obsługuje dotychczasowy callback SDK; log pokazuje faktyczny adres.
+
+## HLS — ADR0060
+
+Wcześniejsze jawne odrzucanie HLS zastępuje reader nieszyfrowanego live/VOD:
+master/media, AAC/MP3 packed audio oraz MPEG-TS przez istniejący codec2.6.2.
+Nie obejmuje AES/DRM/fMP4/BYTERANGE/LL-HLS; discontinuity po starcie kończy
+sesję/retry. Limity16KiB/32 segmenty, osobny manifest PSRAM, reader16KiB,
+TLS i ring256KiB zachowane. Testy hostowe/publiczne próbki PASS, odsłuch
+S3 OPEN. Instrukcja: [HLS_BRINGUP](HLS_BRINGUP.md), `playlist.hls.csv`.
+Generator extended fixtures dodaje3 lokalne HLS: AAC-TS/MP3-TS/AAC-packed.

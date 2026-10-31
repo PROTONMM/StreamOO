@@ -25,7 +25,7 @@ bool streamoo_playlist_url(const char *url)
     return (n>=4 && (!strncasecmp(url+n-4,".m3u",4)||!strncasecmp(url+n-4,".pls",4))) ||
            (n>=5 && !strncasecmp(url+n-5,".m3u8",5));
 }
-static bool resolve(const char *base,const char *entry,char *out)
+bool streamoo_url_resolve(const char *base,const char *entry,char *out)
 {
     if(!*entry)return false;
     int n;
@@ -103,5 +103,5 @@ streamoo_playlist_result_t streamoo_playlist_resolve(char *doc,size_t bytes,cons
             if(index<best){best=index;chosen=p;}
         }else if(!chosen)chosen=line;
     }
-    return chosen && resolve(base,chosen,out)?STREAMOO_PLAYLIST_OK:STREAMOO_PLAYLIST_INVALID;
+    return chosen && streamoo_url_resolve(base,chosen,out)?STREAMOO_PLAYLIST_OK:STREAMOO_PLAYLIST_INVALID;
 }

@@ -38,7 +38,8 @@ static char selected_url[2049];
 static void (*reader)(void *);static void *reader_context;static jmp_buf completed;
 static esp_http_client_config_t config;
 static streamoo_http_stream_t *stream;
-static uint8_t wire[128];static size_t cursor,wire_bytes;
+static unsigned media_loads,segments;
+static uint8_t wire[4096];static size_t cursor,wire_bytes;
 void *heap_caps_malloc(size_t n,unsigned caps){(void)caps;void *p=malloc(n);if(p)++allocations;return p;}
 void *heap_caps_calloc(size_t n,size_t s,unsigned caps){(void)caps;void *p=calloc(n,s);if(p)++allocations;return p;}
 void heap_caps_free(void *p){if(p){assert(allocations);--allocations;free(p);}}
@@ -48,15 +49,16 @@ int xSemaphoreTake(void *p,unsigned wait){(void)wait;if(!*(int *)p)return 0;*(in
 int xSemaphoreGive(void *p){*(int *)p=1;return 1;}
 void vSemaphoreDelete(void *p){--semaphores;free(p);}
 int xTaskCreate(void (*fn)(void *),const char *name,unsigned size,void *ctx,unsigned pri,void *handle){(void)name;(void)handle;assert(size>=8192&&pri==3);reader=fn;reader_context=ctx;return mode==7?0:1;}
-void vTaskDelay(unsigned t){(void)t;}
+void vTaskDelay(unsigned t){(void)t;if(mode==30&&segments)streamoo_http_stream_stop(stream);}
 unsigned uxTaskGetStackHighWaterMark(void *task){(void)task;return 8000;}
 void vTaskDelete(void *p){(void)p;longjmp(completed,1);}
 int esp_crt_bundle_attach(void *p){(void)p;return ESP_OK;}
 void *esp_http_client_init(const esp_http_client_config_t *c){config=*c;assert(c->timeout_ms==3000&&c->disable_auto_redirect&&c->crt_bundle_attach==esp_crt_bundle_attach&&c->auth_type==0);return (void *)1;}
-int esp_http_client_set_header(void *h,const char *key,const char *value){(void)h;if(!strcmp(key,"Icy-MetaData"))assert(!strcmp(value,"1"));else assert(!strcmp(key,"Accept-Encoding")&&!strcmp(value,"identity"));return ESP_OK;}
+int esp_http_client_set_header(void *h,const char *key,const char *value){(void)h;if(!strcmp(key,"Icy-MetaData"))assert(!strcmp(value,"1")||!strcmp(value,"0"));else assert(!strcmp(key,"Accept-Encoding")&&!strcmp(value,"identity"));return ESP_OK;}
 int esp_http_client_open(void *h,int size){(void)h;assert(!size);++opened;return ESP_OK;}
 static void header(const char *name,const char *value){esp_http_client_event_t e={HTTP_EVENT_ON_HEADER,config.user_data,(char *)name,(char *)value};assert(config.event_handler(&e)==ESP_OK);}
 long long esp_http_client_fetch_headers(void *h){(void)h;
+ if(mode>=27){header("Content-Type",strstr(selected_url,"segment")?"application/octet-stream":"application/vnd.apple.mpegurl");return 0;}
  if(mode>=15){
   const char *type=mode==15?"audio/flac":mode==16||mode==17?"audio/ogg":mode==18||mode==26?"application/octet-stream":resolved&&mode!=21?"audio/mpeg":mode==20?"audio/x-scpls":"audio/x-mpegurl";
   header("Content-Type",type);return 0;
@@ -67,10 +69,32 @@ long long esp_http_client_fetch_headers(void *h){(void)h;
  header("Content-Type",mode==5?"text/html":mode==11?"audio/mpegjunk":mode==1?"application/octet-stream":"audio/mpeg");header("icy-metaint",mode==4?"999999999":"3");if(mode==10)header("Location","http://user:key@radio.invalid");return 0;}
 int esp_http_client_get_status_code(void *h){(void)h;return (mode==2||mode==3||mode==10||mode==14)&&!redirected?302:200;}
 int esp_http_client_get_url(void *h,char *out,int cap){(void)h;
+ if(mode>=27){const char *u=*selected_url?selected_url:"https://radio.invalid/hls/master.m3u8";assert((size_t)cap>strlen(u));strcpy(out,u);return ESP_OK;}
  if(mode>=19){const char *u=resolved?selected_url:"https://radio.invalid/list.m3u";assert((size_t)cap>strlen(u));strcpy(out,u);return ESP_OK;}
 const char *url=mode==3?(redirected?"http://radio.invalid":"https://radio.invalid"):(redirected?"https://radio.invalid":"http://radio.invalid");assert((size_t)cap>strlen(url));strcpy(out,url);return ESP_OK;}
+static void hls_wire(const char *url){
+ cursor=0;const char *doc=NULL;
+ if(strstr(url,"segment")){
+  ++segments;memset(wire,0,768);size_t offset=0;
+  if(mode==27||mode==32){memcpy(wire,"ID3\4\0\0\0\0\0\4",10);offset=14;if(mode==32)wire[6]=1;}
+  if(mode==28){wire[0]=wire[188]=wire[376]=0x47;wire_bytes=564;}
+  else {wire[offset]=0xff;wire[offset+1]=(mode==35&&segments==2)?0xfb:0xf1;wire_bytes=offset+16;}
+  return;
+ }
+ if(mode==27&&!strstr(url,"media"))doc="#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=128000,CODECS=\"mp4a.40.2\"\nmedia.m3u8\n";
+ else if(mode==33)doc="#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=64000\nmaster.m3u8\n";
+ else if(mode==34)doc="#EXTM3U\n#EXT-X-TARGETDURATION:1\n#EXTINF:1,\nhttp://radio.invalid/segment1.aac\n";
+ else if(mode==29||mode==30){
+  ++media_loads;
+  doc=media_loads==1?"#EXTM3U\n#EXT-X-TARGETDURATION:1\n#EXT-X-MEDIA-SEQUENCE:1\n#EXTINF:1,\nsegment1.aac\n":
+   "#EXTM3U\n#EXT-X-TARGETDURATION:1\n#EXT-X-MEDIA-SEQUENCE:1\n#EXTINF:1,\nsegment1.aac\n#EXTINF:1,\nsegment2.aac\n#EXT-X-ENDLIST\n";
+ }
+ else if(mode==31)doc="#EXTM3U\n#EXT-X-TARGETDURATION:1\n#EXTINF:1,\nsegment1.aac\n#EXT-X-DISCONTINUITY\n#EXTINF:1,\nsegment2.aac\n#EXT-X-ENDLIST\n";
+ else doc="#EXTM3U\n#EXT-X-TARGETDURATION:1\n#EXTINF:1,\nsegment1.aac\n#EXTINF:1,\nsegment2.aac\n#EXT-X-ENDLIST\n";
+ strcpy((char *)wire,doc);wire_bytes=strlen(doc);
+}
 int esp_http_client_set_url(void *h,const char *url){(void)h;strcpy(selected_url,url);++resolved;cursor=0;
- if(mode!=21){memcpy(wire,"ID3test",7);wire_bytes=7;}
+ if(mode>=27)hls_wire(url);else if(mode!=21){memcpy(wire,"ID3test",7);wire_bytes=7;}
  return ESP_OK;}
 int esp_http_client_set_redirection(void *h){(void)h;redirected=1;return ESP_OK;}
 int esp_http_client_close(void *h){(void)h;return ESP_OK;}
@@ -78,14 +102,15 @@ int esp_http_client_cleanup(void *h){assert(h);++cleaned;return ESP_OK;}
 int esp_http_client_read(void *h,char *out,int cap){(void)h;++reads;if(mode==9||(mode==8&&reads<=2))return -ESP_ERR_HTTP_EAGAIN;if(mode==6)streamoo_http_stream_stop(stream);if(mode==25&&!resolved){streamoo_http_stream_stop(stream);return -1;}
  if(mode==23&&!resolved){memset(out,'x',(size_t)cap);return cap;}
  if(cursor==wire_bytes){return 0;}
- size_t n=wire_bytes-cursor;if(n>(size_t)cap)n=cap;if(mode==1||mode==16||mode==17)n=1;memcpy(out,wire+cursor,n);cursor+=n;return n;}
+ size_t n=wire_bytes-cursor;if(n>(size_t)cap)n=cap;if(mode==1||mode==16||mode==17||mode>=27)n=1;memcpy(out,wire+cursor,n);cursor+=n;return n;}
 int main(int argc,char **argv){assert(argc==2);mode=atoi(argv[1]);
  memcpy(wire,"ID3",3);wire[3]=2;memcpy(wire+4,"StreamTitle='Test';",19);memcpy(wire+36,"abc",3);wire[39]=0;memcpy(wire+40,"def",3);wire_bytes=43;
  if(mode==15||mode==18){memcpy(wire,"fLaCtest",8);wire_bytes=8;}
  if(mode==16||mode==17){memset(wire,0,sizeof wire);memcpy(wire,"OggS",4);wire[5]=2;wire[26]=1;wire[27]=19;
  memcpy(wire+28,mode==16?"\1vorbis":"OpusHead",mode==16?7:8);wire_bytes=36;}
- if(mode>=19){const char *doc=mode==20?"[playlist]\nFile1=/live.mp3\n":mode==22?"#EXTM3U\n#EXT-X-TARGETDURATION:6\nchunk.ts\n":mode==24?"http://radio.invalid/live":"#EXTM3U\n/live.mp3\n";
+ if(mode>=19){const char *doc=mode==20?"[playlist]\nFile1=/live.mp3\n":mode==22?"#EXTM3U\n#EXT-X-KEY:METHOD=AES-128,URI=\"key\"\n#EXT-X-TARGETDURATION:6\nchunk.ts\n":mode==24?"http://radio.invalid/live":"#EXTM3U\n/live.mp3\n";
  strcpy((char *)wire,doc);wire_bytes=strlen(doc);}
+ if(mode>=27)hls_wire("https://radio.invalid/hls/master.m3u8");
  assert(streamoo_http_stream_open("ftp://radio.invalid",&stream)==ESP_ERR_INVALID_ARG);
  int e=streamoo_http_stream_open(mode==3?"https://radio.invalid":"http://radio.invalid",&stream);
  if(mode==7){assert(e==ESP_ERR_NO_MEM&&!allocations&&!semaphores);return 0;}
@@ -94,6 +119,16 @@ int main(int argc,char **argv){assert(argc==2);mode=atoi(argv[1]);
  assert(cleaned==1);if(mode==8)assert(opened==1);
  streamoo_http_stream_info_t info;assert(streamoo_http_stream_info(stream,&info)&&info.ended);
  assert(info.bitrate_kbps==(mode==12?192u:0u));
+ if(mode>=27){
+ if(mode==27||mode==28||mode==29){assert(segments==2);assert(info.codec_known&&info.codec==(mode==28?STREAMOO_CODEC_MPEG_TS:STREAMOO_CODEC_AAC_LC));assert(streamoo_http_stream_queued(stream)==(mode==28?1128u:32u));if(mode==29)assert(media_loads==2);}
+ else if(mode==30){assert(segments==1&&media_loads==1);}
+ else if(mode==31){assert(segments==1&&info.error==ESP_ERR_NOT_SUPPORTED);}
+ else if(mode==32){assert(!streamoo_http_stream_queued(stream)&&info.error==ESP_ERR_INVALID_SIZE);}
+ else if(mode==33){assert(!segments&&resolved==3&&info.error==ESP_ERR_NOT_SUPPORTED);}
+ else if(mode==34){assert(!segments&&info.error==ESP_ERR_INVALID_RESPONSE);}
+ else if(mode==35){assert(segments==2&&info.error==ESP_ERR_NOT_SUPPORTED&&streamoo_http_stream_queued(stream)==16);}
+ streamoo_http_stream_stop(stream);assert(streamoo_http_stream_dispose(stream));assert(!semaphores&&!allocations);return 0;
+ }
  if(mode>=15){
  if(mode==15||mode==18)assert(info.codec_known&&info.codec==STREAMOO_CODEC_FLAC);
  else if(mode==16)assert(info.codec_known&&info.codec==STREAMOO_CODEC_VORBIS);
@@ -123,7 +158,7 @@ class HTTPStreamTests(unittest.TestCase):
   for name,body in files.items():(base/name).write_text(body)
   (base/'test.c').write_text(HARNESS);cls.binary=base/'http'
   includes=['-I'+str(base)]+['-Icomponents/'+n+'/include' for n in ('streaming','decoder','pcm_adapter','compressed_source')]
-  subprocess.run(['cc','-std=c11','-Wall','-Wextra','-Werror',*os.environ.get('STREAMOO_HTTP_SANITIZE','').split(),*includes,str(base/'test.c'),'components/streaming/streamoo_http_stream.c','components/streaming/streamoo_playlist_resolver.c','components/streaming/streamoo_icy.c','components/compressed_source/streamoo_buffered_source.c','components/compressed_source/streamoo_byte_source.c','-o',str(cls.binary)],cwd=ROOT,check=True)
+  subprocess.run(['cc','-std=c11','-Wall','-Wextra','-Werror',*os.environ.get('STREAMOO_HTTP_SANITIZE','').split(),*includes,str(base/'test.c'),'components/streaming/streamoo_http_stream.c','components/streaming/streamoo_playlist_resolver.c','components/streaming/streamoo_hls.c','components/streaming/streamoo_icy.c','components/compressed_source/streamoo_buffered_source.c','components/compressed_source/streamoo_byte_source.c','-o',str(cls.binary)],cwd=ROOT,check=True)
  def run_case(self,n):subprocess.run([str(self.binary),str(n)],check=True,timeout=10)
  def test_http_icy_and_metadata_position(self):self.run_case(0)
  def test_octet_stream_probe_fragmented_bytewise(self):self.run_case(1)
@@ -149,4 +184,8 @@ class HTTPStreamTests(unittest.TestCase):
    with self.subTest(mode=mode):self.run_case(mode)
  def test_m3u_pls_resolution_and_bounded_failures(self):
   for mode in range(19,27):
+   with self.subTest(mode=mode):self.run_case(mode)
+
+ def test_hls_master_packed_id3_ts_live_reload_cancel_and_rejections(self):
+  for mode in range(27,36):
    with self.subTest(mode=mode):self.run_case(mode)

@@ -6,13 +6,14 @@
 #include "esp_vorbis_dec.h"
 #include "esp_opus_dec.h"
 #include "impl/esp_ogg_dec.h"
+#include "impl/esp_ts_dec.h"
 #include "esp_log.h"
 #include "esp_audio_simple_dec.h"
 #include <stdlib.h>
 #include <limits.h>
 #include <string.h>
 
-struct streamoo_decoder { esp_audio_simple_dec_handle_t handle; esp_aac_dec_cfg_t aac;
+struct streamoo_decoder { esp_audio_simple_dec_handle_t handle; esp_aac_dec_cfg_t aac;esp_ts_dec_cfg_t ts;
     bool flac,flac_ready;uint8_t prefix[16];size_t prefix_bytes; };
 static bool registered[STREAMOO_CODEC_COUNT];
 static bool ogg_registered;
@@ -29,6 +30,11 @@ esp_err_t streamoo_decoder_open(streamoo_codec_t codec, streamoo_decoder_t **out
         case STREAMOO_CODEC_FLAC:e=esp_flac_dec_register();break;
         case STREAMOO_CODEC_VORBIS:e=esp_vorbis_dec_register();break;
         case STREAMOO_CODEC_OPUS:e=esp_opus_dec_register();break;
+        case STREAMOO_CODEC_MPEG_TS:
+            e=esp_mp3_dec_register();
+            if(e==ESP_AUDIO_ERR_OK||e==ESP_AUDIO_ERR_ALREADY_EXIST)e=esp_aac_dec_register();
+            if(e==ESP_AUDIO_ERR_OK||e==ESP_AUDIO_ERR_ALREADY_EXIST)e=esp_ts_dec_register();
+            break;
         default:return ESP_ERR_INVALID_ARG;
         }
         if (e!=ESP_AUDIO_ERR_OK && e!=ESP_AUDIO_ERR_ALREADY_EXIST) {
@@ -46,12 +52,14 @@ esp_err_t streamoo_decoder_open(streamoo_codec_t codec, streamoo_decoder_t **out
     if (!d) return ESP_ERR_NO_MEM;
     esp_audio_simple_dec_cfg_t config={.dec_type=codec==STREAMOO_CODEC_MP3 ?
         ESP_AUDIO_SIMPLE_DEC_TYPE_MP3 : codec==STREAMOO_CODEC_AAC_LC ? ESP_AUDIO_SIMPLE_DEC_TYPE_AAC :
-        codec==STREAMOO_CODEC_FLAC ? ESP_AUDIO_SIMPLE_DEC_TYPE_FLAC : ESP_AUDIO_SIMPLE_DEC_TYPE_OGG};
+        codec==STREAMOO_CODEC_FLAC ? ESP_AUDIO_SIMPLE_DEC_TYPE_FLAC :
+        codec==STREAMOO_CODEC_MPEG_TS ? ESP_AUDIO_SIMPLE_DEC_TYPE_TS : ESP_AUDIO_SIMPLE_DEC_TYPE_OGG};
     if (codec==STREAMOO_CODEC_AAC_LC) {
         d->aac=(esp_aac_dec_cfg_t)ESP_AAC_DEC_CONFIG_DEFAULT();
         d->aac.channel=2; d->aac.no_adts_header=false; d->aac.aac_plus_enable=true;
         config.dec_cfg=&d->aac; config.cfg_size=sizeof d->aac;
     }
+    if(codec==STREAMOO_CODEC_MPEG_TS){d->ts.aac_plus_enable=true;config.dec_cfg=&d->ts;config.cfg_size=sizeof d->ts;}
     esp_audio_err_t error=esp_audio_simple_dec_open(&config,&d->handle);
     if (error!=ESP_AUDIO_ERR_OK) {
         ESP_LOGE("decoder","Open failed: vendor=%d",(int)error);

@@ -35,6 +35,7 @@ def main():
         ('Ogg Opus 120ms', 'long-frame.opus', ['-c:a', 'libopus', '-b:a', '96k', '-frame_duration', '120']),
     ]
     manifest = {'source': 'Original mathematical L1k/R2k signals with gaps and 50ms ramps, source peak1036/32768; repeated to32s', 'files': []}
+    hls_entries=[]
     with tempfile.TemporaryDirectory() as tmp:
         wav = Path(tmp)/'source.wav'
         with wave.open(str(wav), 'wb') as f:
@@ -42,20 +43,27 @@ def main():
             f.writeframes(pcm*8)
         for name, filename, options in variants:
             output = args.output_dir/filename
-            subprocess.run(['ffmpeg', '-hide_banner', '-loglevel', 'error', '-n', '-i', str(wav), '-map_metadata', '-1', *options, str(output)], check=True)
-            info = json.loads(subprocess.check_output(['ffprobe', '-v', 'error', '-show_streams', '-of', 'json', str(output)]))
+            subprocess.run(['ffmpeg', '-hide_banner', '-loglevel', 'error', '-n', '-i', str(wav), '-map_metadata', '-1', *options, str(output)], check=True,timeout=30)
+            info = json.loads(subprocess.check_output(['ffprobe', '-v', 'error', '-show_streams', '-of', 'json', str(output)],timeout=20))
             manifest['files'].append({'name': name, 'file': filename, 'sha256': hashlib.sha256(output.read_bytes()).hexdigest(), 'streams': info['streams']})
+        for label,stem,codec,container in [('HLS AAC MPEG-TS','hls-aac-ts','aac','mpegts'),('HLS MP3 MPEG-TS','hls-mp3-ts','libmp3lame','mpegts'),('HLS AAC packed','hls-aac-packed','aac','adts')]:
+            directory=args.output_dir/stem;directory.mkdir();output=directory/'index.m3u8'
+            subprocess.run(['ffmpeg','-hide_banner','-loglevel','error','-n','-i',str(wav),'-map','0:a:0','-map_metadata','-1','-c:a',codec,'-b:a','128k','-f','segment','-segment_time','4','-segment_format',container,'-segment_list',str(output),'-segment_list_type','m3u8',str(directory/('segment%03d.ts' if container=='mpegts' else 'segment%03d.aac'))],check=True,timeout=30)
+            info=json.loads(subprocess.check_output(['ffprobe','-v','error','-show_streams','-of','json',str(output)],timeout=20))
+            manifest['files'].append({'name':label,'file':stem+'/index.m3u8','streams':info['streams']})
+            hls_entries.append((label,base+'/'+stem+'/index.m3u8'))
     (args.output_dir/'relative.m3u').write_text('#EXTM3U\n#EXTINF:-1,FLAC fixture\nsignal16.flac\n')
     (args.output_dir/'relative.pls').write_text('[playlist]\nFile2=reference.mp3\nFile1=signal.ogg\nNumberOfEntries=2\nVersion=2\n')
     (args.output_dir/'nested.m3u').write_text('#EXTM3U\nrelative.pls\n')
-    (args.output_dir/'reject-hls.m3u8').write_text('#EXTM3U\n#EXT-X-TARGETDURATION:6\n#EXTINF:6,\nnot-a-segment.ts\n')
+    (args.output_dir/'reject-hls.m3u8').write_text('#EXTM3U\n#EXT-X-KEY:METHOD=AES-128,URI="key"\n#EXT-X-TARGETDURATION:6\n#EXTINF:6,\nnot-a-segment.ts\n')
     entries = [(name, base+'/'+filename) for name, filename, _ in variants]
+    entries += hls_entries
     entries += [('M3U relative - FLAC', base+'/relative.m3u'), ('PLS File1 - Vorbis', base+'/relative.pls'), ('Nested M3U to PLS', base+'/nested.m3u'), ('HE-AAC Kiss FM', 'https://streaming.g-news.pl:8090/kissfm'), ('AAC+ Nowy Swiat', 'https://stream.nowyswiat.online/aac')]
     with (args.output_dir/'playlist.csv').open('w') as f:
         for name, address in entries:
             f.write(f'{name}\t{address}\t0\n')
     (args.output_dir/'manifest.json').write_text(json.dumps(manifest, ensure_ascii=False, indent=2)+'\n')
-    print(f'Generated {len(variants)} audio files and playlist in {args.output_dir}')
+    print(f'Generated {len(variants)} audio files, 3 HLS fixtures and playlist in {args.output_dir}')
     print(f'Serve with: python3 -m http.server 8000 --bind 0.0.0.0 --directory {args.output_dir}')
     print('Each synthetic file is32s, then EOF/retry is expected. HE-AAC entries are public live stations, not synthetic fixtures.')
 

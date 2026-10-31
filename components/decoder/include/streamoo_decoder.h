@@ -2,7 +2,7 @@
 #include "esp_err.h"
 #include "streamoo_pcm_adapter.h"
 /* AAC_LC is the legacy enum name for the complete ADTS AAC family. */
-typedef enum { STREAMOO_CODEC_MP3, STREAMOO_CODEC_AAC_LC, STREAMOO_CODEC_FLAC, STREAMOO_CODEC_VORBIS, STREAMOO_CODEC_OPUS, STREAMOO_CODEC_COUNT } streamoo_codec_t;
+typedef enum { STREAMOO_CODEC_MP3, STREAMOO_CODEC_AAC_LC, STREAMOO_CODEC_FLAC, STREAMOO_CODEC_VORBIS, STREAMOO_CODEC_OPUS, STREAMOO_CODEC_MPEG_TS, STREAMOO_CODEC_COUNT } streamoo_codec_t;
 typedef struct streamoo_decoder streamoo_decoder_t;
 typedef struct {
     size_t consumed, produced, needed;

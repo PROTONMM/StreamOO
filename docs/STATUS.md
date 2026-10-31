@@ -1,6 +1,29 @@
 # Status implementacji
 
 
+## Bieżąca dostawa — ADR0059/0060 / 2026-10-31
+
+Punkty2/3/4/8 wdrożone: ostatnia stacja/start STOP lub autoplay, ID trwałe
+przy rename/URL, własna nazwa mDNS WWW/NVS i HLS audio. Długi STOP/OLED-off,
+krótki PLAY lub lista, konfigurowalne5s/auto-wybór (1..120s lub powrót),
+bez restartu tej samej grającej stacji. Commit obsługi: ee1bdbc.
+
+HLS: nieszyfrowane live/VOD/master, packed AAC/MP3 i MPEG-TS; AES/fMP4/
+BYTERANGE/LL-HLS jawnie poza zakresem. Live sequence bez replay, osobny
+manifest około84KiB PSRAM, HTTP reader16KiB stack. Nie zmieniono partycji,
+NVSoffsetów, prywatnej playlisty ani zasad TLS. Odbiór PCB nowych funkcji
+OPEN: PLAYER_SETTINGS_BRINGUP oraz HLS_BRINGUP. Zwykły flash bez erase/FS,
+Ctrl+F5. `playlist.hls.csv`6 publicznych wpisów i raport ignorowaneGit;
+manifesty/segmenty/ffprobe hostPASS. Generator ma3 oryginalne HLSVOD.
+
+368 testów hostowych PASS, targeted ASan/UBSan (LSan off), Chromium390px,
+node syntax, GPIO validator i native ESP-IDF6.1 PASS. Obraz0x17a440,
+90% app wolne. Bez flash/erase/eFuse przez agenta. Hardware OLED/NVS/mDNS/
+TS/HLS/heap i długi soak nadal OPEN; host fakes tego nie dowodzą. FLAC128KiB
+oraz RNŚTLS wciąż do potwierdzenia. ROOT CA, FFT/RMS i wyglądWWW odłożone,
+OTA wyłączone. Starsze sekcje poniżej są historią, ta jest nadrzędna.
+
+
 ## Najnowszy krok — 2026-10-31 / ADR0059
 
 Zrobione: długi STOP i OLED-off (bez sleep), krótki PLAY przy STOP/lista
@@ -14,7 +37,7 @@ Build ESP-IDF6.1, host controls/store/settings/player/discovery/REST oraz
 Chromium390px PASS. STOP/autoplay/brak ID, no-op sesji, rename/URL/odczyt
 po restarcie i błąd NVS sprawdzone hostowo; fizyczny odbiór OPEN.
 Teraz zwykły flash bez erase/FS, Ctrl+F5 i PLAYER_SETTINGS_BRINGUP.
-Dalej zlecony punkt8 HLS, osobny commit. FLAC128KiB i RNŚTLS wciąż do
+Punkt8 HLS zrealizowany w ADR0060. FLAC128KiB i RNŚTLS wciąż do
 osobnego potwierdzenia użytkownika. ROOT CA, FFT/RMS i wyglądWWW odłożone.
 OTA wyłączone; bez flash/erase/eFuse przez agenta. Starsze wpisy poniżej
 są historią, bieżące zachowanie określa ta sekcja i ADR0059.

@@ -56,3 +56,7 @@ manifest/archive hash above identifies what StreamOO actually links. No
 FLAC command-line tools (GPL) or other GPL implementation copied to firmware.
 The optional fixture generator invokes installed FFmpeg/ffprobe as host
 processes only, with original mathematical signals.
+
+ADR0060 also registers this same pinned component's MPEG-TS simple decoder
+(`impl/esp_ts_dec.h`) with MP3 and AAC/AAC-plus; no new archive/version.
+HLS playlist/network handling is original StreamOO code, not vendor code.

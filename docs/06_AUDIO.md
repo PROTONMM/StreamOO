@@ -150,3 +150,13 @@ ma testy hostowe i oracle FFmpeg, odbiór na S3 OPEN. RNŚAAC+ osobno OPEN.
 ADR0058: live FLAC24-bit przekraczał domyślne okno parsera20KiB. Bootstrap
 maxframe teraz128KiB, live PCM scratch128KiB PSRAM zamiast64KiB. To limity
 implementacji, nie deklaracja pomiaru całego strumienia; odbiór S3 OPEN.
+
+## HLS — ADR0060
+
+Wcześniejsze jawne odrzucanie HLS zastępuje reader nieszyfrowanego live/VOD:
+master/media, AAC/MP3 packed audio oraz MPEG-TS przez istniejący codec2.6.2.
+Nie obejmuje AES/DRM/fMP4/BYTERANGE/LL-HLS; discontinuity po starcie kończy
+sesję/retry. Limity16KiB/32 segmenty, osobny manifest PSRAM, reader16KiB,
+TLS i ring256KiB zachowane. Testy hostowe/publiczne próbki PASS, odsłuch
+S3 OPEN. Instrukcja: [HLS_BRINGUP](HLS_BRINGUP.md), `playlist.hls.csv`.
+Generator extended fixtures dodaje3 lokalne HLS: AAC-TS/MP3-TS/AAC-packed.

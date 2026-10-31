@@ -10,3 +10,5 @@ bool streamoo_stream_url_allowed(const char *url);
 bool streamoo_playlist_url(const char *url);
 streamoo_playlist_result_t streamoo_playlist_resolve(char *document, size_t bytes,
     const char *base_url, char out[STREAMOO_URL_LIMIT+1]);
+
+bool streamoo_url_resolve(const char *base,const char *entry,char *out);

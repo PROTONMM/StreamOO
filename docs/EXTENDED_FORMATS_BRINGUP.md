@@ -85,3 +85,13 @@ a zmierzone ramki24-bit stereo dochodzą do25839B. Teraz okno parsera
 bootstrap128KiB i PCM128KiB PSRAM. Po zwykłym flash sprawdzić kilka minut,
 w tym zmianę utworu; parser powinien pokazać max_frame131072. Wcześniejsze
 opisy scratch64KiB w tej instrukcji zastępuje nowy limit128KiB.
+
+## HLS — ADR0060
+
+Wcześniejsze jawne odrzucanie HLS zastępuje reader nieszyfrowanego live/VOD:
+master/media, AAC/MP3 packed audio oraz MPEG-TS przez istniejący codec2.6.2.
+Nie obejmuje AES/DRM/fMP4/BYTERANGE/LL-HLS; discontinuity po starcie kończy
+sesję/retry. Limity16KiB/32 segmenty, osobny manifest PSRAM, reader16KiB,
+TLS i ring256KiB zachowane. Testy hostowe/publiczne próbki PASS, odsłuch
+S3 OPEN. Instrukcja: [HLS_BRINGUP](HLS_BRINGUP.md), `playlist.hls.csv`.
+Generator extended fixtures dodaje3 lokalne HLS: AAC-TS/MP3-TS/AAC-packed.

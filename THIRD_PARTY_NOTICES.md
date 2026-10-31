@@ -111,3 +111,12 @@ FLAC, Ogg Vorbis and Ogg Opus. Espressif Modified MIT (Espressif products
 only), with vendor-attributed Xiph BSD backends. See expanded
 [codec notice](licenses/ESP-Audio-Codec-NOTICE.md) and retained Opus/FLAC/
 Vorbis license texts. No external codec implementation copied.
+
+## HLS / MPEG-TS — ADR0060
+
+HLS manifests, sequence handling, ID3 prefix stripping and HTTP segment
+orchestration are original StreamOO code based on RFC8216, with no imported
+HLS implementation. MPEG-TS uses `esp_ts_dec` in the existing pinned
+Espressif audio codec2.6.2 under the already retained Espressif Modified MIT
+terms; underlying MP3/AAC registrations retained. API/configuration/license
+checked in the pinned headers. No new dependency or GPL code imported.

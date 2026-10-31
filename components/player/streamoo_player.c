@@ -353,7 +353,7 @@ static void task(void *context) {
         }
         current.rate = pump->format.rate;
         if(current.rate){
-          const char *names[]={"MP3","AAC","FLAC","Vorbis","Opus"};
+          const char *names[]={"MP3","AAC","FLAC","Vorbis","Opus","MPEG-TS"};
           strcpy(current.codec,info.codec<STREAMOO_CODEC_COUNT ? names[info.codec]:"?");
           current.bitrate_kbps=info.bitrate_kbps;
         }
