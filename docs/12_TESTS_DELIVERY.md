@@ -14,3 +14,11 @@
 
 ## Warunek uznania za ukończone
 Brak krytycznych otwartych kwestii, poprawny `idf.py build`, testy automatyczne i sprzętowe udokumentowane z wynikami. Sam build nie dowodzi, że firmware działa na sprzęcie.
+
+Referencyjny FFT07d: `python3 -m unittest discover -s tests -p test_spectrum.py`.
+Pełne porównanie widma z niezależnym oracle wymaga hostowego NumPy
+(zweryfikowano1.26.4); bez niego dwa testy jawnie SKIP. Nie liczyć skip
+jako zaliczenia porównania. Pozostałe testy sygnałów i C harness działają
+bez NumPy. `STREAMOO_SPECTRUM_SANITIZE='-fsanitize=address,undefined
+-fno-omit-frame-pointer' ASAN_OPTIONS=detect_leaks=0` instrumentuje wyłącznie
+native C harness; ctypes/NumPy porównania pozostają bez instrumentacji.

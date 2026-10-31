@@ -64,3 +64,14 @@ To skala liniowa Q15, nie docelowa kalibracja dB/VU.
 Strojenie07c-2 / ADR0040 po uwadze użytkownika o nadmiernym uśrednianiu:
 RMS attack30/release150ms, peak hold150/release300ms. Takt nadal10Hz,
 próbki i okna RMS bez zmian; ochrona przed miganiem zachowana.
+
+## 07d — matematyczny rdzeń FFT
+
+Komponent spectrum: własny referencyjny float FFT1024/2048, Hann N-1,
+DC mean removal, coherent gain, stereo jako średnia mocy, 24 rozłączne
+przybliżone log-pasma. Maksimum amplitudy binu na pasmo, skala liniowa Q15.
+Testy z NumPy rFFT, dwie długości/3sample rates, sinusy/impuls/szum,
+fazy stereo, Nyquist i rzeczywisty tap volume0/50/100. ADR0041.
+Nadal brak live FFT/overlap/SIMD i benchmarku float-vs-sc16; ESP-DSP1.8.2
+sprawdzono jako przyszły backend, jeszcze bez nowej zależności. Mierniki
+RMS/peak pozostawione bez zmian, zgodnie z prośbą użytkownika.

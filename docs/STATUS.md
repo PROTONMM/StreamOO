@@ -10,7 +10,7 @@ Bieżący punkt wznowienia: [RESUME.md](RESUME.md).
 | 04 UI/SSD1322 | HOME i lista odebrane na OLED; końcowe strojenie fontu OPEN | ADR 0012; odbiór użytkownika |
 | 05 encoder | dekoder/IRQ i gesty odebrane; interaktywny adapter odebrany w trybie A; preferencje NVS odebrane; shutdown/flush OPEN | ADR 0013–0017; 99 testów PASS |
 | 06 audio | I2S/gain/PCM stress odebrane; MP3 decode/PCM potwierdzone logiem; AAC-LC PoC odebrane; AAC incremental file decode06f odebrane logiem i odsłuchem; źródło/bufor AAC06g odebrane logiem, odsłuchem i sterowaniem; niezależny reader AAC06h odebrany; player06i: kilka stacji i 44,1/48kHz odebrane; rozszerzone testy OPEN | ADR0018–0025/0034–0035; 248 testów hostowych PASS; build PASS |
-| 07 DSP | 07b: task RMS/peak i rzeczywiste bargraph/analog gotowe do odbioru; FFT/smoothing OPEN | ADR0037–0038; 284 testy PASS; build PASS |
+| 07 DSP | RMS/peak działa, strojenie odłożone; referencyjny FFT07d gotowy, live/ESP-DSP OPEN | ADR0037–0041; testy NumPy i build |
 | 08 stacje | lista z katalogu i wybór odebrane; import live/reboot i edycja ID OPEN | ADR0033 |
 | 09 sieć | AP/STA/IP/AP-off potwierdzone logiem; mDNS OPEN | ADR0031; build PASS |
 | 10 WWW | formularze Wi-Fi/upload bez dodatkowego logowania; HOME/IP odebrane; lista z katalogu OPEN | ADR0032; 222 testy PASS; Chromium PASS |
@@ -1358,3 +1358,19 @@ Odbiór widocznego ruchu na OLED OPEN. Bez flash/erase/eFuse.
 Weryfikacja:286 testów PASS, ballistics/metering ASan/UBSan PASS (LSan off).
 Native ESP-IDF6.1 build PASS,0x15bf20 (7% wolne).
 check_config --platform i diff --check PASS.
+
+## 07d — referencyjny rdzeń FFT (2026-10-31)
+
+Użytkownik odkłada strojenie RMS/peak. Parametry z e8f96f2 bez zmian.
+Własny spectrum: float radix2 N1024/2048, Hann N-1, normalizacja amplitudy,
+stereo w domenie mocy bez znoszenia faz, 24 pasma bez dziur/pustych zakresów.
+Sam rdzeń, jeszcze bez kolektora overlap/live/OLED. ADR0041.
+Audyt oficjalnego ESP-DSP1.8.2/API/licencji/manifestu pod przyszły backend;
+nie dodano zależności ani kodu stron trzecich. Porównanie FFT sc16/wydajności
+i build przyszłego adaptera OPEN. NumPy1.26.4 użyte jako oracle hostowy.
+
+Weryfikacja07d:295 testów hostowych PASS (oracle NumPy wykonany, bez skip).
+Native C FFT/PCM harness ASan/UBSan PASS, LSan off. Native ESP-IDF6.1 build
+PASS, obraz0x15bf20 (7% wolne); spectrum kompilowany, nieużywany kod
+usunięty przez linker. check_config --platform i diff --check PASS.
+Bez flash/erase/eFuse i zmian partycji.

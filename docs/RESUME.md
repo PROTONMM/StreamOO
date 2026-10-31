@@ -1,6 +1,6 @@
 # Punkt wznowienia StreamOO
 
-Aktualizacja: **2026-10-31, 07c — wolniejsze, wygładzone mierniki i usunięcie migania po krótkich lukach**.
+Aktualizacja: **2026-10-31, 07d — referencyjny FFT; strojenie mierników odłożone**.
 Gałąź feature/streamoo-implementation. ADR0034–0035, STATUS i HTTP_PLAYER_BRINGUP.
 
 ## Potwierdzone przez użytkownika
@@ -131,3 +131,19 @@ na OLED po zwykłym flash bez erase/NVS.
 Weryfikacja:286 testów PASS, ballistics/metering ASan/UBSan PASS (LSan off).
 Native ESP-IDF6.1 build PASS,0x15bf20 (7% wolne).
 check_config --platform i diff --check PASS.
+
+Najnowszy krok07d: użytkownik zostawia RMS/peak do późniejszego dopracowania.
+Nie zmieniać teraz ich parametrów. Dodany spectrum, własny referencyjny
+floatFFT1024/2048/Hann N-1/24 pasma; NumPy oracle oraz realny PCM tap
+volume0/50/100. Jeszcze niewywoływany, bez nowego obrazu UI, bez potrzeby
+wgrywania firmware. ADR0041 opisuje kontrakt/normalizację i audyt
+ESP-DSP1.8.2 Apache2/IDF>=4.2/API. Zależności jeszcze nie dodano.
+Następnie: adapter ESP-DSP, kolektor50% overlap z resetem luk, policzyć
+FFT tylko dla aktywnego widżetu, publikacja generation/timestamp, pomiary
+CPU/pamięci/max_fill na S3. Porównanie float/sc16 nadal OPEN.
+
+Weryfikacja07d:295 testów hostowych PASS (oracle NumPy wykonany, bez skip).
+Native C FFT/PCM harness ASan/UBSan PASS, LSan off. Native ESP-IDF6.1 build
+PASS, obraz0x15bf20 (7% wolne); spectrum kompilowany, nieużywany kod
+usunięty przez linker. check_config --platform i diff --check PASS.
+Bez flash/erase/eFuse i zmian partycji.
