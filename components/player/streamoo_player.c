@@ -42,6 +42,10 @@ bool streamoo_player_state(streamoo_player_state_t *out) {
   portENTER_CRITICAL(&lock);
   *out = state;
   portEXIT_CRITICAL(&lock);
+  int64_t now = esp_timer_get_time();
+  if (out->metering.levels.valid &&
+      (now < out->metering.completed_us || now - out->metering.completed_us > 200000))
+    out->metering = (streamoo_metering_state_t){0};
   return true;
 }
 bool streamoo_player_select(void *context,
@@ -85,6 +89,7 @@ static void task(void *context) {
   streamoo_live_decode_t *pump = NULL;
   streamoo_audio_output_t *output = NULL;
   streamoo_pcm_block_t *storage = NULL, *block = NULL;
+  streamoo_metering_t *meter = NULL;
   bool retiring = false;
   uint32_t sequence = 0, reader_hwm = 0;
   int64_t retry_at = 0, log_at = 0, fade_until = 0;
@@ -181,7 +186,9 @@ static void task(void *context) {
         }
         output = NULL;
       }
-      if (!output && streamoo_http_stream_dispose(session)) {
+      bool meter_done = !output && streamoo_metering_dispose(meter);
+      if (meter_done) meter = NULL;
+      if (!output && meter_done && streamoo_http_stream_dispose(session)) {
         session = NULL;
         retiring = false;
         streamoo_decoder_close(decoder);
@@ -242,12 +249,15 @@ static void task(void *context) {
           if (!pump || !storage || !block)
             current.error = ESP_ERR_NO_MEM;
           else {
+            esp_err_t meter_error = streamoo_metering_open(current.generation, &meter);
+            if (meter_error != ESP_OK)
+              ESP_LOGW("player", "Audio meters disabled: %s", esp_err_to_name(meter_error));
             failure_stage = "pipeline_init";
             if (!streamoo_live_decode_init(pump,
                                            streamoo_http_stream_source(session),
                                            decoder, decode) ||
                 !streamoo_pcm_ring_init(&ring, storage, 32) ||
-                !streamoo_pcm_pipeline_init(&pipeline, &ring, NULL))
+                !streamoo_pcm_pipeline_init(&pipeline, &ring, streamoo_metering_tap(meter)))
               current.error = ESP_FAIL;
           }
         }
@@ -336,6 +346,12 @@ static void task(void *context) {
     if (!session && current.running && online && now < retry_at)
       current.phase = STREAMOO_PLAYER_RETRY;
   publish: {
+    current.metering = (streamoo_metering_state_t){0};
+    if (meter && !retiring && current.phase == STREAMOO_PLAYER_PLAYING) {
+      streamoo_metering_state(meter, &current.metering);
+      if (current.metering.generation != current.generation)
+        current.metering = (streamoo_metering_state_t){0};
+    }
     uint32_t gain = 0;
     if (output && !retiring && current.running && online)
       streamoo_audio_gain_volume(current.volume, &gain);
@@ -363,6 +379,18 @@ static void task(void *context) {
                pcm.hard_underflows, pcm.restarts,
                (unsigned)uxTaskGetStackHighWaterMark(NULL),
                (unsigned)reader_hwm);
+      if (meter) {
+        streamoo_metering_state_t measurement = {0};
+        streamoo_metering_state(meter, &measurement);
+        ESP_LOGI("player", "meters valid=%u windows=%" PRIu64
+                 " gaps=%" PRIu32 " drop=%" PRIu32 " max_work=%" PRIu32
+                 "us stack_hwm=%" PRIu32 " rms=%u/%u peak=%u/%u",
+                 (unsigned)measurement.levels.valid, measurement.levels.windows,
+                 measurement.levels.discontinuities, pcm.tap_drops,
+                 measurement.max_work_us, measurement.stack_hwm,
+                 (unsigned)measurement.levels.rms[0], (unsigned)measurement.levels.rms[1],
+                 (unsigned)measurement.levels.peak[0], (unsigned)measurement.levels.peak[1]);
+      }
       if (output && (audio.invalid_buffers || audio.max_fill_us >= 5000)) {
         failure_stage = "i2s_stats";
         current.error = ESP_FAIL;

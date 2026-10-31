@@ -29,7 +29,7 @@ static char failure_log[1024],diagnostic_log[1024];
 static void (*actor)(void *);static jmp_buf completed;
 static unsigned tick,opens,closes,head,tail,count,allocations;static size_t command_bytes;
 static uint8_t messages[16][128];static int64_t now;
-static bool online,ap=true,output_live,force_fail;static int manual;
+static bool online,ap=true,output_live,force_fail,disable_meter,wrong_meter_generation;static int manual;
 static streamoo_audio_fill_fn output_fill;static void *output_context;
 struct streamoo_http_stream{unsigned stopped;bool closing;};
 struct streamoo_decoder{int unused;};
@@ -69,9 +69,36 @@ streamoo_stream_result_t streamoo_live_decode_read(streamoo_live_decode_t *p,int
 esp_err_t streamoo_audio_output_open(streamoo_audio_pins_t p,streamoo_audio_fill_fn fn,void *ctx,streamoo_audio_output_t **out){(void)p;assert(!output_live&&online&&!ap);output_live=true;output_fill=fn;output_context=ctx;*out=(void *)1;return ESP_OK;}
 esp_err_t streamoo_audio_output_close(streamoo_audio_output_t *out){assert(out&&output_live);output_live=false;++closes;return ESP_OK;}
 bool streamoo_audio_output_stats(streamoo_audio_output_t *s,streamoo_audio_stats_t *out){(void)s;*out=(streamoo_audio_stats_t){tick,10,0};return true;}
+
+struct streamoo_metering {
+ streamoo_pcm_ring_t tap; streamoo_pcm_block_t storage[4];
+ uint64_t generation; unsigned stopping;
+};
+static streamoo_metering_t *active_meter;
+esp_err_t streamoo_metering_open(uint64_t gen,streamoo_metering_t **out){
+ if(disable_meter){*out=NULL;return ESP_ERR_NO_MEM;}
+ *out=heap_caps_calloc(1,sizeof **out,0);active_meter=*out;
+ (*out)->generation=gen;assert(streamoo_pcm_ring_init(&(*out)->tap,(*out)->storage,4));return ESP_OK;
+}
+streamoo_pcm_ring_t *streamoo_metering_tap(streamoo_metering_t *m){return m?&m->tap:NULL;}
+bool streamoo_metering_state(streamoo_metering_t *m,streamoo_metering_state_t *out){
+ assert(m);*out=(streamoo_metering_state_t){.generation=m->generation+(wrong_meter_generation?1:0),.completed_us=now,
+ .levels={.valid=true,.rms={1234,2345},.peak={3000,4000}}};return true;
+}
+bool streamoo_metering_dispose(streamoo_metering_t *m){
+ if(!m)return true;
+ assert(!output_live);
+ if(!m->stopping){m->stopping=tick;return false;}
+ if(tick-m->stopping<3)return false;
+ active_meter=NULL;heap_caps_free(m);return true;
+}
 void vTaskDelay(unsigned ms){now+=(int64_t)ms*1000;++tick;
  if(output_live){int32_t samples[480];output_fill(output_context,samples,240);}
+ if(active_meter){int32_t raw[480];while(streamoo_pcm_pop(&active_meter->tap,raw,NULL)){} }
  streamoo_player_state_t s;assert(streamoo_player_state(&s));
+ if(s.phase!=STREAMOO_PLAYER_PLAYING||disable_meter||wrong_meter_generation)assert(!s.metering.levels.valid);
+ if(s.metering.levels.valid){assert(s.metering.generation==s.generation);assert(s.metering.levels.rms[0]==1234);}
+
  if(tick<=2)assert(!opens&&!output_live);
  if(tick==3){online=true;ap=false;assert(streamoo_player_select(NULL,&(streamoo_ui_select_command_t){11,1}));}
  if(tick==9)assert(s.phase==STREAMOO_PLAYER_PLAYING&&s.station_id==11&&s.running);
@@ -99,7 +126,7 @@ void vTaskDelay(unsigned ms){now+=(int64_t)ms*1000;++tick;
  if(tick==340)catalog=&second;
  if(tick==420){assert(!s.running&&!s.station_id&&!output_live&&opens==3&&closes==3&&!allocations&&first.refs==0&&reordered.refs==0);longjmp(completed,1);}
 }
-int main(int argc,char **argv){manual=argc>1?atoi(argv[1]):0;assert(streamoo_player_start(50)==ESP_OK);assert(!streamoo_player_select(NULL,&(streamoo_ui_select_command_t){11,99}));assert(first.refs==0);if(!setjmp(completed))actor(NULL);return 0;}
+int main(int argc,char **argv){manual=argc>1?atoi(argv[1]):0;disable_meter=manual==3;wrong_meter_generation=manual==4;if(manual>=3)manual=0;assert(streamoo_player_start(50)==ESP_OK);assert(!streamoo_player_select(NULL,&(streamoo_ui_select_command_t){11,99}));assert(first.refs==0);if(!setjmp(completed))actor(NULL);return 0;}
 '''
 class NetworkPlayerTests(unittest.TestCase):
  def run_case(self,mode):
@@ -107,10 +134,13 @@ class NetworkPlayerTests(unittest.TestCase):
    base=Path(tmp);(base/'freertos').mkdir()
    for name,body in HEADERS.items():(base/name).write_text(body)
    (base/'test.c').write_text(HARNESS)
-   includes=['-I'+str(base)]+['-Icomponents/'+n+'/include' for n in ('player','configuration','stations','network','streaming','decoder','compressed_source','pcm_adapter','pcm','audio_gain','audio_output','ui','ui_widgets','input','graphics','text')]
+   includes=['-I'+str(base)]+['-Icomponents/'+n+'/include' for n in ('metering','levels','player','configuration','stations','network','streaming','decoder','compressed_source','pcm_adapter','pcm','audio_gain','audio_output','ui','ui_widgets','input','graphics','text')]
    subprocess.run(['cc','-std=c11','-Wall','-Wextra','-Werror',*os.environ.get('STREAMOO_PLAYER_SANITIZE','').split(),*includes,str(base/'test.c'),'components/player/streamoo_player.c','components/pcm/streamoo_pcm.c','components/audio_gain/streamoo_audio_gain.c','-o',str(base/'player')],cwd=ROOT,check=True)
    subprocess.run([str(base/'player'),str(mode)],check=True,timeout=10)
 
  def test_actor_ap_gate_generation_switch_cancel_retry_and_removed_station(self):self.run_case(0)
  def test_manual_station_change_bypasses_previous_retry_delay(self):self.run_case(1)
  def test_manual_play_bypasses_previous_retry_delay(self):self.run_case(2)
+
+ def test_meter_failure_does_not_stop_audio(self):self.run_case(3)
+ def test_old_meter_generation_never_reaches_ui(self):self.run_case(4)

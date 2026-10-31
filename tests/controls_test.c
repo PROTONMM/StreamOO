@@ -130,6 +130,26 @@ int main(int argc, char **argv)
         assert(streamoo_encoder_demo_set_catalog(&d,next,1,4));
         assert(!d.station_id&&!d.running);
         assert(streamoo_encoder_demo_draw(&d,frame,sizeof frame,6));
+    } else if (scenario==11) {
+        streamoo_encoder_demo_t d; assert(streamoo_encoder_demo_init(&d));
+        const streamoo_ui_station_t list[]={{12,(const uint8_t *)"Live",4}};
+        assert(streamoo_encoder_demo_set_catalog(&d,list,1,8));
+        d.station_id=12; ++d.generation;
+        uint8_t frame[8192];
+        streamoo_visualization_model_t levels={.rms={1000,15000},.peak={2000,25000}};
+        assert(streamoo_encoder_demo_levels(&d,&levels));
+        for(unsigned kind=0;kind<3;++kind){
+            d.ui.visualization=kind;
+            assert(streamoo_encoder_demo_draw(&d,frame,sizeof frame,40*kind));
+            assert(d.ui.home.visualization_valid==(kind!=STREAMOO_VIS_SPECTRUM));
+            if(kind){assert(d.ui.home.visualization.rms[1]==15000);assert(!d.ui.home.visualization.band_count);}
+        }
+        levels.rms[0]=40000;
+        assert(!streamoo_encoder_demo_levels(&d,&levels));
+        assert(d.levels.rms[0]==1000);
+        assert(streamoo_encoder_demo_levels(&d,NULL));
+        assert(streamoo_encoder_demo_draw(&d,frame,sizeof frame,200));
+        assert(!d.ui.home.visualization_valid && !d.ui.home.visualization.rms[1]);
     } else if (scenario==10) {
         streamoo_encoder_demo_t d;assert(streamoo_encoder_demo_init(&d));
         const streamoo_ui_station_t list[]={{12,(const uint8_t *)"Network",7}};

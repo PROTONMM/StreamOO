@@ -1,6 +1,6 @@
 # Punkt wznowienia StreamOO
 
-Aktualizacja: **2026-10-31, 07a — rdzeń RMS/peak gotowy; użytkownik zaakceptował09e**.
+Aktualizacja: **2026-10-31, 07b — rzeczywiste bargraph/analog gotowe do odbioru**.
 Gałąź feature/streamoo-implementation. ADR0034–0035, STATUS i HTTP_PLAYER_BRINGUP.
 
 ## Potwierdzone przez użytkownika
@@ -67,11 +67,11 @@ sprawdzone na hoście. ADR0035. Brak nowych zależności i nowych alokacji.
 
 Użytkownik zaakceptował09e: „jest dobrze”. Nie wymaga powtarzania zwykłego
 odbioru IP/VOL. Scenariusze RF i dokładne czasy osobno w NETWORK_BRINGUP.
-07a dodaje levels: RMS/peak stereo, osobne okna40ms, sekwencje i luki,
-jeszcze bez uruchamiania analizy i bez zmiany ekranu. ADR0037.
-Kolejny krok: osobny konsument droppable tap i snapshot do bargraph/analog,
-reset przy STOP/zmianie generacji, bez analizy w I2S. Potem FFT/Hann/ESP-DSP.
-Nie trzeba teraz wgrywać firmware; ten krok sprawdzany testami obliczeń.
+07b uruchamia levels w osobnym tasku metering przez tap4 bloków.
+Rzeczywiste RMS/peak w bargraph/analog, FFT nadal „Brak danych”. ADR0038.
+Teraz zwykły flash i odbiór DSP_BRINGUP: ruch mierników także przy VOL0,
+STOP/PLAY/szybka zmiana bez starych poziomów, heap/stack/max_fill oraz meters.
+Po odbiorze: smoothing/peak-hold/skala dB/VU i FFT/Hann/ESP-DSP.
 Nowy log potwierdza również PLAYING22050; timeouty HTTP0 przed dekoderem
 nie wyjaśniają dawnego gen7. Przy retry nadal analizuj stage/cause i Decode diag.
 
@@ -105,3 +105,10 @@ Nie dodawać AI-Model/AI-Tokens do commitów; metryki wyłącznie ze zweryfikowa
 
 Weryfikacja07a:275 testów PASS, levels ASan/UBSan PASS (LSan off),
 native build PASS (0x15b530, 7% wolne); kod analizatora jeszcze nieuruchamiany.
+
+Weryfikacja07b:284 testy PASS, metering/actor/controls ASan/UBSan PASS
+(LSan off). Native ESP-IDF6.1 build PASS (0x15bcd0, 7% wolne).
+Metering około10KiB internal +4096B stos/TCB na sesję; brak pamięci wyłącza
+metry bez zatrzymania audio. Lifecycle: I2S-close, STOP worker, ACK, free;
+wyniki tylko PLAYING z aktualną generation i wiekiem<=200ms.
+Do sprawdzenia heap i deadline na sprzęcie; agent nie wykonywał flash.

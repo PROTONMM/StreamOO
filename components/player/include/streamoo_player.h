@@ -1,6 +1,7 @@
 #pragma once
 #include "esp_err.h"
 #include "streamoo_ui_controls.h"
+#include "streamoo_metering.h"
 typedef enum {
   STREAMOO_PLAYER_STOPPED,
   STREAMOO_PLAYER_WAIT_NETWORK,
@@ -17,6 +18,7 @@ typedef struct {
   streamoo_player_phase_t phase;
   esp_err_t error;
   char title[257];
+  streamoo_metering_state_t metering;
 } streamoo_player_state_t;
 /* Task-only service; ready means command owner exists, not that I2S is open.
  * Posts copy commands without waiting for network I/O. UI selection includes

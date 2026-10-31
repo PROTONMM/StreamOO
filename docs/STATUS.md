@@ -10,7 +10,7 @@ Bieżący punkt wznowienia: [RESUME.md](RESUME.md).
 | 04 UI/SSD1322 | HOME i lista odebrane na OLED; końcowe strojenie fontu OPEN | ADR 0012; odbiór użytkownika |
 | 05 encoder | dekoder/IRQ i gesty odebrane; interaktywny adapter odebrany w trybie A; preferencje NVS odebrane; shutdown/flush OPEN | ADR 0013–0017; 99 testów PASS |
 | 06 audio | I2S/gain/PCM stress odebrane; MP3 decode/PCM potwierdzone logiem; AAC-LC PoC odebrane; AAC incremental file decode06f odebrane logiem i odsłuchem; źródło/bufor AAC06g odebrane logiem, odsłuchem i sterowaniem; niezależny reader AAC06h odebrany; player06i: kilka stacji i 44,1/48kHz odebrane; rozszerzone testy OPEN | ADR0018–0025/0034–0035; 248 testów hostowych PASS; build PASS |
-| 07 DSP | 07a: niezależny analizator RMS/peak stereo; task/widżety/FFT OPEN | ADR0037; testy referencyjne i rzeczywisty tap PCM |
+| 07 DSP | 07b: task RMS/peak i rzeczywiste bargraph/analog gotowe do odbioru; FFT/smoothing OPEN | ADR0037–0038; 284 testy PASS; build PASS |
 | 08 stacje | lista z katalogu i wybór odebrane; import live/reboot i edycja ID OPEN | ADR0033 |
 | 09 sieć | AP/STA/IP/AP-off potwierdzone logiem; mDNS OPEN | ADR0031; build PASS |
 | 10 WWW | formularze Wi-Fi/upload bez dodatkowego logowania; HOME/IP odebrane; lista z katalogu OPEN | ADR0032; 222 testy PASS; Chromium PASS |
@@ -1313,3 +1313,20 @@ Weryfikacja07a:275 testów hostowych PASS;9 testów levels także ASan/UBSan
 PASS (LSan off). Native ESP-IDF6.1 build PASS; levels skompilowany dla S3,
 nieużywany kod usuwany przez linker, obraz nadal0x15b530 (7% wolne).
 check_config --platform i diff --check PASS. Bez flash/erase/eFuse.
+
+## 07b — RMS/peak na OLED przez osobny task (2026-10-31)
+
+Komponent metering dołączony do istniejącego tap przed gain. Internal ring4,
+priority1/stack4096B, analiza40ms; snapshot generation/timestamp, expiry200ms.
+STOP/retry/buffering/zmiana stacji nie publikują starych poziomów. Zamknięcie
+I2S przed STOP taska, zwolnienie po ACK; awaria pomiarów nie blokuje audio.
+Bargraph i analog mają prawdziwe poziomy; FFT nadal bez danych. ADR0038.
+
+284 testy PASS, metering/actor/controls ASan/UBSan PASS (LSan off, bez TSan).
+Native ESP-IDF6.1 build PASS:0x15bcd0, 7% app wolne; check_config --platform
+i diff --check PASS. Pcm_fill w IRAM; bez obliczeń/alokacji/I/O w callbacku.
+Bez nowych zależności zewnętrznych, zmiany partycji, flash/erase/eFuse.
+HARDWARE_TEST_PENDING: DSP_BRINGUP — reakcja obu mierników, VOL0/50/100,
+STOP/zmiany stacji, heap/stack/max_fill/low/hard i nowe logi meters.
+Rzeczywisty koszt kopii tap i CPU/DMA/SMP wymaga urządzenia. Smoothing,
+peak-hold, skala dB/VU i FFT to dalsze kroki.

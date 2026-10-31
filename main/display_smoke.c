@@ -125,6 +125,15 @@ static void display_task(void *context)
                     }
                     streamoo_encoder_demo_audio_state(&demo,player.volume,player.running);
                     demo.buffering=player.phase!=STREAMOO_PLAYER_PLAYING;
+                    streamoo_visualization_model_t levels = {0};
+                    for (unsigned ch=0;ch<2;++ch) {
+                        levels.rms[ch]=player.metering.levels.rms[ch];
+                        levels.peak[ch]=player.metering.levels.peak[ch];
+                    }
+                    streamoo_encoder_demo_levels(&demo,
+                        player.phase==STREAMOO_PLAYER_PLAYING &&
+                        player.metering.generation==player.generation &&
+                        player.metering.levels.valid ? &levels : NULL);
                     const char *message=player.title[0]?player.title:
                         player.phase==STREAMOO_PLAYER_PLAYING?"Odtwarzanie":
                         player.phase==STREAMOO_PLAYER_BUFFERING?"Buforowanie...":

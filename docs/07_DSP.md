@@ -42,3 +42,13 @@ Dziewięć testów, w tym niezależna referencja sinusów i rzeczywisty PCM tap
 przy volume0/50/100. Szczegóły/ograniczenia ADR0037. Brak nowych bibliotek.
 Jeszcze bez odbiorcy RTOS i wizualizacji na urządzeniu; istniejący player
 i ekran bez zmian. Kolejny krok: niezależne zadanie DSP i snapshot do UI.
+
+## 07b — konsument tap i połączenie z OLED
+
+Metering uruchamia osobny task priority1/4096B, ring4 bloków drop-newest
+w internal RAM. Player otwiera przed I2S, zwalnia po I2S-close i ACK taska.
+Snapshot generation/timestamp, wygaszenie po200ms, publikacja tylko PLAYING.
+Bargraph/analog pokazują rzeczywiste RMS/peak przed gain; FFT pozostaje
+„Brak danych”. Obecnie liniowa amplituda Q15 bez smoothing/peak-hold/VU.
+Błędy alokacji pomiarów nie przerywają audio. ADR0038; odbiór sprzętowy
+według DSP_BRINGUP OPEN. 284 testy i build PASS; bez nowych zależności.

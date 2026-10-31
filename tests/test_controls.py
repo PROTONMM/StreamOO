@@ -43,3 +43,5 @@ class ControlsTests(unittest.TestCase):
     def test_live_catalog_selection_reorder_and_removal(self): self.run_case(9)
 
     def test_network_selection_waits_for_owner_ack(self): self.run_case(10)
+
+    def test_live_levels_and_unavailable_spectrum(self): self.run_case(11)
