@@ -10,7 +10,7 @@ HARNESS=r'''
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
-static unsigned selected,ogg;static int fault;
+static unsigned selected,ogg;static int fault;static bool bootstrap;
 static esp_audio_err_t reg(unsigned kind){selected=kind;return fault==1?ESP_AUDIO_ERR_FAIL:ESP_AUDIO_ERR_OK;}
 esp_audio_err_t esp_mp3_dec_register(void){return reg(0);}
 esp_audio_err_t esp_aac_dec_register(void){return reg(1);}
@@ -26,21 +26,34 @@ esp_audio_err_t esp_audio_simple_dec_open(esp_audio_simple_dec_cfg_t *cfg,void *
  *out=(void *)1;return ESP_AUDIO_ERR_OK;
 }
 esp_audio_err_t esp_audio_simple_dec_process(void *h,esp_audio_simple_dec_raw_t *raw,esp_audio_simple_dec_out_t *out){
- assert(h&&raw->len&&out->len>=8);raw->consumed=raw->len;out->decoded_size=8;out->needed_size=8;
+ assert(h&&raw->len&&out->len>=8);raw->consumed=raw->len;out->decoded_size=8;
+ if(selected==2&&!bootstrap&&(fault<3||fault>=7)){
+ if(fault>=7){const uint8_t header[]={255,248,89,172,247,190,157,155,0};assert(raw->len==51&&!memcmp(raw->buffer,"fLaC\x80\0\0\x22",8));assert(!memcmp(raw->buffer+42,header,9));}
+ else assert(raw->len==4&&!memcmp(raw->buffer,"fLaC",4));
+ bootstrap=true;out->decoded_size=0;
+ }out->needed_size=8;
  if(fault==4){out->needed_size=100000;return ESP_AUDIO_ERR_BUFF_NOT_ENOUGH;}
  if(fault==5)out->decoded_size=out->len+1;
  if(fault==6)raw->consumed=raw->len+1;
  return ESP_AUDIO_ERR_OK;
 }
 esp_audio_err_t esp_audio_simple_dec_get_info(void *h,esp_audio_simple_dec_info_t *i){assert(h);*i=(esp_audio_simple_dec_info_t){.sample_rate=48000,.channel=2,.bits_per_sample=32};return ESP_AUDIO_ERR_OK;}
-esp_audio_err_t esp_audio_simple_dec_reset(void *h){assert(h);return ESP_AUDIO_ERR_OK;}
+esp_audio_err_t esp_audio_simple_dec_reset(void *h){assert(h);bootstrap=false;return ESP_AUDIO_ERR_OK;}
 void esp_audio_simple_dec_close(void *h){assert(h);}
 int main(int argc,char **argv){assert(argc==3);unsigned kind=(unsigned)atoi(argv[1]);fault=atoi(argv[2]);streamoo_decoder_t *d=NULL;
  assert(streamoo_decoder_open(STREAMOO_CODEC_COUNT,&d)==ESP_ERR_INVALID_ARG&&!d);
  esp_err_t e=streamoo_decoder_open((streamoo_codec_t)kind,&d);
  if(fault==1||(fault==2&&kind>=3)||fault==3){assert(e!=ESP_OK&&!d);return 0;}
  assert(e==ESP_OK&&d&&selected==kind&&ogg==(kind>=3));
- uint8_t input[5]={0},pcm[16];streamoo_decode_result_t r;
+ if(kind==2&&fault>=7){
+ uint8_t data[]={255,248,89,172,247,190,157,155,0,1},pcm[65536];streamoo_decode_result_t r;
+ for(unsigned cycle=0;cycle<2;++cycle){
+ if(fault==7){assert(streamoo_decoder_process(d,data,sizeof data,false,pcm,sizeof pcm,&r)==ESP_OK&&r.consumed==10&&r.produced==8);}
+ else for(unsigned i=0;i<sizeof data;++i){assert(streamoo_decoder_process(d,data+i,1,false,pcm,sizeof pcm,&r)==ESP_OK&&r.consumed==1&&r.produced==(i==9?8u:0u));}
+ assert(bootstrap);assert(streamoo_decoder_reset(d)==ESP_OK);}
+ streamoo_decoder_close(d);return 0;
+ }
+ uint8_t input[5]={0},pcm[16];if(kind==2)memcpy(input,"fLaC",4);streamoo_decode_result_t r;
  e=streamoo_decoder_process(d,input,sizeof input,false,pcm,sizeof pcm,&r);
  if(fault==4)assert(e==ESP_ERR_INVALID_SIZE&&r.needed==100000);
  else if(fault==5||fault==6)assert(e==ESP_ERR_INVALID_RESPONSE);
@@ -53,13 +66,17 @@ class ExtendedDecoderTests(unittest.TestCase):
  def setUpClass(cls):
   cls.tmp=tempfile.TemporaryDirectory();cls.addClassCleanup(cls.tmp.cleanup);base=Path(cls.tmp.name)
   (base/'esp_err.h').write_text('typedef int esp_err_t;\n#define ESP_OK 0\n#define ESP_FAIL -1\n#define ESP_ERR_INVALID_ARG 1\n#define ESP_ERR_NO_MEM 2\n#define ESP_ERR_INVALID_SIZE 3\n#define ESP_ERR_INVALID_RESPONSE 4\n')
-  (base/'esp_log.h').write_text('#include <stdio.h>\n#define ESP_LOGE(tag,...) ((void)printf(__VA_ARGS__))\n')
+  (base/'esp_log.h').write_text('#include <stdio.h>\n#define ESP_LOGE(tag,...) ((void)printf(__VA_ARGS__))\n#define ESP_LOGI(tag,...) ((void)printf(__VA_ARGS__))\n')
   (base/'test.c').write_text(HARNESS);cls.binary=base/'test'
   includes=['-I'+str(base),'-Icomponents/decoder/include','-Icomponents/pcm_adapter/include']
   vendor=ROOT/'managed_components/espressif__esp_audio_codec/include'
   includes += ['-I'+str(vendor/p) for p in ['.','decoder','decoder/impl','simple_dec']]
-  subprocess.run(['cc','-std=c11','-Wall','-Wextra','-Werror',*os.environ.get('STREAMOO_DECODER_SANITIZE','').split(),*includes,'components/decoder/streamoo_decoder.c',str(base/'test.c'),'-o',str(cls.binary)],cwd=ROOT,check=True)
+  subprocess.run(['cc','-std=c11','-Wall','-Wextra','-Werror',*os.environ.get('STREAMOO_DECODER_SANITIZE','').split(),*includes,'components/decoder/streamoo_decoder.c','components/decoder/streamoo_flac_header.c',str(base/'test.c'),'-o',str(cls.binary)],cwd=ROOT,check=True)
  def test_all_codecs_and_bounded_failures(self):
   for codec in range(5):
    for fault in range(7):
     with self.subTest(codec=codec,fault=fault):subprocess.run([str(self.binary),str(codec),str(fault)],check=True)
+
+ def test_headerless_flac_bootstrap_fragmentation_and_reset(self):
+  for mode in (7,8):
+   with self.subTest(mode=mode):subprocess.run([str(self.binary),'2',str(mode)],check=True)

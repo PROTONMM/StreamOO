@@ -363,11 +363,11 @@ static void task(void *context) {
         fade_until = esp_timer_get_time() + 100000;
         ESP_LOGW("player",
                  "Stream failed gen=%" PRIu64 " stage=%s cause=%s"
-                 " HTTP=%d error=%s decoder=%d vendor=%" PRId32
+                 " HTTP=%d codec=%u error=%s decoder=%d vendor=%" PRId32
                  " previous=%" PRIu32 "/%u/%u format=%" PRIu32 "/%u/%u",
                  current.generation, failure_stage,
                  pump ? streamoo_live_failure_name(pump->failure) : "none",
-                 info.http_status, esp_err_to_name(current.error),
+                 info.http_status, (unsigned)info.codec, esp_err_to_name(current.error),
                  pump ? pump->decoder_error : 0, pump ? pump->codec_status : 0,
                  pump ? pump->format.rate : 0,
                  pump ? (unsigned)pump->format.channels : 0,

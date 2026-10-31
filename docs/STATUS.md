@@ -1619,3 +1619,28 @@ naszym adapterem; HTTPS certificate verification,64KiB/ffprobe. SomaFM403
 odrzucone. Prywatny playlist.csv nietknięty, pliki wynikowe ignorowane Git.
 Źródła: RadioMast/RNŚ/RadioBrowser. Odsłuch S3 i nowy FS/reimport OPEN;
 procedura LARGE_FLASH_BRINGUP.md. HLS i Ogg-FLAC nie są testami pozytywnymi.
+
+## Poprawka live FLAC — ADR0056 (2026-10-31)
+
+Zgłoszenie nativeFLAC/RNŚAAC+. Log użytkownika dotyczy FLAC: TLS OK,
+HTTP200, vendor=-7/NOT_SUPPORT przy pierwszych257B, bez PCM. Zweryfikowane
+nagłówki serwera: audio/flac, początek ramki0xFFF8 bez fLaC/STREAMINFO.
+Pierwszy adapter06k pomijał wymóg nagłówka pliku parsera Espressif.
+
+Dodano własny bounded bootstrap: max16B, sprawdzenie pól/coded number/
+CRC8, STREAMINFO42B z jawnymi parametrami ramki, oryginalny header
+przekazany bez utraty/dublowania. Obsługa fragmentów1B, natywnych plików,
+resetu i błędów. Nie zgaduje brakujących rate/bits; zakres64KiB/8..48kHz/
+mono-stereo16/24/32 nadal obowiązuje. Bez zmian I2S/DSP/partycji/listy.
+Stream failed zawiera teraz codec enum. Native dekoder S3 do odbioru.
+
+355 testów hostowych PASS; adapter/header ASan/UBSan PASS (LSan off),
+10000-input corpus. FFmpeg oracle: identyczny PCM po odbudowie nagłówka
+oryginalnego FLAC i po dołączeniu od drugiej ramki. Native IDF6.1 build
+PASS0x1767c0, wolne0xd79840/90%. GPIO validator i diff --check PASS.
+Logi /tmp/streamoo-flac-fix-*.log. Bez nowych zależności/flash/erase/eFuse.
+
+Teraz zwykły flash i ponowny odsłuch TEST FLAC native lossless; oczekiwany
+log FLAC live frame: supplied validated STREAMINFO, potem PCM/PLAYING.
+RNŚAAC+ nadal osobne zgłoszenie OPEN, potrzebny log jego błędu; nie
+przypisujemy mu diagnozy z FLAC. Oba serwery na hoście odpowiadają200.

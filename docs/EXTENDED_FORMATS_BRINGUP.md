@@ -59,3 +59,14 @@ Dla istniejącego sdkconfig z innego checkoutu ustaw w menuconfig → Compiler
 options optymalizację Size (-Os) i Assertions → Silent (kontrole włączone).
 Nowy sdkconfig bierze te ustawienia z sdkconfig.defaults; sam build nie
 nadpisuje istniejących wyborów. W bieżącym workspace są już ustawione.
+
+## Poprawka live FLAC — ADR0056
+
+Radio Mast Raw FLAC zaczyna od ramki0xFFF8 bez fLaC/STREAMINFO. Pierwszy
+build06k tego nie obsługiwał: log użytkownika pokazał vendor=-7 po257B.
+Nowy adapter sprawdza pierwszy nagłówek/CRC8 i uzupełnia STREAMINFO przed
+parserem. Po zwykłym flash wybierz ponownie TEST FLAC native lossless.
+Oczekiwany log: `FLAC live frame: supplied validated STREAMINFO`, potem
+PCM/PLAYING; rzeczywisty odbiór poprawki nadal OPEN. Nie trzeba zmieniać
+playlisty, tablicy partycji ani ustawień. RNŚAAC+ sprawdzamy oddzielnie:
+log FLAC nie potwierdza przyczyny jego problemu.

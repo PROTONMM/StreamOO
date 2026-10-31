@@ -141,3 +141,8 @@ obejmuje teraz całą rodzinę ADTS; UI AAC nie zgaduje konkretnego profilu.
 HTTP rozwiązuje M3U/PLS, do3 dokumentów/16KiB i5 redirect, bez downgrade
 TLS. HLS wykrywany i jawnie odrzucany; implementacja segmentów osobno.
 Instrukcja: [EXTENDED_FORMATS_BRINGUP](EXTENDED_FORMATS_BRINGUP.md).
+
+ADR0056: native live FLAC bez nagłówka pliku wymaga adaptera STREAMINFO;
+sprawdzony header/CRC8 dostarcza parametry, potem oryginalny parser/decoder.
+Pierwszy build06k obsługiwał tylko strumienie z nagłówkiem fLaC. Poprawka
+ma testy hostowe i oracle FFmpeg, odbiór na S3 OPEN. RNŚAAC+ osobno OPEN.

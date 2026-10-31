@@ -133,3 +133,5 @@ Krzywa głośności: `adr/0053-more-usable-volume-curve.md`.
 Rozszerzone kodeki i M3U/PLS: `adr/0054-extended-codecs-and-playlist-resolution.md`, `EXTENDED_FORMATS_BRINGUP.md`.
 
 Duża factory, bez OTA: `adr/0055-single-large-app-without-ota.md`, `LARGE_FLASH_BRINGUP.md`.
+
+Live FLAC bez nagłówka pliku: `adr/0056-headerless-live-flac.md`.

@@ -328,3 +328,21 @@ SomaFM403 odrzucone. Nie zmieniono prywatnego playlist.csv.
 Teraz user flash/reimport, odbiór nowychkodeków i heap/stack/underrun S3.
 Nie deklarować odbioru na podstawie hostpróbek. OTA zamknięte przez
 rezygnację, HLS nadal osobnoOPEN. FFT/RMS/wyglądWWW odłożone.
+
+Najnowsze ADR0056: user zgłosił FLAC/RNŚAAC+ nie gra. Dostarczony log
+potwierdzony jako TEST FLAC native lossless: TLSvalid/HTTP200, parser
+NOT_SUPPORT/vendor-7 na pierwszych257B. Przyczyna: live stream rozpoczyna
+ramką0xFFF8 bez fLaC/STREAMINFO, a SimpleDecoder wymaga fileheader.
+Dodano własny bounded bootstrapnagłówka RFC9639:16B/CRC8/codednumber,
+STREAMINFO42B tylko z jawnych parametrów, niezmienione ramki. Flacfile
+passthrough,1Bfragment/reset/bounds przetestowane; bez I2S/DSPchanges.
+355 tests, adapter/header ASanUBsan, niezależny FFmpegPCM oracle także
+midstream, native build PASS0x1767c0,90%app wolne. GPIO/diffPASS.
+
+Teraz userzwykłyflash i test tego samego FLAC; log nowy
+FLAC live frame: supplied validated STREAMINFO, potem oczekiwanePCM.
+Odbiór poprawki S3 OPEN. Brak zmian playlisty/partycji/NVS. RNŚAAC+
+pozostaje osobnoOPEN: użytkownik nie podał jeszcze logu tej stacji.
+Nie zakładać, że ma ten sam błąd. Stream failed dodaje codec enum
+0MP3/1AAC/2FLAC/3Vorbis/4Opus, by logi były jednoznaczne.
+Agent nie flashował/erase/eFuse. OTA nadal wyłączone decyzją użytkownika.

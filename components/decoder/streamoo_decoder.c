@@ -1,4 +1,5 @@
 #include "streamoo_decoder.h"
+#include "streamoo_flac_header.h"
 #include "esp_mp3_dec.h"
 #include "esp_aac_dec.h"
 #include "esp_flac_dec.h"
@@ -9,8 +10,10 @@
 #include "esp_audio_simple_dec.h"
 #include <stdlib.h>
 #include <limits.h>
+#include <string.h>
 
-struct streamoo_decoder { esp_audio_simple_dec_handle_t handle; esp_aac_dec_cfg_t aac; };
+struct streamoo_decoder { esp_audio_simple_dec_handle_t handle; esp_aac_dec_cfg_t aac;
+    bool flac,flac_ready;uint8_t prefix[16];size_t prefix_bytes; };
 static bool registered[STREAMOO_CODEC_COUNT];
 static bool ogg_registered;
 esp_err_t streamoo_decoder_open(streamoo_codec_t codec, streamoo_decoder_t **out)
@@ -54,6 +57,7 @@ esp_err_t streamoo_decoder_open(streamoo_codec_t codec, streamoo_decoder_t **out
         ESP_LOGE("decoder","Open failed: vendor=%d",(int)error);
         free(d); return error==ESP_AUDIO_ERR_MEM_LACK ? ESP_ERR_NO_MEM : ESP_FAIL;
     }
+    d->flac=codec==STREAMOO_CODEC_FLAC;
     *out=d; return ESP_OK;
 }
 esp_err_t streamoo_decoder_process(streamoo_decoder_t *d,uint8_t *input,size_t bytes,
@@ -62,11 +66,39 @@ esp_err_t streamoo_decoder_process(streamoo_decoder_t *d,uint8_t *input,size_t b
     if (!d || !input || !bytes || !pcm || !capacity || !result || bytes>UINT32_MAX || capacity>UINT32_MAX)
         return ESP_ERR_INVALID_ARG;
     *result=(streamoo_decode_result_t){0};
-    esp_audio_simple_dec_raw_t raw={.buffer=input,.len=bytes,.eos=eos};
+    size_t prefix_consumed=0;
+    if(d->flac && !d->flac_ready){
+        uint8_t streaminfo[42];size_t header_bytes=0;
+        streamoo_flac_header_result_t type=STREAMOO_FLAC_MORE;
+        while(prefix_consumed<bytes && type==STREAMOO_FLAC_MORE){
+            if(d->prefix_bytes==sizeof d->prefix)return ESP_ERR_INVALID_RESPONSE;
+            d->prefix[d->prefix_bytes++]=input[prefix_consumed++];
+            type=streamoo_flac_header(d->prefix,d->prefix_bytes,capacity,streaminfo,&header_bytes);
+        }
+        result->consumed=prefix_consumed;
+        if(type==STREAMOO_FLAC_BAD)return ESP_ERR_INVALID_RESPONSE;
+        if(type==STREAMOO_FLAC_MORE)return eos?ESP_ERR_INVALID_RESPONSE:ESP_OK;
+        uint8_t bootstrap[58];size_t bootstrap_bytes=0;
+        if(type==STREAMOO_FLAC_FRAME){memcpy(bootstrap,streaminfo,42);bootstrap_bytes=42;}
+        memcpy(bootstrap+bootstrap_bytes,d->prefix,header_bytes);bootstrap_bytes+=header_bytes;
+        esp_audio_simple_dec_raw_t initial={.buffer=bootstrap,.len=bootstrap_bytes};
+        esp_audio_simple_dec_out_t initial_out={.buffer=pcm,.len=capacity};
+        esp_audio_err_t initial_error=esp_audio_simple_dec_process(d->handle,&initial,&initial_out);
+        result->codec_status=(int32_t)initial_error;result->needed=initial_out.needed_size;
+        if(initial_error!=ESP_AUDIO_ERR_OK)
+            return initial_error==ESP_AUDIO_ERR_BUFF_NOT_ENOUGH?ESP_ERR_INVALID_SIZE:
+                   initial_error==ESP_AUDIO_ERR_MEM_LACK?ESP_ERR_NO_MEM:ESP_FAIL;
+        if(initial.consumed!=bootstrap_bytes || initial_out.decoded_size)
+            return ESP_ERR_INVALID_RESPONSE;
+        d->flac_ready=true;
+        if(type==STREAMOO_FLAC_FRAME)ESP_LOGI("decoder","FLAC live frame: supplied validated STREAMINFO");
+        if(prefix_consumed==bytes)return ESP_OK;
+    }
+    esp_audio_simple_dec_raw_t raw={.buffer=input+prefix_consumed,.len=bytes-prefix_consumed,.eos=eos};
     esp_audio_simple_dec_out_t out={.buffer=pcm,.len=capacity};
     esp_audio_err_t error=esp_audio_simple_dec_process(d->handle,&raw,&out);
     result->codec_status=(int32_t)error;
-    result->consumed=raw.consumed; result->produced=out.decoded_size; result->needed=out.needed_size;
+    result->consumed=prefix_consumed+raw.consumed; result->produced=out.decoded_size; result->needed=out.needed_size;
     if (result->consumed>bytes || result->produced>capacity) return ESP_ERR_INVALID_RESPONSE;
     if (error==ESP_AUDIO_ERR_BUFF_NOT_ENOUGH) return ESP_ERR_INVALID_SIZE;
     if (error!=ESP_AUDIO_ERR_OK) return ESP_FAIL;
@@ -80,7 +112,9 @@ esp_err_t streamoo_decoder_process(streamoo_decoder_t *d,uint8_t *input,size_t b
 esp_err_t streamoo_decoder_reset(streamoo_decoder_t *d)
 {
     if (!d) return ESP_ERR_INVALID_ARG;
-    return esp_audio_simple_dec_reset(d->handle)==ESP_AUDIO_ERR_OK ? ESP_OK : ESP_FAIL;
+    if(esp_audio_simple_dec_reset(d->handle)!=ESP_AUDIO_ERR_OK)return ESP_FAIL;
+    d->flac_ready=false;d->prefix_bytes=0;
+    return ESP_OK;
 }
 void streamoo_decoder_close(streamoo_decoder_t *d)
 {
