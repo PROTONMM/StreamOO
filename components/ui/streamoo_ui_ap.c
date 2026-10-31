@@ -36,7 +36,7 @@ bool streamoo_ui_sta_draw(uint8_t *frame,size_t bytes,const uint8_t *ssid,size_t
     streamoo_canvas_t c;
     if(!streamoo_canvas_init(&c,frame,bytes,256,64,128))return false;
     streamoo_canvas_fill(&c,(streamoo_rect_t){0,0,256,64},0);
-    static const uint8_t title[]="StreamOO / sieć",connected[]="Połączono z Wi-Fi",waiting[]="Łączenie z Wi-Fi...",retry[]="Ponawianie połączenia...";
+    static const uint8_t title[]="StreamOO / sieć",connected[]="Połączono z Wi-Fi",waiting[]="Łączenie z Wi-Fi...",retry[]="Sprawdzanie zapisanych sieci...";
     if(!line(&c,0,title,sizeof title-1,10)||!line(&c,16,ip_bytes?connected:waiting,ip_bytes?sizeof connected-1:sizeof waiting-1,15))return false;
     if(ssid_bytes&&!line(&c,32,ssid,ssid_bytes,15))return false;
     if(ip_bytes){char url[32];int length=snprintf(url,sizeof url,"http://%.*s/",(int)ip_bytes,(const char *)ip);

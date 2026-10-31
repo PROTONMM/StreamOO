@@ -7,7 +7,7 @@
 |---|---|---|---|
 | 0 | 0 | 256×16 | nazwa stacji wyśrodkowana, Krypton |
 | 0 | 16 | 256×8 | tytuł utworu, bitmapa 5×7 UTF-8 PL |
-| 0 | 24 | 256×8 | dodatkowy tekst, bitmapa 5×7 UTF-8 PL |
+| 0 | 24 | 256×8 | IP po lewej (jasność 6/15), VOL i belka (15/15), bitmapa 5×7 |
 | 0 | 32 | ~44×32 | kodek, bitrate, ikona Wi-Fi w dolnym lewym rogu |
 | ~44 | 32 | ~132×32 | wymienna wizualizacja audio |
 | ~176 | 32 | ~80×32 | data i zegar |
@@ -134,3 +134,12 @@ Nowsza polityka ADR0028: AP jest wyłącznie konfiguracją, bez odtwarzania.
 Enkoder na ekranie AP ignorowany także dla VOL/PLAY/STOP; dane AP pozostają
 widoczne. Poza AP zachowanie HOME/enkodera bez zmian. Zastępuje poprzednią
 obsługę audio na ekranie AP z eksperymentu09b.
+
+## Wiersz IP/głośności — ADR0036
+
+W HOME sieciowym y24..31: IP x0..127 wyrównane do lewej, VOL0..100
+x128..171, belka x176/y25 o rozmiarze80×6. Obramowanie i wypełnienie
+mają normalną jasność15; wnętrze78×4 pokazuje ustawienie głośności,
+nie poziom sygnału PCM. Renderer z clippingiem, bez alokacji i I/O.
+Podczas prób STA komunikat oczekiwania; SSID/hasło konfiguracji wyłącznie
+po uruchomieniu AP. Czytelność jasności6 wymaga odbioru na OLED.

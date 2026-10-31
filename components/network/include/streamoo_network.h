@@ -16,7 +16,7 @@ typedef struct {
 } streamoo_network_state_t;
 /* Task-only owner starts once; hooks run in its task, outside state lock.
  * Hook/context lifetime extends to shutdown. Missing key keeps radio off. */
-/* Bootstrap policy; true reserves this boot for AP configuration (no player). */
+/* Legacy build gate: networking/player enabled. AP is runtime fallback only. */
 bool streamoo_network_boot_ap_enabled(void);
 esp_err_t streamoo_network_start(const streamoo_network_hooks_t *);
 bool streamoo_network_state(streamoo_network_state_t *);

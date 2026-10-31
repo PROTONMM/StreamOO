@@ -9,12 +9,13 @@ Szczegóły i ograniczenia: [ADR0034](adr/0034-http-icy-network-player.md).
 
 1. Zwykłe `idf.py -p PORT flash` z dotychczasowym prywatnym kluczem AP.
    Nie kasuj NVS/flash ani nie wgrywaj obrazu FS; partycje nie zmienione.
-   Playlista i profile Wi-Fi mają pozostać. W AP cisza, bez HTTP readera,
+   Playlista i profile Wi-Fi mają pozostać. Start najpierw STA bez AP;
+   AP dopiero po niepowodzeniu wszystkich profili (ADR0036). W AP cisza, bez HTTP readera,
    aktywnego dekodera i I2S. Player może raportować WAIT_NETWORK/PCM=0.
 2. Po STA/AP-off otwórz listę enkoderem i wybierz **bezpośredni stream MP3**.
    Sam boot nie wybiera stacji automatycznie. Zatwierdzenie stacji inicjuje
    połączenie; oczekuj tytułu „Łączenie”, potem „Buforowanie”/„Odtwarzanie”.
-   Nazwa stacji w HOME, IP nadal w trzeciej linii. Brak metadanych ICY nie
+   Nazwa stacji w HOME, IP po lewej, przyciemnione, obok jasne VOL i belka w trzeciej linii. Brak metadanych ICY nie
    oznacza błędu — wtedy widnieje zwykły status odtwarzania.
 3. Słuchaj przez co najmniej60 s. Enkoder: obrót reguluje volume, długi klik
    STOP/PLAY w trybieA (krótki w trybieB). STOP wygasza i zamyka źródło;

@@ -1,6 +1,6 @@
 # Punkt wznowienia StreamOO
 
-Aktualizacja: **2026-10-31, 06j — precyzyjna diagnostyka retry gotowa, odsłuch06i zaliczony**.
+Aktualizacja: **2026-10-31, 09e — STA przed AP i nowy wiersz IP/VOL gotowe do odbioru**.
 Gałąź feature/streamoo-implementation. ADR0034–0035, STATUS i HTTP_PLAYER_BRINGUP.
 
 ## Potwierdzone przez użytkownika
@@ -65,8 +65,11 @@ naprawy na domysł i bez zmiany formatu/resamplera/ISR. UART po komendzie fade,
 100ms liczone od aktualnego czasu. 15 wektorów błędów i formatowanie logów rzeczywistego kodu actor
 sprawdzone na hoście. ADR0035. Brak nowych zależności i nowych alokacji.
 
-Teraz firmware z diagnostyką do zwykłego odsłuchu; przy następnym zdarzeniu
-przeanalizuj stage/cause i Decode diag z tej samej gen, zanim zmienisz kod.
+Teraz odbiór09e według NETWORK_BRINGUP: zapisane STA bez AP, fallback dopiero
+po całej liście; IP przyciemnione po lewej oraz jasne VOL/belka. ADR0036.
+266 testów i native build PASS (0x15b530, 7% wolne). Bez flash/erase/eFuse.
+Nowy log potwierdza również PLAYING22050; timeouty HTTP0 przed dekoderem
+nie wyjaśniają dawnego gen7. Przy retry nadal analizuj stage/cause i Decode diag.
 
 ## Uzupełnienie odbioru
 

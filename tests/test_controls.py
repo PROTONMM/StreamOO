@@ -10,8 +10,8 @@ SOURCES = ['components/graphics/streamoo_canvas.c'] + [
     ('streamoo_text', 'streamoo_text_layout', 'streamoo_font5x8',
      'streamoo_bitmap_font', 'streamoo_ui_font')] + [
     'components/ui/' + name + '.c' for name in
-    ('streamoo_ui', 'streamoo_ui_list', 'streamoo_ui_home', 'streamoo_ui_controls')] + [
-    'components/ui_widgets/streamoo_visualization.c', 'main/encoder_demo.c', 'tests/controls_test.c']
+    ('streamoo_ui_connection_row', 'streamoo_ui', 'streamoo_ui_list', 'streamoo_ui_home', 'streamoo_ui_controls')] + [
+    'components/ui_widgets/streamoo_visualization.c', 'components/ui_widgets/streamoo_volume_bar.c', 'main/encoder_demo.c', 'tests/controls_test.c']
 
 class ControlsTests(unittest.TestCase):
     @classmethod
@@ -38,7 +38,7 @@ class ControlsTests(unittest.TestCase):
 
     def test_external_audio_owner_and_rejection(self): self.run_case(7)
 
-    def test_home_ip_in_third_row_and_clear(self): self.run_case(8)
+    def test_home_ip_volume_bar_in_third_row_and_clear(self): self.run_case(8)
 
     def test_live_catalog_selection_reorder_and_removal(self): self.run_case(9)
 

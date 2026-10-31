@@ -1,6 +1,7 @@
 #include "encoder_demo.h"
 #include "streamoo_font5x8.h"
 #include "streamoo_text_layout.h"
+#include "streamoo_ui_connection_row.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -109,8 +110,9 @@ bool streamoo_encoder_demo_draw(streamoo_encoder_demo_t *d, uint8_t *frame,
     }
     if (!streamoo_ui_draw_home(&d->ui,&canvas,now)) return false;
     char status[44];
-    int length=d->network_ip[0] ? snprintf(status,sizeof(status),"IP: %s",d->network_ip) :
-        snprintf(status,sizeof(status),"TEST VOL %d  %s  W%u",d->volume,
+    if(d->network_ip[0]) return streamoo_ui_connection_row_draw(&canvas,
+        (const uint8_t *)d->network_ip,strlen(d->network_ip),d->volume);
+    int length=snprintf(status,sizeof(status),"TEST VOL %d  %s  W%u",d->volume,
                         d->running ? (d->buffering ? "BUF" : "PLAY") : "STOP",(unsigned)d->ui.visualization+1);
     if (length<0 || (size_t)length>=sizeof(status)) return false;
     /* Third HOME row shows the LAN address when connected, otherwise test status. */

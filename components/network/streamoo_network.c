@@ -31,7 +31,7 @@ static portMUX_TYPE state_lock = portMUX_INITIALIZER_UNLOCKED;
 static QueueHandle_t changes;
 static EventGroupHandle_t events;
 static streamoo_wifi_profiles_t saved, candidate;
-static bool sntp_started;
+static bool sntp_started, sta_inflight;
 #define GOT_IP 1u
 #define DISCONNECTED 2u
 bool streamoo_network_state(streamoo_network_state_t *out) {
@@ -84,6 +84,16 @@ static void event(void *context, esp_event_base_t base, int32_t id,
   if (base == WIFI_EVENT && id == WIFI_EVENT_STA_DISCONNECTED)
     xEventGroupSetBits(events, DISCONNECTED);
 }
+static void disconnect_station(void) {
+  xEventGroupClearBits(events, GOT_IP | DISCONNECTED);
+  if (sta_inflight) {
+    if (esp_wifi_disconnect() == ESP_OK)
+      xEventGroupWaitBits(events, DISCONNECTED, pdTRUE, pdFALSE,
+                          pdMS_TO_TICKS(500));
+    sta_inflight = false;
+  }
+  xEventGroupClearBits(events, GOT_IP | DISCONNECTED);
+}
 static bool connect_profiles(const streamoo_wifi_profiles_t *profiles,
                              esp_netif_t *sta) {
   portENTER_CRITICAL(&state_lock);
@@ -92,23 +102,27 @@ static bool connect_profiles(const streamoo_wifi_profiles_t *profiles,
   state.sta_ssid[0] = 0;
   portEXIT_CRITICAL(&state_lock);
   for (unsigned i = 0; i < profiles->count; ++i) {
-    esp_wifi_disconnect();
-    vTaskDelay(pdMS_TO_TICKS(100));
-    xEventGroupClearBits(events, GOT_IP | DISCONNECTED);
+    disconnect_station();
     wifi_config_t config = {0};
     const streamoo_wifi_profile_t *p = &profiles->profiles[i];
     memcpy(config.sta.ssid, p->ssid, strlen(p->ssid));
     memcpy(config.sta.password, p->password, strlen(p->password));
     config.sta.threshold.authmode =
         p->password[0] ? WIFI_AUTH_WPA2_PSK : WIFI_AUTH_OPEN;
-    config.sta.scan_method = WIFI_ALL_CHANNEL_SCAN;
+    config.sta.scan_method = WIFI_FAST_SCAN;
     config.sta.pmf_cfg.required = false;
-    if (esp_wifi_set_config(WIFI_IF_STA, &config) != ESP_OK ||
-        esp_wifi_connect() != ESP_OK)
+    if (esp_wifi_set_config(WIFI_IF_STA, &config) != ESP_OK)
       continue;
+    sta_inflight = true;
+    if (esp_wifi_connect() != ESP_OK) {
+      sta_inflight = false;
+      continue;
+    }
     ESP_LOGI("network", "STA attempt profile=%u/%u", i + 1, profiles->count);
     EventBits_t bits = xEventGroupWaitBits(
         events, GOT_IP | DISCONNECTED, pdTRUE, pdFALSE, pdMS_TO_TICKS(15000));
+    if (bits & DISCONNECTED)
+      sta_inflight = false;
     if (bits & GOT_IP) {
       wifi_ap_record_t connected = {0};
       esp_netif_ip_info_t ip = {0};
@@ -116,6 +130,7 @@ static bool connect_profiles(const streamoo_wifi_profiles_t *profiles,
           strncmp((char *)connected.ssid, p->ssid, 32) ||
           esp_netif_get_ip_info(sta, &ip) != ESP_OK || !ip.ip.addr)
         continue;
+      sta_inflight = true;
       char address[16] = {0};
       snprintf(address, sizeof address, IPSTR, IP2STR(&ip.ip));
       portENTER_CRITICAL(&state_lock);
@@ -123,18 +138,21 @@ static bool connect_profiles(const streamoo_wifi_profiles_t *profiles,
       memcpy(state.sta_ip, address, sizeof state.sta_ip);
       memcpy(state.sta_ssid, p->ssid, sizeof state.sta_ssid);
       portEXIT_CRITICAL(&state_lock);
-      if(!sntp_started){
-        esp_sntp_config_t time_config=ESP_NETIF_SNTP_DEFAULT_CONFIG("pool.ntp.org");
-        time_config.wait_for_sync=false;
-        esp_err_t time_error=esp_netif_sntp_init(&time_config);
-        sntp_started=time_error==ESP_OK;
-        if(time_error!=ESP_OK)ESP_LOGW("network","SNTP unavailable: %s",esp_err_to_name(time_error));
+      if (!sntp_started) {
+        esp_sntp_config_t time_config =
+            ESP_NETIF_SNTP_DEFAULT_CONFIG("pool.ntp.org");
+        time_config.wait_for_sync = false;
+        esp_err_t time_error = esp_netif_sntp_init(&time_config);
+        sntp_started = time_error == ESP_OK;
+        if (time_error != ESP_OK)
+          ESP_LOGW("network", "SNTP unavailable: %s",
+                   esp_err_to_name(time_error));
       }
       ESP_LOGI("network", "STA connected: IPv4=%s", address);
       return true;
     }
   }
-  esp_wifi_disconnect();
+  disconnect_station();
   portENTER_CRITICAL(&state_lock);
   state.sta_connected = false;
   state.sta_ip[0] = 0;
@@ -143,12 +161,17 @@ static bool connect_profiles(const streamoo_wifi_profiles_t *profiles,
   return false;
 }
 static bool enable_ap(void) {
+  streamoo_network_state_t snapshot;
+  streamoo_network_state(&snapshot);
+  if (snapshot.ap_ready)
+    return true;
   if (esp_wifi_set_mode(WIFI_MODE_APSTA) != ESP_OK)
     return false;
   portENTER_CRITICAL(&state_lock);
   state.ap_ready = true;
   state.clients = 0;
   portEXIT_CRITICAL(&state_lock);
+  ESP_LOGI("network", "AP configuration ready: IPv4=192.168.4.1");
   return true;
 }
 static bool ap_off(void) {
@@ -233,16 +256,24 @@ static void network_task(void *context) {
   if (error == ESP_OK)
     error = esp_netif_dhcps_start(ap);
   if (error == ESP_OK)
+    error = esp_wifi_set_mode(WIFI_MODE_STA);
+  if (error == ESP_OK)
     error = esp_wifi_start();
   if (error == ESP_OK) {
     portENTER_CRITICAL(&state_lock);
     memcpy(state.ap_ssid, ssid, sizeof state.ap_ssid);
-    state.ap_ready = true;
+    state.ap_ready = false;
     portEXIT_CRITICAL(&state_lock);
-    ESP_LOGI("network", "AP ready: SSID=%s WPA2; IPv4=192.168.4.1", ssid);
+    ESP_LOGI("network", "STA first: trying %u saved profiles before AP",
+             saved.count);
+    bool boot_connected = saved.count && connect_profiles(&saved, sta);
+    if (!boot_connected && !enable_ap()) {
+      error = ESP_FAIL;
+      goto startup_failed;
+    }
     if (hooks.ready)
       hooks.ready(hooks.context);
-    int64_t retry_at = saved.count ? esp_timer_get_time() : INT64_MAX,
+    int64_t retry_at = saved.count ? esp_timer_get_time() + 1000000 : INT64_MAX,
             last_log = 0, off_at = INT64_MAX;
     unsigned retry_seconds = 1;
     for (;;) {
@@ -254,37 +285,50 @@ static void network_task(void *context) {
       if (update) {
         off_at = INT64_MAX;
         esp_err_t saved_error = ESP_FAIL;
-        if (enable_ap()) {
-          vTaskDelay(pdMS_TO_TICKS(750));
-          bool connected = candidate.count && connect_profiles(&candidate, sta);
-          if (!candidate.count) {
-            esp_wifi_disconnect();
-            saved_error = streamoo_config_wifi_save(&candidate);
-            if (saved_error == ESP_OK) {
-              saved = candidate;
-              off_at = INT64_MAX;
-              retry_at = INT64_MAX;
-            }
+        /* HTTP 202 must leave before the current LAN connection is closed. */
+        vTaskDelay(pdMS_TO_TICKS(750));
+        bool connected = candidate.count && connect_profiles(&candidate, sta);
+        if (!candidate.count) {
+          disconnect_station();
+          portENTER_CRITICAL(&state_lock);
+          state.sta_connected = false;
+          state.sta_ip[0] = 0;
+          state.sta_ssid[0] = 0;
+          portEXIT_CRITICAL(&state_lock);
+          saved_error = streamoo_config_wifi_save(&candidate);
+          if (saved_error == ESP_OK) {
+            saved = candidate;
+            retry_at = INT64_MAX;
+          }
+        } else if (connected) {
+          saved_error = streamoo_config_wifi_save(&candidate);
+          if (saved_error == ESP_OK) {
+            saved = candidate;
+            retry_seconds = 1;
+          }
+        }
+        if (saved_error != ESP_OK) {
+          /* A failed edit does not discard the last working list. Try it
+           * before offering AP recovery on a previously STA-only device. */
+          connected = saved.count && connect_profiles(&saved, sta);
+          if (!saved.count) {
+            disconnect_station();
             portENTER_CRITICAL(&state_lock);
             state.sta_connected = false;
             state.sta_ip[0] = 0;
             state.sta_ssid[0] = 0;
             portEXIT_CRITICAL(&state_lock);
-          } else if (connected) {
-            saved_error = streamoo_config_wifi_save(&candidate);
-            if (saved_error == ESP_OK) {
-              saved = candidate;
-              off_at = esp_timer_get_time() + 5000000;
-              retry_seconds = 1;
-            } else {
-              esp_wifi_disconnect();
-              portENTER_CRITICAL(&state_lock);
-              state.sta_connected = false;
-              state.sta_ip[0] = 0;
-              state.sta_ssid[0] = 0;
-              portEXIT_CRITICAL(&state_lock);
-            }
           }
+        } else if (!candidate.count)
+          connected = false;
+        if (connected) {
+          streamoo_network_state(&snapshot);
+          off_at =
+              snapshot.ap_ready ? esp_timer_get_time() + 5000000 : INT64_MAX;
+        } else {
+          if (!enable_ap())
+            ESP_LOGE("network", "AP recovery startup failed");
+          retry_at = saved.count ? esp_timer_get_time() + 1000000 : INT64_MAX;
         }
         portENTER_CRITICAL(&state_lock);
         state.configuring = false;
@@ -302,6 +346,8 @@ static void network_task(void *context) {
           off_at = esp_timer_get_time() + 5000000;
           retry_seconds = 1;
         } else {
+          if (!snapshot.ap_ready && !enable_ap())
+            ESP_LOGE("network", "AP recovery startup failed");
           retry_at = esp_timer_get_time() + (int64_t)retry_seconds * 1000000;
           retry_seconds = retry_seconds < 8 ? retry_seconds * 2 : 15;
         }
@@ -312,6 +358,7 @@ static void network_task(void *context) {
           (xEventGroupGetBits(events) & DISCONNECTED)) {
         wifi_ap_record_t current;
         if (esp_wifi_sta_get_ap_info(&current) != ESP_OK) {
+          sta_inflight = false;
           portENTER_CRITICAL(&state_lock);
           state.sta_connected = false;
           state.sta_ip[0] = 0;
@@ -341,6 +388,7 @@ static void network_task(void *context) {
       }
     }
   }
+startup_failed:
   ESP_LOGE("network", "Network startup failed: %s; no erase/fallback",
            esp_err_to_name(error));
   portENTER_CRITICAL(&state_lock);

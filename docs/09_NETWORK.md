@@ -1,6 +1,6 @@
 # 09 — Wi-Fi provisioning i mDNS
 
-Stan implementacji 2026-10-31: Implementacja 09c: do 8 uporządkowanych profili NVS, worker STA, fallback i AP-off po IPv4. Odbiór sprzętowy OPEN. ADR0031 i NETWORK_BRINGUP.
+Stan implementacji 2026-10-31: 09e/ADR0036 — STA przed AP; do 8 uporządkowanych profili NVS, worker STA, fallback i AP-off po IPv4. Odbiór sprzętowy OPEN. ADR0031 i NETWORK_BRINGUP.
 
 **USTALONE:** przy pierwszym uruchomieniu bez danych STA urządzenie tworzy SoftAP z unikatową nazwą `StreamOO-XXXXXX` opartą na MAC. **Hasło AP jest stałe, wspólne dla wszystkich urządzeń** (przekazywane poza repo); WPA2-Personal. Portal WWW pod `http://192.168.4.1`; po pomyślnym połączeniu z Wi-Fi STA wyłącz SoftAP. Użytkownik może później zmienić Wi-Fi przez stronę WWW.
 
@@ -12,13 +12,13 @@ dostępną sieć, a po nieudanym uwierzytelnieniu/DHCP kolejną. Nie wybieramy
 wyłącznie najmocniejszego RSSI i nie kasujemy pozostałych profili. Sukces
 wymaga STA/IP; dopiero wtedy AP off. Trwałość w NVS, bez ujawniania haseł
 w GET/logach/repo. Limity profili, hidden SSID i polityka aktywnego roamingu
-OPEN. Obecny firmware nadal nie zapisuje profili/nie łączy STA. ADR0030.
+OPEN. Zapis i STA wdrożone w ADR0031; kolejność startu uaktualnia ADR0036.
 
 ## Przepływ
 - Brak credentiali → SoftAP → skan SSID, wybór, hasło → tymczasowy STA test → dopiero po powodzeniu zapis do NVS → `WIFI_MODE_STA`, AP wyłączony.
 - Zła konfiguracja → portal AP pozostaje aktywny, stary profil pozostaje dostępny; strona komunikuje błąd.
 - Przy zmianie Wi-Fi przez WWW: przejściowe rozłączenie przeglądarki jest spodziewane; procedura rollback do ostatnich działających danych po nieudanej zmianie.
-- Krótki zanik STA nie uruchamia AP automatycznie; retry STA i UI offline. Awaryjne uruchomienie AP w menu jako przyszły mechanizm (gest/menu do implementacji).
+- Krótki zanik STA nie uruchamia AP natychmiast; najpierw próba całej zapisanej listy, AP dopiero po jej niepowodzeniu. Awaryjne uruchomienie AP w menu jako przyszły mechanizm (gest/menu do implementacji).
 
 ## mDNS
 - Host domyślny `streamoo-xxxxxx.local` na bazie unikalnego sufiksu MAC, **nie** wspólny `streamoo.local`.
@@ -56,3 +56,16 @@ niezaimplementowane; przyszłe dynamiczne STA→AP wymaga kontrolowanego STOP.
 09d: po STA i AP-off OLED wraca do HOME z adresem IP w trzeciej linii; dostęp WWW lokalnie bez dodatkowego hasła. ADR0032.
 
 06i: niezależny reader HTTP/HTTPS/ICY używa stałej sesji przy krótkim underrun; owner player zamyka ją przy STOP/braku STA/AP-active. SNTP po pierwszym IP dla czasu TLS, bez wyłączania weryfikacji certyfikatów. ADR0034.
+
+## 09e — STA najpierw (ADR0036)
+
+Wi-Fi startuje w trybie STA. Każdy profil ma limit15s na połączenie/IP;
+WIFI_FAST_SCAN kończy szukanie po znalezieniu zgodnego SSID. Priorytetem
+jest kolejność profili, nie porównanie RSSI wszystkich sieci. Brak sztucznego
+opóźnienia przed pierwszą próbą. Rozłączenie aktywnej próby czeka na ACK
+maksymalnie500ms; zakończony DISCONNECTED nie wymaga kolejnego rozłączenia.
+Sukces startu nie uruchamia AP ani jego ekranu. Dopiero brak profili lub
+niepowodzenie całej listy włącza AP i portal konfiguracji. Nieudana zmiana
+z LAN najpierw przywraca poprzednią listę; AP dopiero gdy ona też zawiedzie.
+Jeśli AP już działało, po udanym IP zachowujemy5s na zakończenie odpowiedzi
+WWW przed AP-off. mDNS i aktywny roaming pozostają OPEN.

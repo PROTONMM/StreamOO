@@ -83,13 +83,22 @@ int main(int argc, char **argv)
         assert(streamoo_encoder_demo_draw(&d,old,sizeof old,0));
         assert(streamoo_encoder_demo_set_ip(&d,"10.0.0.42"));
         assert(streamoo_encoder_demo_draw(&d,frame,sizeof frame,0));
-        const char *label="IP: 10.0.0.42";size_t n=strlen(label);int start=(256-(int)(n*6-1))/2;
+        const char *label="IP: 10.0.0.42";size_t n=strlen(label);int start=0;
         for(size_t i=0;i<n;++i) {
             uint8_t glyph[5];assert(streamoo_font5x8(NULL,(uint8_t)label[i],glyph));
             for(unsigned x=0;x<5;++x)for(unsigned y=0;y<8;++y)if(glyph[x]&(1u<<y)) {
-                unsigned px=start+i*6+x;expected[y*128+px/2]|=(uint8_t)(12u<<(px%2?0:4));
+                unsigned px=start+i*6+x;expected[y*128+px/2]|=(uint8_t)(6u<<(px%2?0:4));
             }
         }
+        const char *level="VOL 50";
+        for(size_t i=0;i<strlen(level);++i){uint8_t glyph[5];assert(streamoo_font5x8(NULL,(uint8_t)level[i],glyph));
+            for(unsigned x=0;x<5;++x)for(unsigned y=0;y<8;++y)if(glyph[x]&(1u<<y)){
+                unsigned px=128+i*6+x;expected[y*128+px/2]|=(uint8_t)(15u<<(px%2?0:4));
+            }
+        }
+        for(unsigned y=1;y<7;++y)for(unsigned x=176;x<256;++x)
+            if(y==1||y==6||x==176||x==255||(x>=177&&x<216))expected[y*128+x/2]|=(uint8_t)(15u<<(x%2?0:4));
+        if(argc==3){FILE *file=fopen(argv[2],"wb");assert(file);assert(fwrite(frame,1,sizeof frame,file)==sizeof frame);assert(!fclose(file));}
         assert(!memcmp(frame+24*128,expected,sizeof expected));
         assert(!memcmp(old,frame,24*128));assert(!memcmp(old+32*128,frame+32*128,32*128));
         assert(!streamoo_encoder_demo_set_ip(&d,"192.168.0.1234567"));

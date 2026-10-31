@@ -45,7 +45,7 @@ void app_main(void)
 #endif
 #if defined(CONFIG_STREAMOO_AUDIO_CONTROL_TEST) || defined(CONFIG_STREAMOO_I2S_SMOKE_TEST)
     if (streamoo_network_boot_ap_enabled()) {
-        ESP_LOGI(TAG,"Audio disabled: AP configuration mode");
+        ESP_LOGI(TAG,"Fixture audio disabled: network player owns audio");
     } else {
 #if defined(CONFIG_STREAMOO_AUDIO_CONTROL_TEST)
     streamoo_preferences_value_t restored = {50,0};

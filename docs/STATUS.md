@@ -1274,3 +1274,21 @@ przez actor; live/actor ASan/UBSan PASS (LSan off, bez TSan). Native ESP-IDF6.1
 build PASS, obraz0x15b0f0 B, 7% wolnego app. check_config --platform oraz
 diff --check PASS. Bez flash/erase/eFuse. Przyczyna sprzętowego retry nadal
 OPEN: potrzebne nowe `Stream failed` + `Decode diag` dla jednej gen.
+
+## 09e — STA przed AP i IP/VOL/belka (2026-10-31)
+
+Polecenie użytkownika wdrożone: boot STA-first, kolejność profili i FAST_SCAN,
+AP/ekran konfiguracji dopiero po niepowodzeniu całej listy lub bez profili.
+Nieudana zmiana WWW przywraca stare profile przed AP; istniejące AP gaśnie
+5s po IP. IP po lewej jasność6, VOL/belka jasność15. ADR0036.
+
+266 testów hostowych PASS, w tym12 scenariuszy ownera sieci i testy rastra
+wszystkich101 poziomów. Native ESP-IDF6.1 build PASS, obraz0x15b530, 7% wolne.
+Bez nowych zależności, zmiany partycji i ścieżki IRQ I2S; bez flash/erase/eFuse.
+Odbiór RF/czasu startu i fizycznego OLED OPEN; procedura NETWORK_BRINGUP.
+
+Nowy log użytkownika z06j pokazuje PLAYING44100/48000 oraz22050 (gen6),
+więc22,05kHz nie jest wykluczone. W gen13/14/20 stage=http_end/cause=none,
+HTTP0/decoder0/vendor0/format0: timeout transportu/nagłówków przed dekoderem.
+Nie dowodzi to przyczyny starego gen7 ani awarii HTTPS. Widoczne także
+dwa błędy ramki MP3, po których jest PLAYING48000. Dalszy soak nadal OPEN.

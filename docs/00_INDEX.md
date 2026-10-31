@@ -93,3 +93,5 @@ Katalog LittleFS i lista OLED: `adr/0033-stored-catalog-to-oled.md`.
 Player HTTP/ICY06i: `adr/0034-http-icy-network-player.md`; pierwszy odsłuch: `HTTP_PLAYER_BRINGUP.md`.
 
 Diagnostyka przyczyn retry06j: `adr/0035-live-decode-failure-diagnostics.md`.
+
+Start STA przed AP i IP/VOL/belka: `adr/0036-sta-first-and-volume-row.md`.

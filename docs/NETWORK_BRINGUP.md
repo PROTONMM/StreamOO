@@ -1,3 +1,24 @@
+# Bieżący odbiór09e — STA przed AP, IP i belka głośności
+
+ADR0036 zastępuje poniższe historyczne opisy AP przy każdym restarcie.
+
+1. Zwykły flash, bez erase/NVS/obrazu FS; istniejące profile i katalog zostają.
+2. Z dostępną zapisaną siecią: boot próbuje STA, bez AP/ekranu konfiguracji;
+   po IP normalny HOME. Sprawdź też pierwszą niedostępną i drugą dostępną
+   sieć: AP nie powinno pojawić się między próbami. Limit15s na profil.
+3. Gdy wszystkie zapisane sieci są faktycznie niedostępne: AP i konfiguracja
+   dopiero po całej liście. Bez zapisanych profili AP od razu. Nie kasuj NVS
+   dla testu; można czasowo wyłączyć dostępne routery. Przywrócenie Wi-Fi
+   daje IP i AP-off po5s. W AP brak odtwarzania.
+4. W HOME IP jest po lewej, przyciemnione; obok jasne VOL i pozioma belka.
+   Sprawdź0/50/100: puste/pół/pełne wnętrze, bez nachodzenia na IP, również
+   dla długiego adresu. Belka ma zwykłą jasność; potwierdź czytelność IP.
+5. Błędna zmiana listy przez LAN zachowuje starą listę i próbuje ją przed AP.
+
+Odbiór tego kroku na sprzęcie OPEN. Build i266 testów hostowych PASS.
+
+---
+
 # Bieżący odbiór: player HTTP/ICY06i
 
 Konfiguracja i lista OLED działają na sprzęcie. Pierwszy odsłuch playera
@@ -31,7 +52,7 @@ Decyzje i limity: ADR0031; bieżący dostęp/ekran: ADR0032.
 5. Sprawdź dwie sieci: nieosiągalna/błędne hasło pierwszej, poprawna druga;
    zmiana kolejności przyciskiem ↑/↓. Sprawdź, że błędna cała nowa lista
    zachowuje poprzednią. Po restarcie urządzenie próbuje listę z NVS.
-   Restart udostępnia ponownie AP na czas prób; po udanym IP znowu go wyłącza.
+   W09e restart najpierw próbuje STA; AP tylko po niepowodzeniu całej listy.
 6. Zmieniając hasło istniejącego SSID, wpisz nowe; puste pole zachowuje
    stare. Sieć otwarta wymaga jawnego zaznaczenia checkboxa. Usunięcie
    wszystkich wierszy i potwierdzenie zapisuje pustą listę i utrzymuje AP.
