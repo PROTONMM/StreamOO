@@ -7,6 +7,7 @@ bool streamoo_ui_init(streamoo_ui_t *ui, uint16_t animation_ms,
     *ui = (streamoo_ui_t){0};
     if (!post) return false;
     ui->animation_ms = animation_ms;
+    ui->running = true;
     ui->post = post;
     ui->post_context = context;
     return true;
@@ -54,6 +55,7 @@ bool streamoo_ui_open_stations(streamoo_ui_t *ui, uint64_t now)
     }
     ui->animation_from_q16 = (int64_t)ui->selected * 65536;
     ui->animation_start_ms = ui->selection_start_ms = now;
+    ui->last_activity_ms=now;
     ui->screen = STREAMOO_UI_STATIONS;
     return true;
 }
@@ -98,7 +100,8 @@ bool streamoo_ui_confirm(streamoo_ui_t *ui)
     const streamoo_ui_select_command_t command = {
         ui->stations[ui->selected].stable_id, ui->catalog_generation,
     };
-    if (!ui->post(ui->post_context, &command)) return false;
+    if (!(ui->running && command.station_id==ui->playing_id) &&
+        !ui->post(ui->post_context, &command)) return false;
     ui->screen = STREAMOO_UI_HOME;
     return true;
 }

@@ -1,5 +1,6 @@
 #include "display_smoke.h"
 #include "encoder_demo.h"
+#include "streamoo_settings.h"
 #include "streamoo_ui_ap.h"
 #include "streamoo_network.h"
 #include "streamoo_config_store.h"
@@ -78,6 +79,7 @@ static void display_task(void *context)
                !streamoo_encoder_demo_bind_audio(&demo,streamoo_player_control,NULL))error=ESP_ERR_INVALID_STATE;
             streamoo_encoder_demo_bind_station_owner(&demo,streamoo_player_select,NULL);
         }
+        bool panel_enabled=true;
         uint64_t player_generation=0;
         uint32_t player_volume_revision=0;
         if (!streamoo_ui_set_visualization(&demo.ui, restored.visualization)) error = ESP_ERR_INVALID_STATE;
@@ -194,6 +196,14 @@ static void display_task(void *context)
                 if (preferences_ready && !streamoo_preferences_submit(preferences))
                     ESP_LOGW("display_smoke", "Preferences update not accepted");
             }
+            streamoo_settings_t settings=streamoo_settings_get();
+            if(!setup&&!streamoo_ui_list_timeout(&demo.ui,now,settings.list_timeout_s,settings.list_autoselect))
+                ESP_LOGW("display_smoke","List timeout deferred: command queue busy");
+            bool visible=setup||!demo.station_id||demo.running;
+            if(!visible){
+                if(panel_enabled){error=streamoo_ssd1322_enable(display,false);if(error==ESP_OK)panel_enabled=false;}
+                vTaskDelayUntil(&wake,pdMS_TO_TICKS(40));continue;
+            }
             bool drawn=ap_active ? streamoo_ui_ap_draw(frame,SSD1322_FRAME_BYTES,
                 (const uint8_t *)ap.ssid,15,ap.password,ap.password_bytes) :
                 setup ? streamoo_ui_sta_draw(frame,SSD1322_FRAME_BYTES,
@@ -206,6 +216,7 @@ static void display_task(void *context)
                 break;
             }
             error = streamoo_ssd1322_present(display,frame,SSD1322_FRAME_BYTES);
+            if(error==ESP_OK&&!panel_enabled){error=streamoo_ssd1322_enable(display,true);if(error==ESP_OK)panel_enabled=true;}
             vTaskDelayUntil(&wake,pdMS_TO_TICKS(40) ? pdMS_TO_TICKS(40) : 1);
         }
         streamoo_config_catalog_release(catalog_snapshot);

@@ -10,6 +10,8 @@ bool streamoo_audio_control_model_apply(streamoo_audio_control_model_t *m, const
 {
     if (!m || !c || m->volume>100) return false;
     if (c->kind==STREAMOO_CONTROL_TOGGLE) m->running=!m->running;
+    else if(c->kind==STREAMOO_CONTROL_PLAY)m->running=true;
+    else if(c->kind==STREAMOO_CONTROL_STOP)m->running=false;
     else if (c->kind==STREAMOO_CONTROL_VOLUME_DELTA) {
         int64_t volume=(int64_t)m->volume+c->delta;
         uint8_t next=volume<0 ? 0 : volume>100 ? 100 : (uint8_t)volume;

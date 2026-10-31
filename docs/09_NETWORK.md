@@ -94,3 +94,10 @@ ADR0057: natywna weryfikacja cross-signed CA bundle włączona dla
 alternatywnych ścieżek do już zaufanych rootów (RNŚAAC+). Pełny bundle,
 sprawdzanie podpisów/hostname pozostają; HAVE_TIME_DATE teraz jawnie y
 (wcześniej SDK default n), z istniejącym SNTP. Odbiór na S3 OPEN.
+
+## Własna nazwa LAN — ADR0059
+
+Konfiguracja WWW/NVS pozwala wybrać etykietę DNS1..63 znaków: małe litery,
+cyfry, łącznik wewnątrz. Puste pole przywraca nazwę MAC. Worker sieci
+restartuje tylko mDNS po zmianie; Wi-Fi i audio działają dalej. Konflikt
+obsługuje dotychczasowy callback SDK; log pokazuje faktyczny adres.

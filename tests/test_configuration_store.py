@@ -59,7 +59,7 @@ int main(int argc,char **argv){assert(argc==3);int mode=atoi(argv[1]);directory=
  for(int failure=2;failure<=4;++failure){allocation_failure=failure;assert(streamoo_config_playlist(next,sizeof next-1,true,&r)==ESP_ERR_NO_MEM);assert(streamoo_config_playlist_info(&r)&&r.rows==1);streamoo_catalog_snapshot_t *probe=streamoo_config_catalog_acquire();assert(probe==held);streamoo_config_catalog_release(probe);}
  rename_error=1;assert(streamoo_config_playlist(next,sizeof next-1,true,&r)!=ESP_OK);assert(streamoo_config_playlist_info(&r)&&r.rows==1);
  streamoo_catalog_snapshot_t *probe=streamoo_config_catalog_acquire();assert(probe==held);streamoo_config_catalog_release(probe);
- FILE *f=mapped_fopen("/stations/playlist.csv","rb");assert(f);char check[128]={0};assert(fread(check,1,sizeof check,f)==sizeof old-1);fclose(f);assert(!strcmp(check,(char *)old));
+ FILE *f=mapped_fopen("/stations/playlist.csv","rb");assert(f);char check[128]={0};assert(fread(check,1,sizeof check,f)>sizeof old-1);fclose(f);assert(!memcmp(check,"SOOCAT2\n",8)&&strstr(check,(char *)old));
  f=mapped_fopen("/stations/playlist.tmp","rb");assert(!f);
  rename_error=0;assert(streamoo_config_playlist(next,sizeof next-1,true,&r)==ESP_OK);assert(streamoo_config_playlist_info(&r)&&r.rows==2);
  assert(v.count==1&&!strcmp((const char *)v.stations[0].name,"Old"));
@@ -70,6 +70,17 @@ int main(int argc,char **argv){assert(argc==3);int mode=atoi(argv[1]);directory=
  streamoo_config_catalog_release(held);streamoo_config_catalog_release(fresh);
  mutex=NULL;mounted=false;catalog=(streamoo_playlist_report_t){0};assert(streamoo_config_store_init()==ESP_OK);assert(streamoo_config_playlist_info(&r)&&r.rows==2);
  fresh=streamoo_config_catalog_acquire();nv=streamoo_config_catalog_view(fresh);assert(nv.count==2&&nv.stations[0].stable_id==id);streamoo_config_catalog_release(fresh);
+ unsigned char edited[256];int n=snprintf((char *)edited,sizeof edited,"%016llx\tRenamed\thttps://changed.invalid/live\t3\n0000000000000000\tAdded\thttp://added.invalid\t0\n",(unsigned long long)id);
+ assert(streamoo_config_catalog_edit(edited,(size_t)n,nv.generation,&r)==ESP_OK);
+ fresh=streamoo_config_catalog_acquire();nv=streamoo_config_catalog_view(fresh);
+ assert(nv.count==2&&nv.stations[0].stable_id==id&&!strcmp((const char *)nv.stations[0].name,"Renamed"));
+ uint64_t added=nv.stations[1].stable_id;assert(added&&added!=id);streamoo_config_catalog_release(fresh);
+ unsigned char bad[]="ffffffffffffffff\tUnknown\thttp://a.invalid\t0\n";
+ assert(streamoo_config_catalog_edit(bad,sizeof bad-1,nv.generation,&r)==ESP_ERR_INVALID_ARG);
+ n=snprintf((char *)edited,sizeof edited,"%016llx\tFirst\thttp://a.invalid\t0\n%016llx\tDuplicate\thttp://b.invalid\t0\n",(unsigned long long)id,(unsigned long long)id);
+ assert(streamoo_config_catalog_edit(edited,(size_t)n,nv.generation,&r)==ESP_ERR_INVALID_ARG);
+ mutex=NULL;mounted=false;catalog=(streamoo_playlist_report_t){0};assert(streamoo_config_store_init()==ESP_OK);
+ fresh=streamoo_config_catalog_acquire();nv=streamoo_config_catalog_view(fresh);assert(nv.stations[0].stable_id==id&&nv.stations[1].stable_id==added);streamoo_config_catalog_release(fresh);
  assert(streamoo_config_catalog_replace(NULL,0,nv.generation,&r)==ESP_OK&&r.rows==0);
  fresh=streamoo_config_catalog_acquire();nv=streamoo_config_catalog_view(fresh);assert(!nv.count);
  streamoo_config_catalog_release(fresh);
@@ -93,7 +104,7 @@ class ConfigurationStoreTests(unittest.TestCase):
             (base/'test.c').write_text(HARNESS)
             subprocess.run(['cc','-std=c11','-D_POSIX_C_SOURCE=200809L','-Wall','-Wextra','-Werror',*os.environ.get('STREAMOO_STORE_SANITIZE','').split(),
                             '-I'+tmp,'-Icomponents/configuration','-Icomponents/configuration/include','-Icomponents/stations/include','-Imanaged_components/espressif__cjson/cJSON',
-                            str(base/'test.c'),'components/configuration/streamoo_config_model.c','components/stations/streamoo_stations.c','managed_components/espressif__cjson/cJSON/cJSON.c',
+                            str(base/'test.c'),'components/configuration/streamoo_config_model.c','components/configuration/streamoo_catalog_format.c','components/stations/streamoo_stations.c','managed_components/espressif__cjson/cJSON/cJSON.c',
                             '-lm','-o',str(base/'test')],cwd=ROOT,check=True)
             for mode in range(6):
                 with self.subTest(mode=mode),tempfile.TemporaryDirectory() as storage:

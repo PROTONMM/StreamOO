@@ -24,11 +24,24 @@ int main(int argc, char **argv)
     static const streamoo_ui_station_t stations[]={{11,(const uint8_t *)"one",3},{12,(const uint8_t *)"two",3}};
     assert(streamoo_ui_set_catalog(&ui,stations,2,8));
     streamoo_ui_set_playing(&ui,11);
-    if (scenario==0) {
+    if (scenario==14) {
+        ui.running=false;
+        assert(send(&ui,STREAMOO_INPUT_SHORT,0,0));
+        assert(commands==1&&command.kind==STREAMOO_CONTROL_PLAY&&ui.screen==STREAMOO_UI_HOME);
+        ui.running=true;
+        assert(streamoo_ui_open_stations(&ui,1000));
+        assert(streamoo_ui_list_timeout(&ui,5999,5,true)&&ui.screen==STREAMOO_UI_STATIONS);
+        assert(streamoo_ui_list_timeout(&ui,6000,5,true)&&ui.screen==STREAMOO_UI_HOME&&!selections&&commands==1);
+        assert(streamoo_ui_open_stations(&ui,7000));assert(streamoo_ui_move(&ui,1,7000));
+        assert(streamoo_ui_list_timeout(&ui,12000,5,false)&&ui.screen==STREAMOO_UI_HOME&&!selections);
+        assert(streamoo_ui_open_stations(&ui,13000));assert(streamoo_ui_move(&ui,1,13000));
+        accept=false;assert(!streamoo_ui_list_timeout(&ui,18000,5,true)&&ui.screen==STREAMOO_UI_STATIONS&&ui.playing_id==11);
+        accept=true;assert(streamoo_ui_list_timeout(&ui,18001,5,true)&&ui.screen==STREAMOO_UI_HOME&&selections==2);
+    } else if (scenario==0) {
         assert(send(&ui,STREAMOO_INPUT_ROTATE,-4,0));
         assert(commands==1 && command.kind==STREAMOO_CONTROL_VOLUME_DELTA && command.delta==-4);
         assert(send(&ui,STREAMOO_INPUT_LONG,0,0));
-        assert(command.kind==STREAMOO_CONTROL_TOGGLE && commands==2);
+        assert(command.kind==STREAMOO_CONTROL_STOP && commands==2);
         assert(send(&ui,STREAMOO_INPUT_SHORT,0,0)); assert(ui.screen==STREAMOO_UI_STATIONS);
     } else if (scenario==1) {
         assert(send(&ui,STREAMOO_INPUT_SHORT,0,1)); assert(command.kind==STREAMOO_CONTROL_TOGGLE);
@@ -47,7 +60,7 @@ int main(int argc, char **argv)
             assert(streamoo_ui_open_stations(&ui,0));
             assert(send(&ui,STREAMOO_INPUT_LONG,0,mode)); assert(ui.screen==STREAMOO_UI_HOME);
         }
-        assert(selections==2 && commands==0);
+        assert(selections==2 && commands==1);
     } else if (scenario==4) {
         accept=false; streamoo_ui_t saved=ui;
         assert(!send(&ui,STREAMOO_INPUT_ROTATE,1,0)); assert(!memcmp(&saved,&ui,sizeof ui));
@@ -70,7 +83,7 @@ int main(int argc, char **argv)
         assert(d.volume==37 && !d.running); /* wait for owner snapshot */
         assert(streamoo_encoder_demo_audio_state(&d,38,true));
         assert(streamoo_encoder_demo_input(&d,(streamoo_input_event_t){STREAMOO_INPUT_LONG,0},0,2));
-        assert(command.kind==STREAMOO_CONTROL_TOGGLE && d.running);
+        assert(command.kind==STREAMOO_CONTROL_STOP && d.running);
         assert(streamoo_encoder_demo_audio_state(&d,38,false));
         accept=false;
         assert(!streamoo_encoder_demo_input(&d,(streamoo_input_event_t){STREAMOO_INPUT_ROTATE,1},0,3));
@@ -214,7 +227,9 @@ int main(int argc, char **argv)
         assert(streamoo_encoder_demo_input(&d,(streamoo_input_event_t){STREAMOO_INPUT_ROTATE,1},0,40001));
         assert(d.station_id==1002);
         assert(streamoo_encoder_demo_input(&d,(streamoo_input_event_t){STREAMOO_INPUT_LONG,0},0,40002));
-        assert(d.station_id==1002); /* cancel */
+        assert(d.station_id==1002 && !d.running); /* stop and close list */
+        assert(streamoo_encoder_demo_input(&d,(streamoo_input_event_t){STREAMOO_INPUT_SHORT,0},0,40002));
+        assert(d.running && d.ui.screen==STREAMOO_UI_HOME);
         assert(streamoo_encoder_demo_input(&d,(streamoo_input_event_t){STREAMOO_INPUT_SHORT,0},0,40003));
         assert(streamoo_encoder_demo_input(&d,(streamoo_input_event_t){STREAMOO_INPUT_ROTATE,1},0,40004));
         assert(streamoo_encoder_demo_input(&d,(streamoo_input_event_t){STREAMOO_INPUT_SHORT,0},0,40005));

@@ -3,6 +3,7 @@ from http.server import ThreadingHTTPServer,SimpleHTTPRequestHandler
 from pathlib import Path
 import json,subprocess,threading
 root=Path(__file__).resolve().parents[1]/'components/portal/web'
+system_settings={'list_timeout_s':5,'list_autoselect':True,'autoplay':False,'hostname':''}
 requests=[];zone="Europe/Warsaw";lan=False;running=False;volume=87;catalog=[];generation=1;selected='0000000000000000';exports=0
 
 def canonical():return ''.join(f'{s["name"]}\t{s["url"]}\t{s["ovol"]}\n' for s in catalog)
@@ -11,9 +12,10 @@ def replace_catalog(data):
  import hashlib
  rows=[]
  for line in data.decode().splitlines():
-  name,url,ovol=line.split('\t');url=url.lstrip('\u200b')
+  fields=line.split('\t');existing=fields.pop(0) if len(fields)==4 else None
+  name,url,ovol=fields;url=url.lstrip('\u200b')
   identity=hashlib.sha256((name+'\0'+url+'\0'+str(sum(s['name']==name and s['url']==url for s in rows))).encode()).hexdigest()[:16]
-  rows.append({'id':identity,'name':name,'url':url,'ovol':int(ovol)})
+  rows.append({'id':existing if existing and existing!='0000000000000000' else identity,'name':name,'url':url,'ovol':int(ovol)})
  catalog=rows;generation+=1
  if not any(s['id']==selected for s in rows):selected='0000000000000000';running=False
 script=r'''
@@ -43,6 +45,10 @@ script=r'''
  $('player-volume').value='63';$('player-volume').dispatchEvent(new Event('input'));$('player-volume').dispatchEvent(new Event('change'));
  await wait(()=>$('volume').textContent==='63 / 100');$('player-stop').click();await wait(()=>$('playback').textContent==='Zatrzymane');
  $('player-play').click();await wait(()=>$('playback').textContent==='Odtwarzanie');
+ $('show-config').click();await wait(()=>!$('system-panel').hidden&&!$('save-system').disabled);
+ $('list-timeout').value='9';$('list-action').value='cancel';$('boot-action').value='play';$('hostname').value='kitchen-radio';
+ $('system-form').requestSubmit();await wait(()=>$('system-result').textContent.includes('Zapisano'));
+ const settings=await (await fetch('/api/v1/settings')).json();assert(settings.list_timeout_s===9&&!settings.list_autoselect&&settings.autoplay&&settings.hostname==='kitchen-radio','system settings save');
  $('show-editor').click();assert(!$('editor-panel').hidden,'editor tab');
  $('new-station-name').value='C';$('new-station-url').value='http://radio.invalid/c';$('station-add-form').requestSubmit();
  assert($('editor-rows').children.length===3,'add draft');$('editor-save').click();await wait(()=>$('editor-result').textContent.includes('Zapisano 3'));
@@ -78,6 +84,7 @@ class Handler(SimpleHTTPRequestHandler):
   if self.path=='/test-lan':lan=True;return self.send({'ok':True})
   if self.path=='/test-ap':lan=False;return self.send({'ok':True})
   if self.path=='/test-bump':generation+=1;return self.send({'ok':True})
+  if self.path=='/api/v1/settings':return self.send(system_settings)
   if self.path=='/api/v1/clock':return self.send({'timezone':zone,'zones':['UTC','Europe/Warsaw','Europe/London']})
   if self.path=='/api/v1/status':return self.send({'schema_version':1,'network':{'mode':'sta' if lan else 'ap','ready':True,'ssid':'StreamOO-ABC123','clients':0,'ap_ready':not lan,'connected':lan,'configuring':False,'profiles':1,'error':0,'ip':'10.0.0.42' if lan else '192.168.4.1'},'audio':{'available':lan,'source':'network_stream','running':running,'buffering':False,'volume':volume,'station_id':selected}})
   if self.path=='/api/v1/stations':
@@ -93,6 +100,7 @@ class Handler(SimpleHTTPRequestHandler):
   assert self.headers.get('Authorization') is None
   assert self.headers.get('X-StreamOO-Request')=='1'
   data=self.rfile.read(int(self.headers['Content-Length']));requests.append((self.path,data))
+  if self.path=='/api/v1/settings':system_settings.update(json.loads(data));return self.send({'saved':True})
   if self.path=='/api/v1/clock':zone=json.loads(data)['timezone'];return self.send({'saved':True})
   if self.path.endswith('/select'):
    assert lan and self.headers['X-StreamOO-Catalog-Generation']==str(generation)

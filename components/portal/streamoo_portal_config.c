@@ -1,4 +1,5 @@
 #include "streamoo_portal_config.h"
+#include "streamoo_settings.h"
 #include "cJSON.h"
 #include "streamoo_clock.h"
 #include "streamoo_config_store.h"
@@ -209,6 +210,35 @@ static esp_err_t clock_post(httpd_req_t *r) {
   return error==ESP_OK ? reply(r,"200 OK","{\"saved\":true}"):
       reply(r,"503 Service Unavailable","{\"error\":\"clock_save_failed\"}");
 }
+static esp_err_t settings_get(httpd_req_t *r){
+  streamoo_settings_t s=streamoo_settings_get();
+  cJSON *root=cJSON_CreateObject();char json[512];
+  bool ok=root&&cJSON_AddNumberToObject(root,"list_timeout_s",s.list_timeout_s)&&
+    cJSON_AddBoolToObject(root,"list_autoselect",s.list_autoselect)&&
+    cJSON_AddBoolToObject(root,"autoplay",s.autoplay)&&cJSON_AddStringToObject(root,"hostname",s.hostname)&&
+    cJSON_PrintPreallocated(root,json,sizeof json,false);
+  cJSON_Delete(root);return ok?reply(r,"200 OK",json):reply(r,"503 Service Unavailable","{\"error\":\"memory\"}");
+}
+static esp_err_t settings_post(httpd_req_t *r){
+  if(!request_allowed(r))return ESP_FAIL;
+  if(!content_type(r,"application/json"))return reply(r,"415 Unsupported Media Type","{\"error\":\"json_required\"}");
+  uint8_t *data=body(r,512);if(!data)return ESP_FAIL;
+  cJSON *root=memchr(data,0,r->content_len)?NULL:cJSON_ParseWithLengthOpts((char *)data,r->content_len+1,NULL,true);
+  cJSON *timeout=cJSON_GetObjectItemCaseSensitive(root,"list_timeout_s"),
+        *select=cJSON_GetObjectItemCaseSensitive(root,"list_autoselect"),
+        *autoplay=cJSON_GetObjectItemCaseSensitive(root,"autoplay"),
+        *hostname=cJSON_GetObjectItemCaseSensitive(root,"hostname");
+  streamoo_settings_t s={0};
+  bool valid=cJSON_IsObject(root)&&cJSON_GetArraySize(root)==4&&cJSON_IsNumber(timeout)&&
+    timeout->valuedouble>=1&&timeout->valuedouble<=120&&timeout->valuedouble==(unsigned)timeout->valuedouble&&
+    cJSON_IsBool(select)&&cJSON_IsBool(autoplay)&&cJSON_IsString(hostname)&&strlen(hostname->valuestring)<sizeof s.hostname;
+  if(valid){s.list_timeout_s=(uint32_t)timeout->valuedouble;s.list_autoselect=cJSON_IsTrue(select);
+    s.autoplay=cJSON_IsTrue(autoplay);strcpy(s.hostname,hostname->valuestring);valid=streamoo_settings_valid(&s);}
+  cJSON_Delete(root);heap_caps_free(data);
+  if(!valid)return reply(r,"400 Bad Request","{\"error\":\"invalid_settings\"}");
+  return streamoo_settings_set(&s)==ESP_OK?reply(r,"200 OK","{\"saved\":true}"):
+    reply(r,"503 Service Unavailable","{\"error\":\"settings_save_failed\"}");
+}
 static esp_err_t player_post(httpd_req_t *r) {
   if(!request_allowed(r))return ESP_FAIL;
   if(!content_type(r,"application/json"))return reply(r,"415 Unsupported Media Type","{\"error\":\"json_required\"}");
@@ -296,11 +326,13 @@ static esp_err_t catalog_replace(httpd_req_t *r){
   if(!request_allowed(r)||!catalog_access(r))return ESP_FAIL;
   uint64_t expected;
   if(!generation(r,&expected))return reply(r,"400 Bad Request","{\"error\":\"catalog_generation_required\"}");
-  if(!content_type(r,"text/plain"))return reply(r,"415 Unsupported Media Type","{\"error\":\"text_required\"}");
-  uint8_t *data=r->content_len ? body(r,STREAMOO_PLAYLIST_MAX_BYTES):NULL;
+  bool editor=content_type(r,"application/vnd.streamoo.stations+tsv");
+  if(!editor&&!content_type(r,"text/plain"))return reply(r,"415 Unsupported Media Type","{\"error\":\"text_required\"}");
+  uint8_t *data=r->content_len ? body(r,STREAMOO_PLAYLIST_MAX_BYTES+(editor?17*STREAMOO_PLAYLIST_MAX_ROWS:0)):NULL;
   if(r->content_len&&!data)return ESP_FAIL;
   streamoo_playlist_report_t parsed={0};
-  esp_err_t error=actions.catalog_replace(data,r->content_len,expected,&parsed);heap_caps_free(data);
+  esp_err_t error=editor?streamoo_config_catalog_edit(data,r->content_len,expected,&parsed):
+    actions.catalog_replace(data,r->content_len,expected,&parsed);heap_caps_free(data);
   if(error==ESP_ERR_INVALID_STATE)return reply(r,"409 Conflict","{\"error\":\"catalog_changed\"}");
   if(error==ESP_ERR_INVALID_ARG)return report(r,"400 Bad Request",&parsed,false);
   return error==ESP_OK ? report(r,"200 OK",&parsed,true):reply(r,"503 Service Unavailable","{\"error\":\"playlist_storage_unavailable\"}");
@@ -365,6 +397,10 @@ esp_err_t streamoo_portal_register_configuration(httpd_handle_t server) {
     {.uri="/api/v1/stations/replace",.method=HTTP_POST,.handler=catalog_replace},
     {.uri="/api/v1/stations/select",.method=HTTP_POST,.handler=station_select}};
   for(unsigned i=0;i<4;++i){esp_err_t e=httpd_register_uri_handler(server,&catalog_routes[i]);if(e!=ESP_OK)return e;}
+  const httpd_uri_t settings_routes[]={
+    {.uri="/api/v1/settings",.method=HTTP_GET,.handler=settings_get},
+    {.uri="/api/v1/settings",.method=HTTP_POST,.handler=settings_post}};
+  for(unsigned i=0;i<2;++i){esp_err_t e=httpd_register_uri_handler(server,&settings_routes[i]);if(e!=ESP_OK)return e;}
   serving = true;
   return ESP_OK;
 }

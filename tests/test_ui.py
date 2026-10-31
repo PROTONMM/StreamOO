@@ -47,7 +47,7 @@ class UI(C.Structure):
                 ('selection_start_ms', C.c_uint64), ('animation_ms', C.c_uint16),
                 ('post', POST), ('post_context', C.c_void_p), ('home', HomeSnapshot),
                 ('home_text_start_ms', C.c_uint64), ('home_received', C.c_bool),
-                ('home_scroll_reset_pending', C.c_bool), ('visualization', C.c_int)]
+                ('home_scroll_reset_pending', C.c_bool), ('visualization', C.c_int),('running',C.c_bool),('last_activity_ms',C.c_uint64)]
 
 
 class Probe(C.Structure):
@@ -179,7 +179,7 @@ class UITests(unittest.TestCase):
         self.open(1200)
         self.assertEqual(self.ui.selected, 4)
         self.assertTrue(self.lib.streamoo_ui_confirm(C.byref(self.ui)))
-        self.assertEqual(self.commands, [(90, 124)])
+        self.assertEqual(self.commands, []) # confirming the playing station is a no-op
 
     def test_empty_and_invalid_catalog(self):
         invalid = (Station * 1)(Station(0, b'bad', 3))

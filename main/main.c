@@ -11,6 +11,7 @@
 #include "network_portal.h"
 #include "streamoo_player.h"
 #include "streamoo_clock_settings.h"
+#include "streamoo_settings.h"
 
 static const char *TAG = "StreamOO";
 
@@ -24,6 +25,8 @@ void app_main(void)
         ESP_LOGE(TAG, "Platform startup failed; peripherals remain disabled");
         return;
     }
+    esp_err_t settings_error=streamoo_settings_start();
+    if(settings_error!=ESP_OK)ESP_LOGW(TAG,"System settings unavailable: %s",esp_err_to_name(settings_error));
     esp_err_t clock_error=streamoo_clock_settings_start();
     if(clock_error!=ESP_OK)ESP_LOGW(TAG,"Clock settings unavailable: %s; no erase",esp_err_to_name(clock_error));
     ESP_LOGI(TAG, "StreamOO scaffold (no radio functionality yet)");

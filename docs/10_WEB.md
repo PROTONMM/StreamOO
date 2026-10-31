@@ -79,3 +79,16 @@ preview/import i clear z potwierdzeniem. Konfiguracja Wi-Fi/zegara w LAN
 nadal osobno. Endpointy stations/list/export/replace/select przez wspólny
 katalog, generacje string i CAS. Nowe operacje player/editor odrzucane w AP.
 Procedura WEB_LIBRARY_BRINGUP, dane prywatne nie trafiają do repo.
+
+## Ustawienia obsługi i startu — ADR0059
+
+LAN/Konfiguracja: czas listy1..120s, auto-wybór lub powrót bez zmiany,
+start STOP/autoplay ostatniej stacji oraz własna nazwa `.local`. W AP
+ten panel ukryty; nadal tylko Wi-Fi/import/strefa. GET/POST
+`/api/v1/settings`: dokładnie `list_timeout_s` (integer),
+`list_autoselect` (bool), `autoplay` (bool), `hostname` (DNS label lub
+pusty). POST512B, JSON, Origin/header i walidacja, zapis NVS przed200;
+błąd flash503 bez publikacji nowej konfiguracji. Edytor zapisuje
+`application/vnd.streamoo.stations+tsv`: ID16hex/TAB/nazwa/TAB/URL/TAB/ovol,
+ID0000000000000000 tylko dla nowej pozycji. Endpoint replace nadal
+przyjmuje starszy3-polowy text/plain; eksport/import użytkownika bez ID.

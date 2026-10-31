@@ -47,19 +47,22 @@ bool streamoo_encoder_demo_input(streamoo_encoder_demo_t *d, streamoo_input_even
      * Production adapter will enqueue to player_manager instead. */
     if (d->selection_pending) {
         if (d->selection.catalog_generation == d->ui.catalog_generation) {
-            d->station_id = d->selection.station_id;
+            d->station_id = d->selection.station_id;d->running=true;
             ++d->generation;
         }
         d->selection_pending = false;
     }
     if (d->control_pending) {
         if (d->control.kind == STREAMOO_CONTROL_TOGGLE) d->running = !d->running;
+        else if(d->control.kind==STREAMOO_CONTROL_PLAY)d->running=true;
+        else if(d->control.kind==STREAMOO_CONTROL_STOP)d->running=false;
         else {
             int64_t volume = (int64_t)d->volume + d->control.delta;
             d->volume = volume < 0 ? 0 : volume > 100 ? 100 : (int)volume;
         }
         d->control_pending = false;
     }
+    d->ui.running=d->running;
     /* Sync TEST source before next gesture, including open-list selection. */
     streamoo_ui_set_playing(&d->ui, d->station_id);
     return true;
@@ -143,7 +146,8 @@ bool streamoo_encoder_demo_bind_audio(streamoo_encoder_demo_t *d, streamoo_contr
 bool streamoo_encoder_demo_audio_state(streamoo_encoder_demo_t *d, uint8_t volume, bool running)
 {
     if (!d || !d->audio_post || volume>100) return false;
-    d->volume=volume; d->running=running;
+    if(d->running&&!running)d->ui.screen=STREAMOO_UI_HOME;
+    d->volume=volume; d->running=running;d->ui.running=running;
     return true;
 }
 
@@ -169,7 +173,7 @@ bool streamoo_encoder_demo_set_catalog(streamoo_encoder_demo_t *d,const streamoo
     bool retained=false;
     for(uint32_t i=0;i<count;++i) if(stations[i].stable_id==d->station_id) retained=true;
     if(!retained) {d->station_id=0;d->running=false;}
-    d->selection_pending=false;
+    d->selection_pending=false;d->ui.running=d->running;
     ++d->generation;
     d->imported_catalog=true;
     /* Old snapshot may be released immediately after this call. */

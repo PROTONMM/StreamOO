@@ -1,5 +1,24 @@
 # Status implementacji
 
+
+## Najnowszy krok — 2026-10-31 / ADR0059
+
+Zrobione: długi STOP i OLED-off (bez sleep), krótki PLAY przy STOP/lista
+przy PLAY, bezczynność listy5s domyślnie, WWW1..120s/auto-wybór lub powrót.
+Ten sam grający ID to no-op również w ownerze player/WWW. NVS: ostatni ID
+po5s, start STOP/autoplay oraz własna nazwa mDNS. Edytor i LittleFS v2
+zachowują ID przy rename/URL, aktywna sesja nie restartuje. Stary katalog
+czytany, CSV import/eksport3pola. AP panel bez nowych kontrolek.
+
+Build ESP-IDF6.1, host controls/store/settings/player/discovery/REST oraz
+Chromium390px PASS. STOP/autoplay/brak ID, no-op sesji, rename/URL/odczyt
+po restarcie i błąd NVS sprawdzone hostowo; fizyczny odbiór OPEN.
+Teraz zwykły flash bez erase/FS, Ctrl+F5 i PLAYER_SETTINGS_BRINGUP.
+Dalej zlecony punkt8 HLS, osobny commit. FLAC128KiB i RNŚTLS wciąż do
+osobnego potwierdzenia użytkownika. ROOT CA, FFT/RMS i wyglądWWW odłożone.
+OTA wyłączone; bez flash/erase/eFuse przez agenta. Starsze wpisy poniżej
+są historią, bieżące zachowanie określa ta sekcja i ADR0059.
+
 Bieżący punkt wznowienia: [RESUME.md](RESUME.md).
 
 | Etap | Stan | Dowód |

@@ -139,3 +139,5 @@ Live FLAC bez nagłówka pliku: `adr/0056-headerless-live-flac.md`.
 TLS cross-signed RNŚ: `adr/0057-cross-signed-tls-chains.md`.
 
 Większe ramki live FLAC: `adr/0058-live-flac-parser-window.md`.
+
+Obsługa radia, ustawienia i trwałe ID: `adr/0059-player-gestures-persistent-settings-and-station-ids.md`, `PLAYER_SETTINGS_BRINGUP.md`.

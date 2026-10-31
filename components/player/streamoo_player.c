@@ -1,4 +1,5 @@
 #include "streamoo_player.h"
+#include "streamoo_settings.h"
 #include "esp_attr.h"
 #include "esp_heap_caps.h"
 #include "esp_log.h"
@@ -88,6 +89,8 @@ bool streamoo_player_select(void *context,
 bool streamoo_player_control(void *context,
                              const streamoo_control_command_t *control) {
   (void)context;
+  if(control && (control->kind==STREAMOO_CONTROL_PLAY||control->kind==STREAMOO_CONTROL_STOP))
+    return streamoo_player_set_playing(control->kind==STREAMOO_CONTROL_PLAY);
   if (!queue || !control ||
       (control->kind != STREAMOO_CONTROL_TOGGLE &&
        control->kind != STREAMOO_CONTROL_VOLUME_DELTA))
@@ -126,11 +129,26 @@ static void task(void *context) {
   const char *failure_stage = "none";
   streamoo_player_state_t current;
   streamoo_player_state(&current);
+  bool restored=false;
   for (;;) {
+    if(!restored){
+      streamoo_catalog_snapshot_t *initial=streamoo_config_catalog_acquire();
+      if(initial){
+        uint64_t id=streamoo_settings_last_station();streamoo_catalog_view_t view=streamoo_config_catalog_view(initial);
+        for(uint32_t i=0;i<view.count;++i)if(view.stations[i].stable_id==id){
+          chosen=initial;initial=NULL;station=&view.stations[i];current.station_id=id;
+          current.running=streamoo_settings_get().autoplay;break;
+        }
+        streamoo_config_catalog_release(initial);restored=true;
+      }
+    }
     command_t cmd;
     bool restart = false;
     while (xQueueReceive(queue, &cmd, 0) == pdTRUE) {
       if (cmd.catalog) {
+        if(cmd.id==current.station_id && current.running){
+          streamoo_config_catalog_release(cmd.catalog);continue;
+        }
         streamoo_config_catalog_release(chosen);
         chosen = cmd.catalog;
         station = NULL;
@@ -139,6 +157,7 @@ static void task(void *context) {
           if (view.stations[i].stable_id == cmd.id)
             station = &view.stations[i];
         current.station_id = station ? cmd.id : 0;
+        streamoo_settings_station_changed(current.station_id);
         current.running = station != NULL;
         ++current.generation;
         current.title[0] = 0;
@@ -190,6 +209,7 @@ static void task(void *context) {
       station = replacement;
       if (!station) {
         current.station_id = 0;
+        streamoo_settings_station_changed(0);
         current.running = false;
         current.title[0] = 0;
         ++current.generation;

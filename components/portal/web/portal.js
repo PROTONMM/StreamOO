@@ -19,6 +19,7 @@ async function update() {
     if (generation !== configGeneration) return;
     const network = state.network;
     applyWebMode(Boolean(network.connected&&!network.ap_ready));
+    const systemPanel=document.getElementById('system-panel');if(systemPanel)systemPanel.hidden=!network.connected||network.ap_ready;
     stationStateChanged(state.audio.station_id||'0000000000000000');
     document.body.classList.remove('offline');
     text('connection', network.ready ? 'Połączono z urządzeniem.' : 'Trwa uruchamianie sieci.');
@@ -302,9 +303,9 @@ function setupLibrary() {
       let parsed;try{parsed=new URL(url);}catch(_){throw Error(`Sprawdź adres w wierszu ${index+1}.`);}
       if(!['http:','https:'].includes(parsed.protocol)||parsed.username||parsed.password||parsed.hash||/[\s\p{Cc}\p{Cf}]/u.test(url)||bytes(url)>2048)
         throw Error(`Sprawdź adres HTTP/HTTPS w wierszu ${index+1}.`);
-      return `${name}\t${url}\t${row.ovol ?? 0}\n`;
+      return `${row.id||'0000000000000000'}\t${name}\t${url}\t${row.ovol ?? 0}\n`;
     }).join('');
-    if(new TextEncoder().encode(data).length>262144)throw Error('Lista przekracza 256 KiB.');return data;
+    if(new TextEncoder().encode(data).length>296960)throw Error('Lista przekracza 256 KiB.');return data;
   }
   async function save(rows,confirmed=false){
     if(!loaded||writing||!webPlayerMode)return;
@@ -312,7 +313,7 @@ function setupLibrary() {
     writing=true;++loadSerial;editState();
     try{
       const data=csv(rows);
-      const result=await api('/api/v1/stations/replace',{method:'POST',headers:{'Content-Type':'text/plain; charset=utf-8','X-StreamOO-Catalog-Generation':generation},body:data});
+      const result=await api('/api/v1/stations/replace',{method:'POST',headers:{'Content-Type':'application/vnd.streamoo.stations+tsv','X-StreamOO-Catalog-Generation':generation},body:data});
       dirty=false;await load();text('editor-result',`Zapisano ${result.rows} stacji.`);
     }catch(error){message('editor-result',error);}
     finally{writing=false;editState();}
@@ -360,3 +361,20 @@ if (document.getElementById('wifi-form')?.addEventListener) setupForms();
 setupClock();
 setupLibrary();
 update();
+
+async function setupSystemSettings(){
+  const form=document.getElementById('system-form');if(!form?.addEventListener)return;
+  const timeout=document.getElementById('list-timeout'),action=document.getElementById('list-action'),
+    boot=document.getElementById('boot-action'),hostname=document.getElementById('hostname');
+  const save=form.querySelector('button');save.disabled=true;
+  try{const s=await api('/api/v1/settings');timeout.value=s.list_timeout_s;
+    action.value=s.list_autoselect?'select':'cancel';boot.value=s.autoplay?'play':'stop';hostname.value=s.hostname;save.disabled=false;
+  }catch(e){text('system-result',e.message);}
+  form.addEventListener('submit',async e=>{e.preventDefault();save.disabled=true;
+    try{await api('/api/v1/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+      list_timeout_s:Number(timeout.value),list_autoselect:action.value==='select',autoplay:boot.value==='play',hostname:hostname.value.trim()})});
+      text('system-result','Zapisano. Zachowanie listy i nazwa działają od razu; tryb startu po ponownym włączeniu.');
+    }catch(error){text('system-result',error.message);}finally{save.disabled=false;}
+  });
+}
+setupSystemSettings();

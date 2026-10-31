@@ -49,3 +49,5 @@ class ControlsTests(unittest.TestCase):
     def test_live_codec_rssi_copied_validated_and_cleared(self): self.run_case(12)
 
     def test_live_clock_independent_of_station_and_marquee(self): self.run_case(13)
+
+    def test_pause_wake_idle_select_cancel_and_same_station_noop(self): self.run_case(14)

@@ -1,4 +1,6 @@
 #include "streamoo_config_store.h"
+#include "streamoo_catalog_format.h"
+#include <inttypes.h>
 #include "esp_heap_caps.h"
 #include "esp_littlefs.h"
 #include "esp_partition.h"
@@ -169,17 +171,32 @@ esp_err_t streamoo_config_store_init(void) {
       fseek(file, 0, SEEK_END);
       long size = ftell(file);
       rewind(file);
-      if (size > 0 && size <= STREAMOO_PLAYLIST_MAX_BYTES) {
+      if (size > 0 && size <= STREAMOO_PLAYLIST_MAX_BYTES+17*STREAMOO_PLAYLIST_MAX_ROWS+8) {
         uint8_t *data =
             heap_caps_malloc(size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
         if (data && fread(data, 1, size, file) == (size_t)size) {
           streamoo_playlist_report_t report = {0};
           streamoo_playlist_workspace_t *ws = heap_caps_calloc(
               1, sizeof *ws, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
-          size_t normalized = (size_t)size;
+          size_t normalized = (size_t)size, id_rows=0;
+          bool native=normalized>=8&&!memcmp(data,STREAMOO_CATALOG_MAGIC,8), ids_ok=true;
+          uint64_t *ids=NULL;
+          if(native){
+            memmove(data,data+8,normalized-8);normalized-=8;
+            ids=heap_caps_calloc(STREAMOO_PLAYLIST_MAX_ROWS,sizeof *ids,MALLOC_CAP_SPIRAM|MALLOC_CAP_8BIT);
+            ids_ok=ids&&streamoo_catalog_decode_ids(data,&normalized,ids,STREAMOO_PLAYLIST_MAX_ROWS,&id_rows,false);
+          }
           streamoo_catalog_snapshot_t *loaded = NULL;
-          if (ws && streamoo_playlist_validate(data, &normalized, &report, ws))
-            loaded = snapshot_create(data, normalized, report.rows);
+          bool valid=ids_ok && ((native&&!normalized)||(ws&&streamoo_playlist_validate(data,&normalized,&report,ws)));
+          if(valid && (!native||id_rows==report.rows))loaded=snapshot_create(data,normalized,report.rows);
+          if(loaded&&native){
+            for(uint32_t i=0;i<loaded->view.count;++i){
+              for(uint32_t j=0;j<i;++j)if(ids[i]==ids[j])ids_ok=false;
+              loaded->entries[i].stable_id=ids[i];
+            }
+            if(!ids_ok){streamoo_config_catalog_release(loaded);loaded=NULL;}
+          }
+          heap_caps_free(ids);
           heap_caps_free(ws);
           if (loaded) {
             streamoo_config_catalog_release(initial);
@@ -238,7 +255,7 @@ esp_err_t streamoo_config_wifi_save(const streamoo_wifi_profiles_t *profiles) {
   return error;
 }
 static esp_err_t playlist_change(uint8_t *data,size_t bytes,bool commit,bool guarded,
-                                 uint64_t expected,streamoo_playlist_report_t *report) {
+                                 uint64_t expected,const uint64_t *editor_ids,streamoo_playlist_report_t *report) {
   if (!report)
     return ESP_ERR_INVALID_ARG;
   bool valid=guarded && bytes==0;
@@ -264,11 +281,46 @@ static esp_err_t playlist_change(uint8_t *data,size_t bytes,bool commit,bool gua
     portENTER_CRITICAL(&catalog_lock);uint64_t current=catalog_generation;portEXIT_CRITICAL(&catalog_lock);
     if(current!=expected){xSemaphoreGive(mutex);streamoo_config_catalog_release(candidate);return ESP_ERR_INVALID_STATE;}
   }
+  streamoo_catalog_snapshot_t *old=streamoo_config_catalog_acquire();
+  streamoo_catalog_view_t old_view=streamoo_config_catalog_view(old);
+  for(uint32_t i=0;i<candidate->view.count;++i){
+    streamoo_station_t *entry=&candidate->entries[i];uint64_t id=editor_ids?editor_ids[i]:0;
+    if(editor_ids&&id){
+      bool found=false;for(uint32_t j=0;j<old_view.count;++j)if(old_view.stations[j].stable_id==id)found=true;
+      if(!found){streamoo_config_catalog_release(old);xSemaphoreGive(mutex);streamoo_config_catalog_release(candidate);return ESP_ERR_INVALID_ARG;}
+    }else if(!editor_ids){
+      for(uint32_t j=0;j<old_view.count;++j){const streamoo_station_t *prior=&old_view.stations[j];bool used=false;
+        for(uint32_t k=0;k<i;++k)if(candidate->entries[k].stable_id==prior->stable_id)used=true;
+        if(!used&&entry->name_bytes==prior->name_bytes&&entry->url_bytes==prior->url_bytes&&
+           !memcmp(entry->name,prior->name,entry->name_bytes)&&!memcmp(entry->url,prior->url,entry->url_bytes)){id=prior->stable_id;break;}
+      }
+    }
+    if(!id){
+      bool collision;unsigned attempts=0;do{
+        if(++attempts>64){streamoo_config_catalog_release(old);xSemaphoreGive(mutex);streamoo_config_catalog_release(candidate);return ESP_FAIL;}
+#ifdef ESP_PLATFORM
+        id=((uint64_t)esp_random()<<32)|esp_random();
+#else
+        static uint64_t serial;id=++serial;
+#endif
+        collision=!id;
+        for(uint32_t j=0;j<old_view.count;++j)if(old_view.stations[j].stable_id==id)collision=true;
+        for(uint32_t j=0;j<i;++j)if(candidate->entries[j].stable_id==id)collision=true;
+      }while(collision);
+    }
+    for(uint32_t j=0;j<i;++j)if(candidate->entries[j].stable_id==id){streamoo_config_catalog_release(old);xSemaphoreGive(mutex);streamoo_config_catalog_release(candidate);return ESP_ERR_INVALID_ARG;}
+    entry->stable_id=id;
+  }
+  streamoo_config_catalog_release(old);
   esp_err_t error = ESP_FAIL;
   if (mounted) {
     FILE *file = fopen("/stations/playlist.tmp", "wb");
     if (file) {
-      bool written = !bytes || fwrite(data, 1, bytes, file) == bytes;
+      bool written=fwrite(STREAMOO_CATALOG_MAGIC,1,8,file)==8;
+      for(uint32_t i=0;i<candidate->view.count&&written;++i){const streamoo_station_t *entry=&candidate->entries[i];
+        written=fprintf(file,"%016" PRIx64 "\t%.*s\t%.*s\t%" PRId32 "\n",entry->stable_id,
+          (int)entry->name_bytes,entry->name,(int)entry->url_bytes,entry->url,entry->ovol)>0;
+      }
       if (fflush(file) != 0 || fsync(fileno(file)) != 0)
         written = false;
       if (fclose(file) != 0)
@@ -288,10 +340,10 @@ static esp_err_t playlist_change(uint8_t *data,size_t bytes,bool commit,bool gua
   return error;
 }
 esp_err_t streamoo_config_playlist(uint8_t *data,size_t bytes,bool commit,streamoo_playlist_report_t *report){
-  return playlist_change(data,bytes,commit,false,0,report);
+  return playlist_change(data,bytes,commit,false,0,NULL,report);
 }
 esp_err_t streamoo_config_catalog_replace(uint8_t *data,size_t bytes,uint64_t expected,streamoo_playlist_report_t *report){
-  return playlist_change(data,bytes,true,true,expected,report);
+  return playlist_change(data,bytes,true,true,expected,NULL,report);
 }
 bool streamoo_config_playlist_info(streamoo_playlist_report_t *out) {
   if (!out || !take())
@@ -300,4 +352,14 @@ bool streamoo_config_playlist_info(streamoo_playlist_report_t *out) {
   bool ok = mounted;
   xSemaphoreGive(mutex);
   return ok;
+}
+
+esp_err_t streamoo_config_catalog_edit(uint8_t *data,size_t bytes,uint64_t expected,streamoo_playlist_report_t *report){
+  if(!report||bytes>STREAMOO_PLAYLIST_MAX_BYTES+17*STREAMOO_PLAYLIST_MAX_ROWS)return ESP_ERR_INVALID_ARG;
+  uint64_t *ids=heap_caps_calloc(STREAMOO_PLAYLIST_MAX_ROWS,sizeof *ids,MALLOC_CAP_SPIRAM|MALLOC_CAP_8BIT);
+  if(!ids)return ESP_ERR_NO_MEM;
+  size_t rows=0;
+  bool valid=bytes==0||streamoo_catalog_decode_ids(data,&bytes,ids,STREAMOO_PLAYLIST_MAX_ROWS,&rows,true);
+  esp_err_t error=valid?playlist_change(data,bytes,true,true,expected,ids,report):ESP_ERR_INVALID_ARG;
+  heap_caps_free(ids);return error;
 }

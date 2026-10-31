@@ -65,3 +65,15 @@ się ponownie zaimportować stacje. Factory0x10000/0xEF0000, storage
 sfs_00f00000/init. Nowy blank storage przygotuje się mimo starego markera
 w NVS; niepusty uszkodzony FS nadal bez autoformatowania. Instrukcja
 LARGE_FLASH_BRINGUP.md. Historyczne plany OTA powyżej są zastąpione.
+
+## Preferencje systemowe i ostatnia stacja — ADR0059
+
+Komponent settings przechowuje NVS `streamoo_system/settings`:68B,
+wersja1, czas listy, dwie flagi i64B nazwy, jawne kodowanie bez paddingu.
+`station`: uint64 ostatniego ID, oddzielny worker priority1/4096B zapisuje
+po5s bez zmian. Owner audio publikuje tylko do RAM; nie wykonuje NVS.
+Domyślnie STOP, lista5s/auto-wybór i nazwa MAC. Autoplay po boocie
+wymaga zgodnego ID w katalogu oraz STA/AP-off; brak pozycji nie wybiera
+innej. Usunięcie aktywnej pozycji publikuje ID0. Stary katalog czytany,
+bez kasowania NVS/FS ani zmiany partycji. Fizyczny power-cycle nowych
+ustawień pozostaje do odbioru użytkownika.

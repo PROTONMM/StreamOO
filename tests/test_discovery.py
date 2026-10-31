@@ -11,6 +11,7 @@ class DiscoveryTest(unittest.TestCase):
     def test_lifecycle_failures_and_names(self):
         with tempfile.TemporaryDirectory() as tmp:
             base = Path(tmp)
+            (base/'streamoo_settings.h').write_text('#pragma once\n#include <stdbool.h>\n#include <stdint.h>\ntypedef struct{uint32_t list_timeout_s;bool list_autoselect,autoplay;char hostname[64];} streamoo_settings_t;\nstreamoo_settings_t streamoo_settings_get(void);\n')
             (base/'mdns.h').write_text('''
 #include <stddef.h>
 #include <stdint.h>
@@ -28,15 +29,18 @@ int mdns_service_add(const char*,const char*,const char*,uint16_t,void*,size_t);
             (base/'test.c').write_text(r'''
 #include "mdns.h"
 #include "streamoo_discovery.h"
+#include "streamoo_settings.h"
 #include <assert.h>
 #include <string.h>
 static int calls, frees, fail;
+static const char *custom="";
+streamoo_settings_t streamoo_settings_get(void){streamoo_settings_t s={0};strcpy(s.hostname,custom);return s;}
 static int step(void){++calls;return calls==fail ? 1:0;}
 const char *esp_err_to_name(int e){(void)e;return "fake";}
 int mdns_init(void){return step();}
 void mdns_free(void){++frees;}
 int mdns_register_hostname_changed_callback(void (*cb)(const char*,void*),void *ctx){assert(cb);cb("streamoo-a1b2c3-2",ctx);return step();}
-int mdns_hostname_set(const char *s){assert(!strcmp(s,"streamoo-a1b2c3"));return step();}
+int mdns_hostname_set(const char *s){assert(!strcmp(s,*custom?custom:"streamoo-a1b2c3"));return step();}
 int mdns_instance_name_set(const char *s){assert(!strcmp(s,"StreamOO"));return step();}
 int mdns_service_add(const char *i,const char *s,const char *p,uint16_t port,void *txt,size_t n){assert(!i&&!txt&&!n&&port==80&&!strcmp(s,"_http")&&!strcmp(p,"_tcp"));return step();}
 int main(void){
@@ -60,7 +64,11 @@ int main(void){
  streamoo_discovery_update(false,name,60000001);assert(frees==before+1);
  streamoo_discovery_update(false,name,60000002);assert(frees==before+1);
  calls=0;streamoo_discovery_update(true,name,60000003);assert(calls==5);
- streamoo_discovery_update(false,name,60000004);
+ custom="kitchen-radio";int renamed=frees;
+ streamoo_discovery_update(true,name,60000004);assert(calls==10&&frees==renamed+1);
+ streamoo_discovery_update(true,name,60000005);assert(calls==10);
+ custom="";streamoo_discovery_update(true,name,60000006);assert(calls==15&&frees==renamed+2);
+ streamoo_discovery_update(false,name,60000007);
  return 0;
 }
 ''')

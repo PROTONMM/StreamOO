@@ -55,3 +55,17 @@ normalny atomic pipeline walidacja/temp/fsync/rename/snapshot. Eksport
 strumieniowany z utrzymanego snapshotu, bez odczytu flash. Import pustego
 pliku nadal odrzucony, clear osobnym przyciskiem. ID v1 przy rename/URL
 nadal się zmienia; UI uprzedza o możliwym zatrzymaniu aktywnej pozycji.
+
+## Trwałe ID v2 — ADR0059
+
+Edytor WWW wysyła ID razem z nazwą/URL/ovol. Rename i zmiana URL zachowują
+ID oraz aktywne połączenie; nowy URL obowiązuje przy następnym połączeniu.
+Nowe rekordy dostają losowy niezerowy64-bit ID z kontrolą kolizji.
+LittleFS zachowuje pojedynczy atomowy plik: `SOOCAT2\n` i wiersze
+`16hex<TAB>name<TAB>url<TAB>ovol`. Stary3-polowy katalog nadal czytany,
+jego dotychczasowe ID zachowane przy pierwszym zapisie. Publiczny import/
+eksport CSV nadal3pola; import kojarzy istniejące pary nazwa+URL, nie może
+odgadnąć tożsamości po jednoczesnej zmianie obu pól. CAS generation nadal
+chroni edycję. Usunięcie aktywnego ID zatrzymuje bez fallback. NVS pamięta
+ostatni wybrany ID po5s bez zmian, także przy STOP. Te zasady zastępują
+ograniczenie v1 opisane historycznie wyżej.

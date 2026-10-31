@@ -1,4 +1,5 @@
 #include "streamoo_discovery.h"
+#include "streamoo_settings.h"
 #include "mdns.h"
 #include "esp_log.h"
 #include <stdio.h>
@@ -6,6 +7,7 @@
 
 static bool started;
 static int64_t retry_at;
+static char requested[64];
 
 static void hostname_changed(const char *hostname, void *context)
 {
@@ -21,16 +23,21 @@ void streamoo_discovery_update(bool connected, const char *ap_name, int64_t now_
         retry_at = 0;
         return;
     }
-    if (started || now_us < retry_at) return;
+
     /* AP name StreamOO-XXXXXX comes from the board MAC, not user input. */
     if (!ap_name || strlen(ap_name) != 15 || strncmp(ap_name, "StreamOO-", 9)) return;
-    char hostname[16] = "streamoo-";
+    char hostname[64] = "streamoo-";
     for (unsigned i = 9; i < 15; ++i) {
         char c = ap_name[i];
         if (c >= 'A' && c <= 'F') c += 'a' - 'A';
         if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f'))) return;
         hostname[i] = c;
     }
+    streamoo_settings_t settings=streamoo_settings_get();
+    if(settings.hostname[0])memcpy(hostname,settings.hostname,sizeof hostname);
+    if(started && strcmp(requested,hostname)) {mdns_free();started=false;retry_at=0;}
+    if(started || now_us<retry_at)return;
+    memcpy(requested,hostname,sizeof requested);
     retry_at = now_us + 30000000;
     esp_err_t error = mdns_init();
     bool initialized = error == ESP_OK;

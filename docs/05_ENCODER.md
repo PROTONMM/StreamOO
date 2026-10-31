@@ -5,12 +5,12 @@
 | Gest | A (domyślny) | B |
 |---|---|---|
 | Obrót w ekranie głównym | głośność | głośność |
-| Krótki klik | lista stacji | play/stop |
-| Długi klik | play/stop | lista stacji |
+| Krótki klik | STOP→PLAY i OLED on; podczas PLAY lista | play/stop |
+| Długi klik | STOP, OLED off | lista stacji |
 | Wciśnięcie + obrót | zmień FFT/bargraph/analog | zmień FFT/bargraph/analog |
 | Obrót na liście stacji | płynne przewijanie | jw. |
 | Krótki klik na liście | zatwierdź środkową | jw. |
-| Długi klik na liście | wyjdź bez zmiany | jw. |
+| Długi klik na liście | STOP i powrót HOME | wyjdź bez zmiany |
 
 **PROPONOWANE**: debounce 20ms, długi ≥600ms, akcja długiego przy zwolnieniu; po obrocie z przyciskiem zwolnienie nie emituje kliknięcia. Definiuj gest jako abstrakcyjne zdarzenia `ROTATE`, `SHORT`, `LONG`, `PRESSED_ROTATE` z delta.
 
@@ -84,3 +84,14 @@ pilot jest dodatkowym źródłem komend. Własny adapter wejścia kieruje je do
 wspólnego ownera playera/UI przez jawne interfejsy, bez dostępu do I2S.
 GPIO/odbiornik, mapa klawiszy, powtarzanie i obsługa menu pozostają OPEN;
 nie wybierać pinów z dawnych definicji Arduino. ADR0029.
+
+## Bieżące zachowanie A — ADR0059
+
+Pauza oznacza istniejący STOP źródła, bez timeshiftu i sleep CPU. OLED
+wyłącza się komendą SSD1322 display-off po STOP; krótki klik PLAY pokazuje
+HOME i łączy tę samą stację. WWW PLAY/STOP ma taki sam skutek dla OLED.
+Ekran konfiguracji AP i HOME bez wybranej stacji pozostają widoczne.
+Lista: domyślnie5s bezczynności i zatwierdzenie, przez WWW1..120s oraz
+zatwierdzenie/powrót. Obrót/klik odnawia timer; odrzucone polecenie nie
+zamyka listy. Wybrany grający ID zamyka listę bez komendy restartu.
+Procedura: [PLAYER_SETTINGS_BRINGUP](PLAYER_SETTINGS_BRINGUP.md).

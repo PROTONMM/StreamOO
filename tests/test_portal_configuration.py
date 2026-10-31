@@ -27,6 +27,7 @@ int httpd_req_recv(httpd_req_t *,char *,size_t);
 '''
 HARNESS=r'''
 #include "streamoo_portal_config.h"
+#include "streamoo_settings.h"
 #include "streamoo_config_store.h"
 #include "esp_http_server.h"
 #include <assert.h>
@@ -34,7 +35,12 @@ HARNESS=r'''
 #include <string.h>
 esp_err_t streamoo_portal_register_configuration(httpd_handle_t);
 void streamoo_portal_config_stopped(void);
-static httpd_uri_t routes[12];static unsigned count,submits,previews,commits;
+static httpd_uri_t routes[14];static unsigned count,submits,previews,commits;
+static bool settings_fail;
+static streamoo_settings_t system_settings={.list_timeout_s=5,.list_autoselect=true};
+streamoo_settings_t streamoo_settings_get(void){return system_settings;}
+bool streamoo_settings_valid(const streamoo_settings_t *s){return s->list_timeout_s>=1&&s->list_timeout_s<=120;}
+esp_err_t streamoo_settings_set(const streamoo_settings_t *s){if(settings_fail)return ESP_FAIL;system_settings=*s;return ESP_OK;}
 static int proof=1,foreign,timeout,closed;static bool player_mode_active=true;static const char *catalog_gen="42";
 static const char *input="",*type="application/json";static size_t received;
 static char status[64],output[4096];static streamoo_wifi_profiles_t saved;
@@ -60,7 +66,7 @@ int httpd_resp_set_hdr(httpd_req_t *r,const char *key,const char *value){(void)r
  if(!strcmp(key,"Connection"))closed=!strcmp(value,"close");assert(strcmp(key,"Access-Control-Allow-Origin"));return ESP_OK;}
 int httpd_resp_send(httpd_req_t *r,const char *s,long n){(void)r;(void)n;assert(strlen(s)<sizeof output);strcpy(output,s);return ESP_OK;}
 int httpd_resp_send_chunk(httpd_req_t *r,const char *s,long n){(void)r;if(!n)return ESP_OK;assert(strlen(output)+(size_t)n<sizeof output);strncat(output,s,(size_t)n);return ESP_OK;}
-int httpd_register_uri_handler(httpd_handle_t h,const httpd_uri_t *r){assert(h&&count<12);routes[count++]=*r;return ESP_OK;}
+int httpd_register_uri_handler(httpd_handle_t h,const httpd_uri_t *r){assert(h&&count<14);routes[count++]=*r;return ESP_OK;}
 static bool load(streamoo_wifi_profiles_t *p){*p=saved;return true;}
 static int submit(const streamoo_wifi_profiles_t *p){assert(p->count==1);assert(!strcmp(p->profiles[0].ssid,"New"));++submits;return ESP_OK;}
 static int playlist(uint8_t *p,size_t n,bool commit,streamoo_playlist_report_t *r){
@@ -87,9 +93,18 @@ void streamoo_config_catalog_release(streamoo_catalog_snapshot_t *s){assert(s&&s
 static bool in_player_mode(void){return player_mode_active;}
 static esp_err_t choose(uint64_t id,uint64_t gen){return id==11&&gen==42?ESP_OK:ESP_ERR_INVALID_STATE;}
 static esp_err_t replace(uint8_t *p,size_t n,uint64_t gen,streamoo_playlist_report_t *r){if(gen!=42)return ESP_ERR_INVALID_STATE;if(!n){*r=(streamoo_playlist_report_t){0};return ESP_OK;}return playlist(p,n,true,r);}
+esp_err_t streamoo_config_catalog_edit(uint8_t *p,size_t n,uint64_t gen,streamoo_playlist_report_t *r){return replace(p,n,gen,r);}
 int main(void){
  streamoo_portal_actions_t a={load,submit,playlist,info,get_zone,set_zone,player_command,in_player_mode,choose,replace};assert(streamoo_portal_configure(&a)==ESP_OK);
- assert(streamoo_portal_register_configuration((void *)1)==ESP_OK&&count==12);assert(streamoo_portal_configure(&a)==ESP_ERR_INVALID_STATE);
+ assert(streamoo_portal_register_configuration((void *)1)==ESP_OK&&count==14);assert(streamoo_portal_configure(&a)==ESP_ERR_INVALID_STATE);
+ call(12,"",0);assert(strstr(status,"200")&&strstr(output,"list_timeout_s"));
+ const char *settings="{\"list_timeout_s\":9,\"list_autoselect\":false,\"autoplay\":true,\"hostname\":\"kitchen-radio\"}";
+ proof=0;call(13,settings,strlen(settings));assert(strstr(status,"403"));proof=1;
+ call(13,settings,strlen(settings));assert(strstr(status,"200")&&system_settings.list_timeout_s==9&&system_settings.autoplay&&!system_settings.list_autoselect&&!strcmp(system_settings.hostname,"kitchen-radio"));
+ settings_fail=true;call(13,settings,strlen(settings));assert(strstr(status,"503"));settings_fail=false;
+ const char *bad_settings="{\"list_timeout_s\":0,\"list_autoselect\":false,\"autoplay\":true,\"hostname\":\"test\"}";
+ call(13,bad_settings,strlen(bad_settings));assert(strstr(status,"400"));
+ call(13,"{}",2);assert(strstr(status,"400"));
  call(5,"",0);assert(strstr(output,"Europe/Warsaw")&&strstr(output,"Europe/London"));
  proof=0;call(6,"{}",2);assert(strstr(status,"403"));proof=1;
  call(6,"{\"timezone\":\"bad\"}",18);assert(strstr(status,"400"));
@@ -143,7 +158,7 @@ class PortalConfigurationTests(unittest.TestCase):
             (base/'esp_heap_caps.h').write_text('#pragma once\n#include <stddef.h>\n#define MALLOC_CAP_SPIRAM 1\n#define MALLOC_CAP_8BIT 2\nvoid *heap_caps_malloc(size_t,unsigned);\nvoid heap_caps_free(void *);\n')
             (base/'test.c').write_text(HARNESS)
             subprocess.run(['cc','-std=c11','-D_POSIX_C_SOURCE=200809L','-Wall','-Wextra','-Werror','-Wno-misleading-indentation',*os.environ.get('STREAMOO_PORTAL_CONFIG_SANITIZE','').split(),
-                            '-I'+tmp,'-Icomponents/portal/include','-Icomponents/clock/include','-Icomponents/stations/include','-Icomponents/configuration/include','-Imanaged_components/espressif__cjson/cJSON',
+                            '-I'+tmp,'-Icomponents/portal/include','-Icomponents/clock/include','-Icomponents/settings/include','-Icomponents/stations/include','-Icomponents/configuration/include','-Imanaged_components/espressif__cjson/cJSON',
                             str(base/'test.c'),'components/portal/streamoo_portal_config.c','components/clock/streamoo_clock.c','components/configuration/streamoo_config_model.c',
                             'managed_components/espressif__cjson/cJSON/cJSON.c','-lm','-o',str(base/'test')],cwd=ROOT,check=True)
             subprocess.run([str(base/'test')],check=True,timeout=10)

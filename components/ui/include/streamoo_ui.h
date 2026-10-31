@@ -34,6 +34,8 @@ typedef struct {
     uint64_t home_text_start_ms;
     bool home_received, home_scroll_reset_pending;
     streamoo_visualization_kind_t visualization;
+    bool running;
+    uint64_t last_activity_ms;
 } streamoo_ui_t;
 
 /* Single UI-task ownership; no GPIO/player/network/RTOS dependency. All times
