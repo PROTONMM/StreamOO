@@ -11,11 +11,11 @@ static pthread_t worker;
 static bool permit,paused,finished;
 static void (*entry)(void *); static void *argument;
 static unsigned allocations;
-static bool fail_allocation,fail_task;
+static bool fail_allocation,fail_task,fail_psram;
 static atomic_llong now;
 int64_t esp_timer_get_time(void){return atomic_load(&now);}
 void *heap_caps_calloc(size_t n,size_t bytes,unsigned caps){
-    assert(caps==3);if(fail_allocation)return NULL;
+    assert(caps==3||caps==6);if(fail_allocation||(caps==6&&fail_psram))return NULL;
     void *p=calloc(n,bytes);if(p)++allocations;return p;
 }
 void heap_caps_free(void *p){if(p){assert(allocations);--allocations;free(p);}}
@@ -49,7 +49,7 @@ static void step(void){
 }
 static void close_meter(streamoo_metering_t *m){
     assert(!streamoo_metering_dispose(m)); /* Must wait for consumer ACK. */
-    assert(allocations==1);step();assert(!pthread_join(worker,NULL));
+    assert(allocations>=1);step();assert(!pthread_join(worker,NULL));
     assert(streamoo_metering_dispose(m));assert(!allocations);
 }
 static int32_t lr[480];
@@ -95,6 +95,33 @@ int main(int argc,char **argv){
         close_meter(m);assert(streamoo_metering_open(18,&m)==ESP_OK);
         assert(streamoo_metering_state(m,&state));
         assert(state.generation==18&&!state.levels.valid&&!state.levels.windows);
+        close_meter(m);
+    }else if(test==7 || test==8){
+        assert(!state.spectrum_valid&&!state.spectrum_available&&!state.fft_windows);
+        fail_psram=test==8;
+        streamoo_metering_set_spectrum(m,true);
+        for(unsigned seq=8;seq<16;++seq){
+            for(unsigned i=0;i<240;++i){lr[2*i]=(i%2?10000:-10000)*65536;lr[2*i+1]=lr[2*i];}
+            push(m,seq);step();
+        }
+        assert(streamoo_metering_state(m,&state));assert(state.levels.valid);
+        if(test==8){assert(!state.spectrum_available&&!state.spectrum_valid);assert(allocations==1);}
+        else {
+            assert(state.spectrum_available&&state.spectrum_valid&&state.fft_windows==1);
+            assert(state.bands[23]>10000&&allocations==2);
+            atomic_fetch_add(&now,200001);
+            assert(streamoo_metering_state(m,&state));
+            assert(!state.spectrum_valid&&!state.bands[23]);
+            streamoo_metering_set_spectrum(m,false);
+            assert(streamoo_metering_state(m,&state));assert(!state.spectrum_valid);
+            step();unsigned windows=state.fft_windows;
+            streamoo_metering_set_spectrum(m,true);
+            assert(streamoo_metering_state(m,&state));assert(!state.spectrum_valid);
+            push(m,16);step();assert(streamoo_metering_state(m,&state));
+            assert(!state.spectrum_valid&&state.fft_windows==windows);
+            for(unsigned seq=17;seq<21;++seq){push(m,seq);step();}
+            assert(streamoo_metering_state(m,&state));assert(state.spectrum_valid);
+        }
         close_meter(m);
     }else if(test==6){
         atomic_store(&now,100000);step();

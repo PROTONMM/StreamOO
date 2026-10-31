@@ -27,3 +27,6 @@ esp_err_t streamoo_player_start(uint8_t volume);
 bool streamoo_player_select(void *, const streamoo_ui_select_command_t *);
 bool streamoo_player_control(void *, const streamoo_control_command_t *);
 bool streamoo_player_state(streamoo_player_state_t *);
+
+/* Task-only visualization preference, independent of playback commands. */
+void streamoo_player_spectrum_enabled(bool);

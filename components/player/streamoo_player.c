@@ -26,6 +26,7 @@ static streamoo_player_state_t state;
 static DRAM_ATTR streamoo_pcm_ring_t ring;
 static DRAM_ATTR streamoo_pcm_pipeline_t pipeline;
 static uint32_t target_gain;
+static bool spectrum_requested;
 static streamoo_pcm_stats_t stats;
 static void IRAM_ATTR fill(void *context, int32_t *lr, size_t frames) {
   portENTER_CRITICAL_ISR(&lock);
@@ -41,12 +42,27 @@ bool streamoo_player_state(streamoo_player_state_t *out) {
     return false;
   portENTER_CRITICAL(&lock);
   *out = state;
+  bool spectrum_on = spectrum_requested;
   portEXIT_CRITICAL(&lock);
   int64_t now = esp_timer_get_time();
   if (out->metering.levels.valid &&
       (now < out->metering.completed_us || now - out->metering.completed_us > 200000))
-    out->metering = (streamoo_metering_state_t){0};
+  {
+    out->metering.levels.valid=false;
+    memset(out->metering.levels.rms,0,sizeof out->metering.levels.rms);
+    memset(out->metering.levels.peak,0,sizeof out->metering.levels.peak);
+  }
+  if(!spectrum_on || now<out->metering.spectrum_completed_us ||
+     now-out->metering.spectrum_completed_us>200000) {
+    out->metering.spectrum_valid=false;
+    memset(out->metering.bands,0,sizeof out->metering.bands);
+  }
   return true;
+}
+void streamoo_player_spectrum_enabled(bool enabled) {
+  portENTER_CRITICAL(&lock);
+  spectrum_requested=enabled;
+  portEXIT_CRITICAL(&lock);
 }
 bool streamoo_player_select(void *context,
                             const streamoo_ui_select_command_t *selection) {
@@ -346,6 +362,11 @@ static void task(void *context) {
     if (!session && current.running && online && now < retry_at)
       current.phase = STREAMOO_PLAYER_RETRY;
   publish: {
+    portENTER_CRITICAL(&lock);
+    bool spectrum_on=spectrum_requested;
+    portEXIT_CRITICAL(&lock);
+    streamoo_metering_set_spectrum(meter,spectrum_on && !retiring &&
+        online && current.running && current.phase==STREAMOO_PLAYER_PLAYING);
     current.metering = (streamoo_metering_state_t){0};
     if (meter && !retiring && current.phase == STREAMOO_PLAYER_PLAYING) {
       streamoo_metering_state(meter, &current.metering);
@@ -390,6 +411,13 @@ static void task(void *context) {
                  measurement.max_work_us, measurement.stack_hwm,
                  (unsigned)measurement.levels.rms[0], (unsigned)measurement.levels.rms[1],
                  (unsigned)measurement.levels.peak[0], (unsigned)measurement.levels.peak[1]);
+      }
+      if(meter) {
+        streamoo_metering_state_t spectrum={0};streamoo_metering_state(meter,&spectrum);
+        ESP_LOGI("player","FFT available=%u valid=%u frames=%" PRIu32
+                 " skipped=%" PRIu32 " gaps=%" PRIu32 " max_fft=%" PRIu32 "us",
+                 (unsigned)spectrum.spectrum_available,(unsigned)spectrum.spectrum_valid,
+                 spectrum.fft_windows,spectrum.fft_skipped,spectrum.fft_gaps,spectrum.max_fft_us);
       }
       if (output && (audio.invalid_buffers || audio.max_fill_us >= 5000)) {
         failure_stage = "i2s_stats";

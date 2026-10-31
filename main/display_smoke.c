@@ -117,6 +117,8 @@ static void display_task(void *context)
             }
 #endif
             if(streamoo_network_boot_ap_enabled()) {
+                streamoo_player_spectrum_enabled(demo.ui.screen==STREAMOO_UI_HOME &&
+                    demo.ui.visualization==STREAMOO_VIS_SPECTRUM);
                 streamoo_player_state_t player;
                 if(streamoo_player_state(&player)) {
                     if(demo.station_id!=player.station_id||player_generation!=player.generation){
@@ -130,10 +132,16 @@ static void display_task(void *context)
                         levels.rms[ch]=player.metering.levels.rms[ch];
                         levels.peak[ch]=player.metering.levels.peak[ch];
                     }
+                    if(player.metering.spectrum_valid) {
+                        levels.band_count=24;
+                        memcpy(levels.bands,player.metering.bands,sizeof player.metering.bands);
+                    }
+                    bool visualization_valid=demo.ui.visualization==STREAMOO_VIS_SPECTRUM ?
+                        player.metering.spectrum_valid : player.metering.levels.valid;
                     streamoo_encoder_demo_levels(&demo,
                         player.phase==STREAMOO_PLAYER_PLAYING &&
                         player.metering.generation==player.generation &&
-                        player.metering.levels.valid ? &levels : NULL);
+                        visualization_valid ? &levels : NULL);
                     const char *message=player.title[0]?player.title:
                         player.phase==STREAMOO_PLAYER_PLAYING?"Odtwarzanie":
                         player.phase==STREAMOO_PLAYER_BUFFERING?"Buforowanie...":

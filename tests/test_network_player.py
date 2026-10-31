@@ -7,7 +7,7 @@ HEADERS={
  'esp_attr.h':'#pragma once\n#define IRAM_ATTR\n#define DRAM_ATTR\n',
  'esp_log.h':'#pragma once\nvoid fake_log(const char *,const char *,...) __attribute__((format(printf,2,3)));\n#define ESP_LOGI fake_log\n#define ESP_LOGW fake_log\n',
  'esp_timer.h':'#pragma once\n#include <stdint.h>\nint64_t esp_timer_get_time(void);\n',
- 'esp_heap_caps.h':'#pragma once\n#include <stddef.h>\n#define MALLOC_CAP_INTERNAL 1\n#define MALLOC_CAP_8BIT 2\nvoid *heap_caps_calloc(size_t,size_t,unsigned);\nvoid heap_caps_free(void *);\n',
+ 'esp_heap_caps.h':'#pragma once\n#include <stddef.h>\n#define MALLOC_CAP_INTERNAL 1\n#define MALLOC_CAP_8BIT 2\n#define MALLOC_CAP_SPIRAM 4\nvoid *heap_caps_calloc(size_t,size_t,unsigned);\nvoid heap_caps_free(void *);\n',
  'sdkconfig.h':'#pragma once\n#define CONFIG_STREAMOO_I2S_DOUT 48\n#define CONFIG_STREAMOO_I2S_BCLK 47\n#define CONFIG_STREAMOO_I2S_LRCLK 21\n',
  'freertos/FreeRTOS.h':'#pragma once\ntypedef int portMUX_TYPE;\n#define portMUX_INITIALIZER_UNLOCKED 0\n#define portENTER_CRITICAL(p) ((void)(p))\n#define portEXIT_CRITICAL(p) ((void)(p))\n#define portENTER_CRITICAL_ISR(p) ((void)(p))\n#define portEXIT_CRITICAL_ISR(p) ((void)(p))\n#define pdTRUE 1\n#define pdPASS 1\n#define pdMS_TO_TICKS(x) (x)\n',
  'freertos/queue.h':'#pragma once\n#include <stddef.h>\ntypedef void *QueueHandle_t;\nvoid *xQueueCreate(unsigned,size_t);\nvoid vQueueDelete(void *);\nint xQueueSend(void *,const void *,unsigned);\nint xQueueReceive(void *,void *,unsigned);\n',
@@ -72,7 +72,7 @@ bool streamoo_audio_output_stats(streamoo_audio_output_t *s,streamoo_audio_stats
 
 struct streamoo_metering {
  streamoo_pcm_ring_t tap; streamoo_pcm_block_t storage[4];
- uint64_t generation; unsigned stopping;
+ uint64_t generation; unsigned stopping;bool spectrum_enabled;
 };
 static streamoo_metering_t *active_meter;
 esp_err_t streamoo_metering_open(uint64_t gen,streamoo_metering_t **out){
@@ -80,9 +80,11 @@ esp_err_t streamoo_metering_open(uint64_t gen,streamoo_metering_t **out){
  *out=heap_caps_calloc(1,sizeof **out,0);active_meter=*out;
  (*out)->generation=gen;assert(streamoo_pcm_ring_init(&(*out)->tap,(*out)->storage,4));return ESP_OK;
 }
+void streamoo_metering_set_spectrum(streamoo_metering_t *m,bool enabled){if(m)m->spectrum_enabled=enabled;}
 streamoo_pcm_ring_t *streamoo_metering_tap(streamoo_metering_t *m){return m?&m->tap:NULL;}
 bool streamoo_metering_state(streamoo_metering_t *m,streamoo_metering_state_t *out){
  assert(m);*out=(streamoo_metering_state_t){.generation=m->generation+(wrong_meter_generation?1:0),.completed_us=now,
+ .spectrum_valid=m->spectrum_enabled,.spectrum_completed_us=now,.bands={12345},
  .levels={.valid=true,.rms={1234,2345},.peak={3000,4000}}};return true;
 }
 bool streamoo_metering_dispose(streamoo_metering_t *m){
@@ -96,17 +98,19 @@ void vTaskDelay(unsigned ms){now+=(int64_t)ms*1000;++tick;
  if(output_live){int32_t samples[480];output_fill(output_context,samples,240);}
  if(active_meter){int32_t raw[480];while(streamoo_pcm_pop(&active_meter->tap,raw,NULL)){} }
  streamoo_player_state_t s;assert(streamoo_player_state(&s));
- if(s.phase!=STREAMOO_PLAYER_PLAYING||disable_meter||wrong_meter_generation)assert(!s.metering.levels.valid);
+ if(s.phase!=STREAMOO_PLAYER_PLAYING||disable_meter||wrong_meter_generation){assert(!s.metering.levels.valid);assert(!s.metering.spectrum_valid);}
+ if(s.metering.spectrum_valid)assert(s.metering.generation==s.generation&&s.metering.bands[0]==12345);
  if(s.metering.levels.valid){assert(s.metering.generation==s.generation);assert(s.metering.levels.rms[0]==1234);}
 
  if(tick<=2)assert(!opens&&!output_live);
- if(tick==3){online=true;ap=false;assert(streamoo_player_select(NULL,&(streamoo_ui_select_command_t){11,1}));}
+ if(tick==3){streamoo_player_spectrum_enabled(true);online=true;ap=false;assert(streamoo_player_select(NULL,&(streamoo_ui_select_command_t){11,1}));}
  if(tick==9)assert(s.phase==STREAMOO_PLAYER_PLAYING&&s.station_id==11&&s.running);
  if(tick==10)assert(streamoo_player_control(NULL,&(streamoo_control_command_t){.kind=STREAMOO_CONTROL_TOGGLE}));
  if(tick==12)assert(streamoo_player_select(NULL,&(streamoo_ui_select_command_t){22,1}));
  if(tick==14)assert(streamoo_player_select(NULL,&(streamoo_ui_select_command_t){11,1}));
  if(tick==49)assert(opens==1&&!output_live);
- if(tick==65)assert(opens==2&&s.phase==STREAMOO_PLAYER_PLAYING);
+ if(tick==60){streamoo_player_spectrum_enabled(false);streamoo_player_state_t check;assert(streamoo_player_state(&check)&&!check.metering.spectrum_valid);}
+ if(tick==65){assert(opens==2&&s.phase==STREAMOO_PLAYER_PLAYING);streamoo_player_spectrum_enabled(true);}
  if(tick==70)force_fail=true;
  if(tick==120){assert(strstr(failure_log,"stage=decode cause=decoder_no_progress"));assert(strstr(diagnostic_log,"in=19 used=0 out=0 needed=0"));online=false;ap=true;}
  if(tick==130){online=true;assert(!output_live);}

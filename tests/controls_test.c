@@ -144,6 +144,12 @@ int main(int argc, char **argv)
             assert(d.ui.home.visualization_valid==(kind!=STREAMOO_VIS_SPECTRUM));
             if(kind){assert(d.ui.home.visualization.rms[1]==15000);assert(!d.ui.home.visualization.band_count);}
         }
+        levels.band_count=24;levels.bands[5]=24000;
+        assert(streamoo_encoder_demo_levels(&d,&levels));
+        d.ui.visualization=STREAMOO_VIS_SPECTRUM;
+        assert(streamoo_encoder_demo_draw(&d,frame,sizeof frame,150));
+        assert(d.ui.home.visualization_valid&&d.ui.home.visualization.band_count==24);
+        assert(d.ui.home.visualization.bands[5]==24000);
         levels.rms[0]=40000;
         assert(!streamoo_encoder_demo_levels(&d,&levels));
         assert(d.levels.rms[0]==1000);

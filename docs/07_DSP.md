@@ -75,3 +75,13 @@ fazy stereo, Nyquist i rzeczywisty tap volume0/50/100. ADR0041.
 Nadal brak live FFT/overlap/SIMD i benchmarku float-vs-sc16; ESP-DSP1.8.2
 sprawdzono jako przyszły backend, jeszcze bez nowej zależności. Mierniki
 RMS/peak pozostawione bez zmian, zgodnie z prośbą użytkownika.
+
+## 07e — pierwsze widmo live
+
+Własny kolektor1024/50% overlap, reset po lukach,24 pasma -60..0dBFS,
+max10Hz. Istniejący task metering liczy tylko przy wybranym FFT na HOME
+i PLAYING. Około45KiB workspace PSRAM, brak blokowania PCM, błąd PSRAM
+nie zatrzymuje RMS/audio. Generation/request revision, niezależny timestamp
+i expiry200ms. Referencyjny float backend do pierwszego pomiaru na S3;
+ESP-DSP/sc16/SIMD i docelowe FPS nadal OPEN. ADR0042, DSP_BRINGUP.
+303 testy/NumPy/native build PASS, odbiór dźwięku/czasów/OLED OPEN.

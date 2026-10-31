@@ -1,6 +1,6 @@
 # Punkt wznowienia StreamOO
 
-Aktualizacja: **2026-10-31, 07d — referencyjny FFT; strojenie mierników odłożone**.
+Aktualizacja: **2026-10-31, 07e — FFT live gotowe do odbioru na płytce**.
 Gałąź feature/streamoo-implementation. ADR0034–0035, STATUS i HTTP_PLAYER_BRINGUP.
 
 ## Potwierdzone przez użytkownika
@@ -147,3 +147,15 @@ Native C FFT/PCM harness ASan/UBSan PASS, LSan off. Native ESP-IDF6.1 build
 PASS, obraz0x15bf20 (7% wolne); spectrum kompilowany, nieużywany kod
 usunięty przez linker. check_config --platform i diff --check PASS.
 Bez flash/erase/eFuse i zmian partycji.
+
+Najnowszy krok07e (ADR0042): FFT live1024/50% overlap,24 pasma -60..0dBFS
+max10Hz. Tylko wybrane FFT/HOME/PLAYING, osobny istniejący task metering.
+Workspace około45KiB PSRAM, alloc przy pierwszej aktywacji, free przed ACK
+przy końcu sesji. Brak PSRAM nie blokuje audio/RMS; brak FFT na innym
+widżecie/liście. Reset okna i natychmiastowe maskowanie po zmianie żądania,
+generation/timestamps/expiry200ms. Nie zmieniono strojenia mierników.
+Referencyjny backend float, bez deklaracji SIMD; ESP-DSP/sc16 po pomiarach.
+303 testy, NumPy, targeted ASan/UBSan i native build PASS (0x15f2d0,6% app).
+Teraz zwykły flash bez erase/NVS i DSP_BRINGUP: słupki, VOL0, STOP/zmiany,
+czystość dźwięku; logi FFT max_fft/frames/skipped/gaps i meters/heap/max_fill.
+Agent nie wykonywał flash/erase/eFuse.

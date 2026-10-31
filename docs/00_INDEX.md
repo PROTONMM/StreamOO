@@ -105,3 +105,5 @@ Wygładzanie mierników07c: `adr/0039-meter-ballistics-and-gap-hold.md`.
 Żywsza reakcja mierników: `adr/0040-more-responsive-meter-ballistics.md`.
 
 Referencyjny rdzeń FFT07d: `adr/0041-spectrum-reference-core.md`.
+
+Widmo z rzeczywistego audio07e: `adr/0042-live-spectrum-bringup.md`.

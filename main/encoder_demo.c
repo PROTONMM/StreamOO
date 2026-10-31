@@ -99,7 +99,7 @@ bool streamoo_encoder_demo_draw(streamoo_encoder_demo_t *d, uint8_t *frame,
     s.visualization.peak[0]=s.visualization.rms[0];
     s.visualization.peak[1]=s.visualization.rms[1];
     if (d->imported_catalog && d->levels_valid &&
-        d->ui.visualization != STREAMOO_VIS_SPECTRUM) {
+        (d->ui.visualization != STREAMOO_VIS_SPECTRUM || d->levels.band_count)) {
         s.visualization = d->levels;
         s.visualization_valid = true;
     }
@@ -179,11 +179,13 @@ bool streamoo_encoder_demo_levels(streamoo_encoder_demo_t *d,
 {
     if (!d) return false;
     if (model) {
+        if(model->band_count>STREAMOO_VIS_MAX_BANDS)return false;
+        for(unsigned b=0;b<model->band_count;++b)
+            if(model->bands[b]>32767)return false;
         for (unsigned ch=0; ch<2; ++ch)
             if (model->rms[ch]>32767 || model->peak[ch]>32767) return false;
     }
     d->levels_valid=model!=NULL;
     d->levels=model ? *model : (streamoo_visualization_model_t){0};
-    d->levels.band_count=0; /* No fabricated frequency bands. */
     return true;
 }

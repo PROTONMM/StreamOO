@@ -38,5 +38,5 @@ bool streamoo_encoder_demo_set_catalog(streamoo_encoder_demo_t *, const streamoo
 
 void streamoo_encoder_demo_bind_station_owner(streamoo_encoder_demo_t *, streamoo_ui_post_fn, void *);
 
-/* Copies live RMS/peak; NULL invalidates. Spectrum remains unavailable. */
+/* Copies live visualization levels; NULL invalidates. No fabricated bands. */
 bool streamoo_encoder_demo_levels(streamoo_encoder_demo_t *, const streamoo_visualization_model_t *);

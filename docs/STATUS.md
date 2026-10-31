@@ -10,7 +10,7 @@ Bieżący punkt wznowienia: [RESUME.md](RESUME.md).
 | 04 UI/SSD1322 | HOME i lista odebrane na OLED; końcowe strojenie fontu OPEN | ADR 0012; odbiór użytkownika |
 | 05 encoder | dekoder/IRQ i gesty odebrane; interaktywny adapter odebrany w trybie A; preferencje NVS odebrane; shutdown/flush OPEN | ADR 0013–0017; 99 testów PASS |
 | 06 audio | I2S/gain/PCM stress odebrane; MP3 decode/PCM potwierdzone logiem; AAC-LC PoC odebrane; AAC incremental file decode06f odebrane logiem i odsłuchem; źródło/bufor AAC06g odebrane logiem, odsłuchem i sterowaniem; niezależny reader AAC06h odebrany; player06i: kilka stacji i 44,1/48kHz odebrane; rozszerzone testy OPEN | ADR0018–0025/0034–0035; 248 testów hostowych PASS; build PASS |
-| 07 DSP | RMS/peak działa, strojenie odłożone; referencyjny FFT07d gotowy, live/ESP-DSP OPEN | ADR0037–0041; testy NumPy i build |
+| 07 DSP | RMS/peak działa, strojenie odłożone; widmo live07e gotowe do odbioru, ESP-DSP/wydajność OPEN | ADR0037–0042;303 testy i build PASS |
 | 08 stacje | lista z katalogu i wybór odebrane; import live/reboot i edycja ID OPEN | ADR0033 |
 | 09 sieć | AP/STA/IP/AP-off potwierdzone logiem; mDNS OPEN | ADR0031; build PASS |
 | 10 WWW | formularze Wi-Fi/upload bez dodatkowego logowania; HOME/IP odebrane; lista z katalogu OPEN | ADR0032; 222 testy PASS; Chromium PASS |
@@ -1374,3 +1374,20 @@ Native C FFT/PCM harness ASan/UBSan PASS, LSan off. Native ESP-IDF6.1 build
 PASS, obraz0x15bf20 (7% wolne); spectrum kompilowany, nieużywany kod
 usunięty przez linker. check_config --platform i diff --check PASS.
 Bez flash/erase/eFuse i zmian partycji.
+
+## 07e — FFT na OLED z rzeczywistych próbek (2026-10-31)
+
+Kolektor1024/50% overlap i reset po lukach. Widmo24 pasma -60..0dBFS,
+max10Hz, tylko aktywne FFT/HOME/PLAYING. Workspace około45KiB PSRAM,
+niezmieniony task i ring internal. Błąd PSRAM nie zatrzymuje audio/RMS.
+Rewizja żądania i generation chronią przed starymi pasmami, niezależna
+ważność/czas FFT i RMS, expiry200ms. Parametry mierników bez zmian.
+Referencyjny float backend jako pierwszy pomiar live; optymalizacja
+ESP-DSP/SIMD/sc16 nadal OPEN. ADR0042.
+
+303 testy PASS, NumPy PASS, collector/metering/actor/controls ASan/UBSan
+PASS (LSan off, bez TSan). Native ESP-IDF6.1 build PASS,0x15f2d0 (6% wolne).
+check_config --platform/diff --check PASS, pcm_fill w IRAM. Bez nowych
+zależności, zmian partycji, flash/erase/eFuse.
+HARDWARE_TEST_PENDING: DSP_BRINGUP — słupki FFT, czysty dźwięk, VOL0,
+zmiana widżetu/STOP/stacji, max_fft/max_fill/drop/heap/stack.
