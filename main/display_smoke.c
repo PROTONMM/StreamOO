@@ -86,6 +86,10 @@ static void display_task(void *context)
             streamoo_encoder_demo_bind_station_owner(&demo,streamoo_player_select,NULL);
         }
         bool panel_enabled=true;
+        bool startup_logo=show_logo;
+        uint64_t startup_connected_at=0;
+        streamoo_player_phase_t startup_phase=STREAMOO_PLAYER_STOPPED;
+        bool startup_player_ready=false;
         uint64_t player_generation=0;
         uint32_t player_volume_revision=0;
         if (!streamoo_ui_set_visualization(&demo.ui, restored.visualization)) error = ESP_ERR_INVALID_STATE;
@@ -134,6 +138,8 @@ static void display_task(void *context)
                     demo.ui.visualization==STREAMOO_VIS_SPECTRUM);
                 streamoo_player_state_t player;
                 if(streamoo_player_state(&player)) {
+                    startup_phase=player.phase;
+                    startup_player_ready=player.ready;
                     memcpy(live_codec,player.codec,sizeof live_codec);
                     demo.bitrate_kbps=player.bitrate_kbps;
                     if(demo.station_id!=player.station_id||player_generation!=player.generation){
@@ -196,6 +202,7 @@ static void display_task(void *context)
                 const streamoo_control_mode_t mode = STREAMOO_CONTROL_MODE_A;
 #endif
                 if (setup) continue;
+                startup_logo=false;
                 if (!streamoo_encoder_demo_input(&demo,event,mode,now))
                     ESP_LOGW("display_smoke", "TEST gesture rejected; state preserved");
                 const streamoo_preferences_value_t preferences = {(uint8_t)demo.volume, (uint8_t)demo.ui.visualization};
@@ -205,6 +212,21 @@ static void display_task(void *context)
             streamoo_settings_t settings=streamoo_settings_get();
             if(!setup&&!streamoo_ui_list_timeout(&demo.ui,now,settings.list_timeout_s,settings.list_autoselect))
                 ESP_LOGW("display_smoke","List timeout deferred: command queue busy");
+            /* Hold the already presented boot frame; never repeat on reconnect.
+             * Bound station startup so a failed source cannot hide diagnostics. */
+            if(startup_logo && streamoo_network_boot_ap_enabled()) {
+                if(network.sta_connected && !startup_connected_at) startup_connected_at=now;
+                bool pending=!startup_player_ready || !catalog_snapshot ||
+                    (demo.station_id && demo.running && startup_phase!=STREAMOO_PLAYER_PLAYING &&
+                     startup_phase!=STREAMOO_PLAYER_RETRY);
+                bool waiting=streamoo_ui_boot_wait(ap_active,network.sta_connected,pending,
+                    now-startup_connected_at);
+                if(waiting) {
+                    memset(&ap,0,sizeof ap);
+                    vTaskDelayUntil(&wake,pdMS_TO_TICKS(40));continue;
+                }
+                startup_logo=false;
+            }
             bool visible=setup||!demo.station_id||demo.running;
             if(!visible){
                 if(panel_enabled){error=streamoo_ssd1322_enable(display,false);if(error==ESP_OK)panel_enabled=false;}

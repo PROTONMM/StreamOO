@@ -170,3 +170,7 @@ Propozycja znaku StreamOO w native256×64/4bpp: dwa O/fale, linia sygnału,
 napisKrypton i podpis. Pierwsze present po boot/resecie,1500ms, potem
 normalne UI. Brak powtórzeń po PLAY/reconnect/zmianie stacji, brak opóźnienia
 zadań sieciowych. Podgląd assets/branding/startup-256x64.png; odbiórOLED OPEN.
+
+ADR0068 zastępuje stały koniec logo: minimum1,5s, potem logo do startu
+audio/diagnostyki lub AP. Autoplay ostatniej stacji domyślny; szczegóły
+migracji i granice oczekiwania w ADR0068.

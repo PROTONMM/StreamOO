@@ -10,7 +10,7 @@ static portMUX_TYPE lock = portMUX_INITIALIZER_UNLOCKED;
 static SemaphoreHandle_t writes;
 static bool ready;
 static streamoo_settings_t current = {.list_timeout_s = 5,
-                                      .list_autoselect = true};
+                                      .list_autoselect = true, .autoplay = true};
 static uint64_t last_station, pending_station, station_revision;
 static int64_t station_at;
 bool streamoo_settings_valid(const streamoo_settings_t *s) {
@@ -52,7 +52,7 @@ void streamoo_settings_station_changed(uint64_t id) {
 /* Explicit byte encoding: no structure padding or ABI-dependent persistence. */
 static void encode(const streamoo_settings_t *s, uint8_t data[68]) {
   memset(data, 0, 68);
-  data[0] = 1;
+  data[0] = 2;
   data[1] = (uint8_t)s->list_timeout_s;
   data[2] = s->list_autoselect;
   data[3] = s->autoplay;
@@ -134,11 +134,11 @@ esp_err_t streamoo_settings_start(void) {
     uint8_t data[68];
     size_t bytes = sizeof data;
     esp_err_t found = nvs_get_blob(h, "settings", data, &bytes);
-    if (found == ESP_OK && bytes == sizeof data && data[0] == 1 &&
+    if (found == ESP_OK && bytes == sizeof data && (data[0] == 1 || data[0] == 2) &&
         data[2] <= 1 && data[3] <= 1) {
       streamoo_settings_t loaded = {.list_timeout_s = data[1],
                                     .list_autoselect = data[2] != 0,
-                                    .autoplay = data[3] != 0};
+                                    .autoplay = data[0] == 1 || data[3] != 0};
       memcpy(loaded.hostname, data + 4, 64);
       if (streamoo_settings_valid(&loaded))
         current = loaded;

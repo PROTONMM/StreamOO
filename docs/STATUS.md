@@ -1,5 +1,25 @@
 # Status implementacji
 
+## Najnowsze — logo do startu odtwarzania / ADR0068 / 2026-10-31
+
+Na polecenie użytkownika boot: logo minimum1,5s, potem pozostaje podczas
+prób Wi-Fi i startu ostatniej zapisanej stacji. Bez przejściowej strony STA
+ani wygaszonego STOP. Po PLAYING przejście HOME, AP od razu pokazuje
+konfigurację. RETRY lub30s od pierwszego IPv4 odsłania diagnostykę zamiast
+bezterminowego logo. Po IPv4 minimum500ms na synchronizację ownera/katalogu.
+Obsłużony gest kończy logo; po PLAY/STOP/reconnect logo nie wraca.
+
+Autoplay domyślnie true. Stary blob ustawieńv1 czytany z autoplay=true,
+pozostałe pola i ID zachowane; zapisv2 pozwala nadal wybrać STOP przez WWW.
+Migracja bez kasowania NVS i bez zapisu flash na ścieżce UI/audio. Brak
+zapamiętanej, istniejącej stacji pozostawia HOME do wyboru, bez losowego fallback.
+
+381 testów hostowych PASS (granice logo/AP/timeout i v1/v2/default settings),
+native ESP-IDF6.1 build PASS0x17bc90,90% app wolne; GPIO/diff PASS.
+Zwykły flash bez erase/importu. Odbiór sekwencji OLED/audio na S3 OPEN.
+Nie wykonywano flash. Stabilność HLS/FLAC nadal osobno OPEN.
+
+
 
 ## Najnowsze — bitrate HLS / ADR0067 / 2026-10-31
 

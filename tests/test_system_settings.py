@@ -26,12 +26,14 @@ int xSemaphoreGive(void *s){(void)s;return 1;}
 int64_t esp_timer_get_time(void){return now;}
 int xTaskCreate(void(*f)(void*),const char *name,unsigned stack,void *ctx,unsigned pri,void *handle){(void)ctx;(void)handle;assert(!strcmp(name,"system_settings")&&stack>=4096&&pri==1);worker=f;return 1;}
 void vTaskDelay(unsigned ticks){now+=(int64_t)ticks*1000;if(++delays==26)longjmp(end,1);}
-int main(int argc,char **argv){assert(argc==2);mode=(unsigned)atoi(argv[1]);stored[0]=mode==4?255:1;stored[1]=7;stored[2]=0;stored[3]=1;strcpy((char*)stored+4,"my-radio");
+int main(int argc,char **argv){assert(argc==2);mode=(unsigned)atoi(argv[1]);stored[0]=mode==4?255:mode==6?2:1;stored[1]=7;stored[2]=0;stored[3]=(mode==5||mode==6)?0:1;strcpy((char*)stored+4,"my-radio");
  assert(streamoo_settings_start()==0);assert(worker);streamoo_settings_t s=streamoo_settings_get();
+ assert(s.autoplay==(mode!=6));
  assert(s.list_timeout_s==((mode==0||mode==4)?5u:7u));assert(streamoo_settings_last_station()==77);
  if(mode==1){streamoo_settings_station_changed(88);streamoo_settings_station_changed(88);assert(!station_writes);if(!setjmp(end))worker(NULL);assert(station_writes==1&&saved_id==88&&streamoo_settings_last_station()==88);return 0;}
  s.list_timeout_s=9;strcpy(s.hostname,"new-radio");s.autoplay=true;
  assert(streamoo_settings_set(&s)==(mode==2?ESP_FAIL:0));assert(streamoo_settings_get().list_timeout_s==(mode==2?7u:9u));
+ assert(stored[0]==2);
  unsigned before=commits;
  for(unsigned i=0;i<4;++i){s.list_timeout_s=i==0?0:i==1?121:5;strcpy(s.hostname,i==2?"-bad":i==3?"bad.local":"okay");assert(!streamoo_settings_valid(&s));assert(streamoo_settings_set(&s)==ESP_ERR_INVALID_ARG);}
  assert(commits==before);return 0;}
@@ -49,5 +51,5 @@ class SystemSettingsTests(unittest.TestCase):
    (base/'freertos/semphr.h').write_text('#pragma once\ntypedef void *SemaphoreHandle_t;\nvoid *xSemaphoreCreateMutex(void);\nint xSemaphoreTake(void*,unsigned);\nint xSemaphoreGive(void*);\n')
    (base/'test.c').write_text(HARNESS);binary=base/'test'
    subprocess.run(['cc','-std=c11','-Wall','-Wextra','-Werror',*os.environ.get('STREAMOO_SETTINGS_SANITIZE','').split(),'-I'+tmp,'-Icomponents/settings/include','components/settings/streamoo_settings.c',str(base/'test.c'),'-o',str(binary)],cwd=ROOT,check=True)
-   for mode in (0,1,2,4):
+   for mode in (0,1,2,4,5,6):
     with self.subTest(mode=mode):subprocess.run([str(binary),str(mode)],check=True)
