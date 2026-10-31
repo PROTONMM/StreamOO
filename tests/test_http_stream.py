@@ -33,6 +33,7 @@ HARNESS=r'''
 #include <setjmp.h>
 #include <stdlib.h>
 #include <string.h>
+static int sdk_get_urls;
 static int mode,redirected,reads,cleaned,semaphores,allocations,opened,resolved;
 static char selected_url[2049];
 static void (*reader)(void *);static void *reader_context;static jmp_buf completed;
@@ -53,11 +54,14 @@ void vTaskDelay(unsigned t){(void)t;if(mode==30&&segments)streamoo_http_stream_s
 unsigned uxTaskGetStackHighWaterMark(void *task){(void)task;return 8000;}
 void vTaskDelete(void *p){(void)p;longjmp(completed,1);}
 int esp_crt_bundle_attach(void *p){(void)p;return ESP_OK;}
-void *esp_http_client_init(const esp_http_client_config_t *c){config=*c;assert(c->timeout_ms==3000&&c->disable_auto_redirect&&c->crt_bundle_attach==esp_crt_bundle_attach&&c->auth_type==0);return (void *)1;}
+void *esp_http_client_init(const esp_http_client_config_t *c){config=*c;strcpy(selected_url,c->url);assert(c->timeout_ms==3000&&c->disable_auto_redirect&&c->crt_bundle_attach==esp_crt_bundle_attach&&c->auth_type==0);return (void *)1;}
 int esp_http_client_set_header(void *h,const char *key,const char *value){(void)h;if(!strcmp(key,"Icy-MetaData"))assert(!strcmp(value,"1")||!strcmp(value,"0"));else assert(!strcmp(key,"Accept-Encoding")&&!strcmp(value,"identity"));return ESP_OK;}
 int esp_http_client_open(void *h,int size){(void)h;assert(!size);++opened;return ESP_OK;}
 static void header(const char *name,const char *value){esp_http_client_event_t e={HTTP_EVENT_ON_HEADER,config.user_data,(char *)name,(char *)value};assert(config.event_handler(&e)==ESP_OK);}
 long long esp_http_client_fetch_headers(void *h){(void)h;
+ if((mode==2||mode==3||mode==10||mode==14)&&!redirected)header("Location",mode==10?"http://user:key@radio.invalid":mode==3?"http://radio.invalid":"https://radio.invalid");
+ if(mode==37&&strstr(selected_url,"?lsid=first"))header("Location","?lsid=keep%2Ftoken&x=1");
+ if((mode==38||mode==39)&&strstr(selected_url,"segment1")&&!strstr(selected_url,"token="))header("Location",mode==39?"http://radio.invalid/signed/segment1.mp3?token=x":"../signed/segment1.mp3?token=x%2Fy");
  if(mode>=27){header("Content-Type",strstr(selected_url,"segment")?"application/octet-stream":"application/vnd.apple.mpegurl");return 0;}
  if(mode>=15){
   const char *type=mode==15?"audio/flac":mode==16||mode==17?"audio/ogg":mode==18||mode==26?"application/octet-stream":resolved&&mode!=21?"audio/mpeg":mode==20?"audio/x-scpls":"audio/x-mpegurl";
@@ -66,22 +70,36 @@ long long esp_http_client_fetch_headers(void *h){(void)h;
  if(mode==12)header("icy-br","192");
  if(mode==13){header("icy-br","-128");header("icy-br","128junk");header("icy-br","99999999999999");}
  if(mode==14&&!redirected)header("icy-br","320");
- header("Content-Type",mode==5?"text/html":mode==11?"audio/mpegjunk":mode==1?"application/octet-stream":"audio/mpeg");header("icy-metaint",mode==4?"999999999":"3");if(mode==10)header("Location","http://user:key@radio.invalid");return 0;}
-int esp_http_client_get_status_code(void *h){(void)h;return (mode==2||mode==3||mode==10||mode==14)&&!redirected?302:200;}
-int esp_http_client_get_url(void *h,char *out,int cap){(void)h;
- if(mode>=27){const char *u=*selected_url?selected_url:"https://radio.invalid/hls/master.m3u8";assert((size_t)cap>strlen(u));strcpy(out,u);return ESP_OK;}
- if(mode>=19){const char *u=resolved?selected_url:"https://radio.invalid/list.m3u";assert((size_t)cap>strlen(u));strcpy(out,u);return ESP_OK;}
-const char *url=mode==3?(redirected?"http://radio.invalid":"https://radio.invalid"):(redirected?"https://radio.invalid":"http://radio.invalid");assert((size_t)cap>strlen(url));strcpy(out,url);return ESP_OK;}
+ header("Content-Type",mode==5?"text/html":mode==11?"audio/mpegjunk":mode==1?"application/octet-stream":"audio/mpeg");header("icy-metaint",mode==4?"999999999":"3");return 0;}
+int esp_http_client_get_status_code(void *h){(void)h;
+ if(mode==37&&strstr(selected_url,"?lsid=first"))return 302;
+ if((mode==38||mode==39)&&strstr(selected_url,"segment1")&&!strstr(selected_url,"token="))return 307;
+ return (mode==2||mode==3||mode==10||mode==14)&&!redirected?302:200;
+}
+/* Emulate pinned IDF6.1: get_url omits query, even though the next HTTP
+ * request still uses it. Production must not use this lossy getter. */
+int esp_http_client_get_url(void *h,char *out,int cap){(void)h;++sdk_get_urls;assert((size_t)cap>strlen(selected_url));strcpy(out,selected_url);char *q=strchr(out,'?');if(q)*q=0;return ESP_OK;}
 static void hls_wire(const char *url){
  cursor=0;const char *doc=NULL;
+ if((mode==37&&strstr(url,"?lsid=first"))||((mode==38||mode==39)&&strstr(url,"segment1")&&!strstr(url,"token="))){wire_bytes=0;return;}
  if(strstr(url,"segment")){
   ++segments;memset(wire,0,768);size_t offset=0;
+  if(mode>=36){memcpy(wire,"ID3\4\0\0\0\0\0\x3f",10);memcpy(wire+73,"ID3\4\0\0\0\0\0\x29",10);offset=124;}
   if(mode==27||mode==32){memcpy(wire,"ID3\4\0\0\0\0\0\4",10);offset=14;if(mode==32)wire[6]=1;}
   if(mode==28){wire[0]=wire[188]=wire[376]=0x47;wire_bytes=564;}
-  else {wire[offset]=0xff;wire[offset+1]=(mode==35&&segments==2)?0xfb:0xf1;wire_bytes=offset+16;}
+  else {wire[offset]=0xff;wire[offset+1]=(mode>=36||(mode==35&&segments==2))?0xfb:0xf1;wire_bytes=offset+16;}
   return;
  }
- if(mode==27&&!strstr(url,"media"))doc="#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=128000,CODECS=\"mp4a.40.2\"\nmedia.m3u8\n";
+ if(mode>=36){
+  if(!strstr(url,"media")||!strstr(url,"lsid="))doc=mode==37?"#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=128000\nmedia.m3u8?lsid=first\n":"#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=128000\nmedia.m3u8?lsid=keep%2Ftoken&x=1\n";
+  else {
+   assert(strstr(url,"media.m3u8?lsid=keep%2Ftoken&x=1"));++media_loads;
+   doc=media_loads==1?"#EXTM3U\n#EXT-X-TARGETDURATION:1\n#EXT-X-MEDIA-SEQUENCE:1\n#EXTINF:1,\nsegment1.mp3\n":media_loads==2?
+   "#EXTM3U\n#EXT-X-TARGETDURATION:1\n#EXT-X-MEDIA-SEQUENCE:1\n#EXTINF:1,\nsegment1.mp3\n#EXTINF:1,\nsegment2.mp3\n":
+   "#EXTM3U\n#EXT-X-TARGETDURATION:1\n#EXT-X-MEDIA-SEQUENCE:2\n#EXTINF:1,\nsegment2.mp3\n#EXTINF:1,\nsegment3.mp3\n#EXT-X-ENDLIST\n";
+  }
+ }
+ else if(mode==27&&!strstr(url,"media"))doc="#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=128000,CODECS=\"mp4a.40.2\"\nmedia.m3u8\n";
  else if(mode==33)doc="#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=64000\nmaster.m3u8\n";
  else if(mode==34)doc="#EXTM3U\n#EXT-X-TARGETDURATION:1\n#EXTINF:1,\nhttp://radio.invalid/segment1.aac\n";
  else if(mode==29||mode==30){
@@ -94,9 +112,10 @@ static void hls_wire(const char *url){
  strcpy((char *)wire,doc);wire_bytes=strlen(doc);
 }
 int esp_http_client_set_url(void *h,const char *url){(void)h;strcpy(selected_url,url);++resolved;cursor=0;
+ if(mode==2||mode==3||mode==10||mode==14){redirected=1;return ESP_OK;}
  if(mode>=27)hls_wire(url);else if(mode!=21){memcpy(wire,"ID3test",7);wire_bytes=7;}
  return ESP_OK;}
-int esp_http_client_set_redirection(void *h){(void)h;redirected=1;return ESP_OK;}
+int esp_http_client_set_redirection(void *h){(void)h;assert(0);return ESP_OK;}
 int esp_http_client_close(void *h){(void)h;return ESP_OK;}
 int esp_http_client_cleanup(void *h){assert(h);++cleaned;return ESP_OK;}
 int esp_http_client_read(void *h,char *out,int cap){(void)h;++reads;if(mode==9||(mode==8&&reads<=2))return -ESP_ERR_HTTP_EAGAIN;if(mode==6)streamoo_http_stream_stop(stream);if(mode==25&&!resolved){streamoo_http_stream_stop(stream);return -1;}
@@ -112,13 +131,18 @@ int main(int argc,char **argv){assert(argc==2);mode=atoi(argv[1]);
  strcpy((char *)wire,doc);wire_bytes=strlen(doc);}
  if(mode>=27)hls_wire("https://radio.invalid/hls/master.m3u8");
  assert(streamoo_http_stream_open("ftp://radio.invalid",&stream)==ESP_ERR_INVALID_ARG);
- int e=streamoo_http_stream_open(mode==3?"https://radio.invalid":"http://radio.invalid",&stream);
+ int e=streamoo_http_stream_open(mode>=27?"https://radio.invalid/hls/master.m3u8":mode>=19?"https://radio.invalid/list.m3u":mode==3?"https://radio.invalid":"http://radio.invalid",&stream);
  if(mode==7){assert(e==ESP_ERR_NO_MEM&&!allocations&&!semaphores);return 0;}
  assert(e==ESP_OK&&!streamoo_http_stream_dispose(stream));
  if(!setjmp(completed))reader(reader_context);
- assert(cleaned==1);if(mode==8)assert(opened==1);
+ assert(cleaned==1&&!sdk_get_urls);if(mode==8)assert(opened==1);
  streamoo_http_stream_info_t info;assert(streamoo_http_stream_info(stream,&info)&&info.ended);
  assert(info.bitrate_kbps==(mode==12?192u:0u));
+ if(mode>=36){
+ if(mode==39)assert(!segments&&!streamoo_http_stream_queued(stream)&&info.error==ESP_ERR_INVALID_RESPONSE);
+ else assert(segments==3&&media_loads==3&&info.codec_known&&info.codec==STREAMOO_CODEC_MP3&&streamoo_http_stream_queued(stream)==48);
+ streamoo_http_stream_stop(stream);assert(streamoo_http_stream_dispose(stream)&&!semaphores&&!allocations);return 0;
+ }
  if(mode>=27){
  if(mode==27||mode==28||mode==29){assert(segments==2);assert(info.codec_known&&info.codec==(mode==28?STREAMOO_CODEC_MPEG_TS:STREAMOO_CODEC_AAC_LC));assert(streamoo_http_stream_queued(stream)==(mode==28?1128u:32u));if(mode==29)assert(media_loads==2);}
  else if(mode==30){assert(segments==1&&media_loads==1);}
@@ -189,3 +213,8 @@ class HTTPStreamTests(unittest.TestCase):
  def test_hls_master_packed_id3_ts_live_reload_cancel_and_rejections(self):
   for mode in range(27,36):
    with self.subTest(mode=mode):self.run_case(mode)
+
+ def test_hls_preserves_session_query_on_multiple_reloads_and_redirects(self):
+  for mode in (36,37,38):
+   with self.subTest(mode=mode):self.run_case(mode)
+ def test_hls_redirect_rejects_https_downgrade_with_query(self):self.run_case(39)

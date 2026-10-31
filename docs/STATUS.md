@@ -1,6 +1,31 @@
 # Status implementacji
 
 
+## Najnowsze — HLS128k MP3 / ADR0065 / 2026-10-31
+
+Użytkownik wskazał HLS MP3, nie FLAC: początek phase4/44100/PCM32/low0/
+starts1, potem HTTP200/NOT_SUPPORTED po~3 segmentach. Przyczyna odtworzona:
+SDK6.1 get_url pomija query; po master znikał lsid media URL, reload bez
+niego dostawał nowy MASTER, celowo odrzucany podczas grania. Publiczny
+serwer potwierdza MEDIA zlsid i MASTER bez;5 segmentów MP3/44100/stereo
+sprawdzonych hostowo. Nie dodawać ich audio do repo.
+
+Poprawka: własny pełny request_url i Location, zachowanie query/escaping,
+redirect także query-only przez dotychczasowy resolver. Brak SDKget_url/
+set_redirection w readerze. LimityURI/redirect i TLS/no-downgrade zachowane,
+około4KiB dodatkowo w PSRAM, bez zmian PCM/decoder/ISR/NVS/partycji/playlist.
+Stary reader odtwarza błąd na shimie SDK, nowy przechodzi wielokrotne
+reload i podpisane redirecty; test obejmuje dwa ID3 jak w realnym źródle.
+
+374 testy hostowe, HTTP ASanUBSan (LSan off), native ESP-IDF6.1 build
+PASS0x17aa40 (90% app), GPIO/diff PASS. Teraz zwykły flash bez erase/FS/
+reimport: ten sam HLS przez>=3min, jedna gen/starts1/low0 i brak ponownego
+MASTER/NOT_SUPPORTED po~37s. Odbiór poprawki na S3 OPEN. FLAC nadal osobno
+niedokończony: czekamy na phase + Decode perf z ADR0064; ten log nie dowodzi
+naprawy FLAC. Logo/ustawienia bez zmian, ROOT CA/FFT/RMS/wyglądWWW odłożone,
+OTA wyłączone. Agent nie flashował. Starsze sekcje poniżej to historia.
+
+
 ## Bieżący problem — FLAC nadal przerywa / ADR0064 / 2026-10-31
 
 Użytkownik: po ADR0062 nadal źle. Nowy log31..51s: gen2, low5→11/starts5→11,

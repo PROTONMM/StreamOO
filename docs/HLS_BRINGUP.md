@@ -34,3 +34,13 @@ ją przed próbą, albo dodaj wybrane adresy ręcznie w edytorze.
 Testy hostowe/ASan/UBSan i build PASS. Realny multicast/NVS/OLED/DMA,
 wydajność TS/HE-AAC, TLS S3, stabilność HLS po wielogodzinnym odtwarzaniu
 oraz stare poprawki live FLAC/RNŚ pozostają osobnymi punktami OPEN.
+
+## Poprawka odświeżania sesji — ADR0065
+
+Pierwszy odsłuch S3 HLS MP3 był poprawny, po~37s HTTP200/NOT_SUPPORTED.
+GetterURL w pinned SDK usuwał query/lsid; reload trafiał na MASTER zamiast
+MEDIA. Reader przechowuje teraz pełne adresy, także po redirect query-only
+oraz segmentach ze znakowanym URL. Host odtwarza błąd starego wariantu i
+poprawne wielokrotne reload nowego. Po zwykłym flash bez erase/importu
+sprawdzić TEST HLS128k-mp3-stereo>=3min, gen/starts bez restartów, low0.
+Odbiór poprawki S3 OPEN; ograniczenia AES/fMP4/discontinuity pozostają.

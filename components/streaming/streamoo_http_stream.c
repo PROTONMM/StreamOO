@@ -17,7 +17,8 @@ static portMUX_TYPE info_lock = portMUX_INITIALIZER_UNLOCKED;
 struct streamoo_http_stream {
   streamoo_buffered_source_t *buffer;
   uint8_t *storage;
-  char url[2049], redirect_old[2049], redirect_next[2049];
+  char url[2049], request_url[2049], location[2049], redirect_old[2049],
+      redirect_next[2049];
   SemaphoreHandle_t done;
   atomic_uint stop;
   streamoo_http_stream_info_t info;
@@ -47,8 +48,11 @@ static esp_err_t header(esp_http_client_event_t *e) {
   if (e->event_id != HTTP_EVENT_ON_HEADER)
     return ESP_OK;
   if (!strcasecmp(e->header_key, "Location")) {
-    if (strlen(e->header_value) > 2048 || strchr(e->header_value, '@'))
+    if (!*e->header_value || strlen(e->header_value) > 2048 ||
+        strchr(e->header_value, '@') || s->location[0])
       s->bad_location = true;
+    else
+      strcpy(s->location, e->header_value);
   } else if (!strcasecmp(e->header_key, "icy-metaint")) {
     char *end = NULL;
     unsigned long n = strtoul(e->header_value, &end, 10);
@@ -122,6 +126,26 @@ static esp_err_t header(esp_http_client_event_t *e) {
   }
   return ESP_OK;
 }
+/* IDF6.1 get_url reconstructs scheme/host/port/path but omits query.
+ * Own the exact accepted request URL, including session/signature parameters.
+ */
+static esp_err_t set_request_url(streamoo_http_stream_t *s,
+                                 esp_http_client_handle_t client,
+                                 const char *url) {
+  if (!streamoo_stream_url_allowed(url))
+    return ESP_ERR_INVALID_ARG;
+  esp_err_t error = esp_http_client_set_url(client, url);
+  if (error == ESP_OK)
+    memmove(s->request_url, url, strlen(url) + 1);
+  return error;
+}
+static esp_err_t follow_redirect(streamoo_http_stream_t *s,
+                                 esp_http_client_handle_t client) {
+  if (s->bad_location || !s->location[0] ||
+      !streamoo_url_resolve(s->request_url, s->location, s->redirect_next))
+    return ESP_ERR_INVALID_RESPONSE;
+  return set_request_url(s, client, s->redirect_next);
+}
 static bool write_audio(streamoo_http_stream_t *s, const uint8_t *data,
                         size_t n) {
   size_t offset = 0;
@@ -144,13 +168,14 @@ typedef struct {
 static esp_err_t hls_open(streamoo_http_stream_t *s,
                           esp_http_client_handle_t client, const char *url) {
   esp_http_client_close(client);
-  if (esp_http_client_set_url(client, url) != ESP_OK)
+  if (set_request_url(s, client, url) != ESP_OK)
     return ESP_FAIL;
   for (unsigned redirects = 0; redirects <= 5 && !atomic_load(&s->stop);
        ++redirects) {
     s->interval = 0;
     s->bad_header = false;
     s->bad_location = false;
+    s->location[0] = 0;
     s->playlist_header = false;
     s->response_known = false;
     esp_err_t error = esp_http_client_open(client, 0);
@@ -168,15 +193,9 @@ static esp_err_t hls_open(streamoo_http_stream_t *s,
         !(code == 301 || code == 302 || code == 303 || code == 307 ||
           code == 308))
       return ESP_ERR_INVALID_RESPONSE;
-    if (esp_http_client_get_url(client, s->redirect_old,
-                                sizeof s->redirect_old) != ESP_OK ||
-        esp_http_client_set_redirection(client) != ESP_OK ||
-        esp_http_client_get_url(client, s->redirect_next,
-                                sizeof s->redirect_next) != ESP_OK ||
-        !streamoo_stream_url_allowed(s->redirect_next) ||
-        (!strncmp(s->redirect_old, "https://", 8) &&
-         strncmp(s->redirect_next, "https://", 8)))
-      return ESP_ERR_INVALID_RESPONSE;
+    error = follow_redirect(s, client);
+    if (error != ESP_OK)
+      return error;
     esp_http_client_close(client);
   }
   return ESP_FAIL;
@@ -324,7 +343,7 @@ static esp_err_t hls_run(streamoo_http_stream_t *s,
       if (error == ESP_OK)
         error = hls_document(s, client, h, &bytes);
       if (error == ESP_OK)
-        error = esp_http_client_get_url(client, h->url, sizeof h->url);
+        strcpy(h->url, s->request_url);
       continue;
     }
     if (result != STREAMOO_HLS_MEDIA) {
@@ -387,7 +406,7 @@ static esp_err_t hls_run(streamoo_http_stream_t *s,
     if (error == ESP_OK)
       error = hls_document(s, client, h, &bytes);
     if (error == ESP_OK)
-      error = esp_http_client_get_url(client, h->url, sizeof h->url);
+      strcpy(h->url, s->request_url);
   }
   heap_caps_free(h);
   return error;
@@ -417,6 +436,7 @@ static void reader(void *context) {
     s->interval = 0;
     s->bad_header = false;
     s->bad_location = false;
+    s->location[0] = 0;
     s->playlist_header = false;
     portENTER_CRITICAL(&info_lock);
     s->info.codec_known = false;
@@ -438,11 +458,7 @@ static void reader(void *context) {
         error = ESP_ERR_NOT_SUPPORTED;
         break;
       }
-      if (esp_http_client_get_url(client, s->redirect_old,
-                                  sizeof s->redirect_old) != ESP_OK) {
-        error = ESP_FAIL;
-        break;
-      }
+      strcpy(s->redirect_old, s->request_url);
       streamoo_http_stream_info_t snapshot;
       streamoo_http_stream_info(s, &snapshot);
       if (s->playlist_header ||
@@ -492,7 +508,7 @@ static void reader(void *context) {
                                                   : ESP_ERR_INVALID_RESPONSE;
           break;
         }
-        if (esp_http_client_set_url(client, s->redirect_next) != ESP_OK) {
+        if (set_request_url(s, client, s->redirect_next) != ESP_OK) {
           error = ESP_FAIL;
           break;
         }
@@ -508,21 +524,9 @@ static void reader(void *context) {
       error = ESP_ERR_INVALID_RESPONSE;
       break;
     }
-    if (s->bad_location) {
-      error = ESP_ERR_INVALID_RESPONSE;
+    error = follow_redirect(s, client);
+    if (error != ESP_OK)
       break;
-    }
-    char *old = s->redirect_old, *next = s->redirect_next;
-    if (esp_http_client_get_url(client, old, sizeof s->redirect_old) !=
-            ESP_OK ||
-        esp_http_client_set_redirection(client) != ESP_OK ||
-        esp_http_client_get_url(client, next, sizeof s->redirect_next) !=
-            ESP_OK ||
-        !streamoo_stream_url_allowed(next) ||
-        (!strncmp(old, "https://", 8) && strncmp(next, "https://", 8))) {
-      error = ESP_ERR_INVALID_RESPONSE;
-      break;
-    }
     esp_http_client_close(client);
   }
   if (error == ESP_OK &&
@@ -638,6 +642,7 @@ esp_err_t streamoo_http_stream_open(const char *url,
     return ESP_ERR_NO_MEM;
   atomic_init(&s->stop, 0);
   strcpy(s->url, url);
+  strcpy(s->request_url, url);
   s->storage = heap_caps_malloc(CAPACITY, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
   s->done = xSemaphoreCreateBinary();
   if (s->storage)

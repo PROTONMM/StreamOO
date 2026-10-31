@@ -149,3 +149,5 @@ FLAC parser/PCM/rebuffer: `adr/0062-flac-parser-recovery-and-buffer-reserve.md`.
 Logo OLED: `adr/0063-native-oled-boot-mark.md`, `../assets/branding/README.md`.
 
 FLAC nadal przerywa — porcje wejścia i pomiar terminów: `adr/0064-live-decode-batches-and-deadline-measurements.md`.
+
+Zachowanie sesji HLS przy reload: `adr/0065-hls-session-query-preservation.md`.

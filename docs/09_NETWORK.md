@@ -111,3 +111,9 @@ sesję/retry. Limity16KiB/32 segmenty, osobny manifest PSRAM, reader16KiB,
 TLS i ring256KiB zachowane. Testy hostowe/publiczne próbki PASS, odsłuch
 S3 OPEN. Instrukcja: [HLS_BRINGUP](HLS_BRINGUP.md), `playlist.hls.csv`.
 Generator extended fixtures dodaje3 lokalne HLS: AAC-TS/MP3-TS/AAC-packed.
+
+ADR0065: reader posiada pełny bieżący URL wraz z query (lsid/podpisy),
+ponieważ pinned SDKget_url zwracał sam scheme/host/port/path. Dotyczy
+HLS reload, M3U/PLS i manualnych Location. Resolver/limity/no-downgrade
+zachowane; tracker nie dodaje logowania query ani osobnego zapisu w NVS. Hostowa
+reprodukcja RadioMast i testy PASS; odbiór wielokrotnych reload S3 OPEN.
