@@ -12,8 +12,8 @@ Bieżący punkt wznowienia: [RESUME.md](RESUME.md).
 | 06 audio | I2S/gain/PCM stress odebrane; MP3 decode/PCM potwierdzone logiem; AAC-LC PoC odebrane; AAC incremental file decode06f odebrane logiem i odsłuchem; źródło/bufor AAC06g odebrane logiem, odsłuchem i sterowaniem; niezależny reader AAC06h odebrany; player06i: kilka stacji i 44,1/48kHz odebrane; rozszerzone testy OPEN | ADR0018–0025/0034–0035; 248 testów hostowych PASS; build PASS |
 | 07 DSP | RMS/peak działa, strojenie odłożone; widmo live07e gotowe do odbioru, ESP-DSP/wydajność OPEN | ADR0037–0042;303 testy i build PASS |
 | 08 stacje | lista z katalogu i wybór odebrane; import live/reboot i edycja ID OPEN | ADR0033 |
-| 09 sieć | AP/STA/IP/AP-off potwierdzone logiem; mDNS OPEN | ADR0031; build PASS |
-| 10 WWW | formularze Wi-Fi/upload bez dodatkowego logowania; HOME/IP odebrane; lista z katalogu OPEN | ADR0032; 222 testy PASS; Chromium PASS |
+| 09 sieć | AP/STA/IP/AP-off odebrane; mDNS LAN wdrożone, odbiór OPEN | ADR0052 |
+| 10 WWW | tryby AP/LAN, player i edytor playlisty odebrane; wygląd do dopracowania | ADR0051; potwierdzenie użytkownika |
 | 11 storage/OTA | NVS preferencji odebrane; profile NVS/LittleFS katalog gotowe do odbioru; OTA OPEN | ADR0017/0031 |
 | 12 testy końcowe | NIEURUCHOMIONE | — |
 
@@ -1515,3 +1515,24 @@ URL i fizyczny test trwałości strefy pozostają OPEN.
 
 Dodatkowo rzeczywiste nowe handlery portal configuration przeszły ASan/UBSan
 (LSan off), obejmując listę/eksport/select/replace i blokady AP.
+
+## 09f — mDNS LAN (2026-10-31, ADR0052)
+
+Użytkownik odebrał funkcje WWW/edytora ADR0051; wygląd do dopracowania.
+Dodano domyślną nazwę `streamoo-xxxxxx.local` i `_http._tcp:80`, tylko STA
+po AP-off. Owner sieci, restart po reconnect, retry błędów30s, sprzątanie
+częściowego startu, callback aktualnej nazwy przy konflikcie. Bez sekretów
+w ogłoszeniach/logach, bez zmian audio/UI/partycji. Konfigurowalna nazwa
+WWW/NVS osobno OPEN. Instrukcja MDNS_BRINGUP.md.
+
+Zależność espressif/mdns1.14.0 przypięta, Apache2 sprawdzone i notice
+zachowany. PSRAM dla danych, stack4096B internal priority1; tylkoSTA,
+bez browse/CLI. Limit interfejsów2 z powodu błędu kompilacji upstream
+przy1, bez łatania źródeł. Rzeczywisty narzut heap/audio/multicast OPEN.
+
+Weryfikacja:335 testów hostowych PASS, discovery ASan/UBSan PASS
+(LSan off), ESP-IDF6.1 native build PASS. Obraz0x16dd00, wolne0x9300
+(37632B,2% app); bez zmiany partycji. GPIO validator, JS syntax,
+diff --check PASS. pcm_fill nadal IRAM0x40377a90. Logi testów/build
+`/tmp/streamoo-mdns-{tests,build,sanitize}.log`. Bez flash/erase/eFuse.
+Fizyczny test NVS strefy nadal osobno, nie uznany za zaliczony.

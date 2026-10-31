@@ -125,3 +125,5 @@ Bitrate deklarowany przez serwer ICY: `adr/0049-server-declared-stream-bitrate.m
 Sterowanie WWW playerem: `adr/0050-web-player-controls.md`, `WEB_PLAYER_BRINGUP.md`.
 
 Tryby AP/LAN i edytor playlisty: `adr/0051-ap-setup-lan-player-and-playlist-editor.md`, `WEB_LIBRARY_BRINGUP.md`.
+
+Nazwa odtwarzacza w LAN: `adr/0052-lan-mdns-advertisement.md`, `MDNS_BRINGUP.md`.

@@ -78,3 +78,10 @@ bez połączenia renderera z SDK.
 ADR0047: sync_cb SNTP ustawia network.time_synced dopiero dla wiarygodnego
 zakresu UTC2020..2099. Flaga nie znika przy utracie STA, zeruje się na reboot
 lub nieważnej korekcie. Strefa dotyczy tylko projekcji UI, nie czasu TLS.
+
+## 09f — nazwa LAN (ADR0052)
+
+Dodano domyślną nazwę MAC `streamoo-xxxxxx.local` i ogłaszanie HTTP80
+wyłącznie STA/AP-off, po błędzie retry30s. Dokładny komponent Espressif
+mDNS1.14.0, Apache2.0. Konfiguracja własnej nazwy przez WWW/NVS nadal OPEN.
+Procedura sprzętowa: [MDNS_BRINGUP](MDNS_BRINGUP.md).

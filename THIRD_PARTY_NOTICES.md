@@ -96,3 +96,10 @@ Mozilla CA data is MPL-2.0; retained license and corresponding PEM source.
 Transport, ICY filter, linear PCM conversion and player integration are
 original StreamOO implementations. Existing Espressif codec2.6.2 terms apply
 unchanged. No yoRadio or other GPL implementation copied.
+
+## LAN service discovery (09f)
+
+espressif/mdns **1.14.0**, Apache-2.0, exact registry hash pinned in
+`dependencies.lock`; native ESP-IDF6.1 build checked. Public API and
+upstream LICENSE reviewed before integration. Retain
+[license and source notice](licenses/ESP-mDNS-NOTICE.md) and Apache-2.0.txt.

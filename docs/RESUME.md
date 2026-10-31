@@ -247,3 +247,17 @@ stację (UI ostrzega). Prywatny playlist.csv i wyniki hostowe nietknięte.
 (0x165fa0,5% app wolne). Teraz zwykły flash/Ctrl+F5 i WEB_LIBRARY_BRINGUP.
 Bez flash/erase/eFuse przez agenta. Nie uznawać fizycznego NVS power-cycle
 strefy za zaliczony — użytkownik sprawdza osobno.
+
+Najnowsze ADR0052: użytkownik odebrał WWW/edytor, wygląd później.
+Dodano mDNS LAN `http://streamoo-xxxxxx.local/` (sufiks AP małymi literami),
+HTTP80 DNS-SD. Nazwa i ewentualny konflikt w logu discovery. TylkoSTA/AP-off,
+owner sieci, free/restart po utracie/odzyskaniu Wi-Fi, retry błędu30s.
+Nowy managed espressif/mdns1.14.0 Apache2, dokładny hash dependencies.lock.
+Wyłączone browse/CLI/AP/Ethernet, danePSRAM/stosinternal4096 priority1.
+Maxinterfaces2, ponieważ upstream nie kompiluje się przy1; bez vendorpatch.
+335 testów i discovery ASan/UBSan PASS; native build PASS0x16dd00,
+37632B/2% app wolne. Partitions bez zmian. Teraz zwykły flash i
+MDNS_BRINGUP: .local, audio, reconnect/reboot, heap. Odbiór multicast na
+płytce OPEN. Własna nazwa WWW/NVS następny mały krok, jeszcze OPEN.
+Nie stroić FFT/RMS ani wyglądu WWW teraz. NVS timezone power-cycle
+użytkownik sprawdza osobno. Bez flash/erase/eFuse przez agenta.

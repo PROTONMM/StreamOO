@@ -1,3 +1,4 @@
+#include "streamoo_discovery.h"
 #include "streamoo_network.h"
 #include "network_secret.h"
 #include "sdkconfig.h"
@@ -381,6 +382,8 @@ static void network_task(void *context) {
       if (snapshot.sta_connected && snapshot.ap_ready && now >= off_at) {
         off_at = ap_off() ? INT64_MAX : now + 1000000;
       }
+      streamoo_network_state(&snapshot);
+      streamoo_discovery_update(snapshot.sta_connected && !snapshot.ap_ready, snapshot.ap_ssid, now);
       if(snapshot.sta_connected && now>=rssi_at) {
         wifi_ap_record_t info={0};
         bool valid=esp_wifi_sta_get_ap_info(&info)==ESP_OK && info.rssi>=-127;

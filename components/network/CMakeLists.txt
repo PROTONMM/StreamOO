@@ -1,6 +1,6 @@
-idf_component_register(SRCS "streamoo_network.c" "streamoo_network_policy.c"
+idf_component_register(SRCS "streamoo_network.c" "streamoo_network_policy.c" "streamoo_discovery.c"
                        INCLUDE_DIRS "include" REQUIRES esp_common configuration
-                       PRIV_REQUIRES esp_timer esp_wifi esp_netif esp_event esp_hw_support nvs_flash freertos log)
+                       PRIV_REQUIRES espressif__mdns esp_timer esp_wifi esp_netif esp_event esp_hw_support nvs_flash freertos log)
 set(STREAMOO_NETWORK_SECRETS_FILE "" CACHE FILEPATH "Private AP JSON outside the repository")
 set(secret_args)
 if(STREAMOO_NETWORK_SECRETS_FILE)

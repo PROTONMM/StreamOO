@@ -198,7 +198,8 @@ class NetworkStartupTests(unittest.TestCase):
   for name,body in files.items():(base/name).write_text(body)
   (base/'test.c').write_text(HARNESS);cls.binary=base/'network'
   includes=['-I'+str(base)]+['-Icomponents/'+n+'/include' for n in ('network','configuration','stations')]
-  subprocess.run(['cc','-std=c11','-Wall','-Wextra','-Werror','-Wno-parentheses','-Wno-misleading-indentation',*os.environ.get('STREAMOO_NETWORK_SANITIZE','').split(),*includes,str(base/'test.c'),'components/network/streamoo_network.c','components/network/streamoo_network_policy.c','-o',str(cls.binary)],cwd=ROOT,check=True)
+  (base/'discovery_stub.c').write_text('#include <stdbool.h>\n#include <stdint.h>\nvoid streamoo_discovery_update(bool connected,const char *name,int64_t now){(void)connected;(void)name;(void)now;}\n')
+  subprocess.run(['cc','-std=c11','-Wall','-Wextra','-Werror','-Wno-parentheses','-Wno-misleading-indentation',*os.environ.get('STREAMOO_NETWORK_SANITIZE','').split(),*includes,str(base/'test.c'),'components/network/streamoo_network.c','components/network/streamoo_network_policy.c',str(base/'discovery_stub.c'),'-o',str(cls.binary)],cwd=ROOT,check=True)
  def run_case(self,n):subprocess.run([str(self.binary),str(n)],check=True,timeout=10)
  def test_first_saved_network_without_ap(self):self.run_case(0)
  def test_second_saved_network_without_ap(self):self.run_case(1)
