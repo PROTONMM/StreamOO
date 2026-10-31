@@ -9,7 +9,7 @@ Bieżący punkt wznowienia: [RESUME.md](RESUME.md).
 | 03 szkielet | baza zaimplementowana; odbiór sprzętowy i integracyjny OPEN | ESP-IDF v6.1 build PASS; ADR 0002 |
 | 04 UI/SSD1322 | HOME i lista odebrane na OLED; końcowe strojenie fontu OPEN | ADR 0012; odbiór użytkownika |
 | 05 encoder | dekoder/IRQ i gesty odebrane; interaktywny adapter odebrany w trybie A; preferencje NVS odebrane; shutdown/flush OPEN | ADR 0013–0017; 99 testów PASS |
-| 06 audio | I2S/gain/PCM stress odebrane; MP3 decode/PCM potwierdzone logiem; AAC-LC PoC odebrane; AAC incremental file decode06f odebrane logiem i odsłuchem; źródło/bufor AAC06g odebrane logiem, odsłuchem i sterowaniem; niezależny reader AAC06h odebrany; player HTTP/ICY06i gotowy do odbioru | ADR0018–0025/0034; 247 testów hostowych PASS; build PASS |
+| 06 audio | I2S/gain/PCM stress odebrane; MP3 decode/PCM potwierdzone logiem; AAC-LC PoC odebrane; AAC incremental file decode06f odebrane logiem i odsłuchem; źródło/bufor AAC06g odebrane logiem, odsłuchem i sterowaniem; niezależny reader AAC06h odebrany; player06i: kilka stacji i 44,1/48kHz odebrane; rozszerzone testy OPEN | ADR0018–0025/0034; 247 testów hostowych PASS; build PASS |
 | 07 DSP | NIEZAIMPLEMENTOWANE | — |
 | 08 stacje | lista z katalogu i wybór odebrane; import live/reboot i edycja ID OPEN | ADR0033 |
 | 09 sieć | AP/STA/IP/AP-off potwierdzone logiem; mDNS OPEN | ADR0031; build PASS |
@@ -1237,3 +1237,25 @@ rate44,1k/48k, heap/stack_hwm/reader_hwm/max_fill/low/hard, szybkie zmiany,
 STOP i rebuffer. Procedura HTTP_PLAYER_BRINGUP. Nie uznawać playera/projektu
 za odebrany przed logiem i odsłuchem. DSP, HE-AAC/reszta kodeków, HLS/M3U/PLS,
 sterowanie WWW/mobile/RC5, last ID NVS i docelowy SRC pozostają dalsze.
+
+## Odbiór 06i — pierwsze stacje sieciowe (2026-10-31)
+
+Użytkownik: „Działa, sprawdziłem kilka stacji, słychać dobrze”. Log firmware
+z 740c327 potwierdza PLAYING przy rate44100 (gen3/8) i48000 (gen5), również
+zapisy zmienianej głośności do NVS. Pierwszy odsłuch kilku stacji zaliczony.
+W widocznych sesjach PCM=32, invalid=0, low=0, hard=0, starts=1, max_fill111–112us.
+Stos player HWM minimum8704 B, reader6404 B; internal heap w odtwarzaniu
+61139–61599 B, minimum39844 B, largest31744 B; PSRAM minimum8031908 B.
+To ograniczony czas obserwacji, nie test wielogodzinnej stabilności.
+
+Jedna próba gen7: HTTP200/ESP_FAIL, decoder0/vendor0, format22050/2/16;
+retry gen8 wraca do PLAYING44100. Przyczyna OPEN — log nie rozróżnia
+zmiany formatu, braku postępu i pozostałych guardów pumpa. Nie uznajemy
+22,05kHz za nieobsługiwane (konwerter wspiera ten rate). Bez zgadywania kodeka
+lub HE-AAC na podstawie tej linii. Nie było widocznych błędów I2S/underrun.
+
+Oddzielne potwierdzenie MP3 vs AAC-LC, HTTP vs HTTPS/ICY, STOP bez trzasków,
+zaniki/rebuffer, szybkie zmiany i dłuższy soak pozostają OPEN. Kolejny punkt:
+precyzyjna diagnostyka pojedynczego retry/pozostały odbiór, potem DSP/kolejne
+funkcje. Zmieniono tylko dokumentację; bez powtarzania build/testów kodu
+(ostatnie247 testów i build PASS). diff --check PASS; brak flash/erase/eFuse.

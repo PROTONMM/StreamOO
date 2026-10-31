@@ -1,6 +1,6 @@
 # Punkt wznowienia StreamOO
 
-Aktualizacja: **2026-10-31, 06i — player HTTP/ICY gotowy do pierwszego odsłuchu**.
+Aktualizacja: **2026-10-31, 06i — pierwszy odsłuch kilku stacji zaliczony**.
 Gałąź feature/streamoo-implementation. ADR0034, STATUS i HTTP_PLAYER_BRINGUP.
 
 ## Potwierdzone przez użytkownika
@@ -12,7 +12,21 @@ i wybór potwierdzone („Działa fajnie”). Nie diagnozować ponownie znaków 
 wcześniej potwierdzono poruszanie przewodami. Reboot/live-import katalogu
 pozostają bez osobnego wyniku sprzętowego.
 
-## Nowy player 06i — kod/testy, jeszcze bez odsłuchu
+## Odbiór 06i
+
+Użytkownik potwierdził dobry odsłuch kilku stacji. Log 740c327: PLAYING44100
+oraz48000, PCM32, invalid/low/hard0, starts1 per sesja, max_fill111–112us.
+HWM player min8704 B, reader6404 B. Heap internal61139–61599 B, min39844 B,
+largest31744 B; PSRAM min8031908 B. Nie wnioskować wielogodzinnej stabilności
+ani konkretnego kodeka/protokołu z samego rate.
+
+Pojedyncza nieudana próba gen7: HTTP200/ESP_FAIL/decoder0/vendor0,
+format22050/2/16; retry gen8 wrócił do PLAYING44100. Przyczyna OPEN, dodać
+precyzyjny fail_reason/format poprzedni-obserwowany przy następnym kroku,
+zamiast zgadywać HE-AAC lub uznać22,05kHz za nieobsługiwane.
+Osobne MP3/AAC-LC, HTTPS/ICY, STOP/zaniki/rebuffer i dłuższy soak jeszcze OPEN.
+
+## Player 06i — architektura
 
 Owner player priority4: komendy ID/generation i volume/toggle, stan snapshot,
 nowa sesja dla wyboru, retry tej samej stacji, bez fallback do innej. Otwiera
@@ -41,16 +55,16 @@ pod wybraną Apache2, parser2.7.0 MIT, Mozilla CA MPL2 z source PEM dołączonym
 bez TSan). Transport/RTOS/decoder/I2S w testach są atrapami; nie dowodzą realnego
 TCP/TLS, wydajności kodeka i DMA/SMP. Native ESP-IDF6.1 build PASS, 8% wolnego
 app. Fill/pcm_fill w IRAM i pipeline/ring w DRAM sprawdzone w ELF.
-Nie wykonano flash/erase/eFuse ani połączeń do prywatnych stacji z hosta.
+Agent nie wykonywał flash/erase/eFuse ani połączeń do prywatnych stacji z hosta.
 
-## Teraz: odbiór na PCB
+## Teraz: uzupełnienie odbioru/diagnostyka
 
 Zwykły idf.py -p PORT flash; zachować NVS/LittleFS, bez erase i obrazu FS.
-Po STA wybierz bezpośredni MP3, słuchaj60s, volume/STOP/PLAY/szybkie zmiany,
+Po podstawowym odsłuchu pozostały STOP/PLAY/szybkie zmiany,
 potem AAC-LC/HTTPS/ICY i zaniki. Logi player: phase/rate/compressed/PCM,
 max_fill/invalid/low/hard/starts/stack_hwm/reader_hwm; platform heap internal
-free/min/largest i PSRAM po uruchomieniu dekodera. Nie uznawać za zaliczone
-przed logiem i odsłuchem. Dokładna procedura HTTP_PLAYER_BRINGUP.md.
+free/min/largest i PSRAM po uruchomieniu dekodera. Podstawowy odsłuch już zaliczony; nie powtarzać go bez potrzeby.
+Pozostałe scenariusze oznaczać oddzielnie. Dokładna procedura HTTP_PLAYER_BRINGUP.md.
 
 ## Stałe zasady i dalszy zakres
 

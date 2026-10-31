@@ -1,6 +1,8 @@
 # Pierwszy odsłuch HTTP/ICY — 06i
 
-Wersja gotowa do testu, nieodebrana jeszcze na ESP32-S3. Własny player
+Pierwszy odsłuch kilku stacji na ESP32-S3 potwierdzony przez użytkownika:
+PLAYING44,1/48kHz, max_fill112us, invalid/low/hard0. Rozszerzony odbiór
+i wyjaśnienie pojedynczego retry nadal OPEN — szczegóły STATUS/ADR0034. Własny player
 wybranej stacji, MP3 i AAC-LC/ADTS, bezpośrednie HTTP/HTTPS. Lista OLED i
 konfiguracja zostały już potwierdzone; nie powtarzaj diagnostyki pinów/UART.
 Szczegóły i ograniczenia: [ADR0034](adr/0034-http-icy-network-player.md).

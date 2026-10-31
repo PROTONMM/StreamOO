@@ -1,7 +1,8 @@
 # ADR0034 — pierwszy player HTTP/ICY
 
 Data: 2026-10-31. Status: implementacja/build/testy hostowe PASS;
-HARDWARE_TEST_PENDING — pierwszy odsłuch streamu i pomiary na ESP32-S3 OPEN.
+Pierwszy odsłuch kilku stacji i rate44,1/48kHz potwierdzone na ESP32-S3;
+pozostały odbiór i pojedynczy retry OPEN (wyniki poniżej).
 Użytkownik potwierdził listę z playlisty i wybór z etapu08a („Działa fajnie”).
 
 ## Granice kroku
@@ -78,7 +79,7 @@ Oryginalny task-only liniowy resampler ze stałą fazą wymierną, uwzględniaj�
 fragmentację i WAIT, konwertuje 44,1kHz i inne8..48kHz do48kHz, duplikuje mono.
 To PoC, nie wysokiej jakości band-limited SRC/DSP. Bez float/FFT/alokacji
 w IRQ. Właściwy vendor decoder MP3/AAC-LC nie jest uruchamiany na hoście;
-nowa integracja 44,1kHz wymaga potwierdzenia na sprzęcie.
+nowa integracja 44,1kHz potwierdzona odsłuchem i logiem poniżej.
 
 PCM storage, render i scratch dekodera wewnętrzne; skompresowane dane,
 metadane i HTTP URL w PSRAM. Stary testowy pcm_storage32 bloków przeniesiono
@@ -116,10 +117,24 @@ Transport/RTOS/decoder/I2S w tych testach są deterministycznymi atrapami;
 nie są pomiarem prawdziwego TCP/TLS, kodeka, DMA ani współbieżności SMP.
 Targeted actor/HTTP/PCM ASan/UBSan PASS, LSan off, bez TSan.
 Native build ESP-IDF6.1 PASS; odbiór według NETWORK_BRINGUP.
-Nie wykonano flash/erase/eFuse ani połączeń do prywatnych stacji z hosta.
+Agent nie wykonywał flash/erase/eFuse ani połączeń do prywatnych stacji z hosta.
 
 OPEN: odsłuch MP3/AAC-LC, 44,1kHz/48kHz, HTTP/HTTPS/ICY, heap/stosy/jitter,
 szybkie przełączanie i STOP bez trzasków, retry po zaniku sieci, import
 podczas grania. Trwałe ID przy edycji i ostatni wybór NVS, wysokiej jakości
 SRC, reszta kodeków, DSP/tap/widgets z rzeczywistego audio i API sterowania
 pozostają dalszymi etapami. Nie oznaczać projektu jako ukończonego.
+
+## Pierwszy wynik sprzętowy
+
+2026-10-31: użytkownik sprawdził kilka stacji i potwierdził dobry dźwięk.
+PLAYING44100/48000, PCM32, invalid/low/hard0, starts1 na widoczną sesję;
+max_fill111–112us. HWM player min8704 B, reader6404 B; internal heap w stanie
+odtwarzania61139–61599 B, min39844/largest31744 B, PSRAM min8031908 B.
+Szczegóły w STATUS. To odbiór podstawowego toru, nie wszystkich protokołów/kodeków.
+
+Gen7 raz zgłosił HTTP200/ESP_FAIL przy decoder0/vendor0 i format22050/2/16;
+retry gen8 odtworzył44100. Powód guardu nie jest rozróżniany w obecnym logu.
+Przed naprawą dodać fail_reason; nie przypisywać przyczyny HE-AAC/formatowi
+bez dowodu. Rozszerzone testy z sekcji OPEN pozostają, podstawowy odsłuch
+i konwersja44,1→48kHz zostały już zaliczone.
