@@ -1,5 +1,14 @@
 # Punkt wznowienia StreamOO
 
+## Najnowsze — import playlisty dopisujący stacje / ADR0070 / 2026-10-31
+
+Upload playlist.csv przez WWW atomowo dodaje rekordy do katalogu, nie usuwa
+istniejących. Stare stable ID pozostają, nowe wpisy mają nowe ID; duplikaty
+URL dozwolone/raportowane. Clear i zapis edytora nadal jawnie czyszczą lub
+zastępują katalog. Test magazynu, portal/frontend,381 testów i native build
+PASS0x17bf70. Odbiór sprzętowy: mały import, suma/stare stacje oraz reboot;
+bez erase/importu poprzedniej listy przez agenta.
+
 ## Najnowsze — FLAC: rozdzielenie HTTP i dekodera / ADR0069 / 2026-10-31
 
 Log `TEST FLAC native lossless` łączy krótkie fade/rebuffer z `src_wait`, a

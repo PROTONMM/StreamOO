@@ -80,6 +80,10 @@ nadal osobno. Endpointy stations/list/export/replace/select przez wspólny
 katalog, generacje string i CAS. Nowe operacje player/editor odrzucane w AP.
 Procedura WEB_LIBRARY_BRINGUP, dane prywatne nie trafiają do repo.
 
+ADR0070: zatwierdzony upload playlist.csv dopisuje stacje do obecnego
+katalogu. Przycisk clear pozostaje jedyną operacją usuwającą całą listę;
+zapis edytora pozostaje świadomym zastąpieniem całej wersji katalogu.
+
 ## Ustawienia obsługi i startu — ADR0059
 
 LAN/Konfiguracja: czas listy1..120s, auto-wybór lub powrót bez zmiany,

@@ -158,4 +158,6 @@ Deklarowany bitrate HLS: `adr/0067-hls-declared-bitrate.md`.
 
 FLAC: dopływ HTTP i dekodowanie na oddzielnych rdzeniach: `adr/0069-flac-reader-decoder-core-placement.md`.
 
+Import playlisty dopisujący stacje: `adr/0070-append-playlist-import.md`.
+
 Logo podczas Wi-Fi i autoplay: `adr/0068-boot-logo-through-autoplay.md`.

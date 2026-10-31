@@ -7,7 +7,9 @@
 
 ## Import
 - Upload→ parser zgodny ze **sprawdzonym na rzeczywistych plikach** formatem yoRadio→ walidacja pól/UTF-8/długości/url/duplikatów→ podgląd→ commit atomowy.
-- Tryby: replace lub merge (proponowane); duplikaty raportować, bez cichego nadpisania.
+- Import WWW dopisuje pozycje do istniejącego katalogu; pełne zastąpienie
+  pozostaje operacją edytora, a wyczyszczenie listy wymaga osobnego przycisku.
+  Duplikaty raportować, bez cichego nadpisania.
 - Zapis przez staging + walidacja CRC/checksum + atomowe przełączenie pliku/manifestu; przerwany import pozostawia poprzednią listę.
 - Eksport zgodny z tym samym formatem (weryfikować testem round-trip). **FORMAT SPRAWDZONY2026-10-31:** lokalny playlist.csv to UTF-8 i3 literalne pola TAB: nazwa/URL/ovol, bez nagłówka. Parser/preview/atomowy zapis zaimplementowane (ADR0031), publikacja i lista OLED gotowe do odbioru (ADR0033).
 
@@ -55,6 +57,12 @@ normalny atomic pipeline walidacja/temp/fsync/rename/snapshot. Eksport
 strumieniowany z utrzymanego snapshotu, bez odczytu flash. Import pustego
 pliku nadal odrzucony, clear osobnym przyciskiem. ID v1 przy rename/URL
 nadal się zmienia; UI uprzedza o możliwym zatrzymaniu aktywnej pozycji.
+
+ADR0070: import playlist.csv przez WWW atomowo dopisuje rekordy do katalogu,
+zamiast go zastępować. Istniejące ID pozostają, nowe wpisy mają nowe ID.
+Preview sprawdza sam plik; commit łączy go z aktualnym snapshotem i odrzuca
+kolizję równoczesnego zapisu. Nadal wolno zachować powtarzające się URL;
+clear i edytor zachowują jawne operacje zastąpienia/usunięcia.
 
 ## Trwałe ID v2 — ADR0059
 

@@ -170,6 +170,8 @@ static esp_err_t playlist_request(httpd_req_t *r) {
   heap_caps_free(data);
   if (error == ESP_OK)
     return report(r, "200 OK", &parsed, commit);
+  if (error == ESP_ERR_INVALID_STATE)
+    return reply(r, "409 Conflict", "{\"error\":\"catalog_changed\"}");
   if (error == ESP_ERR_INVALID_ARG)
     return report(r, "400 Bad Request", &parsed, false);
   return reply(r, "503 Service Unavailable",

@@ -148,15 +148,15 @@ function setupForms() {
     event.preventDefault(); commit.disabled = true; previewFile = null;
     try {
       const selected = file(); const report = await api('/api/v1/stations/import/preview', {method: 'POST', headers: {'Content-Type': 'text/plain; charset=utf-8'}, body: selected});
-      previewFile = selected; commit.disabled = false; commit.textContent = `Zatwierdź i zapisz ${report.rows} stacji`;
-      text('playlist-result', `Poprawny plik: ${report.rows} stacji. Adresy oczyszczone z niewidocznych znaków: ${report.normalized}. Powtórzone adresy: ${report.duplicates} (zostaną zachowane). Zatwierdzenie zastąpi poprzednią listę.`);
+      previewFile = selected; commit.disabled = false; commit.textContent = `Zatwierdź i dodaj ${report.rows} stacji`;
+      text('playlist-result', `Poprawny plik: ${report.rows} stacji. Adresy oczyszczone z niewidocznych znaków: ${report.normalized}. Powtórzone adresy: ${report.duplicates} (zostaną zachowane). Zatwierdzenie doda pozycje do obecnej listy.`);
     } catch (error) { text('playlist-result', error.message); }
   };
   commit.onclick = async () => {
     try {
       const selected = file(); if (selected !== previewFile) throw new Error('Najpierw sprawdź wybrany plik.'); if(!beforeCatalogImport())return; commit.disabled = true;
       const report = await api('/api/v1/stations/import', {method: 'POST', headers: {'Content-Type': 'text/plain; charset=utf-8'}, body: selected});
-      text('playlist-result', `Zapisano ${report.rows} stacji. Lista pozostanie po ponownym uruchomieniu radia.`);
+      text('playlist-result', `Dodano stacje. Łącznie na liście: ${report.rows}. Lista pozostanie po ponownym uruchomieniu radia.`);
       text('catalog-status', `Zapisana playlista: ${report.rows} stacji.`); previewFile = null;catalogUpdated();
     } catch (error) { text('playlist-result', error.message); commit.disabled = !previewFile; }
   };
@@ -350,7 +350,7 @@ function setupLibrary() {
     if(enabled){if(!dirty)load();else{renderStations();renderEditor();text('editor-result','Niezapisane zmiany zachowane. Przed zapisem sprawdzimy wersję listy.');}}
     else{document.getElementById('station-list').replaceChildren();document.getElementById('editor-rows').replaceChildren();}
   };
-  beforeCatalogImport=()=>!dirty||confirm('Import zastąpi listę i odrzuci niezapisane zmiany. Kontynuować?');
+  beforeCatalogImport=()=>!dirty||confirm('Import doda stacje do zapisanej listy. Niezapisane zmiany edytora zostaną odrzucone. Kontynuować?');
   catalogUpdated=()=>{dirty=false;if(webPlayerMode)load();};
   editState();
 }

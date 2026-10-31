@@ -5,8 +5,8 @@
 esp_err_t streamoo_config_store_init(void);
 bool streamoo_config_wifi_load(streamoo_wifi_profiles_t *);
 esp_err_t streamoo_config_wifi_save(const streamoo_wifi_profiles_t *);
-/* Validates/normalizes an upload REQUEST COPY; commit atomically renames in
- * LittleFS. */
+/* Validates/normalizes an upload REQUEST COPY. Commit atomically appends it
+ * to the current catalog in LittleFS; an editor replacement remains separate. */
 esp_err_t streamoo_config_playlist(uint8_t *, size_t, bool,
                                    streamoo_playlist_report_t *);
 bool streamoo_config_playlist_info(streamoo_playlist_report_t *);

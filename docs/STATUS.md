@@ -1,5 +1,21 @@
 # Status implementacji
 
+## Najnowsze — import playlisty dopisujący stacje / ADR0070 / 2026-10-31
+
+Na polecenie użytkownika upload playlist.csv przez WWW nie zastępuje już
+katalogu. Preview sprawdza tylko wskazany plik; commit atomowo dołącza jego
+rekordy do aktualnego snapshotu, zachowuje stare stable ID i nadaje nowe ID
+pozycjom importowanym. Powtarzające się URL pozostają dozwolone/raportowane.
+Limit łącznego katalogu, błędy zapisu i równoczesny edytor nie mogą utracić
+starej listy; konflikt generacji daje409. Clear i zapis edytora nadal są
+jawnymi operacjami usunięcia/zastąpienia.
+
+Test magazynu dopisuje2 rekordy do1, zachowuje stare ID i sprawdza preview,
+awarie alokacji/rename oraz restart. Portal/frontend i381 testów hostowych,
+native ESP-IDF6.1 build PASS0x17bf70 (90% app wolne). Odbiór: import małego
+pliku, sprawdzenie sumy i poprzednich stacji po reboocie. Firmware, NVS,
+partycje, I2S i prywatne playlisty nietknięte; agent nie flashował.
+
 ## Najnowsze — FLAC: rozdzielenie HTTP i dekodera / ADR0069 / 2026-10-31
 
 Log `TEST FLAC native lossless`: krótkie przerwy są zapobiegawczym fade przy

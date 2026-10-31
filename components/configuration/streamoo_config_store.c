@@ -340,7 +340,79 @@ static esp_err_t playlist_change(uint8_t *data,size_t bytes,bool commit,bool gua
   return error;
 }
 esp_err_t streamoo_config_playlist(uint8_t *data,size_t bytes,bool commit,streamoo_playlist_report_t *report){
-  return playlist_change(data,bytes,commit,false,0,NULL,report);
+  if (!commit)
+    return playlist_change(data, bytes, false, false, 0, NULL, report);
+  if (!data || !report)
+    return ESP_ERR_INVALID_ARG;
+
+  /* Normalize the request first. The committed form is then old catalog plus
+   * this upload, guarded by the catalog generation so concurrent editor saves
+   * can never be lost. */
+  streamoo_playlist_workspace_t *ws = heap_caps_calloc(
+      1, sizeof *ws, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+  if (!ws)
+    return ESP_ERR_NO_MEM;
+  size_t normalized = bytes;
+  bool valid = streamoo_playlist_validate(data, &normalized, report, ws);
+  heap_caps_free(ws);
+  if (!valid)
+    return ESP_ERR_INVALID_ARG;
+
+  streamoo_catalog_snapshot_t *old = streamoo_config_catalog_acquire();
+  streamoo_catalog_view_t view = streamoo_config_catalog_view(old);
+  size_t old_bytes = 0;
+  for (uint32_t i = 0; i < view.count; ++i) {
+    char volume[16];
+    int volume_bytes = snprintf(volume, sizeof volume, "%" PRId32,
+                                view.stations[i].ovol);
+    if (volume_bytes < 1 || (size_t)volume_bytes >= sizeof volume ||
+        view.stations[i].name_bytes > STREAMOO_PLAYLIST_MAX_BYTES - old_bytes ||
+        view.stations[i].url_bytes > STREAMOO_PLAYLIST_MAX_BYTES - old_bytes -
+                                         view.stations[i].name_bytes - 1 ||
+        (size_t)volume_bytes > STREAMOO_PLAYLIST_MAX_BYTES - old_bytes -
+                                         view.stations[i].name_bytes -
+                                         view.stations[i].url_bytes - 2) {
+      streamoo_config_catalog_release(old);
+      report->error = "catalog_size";
+      return ESP_ERR_INVALID_ARG;
+    }
+    old_bytes += view.stations[i].name_bytes + view.stations[i].url_bytes +
+                 (size_t)volume_bytes + 3;
+  }
+  if (old_bytes > STREAMOO_PLAYLIST_MAX_BYTES - normalized) {
+    streamoo_config_catalog_release(old);
+    report->error = "catalog_size";
+    return ESP_ERR_INVALID_ARG;
+  }
+  size_t merged_bytes = old_bytes + normalized;
+  uint8_t *merged = heap_caps_malloc(merged_bytes, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+  if (!merged) {
+    streamoo_config_catalog_release(old);
+    return ESP_ERR_NO_MEM;
+  }
+  size_t at = 0;
+  for (uint32_t i = 0; i < view.count; ++i) {
+    const streamoo_station_t *entry = &view.stations[i];
+    int volume_bytes = snprintf((char *)merged + at + entry->name_bytes +
+                                    entry->url_bytes + 2,
+                                16, "%" PRId32, entry->ovol);
+    memcpy(merged + at, entry->name, entry->name_bytes);
+    at += entry->name_bytes;
+    merged[at++] = '\t';
+    memcpy(merged + at, entry->url, entry->url_bytes);
+    at += entry->url_bytes;
+    merged[at++] = '\t';
+    at += (size_t)volume_bytes;
+    merged[at++] = '\n';
+  }
+  memcpy(merged + at, data, normalized);
+  uint64_t expected = view.generation;
+  streamoo_config_catalog_release(old);
+
+  esp_err_t error = playlist_change(merged, merged_bytes, true, true, expected,
+                                    NULL, report);
+  heap_caps_free(merged);
+  return error;
 }
 esp_err_t streamoo_config_catalog_replace(uint8_t *data,size_t bytes,uint64_t expected,streamoo_playlist_report_t *report){
   return playlist_change(data,bytes,true,true,expected,NULL,report);

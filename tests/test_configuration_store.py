@@ -56,15 +56,16 @@ int main(int argc,char **argv){assert(argc==3);int mode=atoi(argv[1]);directory=
  assert(streamoo_config_playlist_info(&r)&&r.rows==1);
  streamoo_catalog_snapshot_t *held=streamoo_config_catalog_acquire();streamoo_catalog_view_t v=streamoo_config_catalog_view(held);
  assert(v.count==1&&!strcmp((const char *)v.stations[0].name,"Old"));
+ uint64_t old_id=v.stations[0].stable_id;
  for(int failure=2;failure<=4;++failure){allocation_failure=failure;assert(streamoo_config_playlist(next,sizeof next-1,true,&r)==ESP_ERR_NO_MEM);assert(streamoo_config_playlist_info(&r)&&r.rows==1);streamoo_catalog_snapshot_t *probe=streamoo_config_catalog_acquire();assert(probe==held);streamoo_config_catalog_release(probe);}
  rename_error=1;assert(streamoo_config_playlist(next,sizeof next-1,true,&r)!=ESP_OK);assert(streamoo_config_playlist_info(&r)&&r.rows==1);
  streamoo_catalog_snapshot_t *probe=streamoo_config_catalog_acquire();assert(probe==held);streamoo_config_catalog_release(probe);
  FILE *f=mapped_fopen("/stations/playlist.csv","rb");assert(f);char check[128]={0};assert(fread(check,1,sizeof check,f)>sizeof old-1);fclose(f);assert(!memcmp(check,"SOOCAT2\n",8)&&strstr(check,(char *)old));
  f=mapped_fopen("/stations/playlist.tmp","rb");assert(!f);
- rename_error=0;assert(streamoo_config_playlist(next,sizeof next-1,true,&r)==ESP_OK);assert(streamoo_config_playlist_info(&r)&&r.rows==2);
+ rename_error=0;assert(streamoo_config_playlist(next,sizeof next-1,true,&r)==ESP_OK);assert(streamoo_config_playlist_info(&r)&&r.rows==3);
  assert(v.count==1&&!strcmp((const char *)v.stations[0].name,"Old"));
  streamoo_catalog_snapshot_t *fresh=streamoo_config_catalog_acquire();streamoo_catalog_view_t nv=streamoo_config_catalog_view(fresh);
- assert(nv.count==2&&nv.generation>v.generation);uint64_t id=nv.stations[0].stable_id;
+ assert(nv.count==3&&nv.generation>v.generation&&nv.stations[0].stable_id==old_id);uint64_t id=nv.stations[1].stable_id;
  assert(streamoo_config_catalog_replace(next,sizeof next-1,v.generation,&r)==ESP_ERR_INVALID_STATE);
  assert(streamoo_config_catalog_replace(next,sizeof next-1,nv.generation,&r)==ESP_OK);
  streamoo_config_catalog_release(held);streamoo_config_catalog_release(fresh);
