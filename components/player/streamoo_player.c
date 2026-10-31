@@ -1,4 +1,5 @@
 #include "streamoo_player.h"
+#include "streamoo_player_buffer.h"
 #include "streamoo_settings.h"
 #include "esp_attr.h"
 #include "esp_heap_caps.h"
@@ -122,7 +123,7 @@ static void task(void *context) {
   streamoo_audio_output_t *output = NULL;
   streamoo_pcm_block_t *storage = NULL, *block = NULL;
   streamoo_metering_t *meter = NULL;
-  bool retiring = false;
+  bool retiring = false, flac_refill=false;
   uint32_t sequence = 0, reader_hwm = 0;
   int64_t retry_at = 0, log_at = 0, fade_until = 0;
   unsigned backoff = 1;
@@ -293,21 +294,24 @@ static void task(void *context) {
       streamoo_http_stream_info(session, &info);
       reader_hwm = info.reader_stack_hwm;
       size_t queued = streamoo_http_stream_queued(session);
+      size_t reserve=streamoo_player_reserve(info.codec==STREAMOO_CODEC_FLAC,info.bitrate_kbps);
       if (!decoder && info.codec_known &&
-          (queued >= 8192 || (info.ended && queued))) {
-        failure_stage = "decoder_open";
-        current.error = streamoo_decoder_open(info.codec, &decoder);
-        if (current.error == ESP_OK) {
-          failure_stage = "memory";
-          pump = heap_caps_calloc(1, sizeof *pump,
-                                  MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
-          storage = heap_caps_calloc(32, sizeof *storage,
-                                     MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
-          block = heap_caps_calloc(1, sizeof *block,
-                                   MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
-          if (!pump || !storage || !block)
-            current.error = ESP_ERR_NO_MEM;
-          else {
+          (queued >= reserve || (info.ended && queued))) {
+        flac_refill=false;
+        /* Reserve the contiguous DMA/ISR ring before codec allocations can
+         * fragment internal RAM. Large decode scratch belongs in PSRAM. */
+        failure_stage = "pcm_memory";
+        storage = heap_caps_calloc(32,sizeof *storage,MALLOC_CAP_INTERNAL|MALLOC_CAP_8BIT);
+        block = heap_caps_calloc(1,sizeof *block,MALLOC_CAP_INTERNAL|MALLOC_CAP_8BIT);
+        pump = heap_caps_calloc(1,sizeof *pump,MALLOC_CAP_SPIRAM|MALLOC_CAP_8BIT);
+        if(!pump||!storage||!block){
+          current.error=ESP_ERR_NO_MEM;
+          ESP_LOGW("player","Audio allocation failed: ring=%u block=%u scratch=%u",storage!=NULL,block!=NULL,pump!=NULL);
+        }
+        else {
+          failure_stage="decoder_open";
+          current.error=streamoo_decoder_open(info.codec,&decoder);
+          if(current.error==ESP_OK) {
             esp_err_t meter_error = streamoo_metering_open(current.generation, &meter);
             if (meter_error != ESP_OK)
               ESP_LOGW("player", "Audio meters disabled: %s", esp_err_to_name(meter_error));
@@ -334,13 +338,17 @@ static void task(void *context) {
         }
       }
       if (current.error == ESP_OK && output) {
-        for (unsigned burst = 0; burst < 8 && streamoo_pcm_count(&ring) < 32;
+        if(flac_refill&&(queued>=reserve||info.ended))flac_refill=false;
+        for (unsigned burst = 0; !flac_refill && burst < 8 && streamoo_pcm_count(&ring) < 32;
              ++burst) {
           failure_stage = "decode";
           streamoo_stream_result_t r =
               streamoo_live_decode_read(pump, block->samples);
-          if (r == STREAMOO_STREAM_WAIT)
+          if (r == STREAMOO_STREAM_WAIT){
+            if(info.codec==STREAMOO_CODEC_FLAC&&streamoo_pcm_count(&ring)<=STREAMOO_PCM_LOW_BLOCKS&&
+               streamoo_http_stream_queued(session)<=1)flac_refill=true;
             break;
+          }
           if (r != STREAMOO_STREAM_READY) {
             current.error = ESP_FAIL;
             break;

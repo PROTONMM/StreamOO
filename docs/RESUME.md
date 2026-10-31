@@ -1,25 +1,24 @@
 # Punkt wznowienia StreamOO
 
 
-## Najnowsza poprawka FLAC — ADR0061 / 2026-10-31
+## Bieżące — 2026-10-31 / FLAC recovery ADR0062
 
-Log b040430e: FLAC44100/2/24, HTTP200, needed138240>131072, vendor-8;
-low/starts rosną także bez restartu, compressed bywa1. Nie uznawać ADR0058
-za odebrane ani wszystkich przerw za Wi-Fi/FFT. Live headerless FLAC teraz
-własny bounded CRC8/CRC16 scanner→pojedyncza ramka→SDK frame decoder,
-bez agregowania przez SimpleDecoder parser. Zwykłe pliki fLaC bez zmian.
-Cache128KiB+16 PSRAM przed I2S, scratch nadal128KiB; ring/PCM/ISR bez zmian.
+Użytkownik: po ADR0061 gra gorzej. Log bca642b2: memory/NO_MEM,
+compressed1, low/starts około2/s, potem raw adapter INVALID_RESPONSE/vendor0.
+ADR0061 odrzucone: surowy backend i CRC scanner wycofane; wraca parser SDK
+ze STREAMINFO. Hostowe testy CRC nie potwierdziły kontraktu binarnego SDK.
+PCM scratch512KiB PSRAM obejmuje138240B i maksymalny blok524280B;
+wewnętrzny ring PCM rezerwowany przed codec_open. FLAC start/refill~500ms
+z icy-br, fallback64KiB, clamp32..192KiB w istniejącym ring256KiB; bez
+restartu TCP/generation. MP3/AAC próg8KiB bez zmian. Odbiór S3 OPEN.
 
-370 testów hostowych, scanner/header/adapter ASanUBSan (LSan off),
-niezależne FFprobe boundaries i FFmpeg PCM/refheaders PASS. Native build
-ESP-IDF6.1 PASS0x17a9a0,90% app wolne, GPIO/diff PASS. Binarnego raw FLAC
-SDK nie wykonano na hoście; odsłuch na S3 nadal OPEN. Zwykły flash bez erase/
-FS/reimport, ten sam TEST FLAC kilka minut i zmiana utworu. Nowy log:
-FLAC live: CRC-checked single frames, parser aggregation disabled.
-Sprawdzić brak vendor-8/needed138240 i low/hard/starts. Jeśli compressed
-nadal zanika do1, transport/rebuffer wymagają osobnego pomiaru. Agent nie
-flashował. Gesty/ustawienia/HLS z ADR0059/60 nadal do odbioru użytkownika;
-ROOT CA/FFT/RMS/wyglądWWW odłożone, OTA wyłączone. Starsze sekcje to historia.
+370 testów hostowych PASS, live/actor ASanUBSan (LSan off), GPIO/diff i native ESP-IDF6.1 PASS0x17a8a0,90% app wolne.
+Teraz zwykły flash bez erase/FS/reimport; nowy log FLAC live frame: supplied
+validated STREAMINFO, bez CRC-checked single frames. Sprawdzić FLAC kilka
+minut i zmianę utworu: low/hard/starts, compressed/PCM, heap/min/largest.
+Nie obiecywać rozwiązania za wolnej sieci samym rebufferem. Odbiór nowych
+ustawień/HLS i RNŚTLS nadal osobno OPEN. ROOT CA/FFT/RMS/wyglądWWW odłożone,
+OTA wyłączone. Agent nie flashował. Starsze wpisy poniżej są historią.
 
 
 ## Bieżąca dostawa — ADR0059/0060 / 2026-10-31

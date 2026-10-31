@@ -120,7 +120,7 @@ static void diagnostic(unsigned fault){
  assert(streamoo_live_decode_init(&s,(streamoo_byte_source_t){&d,diagnostic_source,NULL},&d,diagnostic_decode));
  assert(!s.failed&&s.failure==STREAMOO_LIVE_FAILURE_NONE&&!s.decode_calls&&!s.source_calls&&!s.fetched_total&&!s.last_input);
 }
-int main(int argc,char **argv){assert(argc==2);int mode=atoi(argv[1]);if(mode==300)wide(24,13824);else if(mode>=200)wide((unsigned)(mode-200),64);else if(mode>=100)diagnostic(mode-100);else if(mode<3)resample(mode==0?48000:mode==1?44100:22050,mode==2?1:2);else icy(mode-2);return 0;}
+int main(int argc,char **argv){assert(argc==2);int mode=atoi(argv[1]);if(mode==301)wide(24,23040);else if(mode==302)wide(32,65535);else if(mode==300)wide(24,13824);else if(mode>=200)wide((unsigned)(mode-200),64);else if(mode>=100)diagnostic(mode-100);else if(mode<3)resample(mode==0?48000:mode==1?44100:22050,mode==2?1:2);else icy(mode-2);return 0;}
 '''
 class LiveStreamTests(unittest.TestCase):
  @classmethod
@@ -145,3 +145,7 @@ class LiveStreamTests(unittest.TestCase):
 
  def test_observed_flac_output_requirement_82944_bytes(self):
   subprocess.run([str(self.binary),'300'],check=True)
+
+ def test_flac_observed_138240_and_maximum_stereo_32bit_block(self):
+  for mode in (301,302):
+   with self.subTest(mode=mode):subprocess.run([str(self.binary),str(mode)],check=True)

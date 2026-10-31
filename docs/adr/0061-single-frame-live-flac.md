@@ -1,6 +1,11 @@
 # ADR0061 — pojedyncze ramki live FLAC zamiast grupowania przez parser
 
-Data:2026-10-31. Status: implementacja/host PASS, odbiór S3 OPEN.
+Data:2026-10-31. Status: ODRZUCONE po odsłuchu S3, wycofane w ADR0062.
+
+Log bca642b2 i użytkownik: wyraźna regresja, brak pamięci stage=memory oraz
+ESP_ERR_INVALID_RESPONSE przy vendor=0, częste rebuffer. Hostowe CRC/oracle
+nie wystarczały do sprawdzenia kontraktu binarnego raw dekodera. Poniżej
+historyczne uzasadnienie eksperymentu; nie opisuje bieżącego firmware.
 
 Użytkownik: TEST FLAC native lossless około1500k przerywa zależnie od
 utworu, pojawia się Brak danych. Log b040430e: gen8/gen9 HTTP200,

@@ -144,4 +144,5 @@ Obsługa radia, ustawienia i trwałe ID: `adr/0059-player-gestures-persistent-se
 
 HLS audio: `adr/0060-hls-audio-segments.md`, `HLS_BRINGUP.md`.
 
-Pojedyncze ramki live FLAC: `adr/0061-single-frame-live-flac.md`.
+ADR0061 odrzucone po odsłuchu S3: `adr/0061-single-frame-live-flac.md`.
+FLAC parser/PCM/rebuffer: `adr/0062-flac-parser-recovery-and-buffer-reserve.md`.
