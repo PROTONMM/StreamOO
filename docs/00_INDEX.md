@@ -75,3 +75,5 @@ Etap06g — źródło skompresowane i bufor: `adr/0024-compressed-source-buffer.
 Etap06h — niezależny czytnik: `adr/0025-independent-compressed-reader.md`.
 
 Etap09a — SoftAP: `adr/0026-secured-softap-bringup.md`, `NETWORK_BRINGUP.md`.
+
+Etap09b — portal odczytu i OLED AP: `adr/0027-readonly-portal-and-ap-oled.md`.

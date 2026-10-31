@@ -76,3 +76,8 @@ Przed buildem ustaw wspólne hasło lokalnie: `python3 tools/configure_network.p
 następnie `idf.py reconfigure build`. Brak prywatnego klucza pozostawia Wi-Fi
 wyłączone. Factory rośnie do1500KiB z zachowaniem NVS; pierwszy flash musi
 objąć tablicę partycji. Pełna procedura: [NETWORK_BRINGUP](docs/NETWORK_BRINGUP.md).
+
+09b dodaje portal odczytu pod http://192.168.4.1/ z rzeczywistym statusem
+sieci i audio. OLED podczas AP pokazuje SSID oraz stałe hasło wbudowane
+z prywatnego buildu. Brak hasła w HTTP/UART. Konfiguracja STA i wyłączenie
+AP po udanym połączeniu są następnym krokiem, nie funkcją bieżącego portalu.

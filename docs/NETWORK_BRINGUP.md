@@ -89,3 +89,31 @@ Ponowna próba użytkownika2026-10-31 potwierdziła przyczynę: poruszanie
 przewodów UART przy dotykaniu enkodera. Po sprawdzeniu „Jest OK”. Obserwacja
 zamknięta, bez zmiany firmware; opis porównania konsol pozostaje tylko
 procedurą na wypadek nowego, niezależnego objawu.
+
+## Portal09b i ekran AP (bieżący obraz)
+
+Używa tego samego, stałego klucza prywatnego buildu. Wystarczy zwykły build
+w istniejącym środowisku i flash; nie trzeba ponownie podawać hasła. Nowa
+partycja1500KiB pozostaje bez zmian. Bez prywatnego pliku nadal nie ma AP.
+
+1. OLED ma pokazać SSID, hasło AP i `http://192.168.4.1`. Hasło dłuższe niż
+   42 znaki kontynuuje się w następnym wierszu bez separatora. AP aktywne→
+   ekran konfiguracji zamiast HOME/listy. Obrót reguluje VOL, trybA długi klik
+   PLAY/STOP (trybB krótki); gest listy i pressed-rotate pomijane podczas AP.
+2. Połącz klienta z AP i otwórz **http://192.168.4.1/**. Strona działa offline,
+   bez CDN i bez wymaganego Internetu. To panel odczytu, nie ma jeszcze
+   formularza domowej sieci. Portal nie przechwytuje DNS/captive detection.
+3. Panel powinien pokazać nazwę AP i rzeczywiste VOL/PLAY/STOP zmieniane
+   enkoderem; poll co2s. Liczba klientów pochodzi z pomiaru sieci co10s.
+   JSON pod `/api/v1/status` ma schema_version1 i nie może zawierać hasła.
+4. Sprawdź stronę na telefonie i wykonaj kilkanaście odświeżeń podczas AAC.
+   Metody zmieniające stan nie istnieją; POST/api/v1/status ma być odrzucony.
+   Nie podawaj hasła w URL ani w logu do przesłania.
+5. Podeślij portal ready, network/PCM/buffers/heap oraz potwierdzenie OLED,
+   strony, zgodności volume i czystego dźwięku. Oczekujemy low0/hard0/invalid0
+   i stabilnej pamięci przy otwartej stronie.
+
+Hasło AP nie trafia do HTTP ani UART; jego wyświetlanie na OLED jest
+zamierzone i autoryzowane. Wyłączenie AP po połączeniu STA/IP jest wymaganiem
+następnego zakresu, obecny firmware nie konfiguruje jeszcze STA. Nie wyłączamy
+AP po samym połączeniu telefonu/komputera z punktem dostępu urządzenia.

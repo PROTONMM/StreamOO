@@ -124,3 +124,8 @@ Nowy 20s pokaz HOME zastępuje poprzednią scenę i zachowuje czas całej
 sekwencji około 46s. Użytkownik potwierdził poprawne działanie pokazu HOME
 wersji `8f895bd` na OLED (2026-10-24). Renderery i lista są gotowe
 programowo; pełne fizyczne sterowanie wymaga etapu 05 i źródła danych dalszych etapów.
+
+09b: ekran AP z rzeczywistym SSID/hasłem i URL ma pierwszeństwo nad HOME.
+Pełny klucz do63 znaków w dwóch wierszach42+21, bez ucinania. VOL/PLAY/STOP
+z enkodera nadal działają, lista/widżet nie otwierają się w tle. Po AP off
+powrót do HOME. Hasło nie jest częścią snapshotów HTTP. ADR0027.

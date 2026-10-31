@@ -25,3 +25,12 @@ pełny przepływ powyżej pozostaje wymaganiem. Instrukcja:
 [NETWORK_BRINGUP](NETWORK_BRINGUP.md), [ADR0026](adr/0026-secured-softap-bringup.md).
 Nowy profil partycji SDK1500KiB zachowuje położenie NVS/PHY/factory.
 Odbiór RF/DHCP i współpracy z audio OPEN.
+
+## Zakres09b — portal odczytu i ekran AP
+
+Statyczny portal HTTP192.168.4.1 i GET/api/v1/status, bez zapisów ustawień.
+OLED podczas AP wyświetla SSID i pełne hasło, zgodnie z poleceniem użytkownika.
+Stałe hasło nadal wbudowane z prywatnego buildu, niewysyłane przez HTTP/logi.
+Użytkownik potwierdził AP off po udanym STA z IP; przejście to będzie wdrożone
+wraz z zapisem/testem STA, nie po samym dołączeniu klienta AP.
+[ADR0027](adr/0027-readonly-portal-and-ap-oled.md). Odbiór09b OPEN.

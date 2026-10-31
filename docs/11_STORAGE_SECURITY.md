@@ -34,3 +34,9 @@ Zachowano jednego producenta skrzynki NVS i zapis po5s od obserwacji zmiany.
 build-time, nie secret Kconfig ani zapis credentials do NVS. Brak klucza
 nie otwiera AP. Nowa factory1500KiB przy tym samym NVS/PHY i offsetach;
 nie kasować NVS. Portal/STA/admin auth, OTA i szyfrowanie nadal OPEN.
+
+09b: użytkownik zezwolił na wyświetlanie stałego hasła AP na OLED podczas AP.
+Prywatny build/stałość klucza bez zmian, brak haseł w repo/logach/HTTP DTO.
+Nie traktować tej decyzji jako wyboru osobnego auth administracji. Publiczny
+portal jest wyłącznie do odczytu; brak zapisu Wi-Fi/NVS i nowych endpointów
+sterowania. Wyłączenie AP nastąpi po udanym STA/IP w kolejnym zakresie.

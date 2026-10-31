@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>StreamOO</title>
+<link rel="stylesheet" href="/portal.css">
+<script src="/portal.js" defer></script>
+</head>
+<body>
+<main>
+<header><span class="brand">StreamOO<span class="dot">●</span></span><span class="label">Twoje radio</span></header>
+<section class="welcome"><p class="eyebrow">Panel urządzenia</p><h1>Jesteś na miejscu.</h1><p id="connection" role="status" aria-live="polite">Łączenie z urządzeniem…</p></section>
+<div class="cards">
+<section class="card" aria-labelledby="network-title"><p class="eyebrow">Połączenie</p><h2 id="network-title">Sieć urządzenia</h2><dl><div><dt>Tryb</dt><dd>Punkt dostępu</dd></div><div><dt>Nazwa sieci</dt><dd id="ssid">—</dd></div><div><dt>Adres urządzenia</dt><dd>192.168.4.1</dd></div><div><dt>Połączone urządzenia</dt><dd id="clients">—</dd></div></dl><p class="note">Ustawienie domowej sieci Wi-Fi będzie dostępne w kolejnym kroku konfiguracji.</p></section>
+<section class="card" aria-labelledby="audio-title"><p class="eyebrow">Dźwięk</p><h2 id="audio-title">Źródło testowe</h2><p id="playback" class="playback">Oczekiwanie na status…</p><div class="volume"><span>Głośność</span><strong id="volume">—</strong></div><p class="note">Odtwarzaniem i głośnością sterujesz enkoderem na urządzeniu.</p></section>
+</div>
+<footer>Połączenie lokalne. Ta sieć nie udostępnia Internetu.</footer>
+<noscript><p class="note">Włącz JavaScript, aby zobaczyć aktualny status urządzenia.</p></noscript>
+</main>
+</body>
+</html>

@@ -25,3 +25,12 @@ Responsywny prosty panel z zakładkami Player / Stations / Wi-Fi / System. Impor
 
 ## Testy
 API contract, nieautoryzowane modyfikacje, upload uszkodzonego pliku, edycja stacji podczas odtwarzania, pełny provisioning offline.
+
+## Pierwszy zakres09b — odczyt
+
+Własne offline HTML/CSS/JS i GET/api/v1/status na esp_http_server6.1.
+Status sieci/audio pochodzi z jawnego gettera aplikacji, nie z syntetycznego
+HOME. Bez metod modyfikujących, formularzy credentials i CORS '*'.
+Panel nie pokazuje kluczy; hasło AP wyłącznie na OLED na polecenie użytkownika.
+Auth administracji i pełna konfiguracja Wi-Fi pozostają OPEN przed dodaniem
+zapisu. [ADR0027](adr/0027-readonly-portal-and-ap-oled.md).

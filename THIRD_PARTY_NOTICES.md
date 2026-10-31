@@ -69,3 +69,7 @@ is copied to firmware. The synthetic MP3/AAC fixtures contain no external record
 esp_wifi/esp_netif/esp_event from pinned ESP-IDF6.1; local public headers and
 esp_wifi/lib/LICENSE reviewed as Apache2.0. Retained Apache-2.0.txt and
 [Wi-Fi SDK notice](licenses/ESP-IDF-WiFi-NOTICE.md). No SDK code copied.
+
+09b also uses native esp_http_server from the same pinned SDK, public header
+copyright2018–2026 Espressif Systems, Apache-2.0. Retained Apache-2.0.txt.
+Portal HTML/CSS/JS and OLED layout are original; no external frontend assets.

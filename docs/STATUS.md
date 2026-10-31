@@ -12,8 +12,8 @@ Bieżący punkt wznowienia: [RESUME.md](RESUME.md).
 | 06 audio | I2S/gain/PCM stress odebrane; MP3 decode/PCM potwierdzone logiem; AAC-LC PoC odebrane; AAC incremental file decode06f odebrane logiem i odsłuchem; źródło/bufor AAC06g odebrane logiem, odsłuchem i sterowaniem; niezależny reader AAC06h odebrany logiem i odsłuchem; sieć/player OPEN | ADR 0018–0025; 168 testów hostowych PASS; build źródeł PASS |
 | 07 DSP | NIEZAIMPLEMENTOWANE | — |
 | 08 stacje | NIEZAIMPLEMENTOWANE | — |
-| 09 sieć | SoftAP/DHCP potwierdzone logiem; odsłuch przy RF i pozostałe próby OPEN; portal/STA/mDNS OPEN | ADR0026; 179 testów hostowych PASS; native AP build PASS |
-| 10 WWW | NIEZAIMPLEMENTOWANE | — |
+| 09 sieć | SoftAP/DHCP potwierdzone; portal odczytu i OLED AP09b gotowe do odbioru; STA/mDNS OPEN | ADR0026–0027; 197 testów hostowych PASS |
+| 10 WWW | portal odczytu i GET/api/v1/status09b; zapis/auth administracji OPEN | ADR0027; testy handlerów/DOM PASS |
 | 11 storage/OTA | NVS volume/widżet odebrane; flush i pozostały zakres OPEN | ADR 0017; odbiór użytkownika |
 | 12 testy końcowe | NIEURUCHOMIONE | — |
 
@@ -1074,3 +1074,38 @@ nieczytelnego fragmentu konsoli potwierdzona jako połączenie UART poruszane
 przy obsłudze enkodera. Obserwacja zamknięta; bez poprawki firmware i bez
 powtarzania diagnostyki UART. Nie jest to osobne potwierdzenie odsłuchu
 przy AP, próby złego klucza ani rozłączenia klienta. Zmiana dokumentacyjna.
+
+## Etap09b — portal statusu i ekran danych AP (2026-10-31)
+
+- Własny portal offline HTML/CSS/JS i GET/api/v1/status na natywnym
+  esp_http_server6.1. HTTP task2/stos6144B,4 sockety/LRU, timeout3s.
+  Tylko GET, bez admin mutations, CORS '*', zewnętrznych assetów i kluczy
+  w DTO. Jawny schema_version1 i stały bufor JSON512B. Błąd snapshotu→503.
+- Network owner publikuje kopię stanu bez klucza i hooks ready/stopped;
+  adapter aplikacji łączy getter network/audio i start/stop HTTP poza IRQ.
+  Portal nie zależy od implementacji ownerów. Błąd HTTP nie wyłącza AP/audio.
+- Użytkownik potwierdził stałe/wbudowane hasło AP, SSID/hasło na OLED oraz
+  docelowe AP off po STA/IP. Klucz nadal z istniejącego prywatnego buildu,
+  stały runtime i wspólny dla urządzeń. Oddzielny ap_display tylko dla OLED,
+  brak hasła w statusie HTTP/logach. Nie ustalono osobnego admin auth.
+- UI AP ma pierwszeństwo, pełne63 znaki hasła42+21 bez ucięcia. VOL i
+  PLAY/STOP nadal działają; lista/pressed-rotate nie otwierają się w tle.
+  AP nieaktywne→HOME. Nie dodano nowego kodu/fontu zewnętrznego.
+- 197 testów hostowych PASS: JSON/bounds, handlery i lifecycle z shimem HTTP,
+  Node DOM/fetch oraz renderer OLED z pełnym kluczem/wyczyszczeniem ramek.
+  ASan/UBSan4 przypadki handlerów/modelu PASS (bez LeakSanitizer).
+  Chromium headless390px: lokalny przykładowy status, poprawny DOM/live JSON
+  i screenshot zweryfikowane; to nie runtime esp_http_server na hoście/S3.
+- API/licencja esp_http_server sprawdzone w lokalnym SDK6.1 (Apache2.0),
+  bez nowych pakietów registry i bez kopiowania API WWW yoRadio. I2S,
+  gain/tap/reader oraz NVS preferencji bez zmian. Partycja1500KiB bez zmian.
+- ADR0027. Odbiór09b S3 OPEN: OLED/strona/status z rzeczywistym VOL/PLAY,
+  brak klucza w HTTP/UART, stabilne PCM/heap i czysty odsłuch przy pollu.
+  STA, AP off po uzyskaniu IP, zapis/rollback i admin auth nadal OPEN.
+  Nie flashowano za użytkownika i nie zmieniano prywatnego klucza.
+
+Build09b ESP-IDF6.1: AAC+AP/portal0x11b2c0B, MP3+AP/portal0x121e00B,
+AP off0x814c0B PASS. Końcowy profil AAC+AP z istniejącą prywatną konfiguracją,
+stress OFF/tap_delay0; factory1500KiB ma24% wolnej. Nie zmieniano klucza ani
+zewnętrznego pliku. Walidator GPIO/platform i diff --check PASS; controlled_fill/
+pcm_fill pozostają w IRAM. Nie uruchamiano buildu z ujawnianiem sekretów.

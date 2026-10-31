@@ -19,7 +19,7 @@
 | D15 | OTWARTE | ESP-IDF 6.1 USTALONE (v6.1 zweryfikowane, ADR 0002); nadal OTWARTE: component registry, licencje i kompatybilność kodeków. |
 | D16 | OTWARTE | Dokładne zachowanie overflow/underrun, rozmiary partycji, wybór enkodera half/full quadrature po pomiarze. |
 | D17 | OTWARTE | Model SSD1322 i R5/R8=4SPI potwierdzone przez użytkownika (ADR 0003); nadal OTWARTE: odbiór zasilania/resetu/obrazu OLED, modułu audio i kierunku enkodera na PCB. |
-| D18 | OTWARTE | Hasło AP: konkretna wartość w prywatnej konfiguracji; uwierzytelnianie administracyjne WWW. |
+| D18 | OTWARTE | Hasło AP stałe/wbudowane z prywatnego buildu i wyświetlane na OLED w AP (potwierdzenie użytkownika2026-10-31); osobne uwierzytelnianie administracji WWW nadal OPEN. |
 | D19 | OTWARTE | Czy lista stacji ma zawijać się (wrap-around), parametr timeout menu. |
 | D20 | OTWARTE | Format czasu/strefa i polityka bez SNTP nadal otwarte. W HOME 04i do testu użyto YYYY-MM-DD i HH:MM:SS z jawnego czasu cywilnego; renderer nie wybiera strefy ani nie synchronizuje czasu. |
 | D21 | USTALONE | Scroll ma poruszać tekst wyłącznie od prawej do lewej; nowsza decyzja użytkownika, ADR 0009. |

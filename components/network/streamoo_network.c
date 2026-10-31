@@ -14,6 +14,26 @@
 #include "freertos/task.h"
 #include <string.h>
 static bool started;
+static streamoo_network_hooks_t hooks;
+static streamoo_network_state_t state;
+static portMUX_TYPE state_lock=portMUX_INITIALIZER_UNLOCKED;
+bool streamoo_network_state(streamoo_network_state_t *out)
+{
+    if (!out) return false;
+    portENTER_CRITICAL(&state_lock); *out=state; portEXIT_CRITICAL(&state_lock);
+    return true;
+}
+bool streamoo_network_ap_display(streamoo_network_ap_display_t *out)
+{
+    if (!out) return false;
+    *out=(streamoo_network_ap_display_t){0};
+    streamoo_network_state_t snapshot;
+    if (!streamoo_network_state(&snapshot) || !snapshot.ap_ready) return false;
+    memcpy(out->ssid,snapshot.ap_ssid,sizeof out->ssid);
+    memcpy(out->password,streamoo_ap_password,sizeof streamoo_ap_password);
+    out->password_bytes=sizeof streamoo_ap_password-1;
+    return true;
+}
 static void network_task(void *context)
 {
     (void)context;
@@ -50,28 +70,46 @@ static void network_task(void *context)
     if (error==ESP_OK) error=esp_netif_dhcps_start(netif);
     if (error==ESP_OK) error=esp_wifi_start();
     if (error==ESP_OK) {
-        ESP_LOGI("network","AP ready: SSID=%s WPA2; IPv4=192.168.4.1; TEST no portal/STA",ssid);
+        ESP_LOGI("network","AP ready: SSID=%s WPA2; IPv4=192.168.4.1; no STA",ssid);
+        portENTER_CRITICAL(&state_lock);
+        memcpy(state.ap_ssid,ssid,sizeof state.ap_ssid); state.ap_ready=true;
+        portEXIT_CRITICAL(&state_lock);
+        if (hooks.ready) hooks.ready(hooks.context);
         for (;;) {
             wifi_sta_list_t clients={0};
             error=esp_wifi_ap_get_sta_list(&clients);
             if (error!=ESP_OK) break;
+            portENTER_CRITICAL(&state_lock); state.clients=clients.num; portEXIT_CRITICAL(&state_lock);
             ESP_LOGI("network","AP clients=%d stack_hwm=%u",clients.num,
                 (unsigned)uxTaskGetStackHighWaterMark(NULL));
             vTaskDelay(pdMS_TO_TICKS(10000));
         }
     }
     ESP_LOGE("network","AP test failed: %s; no erase/fallback",esp_err_to_name(error));
+    portENTER_CRITICAL(&state_lock); state.ap_ready=false; portEXIT_CRITICAL(&state_lock);
+    if (hooks.stopped) hooks.stopped(hooks.context);
     if (initialized) { esp_wifi_stop(); esp_wifi_deinit(); }
     if (netif) esp_netif_destroy_default_wifi(netif);
     vTaskDelete(NULL);
 }
-esp_err_t streamoo_network_start(void)
+esp_err_t streamoo_network_start(const streamoo_network_hooks_t *observer)
 {
     if (started) return ESP_ERR_INVALID_STATE;
     if (!streamoo_network_password_valid(streamoo_ap_password,sizeof streamoo_ap_password-1)) return ESP_ERR_INVALID_ARG;
+    hooks=observer ? *observer : (streamoo_network_hooks_t){0};
     if (xTaskCreate(network_task,"network",6144,NULL,3,NULL)!=pdPASS) return ESP_ERR_NO_MEM;
     started=true; return ESP_OK;
 }
 #else
-esp_err_t streamoo_network_start(void) { return ESP_ERR_NOT_FOUND; }
+bool streamoo_network_ap_display(streamoo_network_ap_display_t *out)
+{
+    if (out) *out=(streamoo_network_ap_display_t){0};
+    return false;
+}
+esp_err_t streamoo_network_start(const streamoo_network_hooks_t *observer) { (void)observer; return ESP_ERR_NOT_FOUND; }
+bool streamoo_network_state(streamoo_network_state_t *out)
+{
+    if (out) *out=(streamoo_network_state_t){0};
+    return false;
+}
 #endif

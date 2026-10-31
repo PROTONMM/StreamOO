@@ -77,3 +77,9 @@ nie obejmuje I/O źródła ani ścieżki I2S. Destroy po zatrzymaniu producenta.
 Private build JSON poza repo, header tylko jako artefakt build. Polityka SSID/
 klucza niezależna od SDK, testowana na hoście. Brak klucza→brak Wi-Fi.
 Źródło audio, render i NVS preferencji niezależne od managera sieci.
+
+09b portal: osobny komponent HTTP z callbackiem kopii statusu od aplikacji,
+statycznymi zasobami offline i wyłącznie GET. Network owner publikuje snapshot
+bez hasła i hooks ready/stopped; app adapter spina HTTP z audio/network.
+Oddzielny zaufany ap_display przekazuje klucz tylko do lokalnego OLED ui_ap.
+Brak nowych zależności registry; natywny esp_http_server z ESP-IDF6.1.

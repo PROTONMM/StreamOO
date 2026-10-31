@@ -1,8 +1,35 @@
 # Punkt wznowienia StreamOO
 
-Aktualizacja: **2026-10-31, SoftAP/DHCP09a potwierdzone; zakłócenie UART wyjaśnione**.
+Aktualizacja: **2026-10-31, portal odczytu i OLED AP09b gotowe do odbioru**.
 PCM/rebuffer/tap stress potwierdzone logiem i odsłuchem (`5664a90`).
-Gałąź feature/streamoo-implementation, szczegóły STATUS i ADR0026.
+Gałąź feature/streamoo-implementation, szczegóły STATUS i ADR0027.
+
+## Bieżące09b — portal i OLED konfiguracji AP
+
+Portal read-only pod http://192.168.4.1/ i GET/api/v1/status. Nowy komponent
+portal otrzymuje snapshot przez callback aplikacji; publiczne DTO sieci/audio
+nie ma hasła. Network hooks ready/stopped sterują HTTP z taska ownera.
+Serwer2/6144B,4 sockety/LRU/timeout3s; offline assets i poll JSco2s bez nakładania.
+
+Nowsza decyzja użytkownika: hasło AP stałe i wbudowane, SSID/hasło pokazane
+na OLED w AP, AP off po połączeniu STA. Stałość zapewnia dotychczasowy
+prywatny build, nie dodawać hasła do repo/logów/HTTP. OLED ui_ap pokazuje
+całe63 znaki w dwóch wierszach42+21. Ekran AP ma pierwszeństwo; enkoder
+steruje VOL/PLAY/STOP, nie otwiera niewidocznej listy/widżetu. AP off→HOME.
+
+Zapis Wi-Fi/STA i AP off po udanym IP NIE są jeszcze wdrożone. Portal ma
+wyłącznie odczyt, bez formularzy/mutations. Użytkownik nie ustalił osobnego
+auth administracji; nie uznawać ponownego opisu klucza AP za decyzję auth.
+Następny zakres: uwierzytelniony zapis/test STA/rollback i AP off po IP.
+
+Użyj istniejącego prywatnego pliku bez ponownego pytania o klucz. Zwykły
+build/flash, partycja1500KiB zachowana. Bez AP/private config działa HOME.
+197 testów hostowych PASS, ASan/UBSan handlerów PASS, Node i mobilny podgląd
+Chromium z przykładowym statusem PASS. Build AAC+AP0x11b2c0B, MP3+AP
+i AP off PASS. Końcowy profil AAC+AP, bez zmiany prywatnego klucza,
+stress OFF/0 i factory1500KiB. Runtime09b na S3 OPEN: ekran AP,
+strona/JSON/live VOL, dźwięk/PCM/heap podczas pollu. Postęp buildów w STATUS.
+UART problem wyjaśniony przewodami; nie diagnozować ponownie bez nowego objawu.
 
 ## Najnowszy log09a i konsola UART
 
@@ -17,7 +44,7 @@ enkodera; po sprawdzeniu „Jest OK”. Nie zmieniać firmware ani nie powtarza�
 diagnostyki UART bez nowego objawu. Pozostaje dokończyć odbiór09a wymieniony
 powyżej; nie wywodzić odsłuchu/odrzucenia złego klucza z potwierdzenia UART.
 
-## Bieżący09a — zabezpieczony SoftAP
+## Historia09a — zabezpieczony SoftAP
 
 AAC06h odebrane (kod6031941, odbiór ed32109); nie powtarzać. Nowy komponent
 network uruchamia AP WPA2 StreamOO-XXXXXX z MAC, DHCP192.168.4.1/24,

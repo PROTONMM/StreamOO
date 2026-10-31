@@ -1,5 +1,7 @@
 #include "display_smoke.h"
 #include "encoder_demo.h"
+#include "streamoo_ui_ap.h"
+#include "streamoo_network.h"
 #include "audio_control_probe.h"
 #include "streamoo_preferences.h"
 #include "streamoo_input_probe.h"
@@ -75,19 +77,28 @@ static void display_task(void *context)
                 }
             }
 #endif
+            streamoo_network_ap_display_t ap;
+            bool ap_active=streamoo_network_ap_display(&ap);
+            if (ap_active && demo.ui.screen==STREAMOO_UI_STATIONS) streamoo_ui_cancel(&demo.ui);
             for (unsigned n=0; n<32 && streamoo_input_probe_receive(&event); ++n) {
 #ifdef CONFIG_STREAMOO_ENCODER_MODE_B
                 const streamoo_control_mode_t mode = STREAMOO_CONTROL_MODE_B;
 #else
                 const streamoo_control_mode_t mode = STREAMOO_CONTROL_MODE_A;
 #endif
+                if (ap_active && (event.kind==STREAMOO_INPUT_PRESSED_ROTATE ||
+                    event.kind==(mode==STREAMOO_CONTROL_MODE_A ? STREAMOO_INPUT_SHORT : STREAMOO_INPUT_LONG))) continue;
                 if (!streamoo_encoder_demo_input(&demo,event,mode,now))
                     ESP_LOGW("display_smoke", "TEST gesture rejected; state preserved");
                 const streamoo_preferences_value_t preferences = {(uint8_t)demo.volume, (uint8_t)demo.ui.visualization};
                 if (preferences_ready && !streamoo_preferences_submit(preferences))
                     ESP_LOGW("display_smoke", "Preferences update not accepted");
             }
-            if (!streamoo_encoder_demo_draw(&demo,frame,SSD1322_FRAME_BYTES,now)) {
+            bool drawn=ap_active ? streamoo_ui_ap_draw(frame,SSD1322_FRAME_BYTES,
+                (const uint8_t *)ap.ssid,15,ap.password,ap.password_bytes) :
+                streamoo_encoder_demo_draw(&demo,frame,SSD1322_FRAME_BYTES,now);
+            memset(&ap,0,sizeof ap);
+            if (!drawn) {
                 error = ESP_ERR_INVALID_ARG;
                 break;
             }
