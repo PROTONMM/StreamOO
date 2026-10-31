@@ -1,5 +1,20 @@
 # Status implementacji
 
+## Najnowsze — FLAC: rozdzielenie HTTP i dekodera / ADR0069 / 2026-10-31
+
+Log `TEST FLAC native lossless`: krótkie przerwy są zapobiegawczym fade przy
+`low`, nie twardym brakiem PCM (`hard=0`). Pierwszy low zbiega się ze skokiem
+`src_wait`1→11; dekoder nie dowodzi za słabego CPU. ESP32-S3 ma 240MHz/2
+rdzenie, Wi-Fi jest na core0. `http_reader` przypięto do core0, `player`/
+dekoder PCM do core1; bez zmian priorytetów, ringów, I2S, FFT, NVS lub
+partycji. Log bootowy pokaże rzeczywiste core obu tasków.
+
+381 testów hostowych, targeted player11 + HTTP23 i native ESP-IDF6.1 build
+PASS0x17bd40 (90% app wolne); odbiór S3 OPEN. Wgrać zwyczajnie bez
+erase/importu, FLAC kilka minut/zmiana utworu. Oczekiwane mniej `low`/`starts`,
+`hard=0`; przy dalszych przerwach mierzyć przejście low, nie zmieniać progów
+fade na ślepo. Agent nie flashował.
+
 ## Najnowsze — logo do startu odtwarzania / ADR0068 / 2026-10-31
 
 Na polecenie użytkownika boot: logo minimum1,5s, potem pozostaje podczas

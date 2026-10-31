@@ -162,6 +162,10 @@ static void log_decode_profile(const decode_profile_t *p,const streamoo_live_dec
 }
 static void task(void *context) {
   (void)context;
+#ifdef ESP_PLATFORM
+  ESP_LOGI("player", "Task placement: decoder/PCM core=%d (affinity=1)",
+           xPortGetCoreID());
+#endif
   streamoo_catalog_snapshot_t *chosen = NULL;
   const streamoo_station_t *station = NULL;
   streamoo_http_stream_t *session = NULL;
@@ -558,7 +562,13 @@ esp_err_t streamoo_player_start(uint8_t volume) {
   if (!queue)
     return ESP_ERR_NO_MEM;
   state = (streamoo_player_state_t){.ready = true, .volume = volume};
-  if (xTaskCreate(task, "player", 24576, NULL, 4, NULL) != pdPASS) {
+#ifdef ESP_PLATFORM
+  int created = xTaskCreatePinnedToCore(task, "player", 24576, NULL, 4,
+                                         NULL, 1);
+#else
+  int created = xTaskCreate(task, "player", 24576, NULL, 4, NULL);
+#endif
+  if (created != pdPASS) {
     vQueueDelete(queue);
     queue = NULL;
     return ESP_ERR_NO_MEM;

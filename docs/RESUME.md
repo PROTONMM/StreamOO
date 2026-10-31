@@ -1,5 +1,14 @@
 # Punkt wznowienia StreamOO
 
+## Najnowsze — FLAC: rozdzielenie HTTP i dekodera / ADR0069 / 2026-10-31
+
+Log `TEST FLAC native lossless` łączy krótkie fade/rebuffer z `src_wait`, a
+nie z pełnym opróżnieniem PCM (`hard=0`). `http_reader` jest teraz core0 wraz
+z Wi-Fi, player/dekoder core1. Brak zmian ringów, I2S, NVS, partycji i
+playlist. Odbiór: zwykły flash bez erase/importu, logo task placement core0/1,
+FLAC kilka minut i zmiana utworu; porównać `low`/`starts`, hard ma pozostać0.
+381 testów, targeted player11+HTTP23 i native build0x17bd40 PASS; S3 OPEN.
+
 ## Najnowsze — logo do startu odtwarzania / ADR0068 / 2026-10-31
 
 Na polecenie użytkownika boot: logo minimum1,5s, potem pozostaje podczas

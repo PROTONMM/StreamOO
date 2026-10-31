@@ -2,6 +2,7 @@
 #include "esp_crt_bundle.h"
 #include "esp_heap_caps.h"
 #include "esp_http_client.h"
+#include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
 #include "freertos/task.h"
@@ -542,6 +543,10 @@ static esp_err_t hls_run(streamoo_http_stream_t *s,
 }
 static void reader(void *context) {
   streamoo_http_stream_t *s = context;
+#ifdef ESP_PLATFORM
+  ESP_LOGI("http_reader", "Task placement: HTTP/Wi-Fi core=%d (affinity=0)",
+           xPortGetCoreID());
+#endif
   esp_http_client_config_t config = {.url = s->url,
                                      .timeout_ms = 3000,
                                      .buffer_size = 2048,
@@ -807,10 +812,22 @@ esp_err_t streamoo_http_stream_open(const char *url,
   s->done = xSemaphoreCreateBinary();
   if (s->storage)
     s->buffer = streamoo_buffered_source_create(s->storage, CAPACITY);
-  if (!s->done || !s->buffer ||
-      xTaskCreate(reader, "http_reader", 16384, s, 3, NULL) != pdPASS) {
+  if (!s->done || !s->buffer) {
     if (s->done)
       vSemaphoreDelete(s->done);
+    streamoo_buffered_source_destroy(s->buffer);
+    heap_caps_free(s->storage);
+    heap_caps_free(s);
+    return ESP_ERR_NO_MEM;
+  }
+#ifdef ESP_PLATFORM
+  int reader_created = xTaskCreatePinnedToCore(reader, "http_reader", 16384,
+                                                 s, 3, NULL, 0);
+#else
+  int reader_created = xTaskCreate(reader, "http_reader", 16384, s, 3, NULL);
+#endif
+  if (reader_created != pdPASS) {
+    vSemaphoreDelete(s->done);
     streamoo_buffered_source_destroy(s->buffer);
     heap_caps_free(s->storage);
     heap_caps_free(s);

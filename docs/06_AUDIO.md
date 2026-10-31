@@ -174,6 +174,11 @@ przygotowania bloku, ring przed/po najwolniejszym wywołaniu oraz rozmiary/
 postęp. Log Decode perf co5s służy do pomiaru S3 przed następną decyzją;
 nie zmienia rozmiaru ring/PCM/prebuffer ani I2S. Stabilność nadal OPEN.
 
+ADR0069: log użytkownika wiąże krótkie fade/rebuffer FLAC z `src_wait`, nie
+z twardym brakiem PCM. Czytnik HTTP/Wi-Fi działa na rdzeniu0, a player/
+dekoder PCM na rdzeniu1. Ringi, progi fade i callback I2S bez zmian; odbiór
+tego eksperymentu na S3 pozostaje OPEN.
+
 ADR0067 rozszerza źródło bitrate z ADR0049 o wybrany wariant HLS:
 AVERAGE-BANDWIDTH jeśli poprawne, inaczej BANDWIDTH. Wartość deklarowana,
 trwała przez media reload/segmenty, bez estymacji z rate czy napełnienia.

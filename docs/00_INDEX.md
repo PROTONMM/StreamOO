@@ -156,4 +156,6 @@ Nazwa stacji i źródłowe błędy czytnika: `adr/0066-station-and-reader-failur
 
 Deklarowany bitrate HLS: `adr/0067-hls-declared-bitrate.md`.
 
+FLAC: dopływ HTTP i dekodowanie na oddzielnych rdzeniach: `adr/0069-flac-reader-decoder-core-placement.md`.
+
 Logo podczas Wi-Fi i autoplay: `adr/0068-boot-logo-through-autoplay.md`.
