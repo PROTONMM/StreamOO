@@ -160,3 +160,14 @@ sesję/retry. Limity16KiB/32 segmenty, osobny manifest PSRAM, reader16KiB,
 TLS i ring256KiB zachowane. Testy hostowe/publiczne próbki PASS, odsłuch
 S3 OPEN. Instrukcja: [HLS_BRINGUP](HLS_BRINGUP.md), `playlist.hls.csv`.
 Generator extended fixtures dodaje3 lokalne HLS: AAC-TS/MP3-TS/AAC-packed.
+
+## Live FLAC po kolejnym logu — ADR0061
+
+Needed138240 przekroczyło scratch128KiB. Live headerless FLAC teraz
+rozdzielane CRC8/CRC16 na pojedyncze ramki, SDK use_frame_dec=true, bez
+agregującego parsera/STREAMINFO bootstrap. File fLaC bez zmian. Nowy cache
+128KiB+16 PSRAM, PCM scratch nadal128KiB. Po zwykłym flash sprawdzić tę
+samą stację kilka minut/zmiana utworu: log `FLAC live: CRC-checked single
+frames, parser aggregation disabled`, brak vendor-8 i stabilne low/starts.
+Raw decoder SDK i transport przy compressed1 nadal do odbioru S3; hostowe
+testy/oracle i build nie są odsłuchem. Szczegóły ADR0061 i STATUS.

@@ -1,5 +1,9 @@
 #include "streamoo_decoder.h"
 #include "streamoo_flac_header.h"
+#include "streamoo_flac_frames.h"
+#ifdef ESP_PLATFORM
+#include "esp_heap_caps.h"
+#endif
 #include "esp_mp3_dec.h"
 #include "esp_aac_dec.h"
 #include "esp_flac_dec.h"
@@ -14,6 +18,7 @@
 #include <string.h>
 
 struct streamoo_decoder { esp_audio_simple_dec_handle_t handle; esp_aac_dec_cfg_t aac;esp_ts_dec_cfg_t ts;
+    streamoo_flac_frames_t frames;uint8_t *frame_storage;bool live,frame_decoder;
     bool flac,flac_ready;uint8_t prefix[16];size_t prefix_bytes; };
 static bool registered[STREAMOO_CODEC_COUNT];
 static bool ogg_registered;
@@ -66,6 +71,15 @@ esp_err_t streamoo_decoder_open(streamoo_codec_t codec, streamoo_decoder_t **out
         free(d); return error==ESP_AUDIO_ERR_MEM_LACK ? ESP_ERR_NO_MEM : ESP_FAIL;
     }
     d->flac=codec==STREAMOO_CODEC_FLAC;
+    if(d->flac){
+#ifdef ESP_PLATFORM
+        d->frame_storage=heap_caps_malloc(STREAMOO_FLAC_FRAME_STORAGE,MALLOC_CAP_SPIRAM|MALLOC_CAP_8BIT);
+#else
+        d->frame_storage=malloc(STREAMOO_FLAC_FRAME_STORAGE);
+#endif
+        if(!d->frame_storage){esp_audio_simple_dec_close(d->handle);free(d);return ESP_ERR_NO_MEM;}
+        streamoo_flac_frames_init(&d->frames,d->frame_storage);
+    }
     *out=d; return ESP_OK;
 }
 esp_err_t streamoo_decoder_process(streamoo_decoder_t *d,uint8_t *input,size_t bytes,
@@ -86,8 +100,21 @@ esp_err_t streamoo_decoder_process(streamoo_decoder_t *d,uint8_t *input,size_t b
         result->consumed=prefix_consumed;
         if(type==STREAMOO_FLAC_BAD)return ESP_ERR_INVALID_RESPONSE;
         if(type==STREAMOO_FLAC_MORE)return eos?ESP_ERR_INVALID_RESPONSE:ESP_OK;
+        bool live=type==STREAMOO_FLAC_FRAME;
+        if(live!=d->frame_decoder){
+            esp_audio_simple_dec_close(d->handle);d->handle=NULL;
+            esp_audio_simple_dec_cfg_t cfg={.dec_type=ESP_AUDIO_SIMPLE_DEC_TYPE_FLAC,.use_frame_dec=live};
+            esp_audio_err_t opened=esp_audio_simple_dec_open(&cfg,&d->handle);
+            if(opened!=ESP_AUDIO_ERR_OK)return ESP_FAIL;
+            d->frame_decoder=live;
+        }
+        if(live){
+            d->live=true;d->flac_ready=true;
+            streamoo_flac_frames_append(&d->frames,d->prefix,header_bytes);
+            ESP_LOGI("decoder","FLAC live: CRC-checked single frames, parser aggregation disabled");
+            goto live_frame;
+        }
         uint8_t bootstrap[58];size_t bootstrap_bytes=0;
-        if(type==STREAMOO_FLAC_FRAME){memcpy(bootstrap,streaminfo,42);bootstrap_bytes=42;}
         memcpy(bootstrap+bootstrap_bytes,d->prefix,header_bytes);bootstrap_bytes+=header_bytes;
         esp_audio_simple_dec_raw_t initial={.buffer=bootstrap,.len=bootstrap_bytes};
         esp_audio_simple_dec_out_t initial_out={.buffer=pcm,.len=capacity};
@@ -99,8 +126,31 @@ esp_err_t streamoo_decoder_process(streamoo_decoder_t *d,uint8_t *input,size_t b
         if(initial.consumed!=bootstrap_bytes || initial_out.decoded_size)
             return ESP_ERR_INVALID_RESPONSE;
         d->flac_ready=true;
-        if(type==STREAMOO_FLAC_FRAME)ESP_LOGI("decoder","FLAC live frame: supplied validated STREAMINFO");
         if(prefix_consumed==bytes)return ESP_OK;
+    }
+live_frame:
+    if(d->live){
+        result->consumed=prefix_consumed;
+        int ready=0;
+        while(result->consumed<bytes&&!ready){
+            if(streamoo_flac_frames_append(&d->frames,input+result->consumed,1)!=1)return ESP_ERR_INVALID_SIZE;
+            ++result->consumed;
+            ready=streamoo_flac_frames_find(&d->frames,eos&&result->consumed==bytes,capacity);
+            if(ready<0)return ESP_ERR_INVALID_RESPONSE;
+        }
+        if(!ready&&eos)ready=streamoo_flac_frames_find(&d->frames,true,capacity);
+        if(ready<0)return ESP_ERR_INVALID_RESPONSE;
+        if(!ready)return ESP_OK;
+        esp_audio_simple_dec_raw_t raw_frame={.buffer=d->frames.data,.len=d->frames.ready};
+        esp_audio_simple_dec_out_t out_frame={.buffer=pcm,.len=capacity};
+        esp_audio_err_t status=esp_audio_simple_dec_process(d->handle,&raw_frame,&out_frame);
+        result->codec_status=status;result->needed=out_frame.needed_size;
+        if(status!=ESP_AUDIO_ERR_OK)return status==ESP_AUDIO_ERR_BUFF_NOT_ENOUGH?ESP_ERR_INVALID_SIZE:ESP_FAIL;
+        if(raw_frame.consumed!=d->frames.ready||out_frame.decoded_size>capacity||!out_frame.decoded_size)return ESP_ERR_INVALID_RESPONSE;
+        esp_audio_simple_dec_info_t info={0};
+        if(esp_audio_simple_dec_get_info(d->handle,&info)!=ESP_AUDIO_ERR_OK)return ESP_ERR_INVALID_RESPONSE;
+        result->produced=out_frame.decoded_size;result->format=(streamoo_pcm_format_t){info.sample_rate,info.channel,info.bits_per_sample};
+        streamoo_flac_frames_consume(&d->frames);return ESP_OK;
     }
     esp_audio_simple_dec_raw_t raw={.buffer=input+prefix_consumed,.len=bytes-prefix_consumed,.eos=eos};
     esp_audio_simple_dec_out_t out={.buffer=pcm,.len=capacity};
@@ -119,12 +169,19 @@ esp_err_t streamoo_decoder_process(streamoo_decoder_t *d,uint8_t *input,size_t b
 }
 esp_err_t streamoo_decoder_reset(streamoo_decoder_t *d)
 {
-    if (!d) return ESP_ERR_INVALID_ARG;
+    if (!d || !d->handle) return ESP_ERR_INVALID_ARG;
     if(esp_audio_simple_dec_reset(d->handle)!=ESP_AUDIO_ERR_OK)return ESP_FAIL;
-    d->flac_ready=false;d->prefix_bytes=0;
+    d->flac_ready=false;d->prefix_bytes=0;d->live=false;
+    if(d->frame_storage)streamoo_flac_frames_init(&d->frames,d->frame_storage);
     return ESP_OK;
 }
 void streamoo_decoder_close(streamoo_decoder_t *d)
 {
-    if (d) { esp_audio_simple_dec_close(d->handle); free(d); }
+    if (d) { if(d->handle)esp_audio_simple_dec_close(d->handle);
+#ifdef ESP_PLATFORM
+        heap_caps_free(d->frame_storage);
+#else
+        free(d->frame_storage);
+#endif
+        free(d); }
 }

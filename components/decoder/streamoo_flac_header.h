@@ -8,3 +8,7 @@ typedef enum { STREAMOO_FLAC_MORE, STREAMOO_FLAC_FILE, STREAMOO_FLAC_FRAME, STRE
  * produces42 bytes (fLaC + final STREAMINFO), without altering the frame. */
 streamoo_flac_header_result_t streamoo_flac_header(const uint8_t *data,size_t bytes,
     size_t pcm_capacity,uint8_t streaminfo[42],size_t *header_bytes);
+
+/* Structural CRC8 header scan also accepts rate/depth references to STREAMINFO.
+ * First live header still requires explicit parameters via streamoo_flac_header. */
+streamoo_flac_header_result_t streamoo_flac_boundary_header(const uint8_t *,size_t,size_t *);

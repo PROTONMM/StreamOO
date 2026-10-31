@@ -143,3 +143,5 @@ Większe ramki live FLAC: `adr/0058-live-flac-parser-window.md`.
 Obsługa radia, ustawienia i trwałe ID: `adr/0059-player-gestures-persistent-settings-and-station-ids.md`, `PLAYER_SETTINGS_BRINGUP.md`.
 
 HLS audio: `adr/0060-hls-audio-segments.md`, `HLS_BRINGUP.md`.
+
+Pojedyncze ramki live FLAC: `adr/0061-single-frame-live-flac.md`.

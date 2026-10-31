@@ -1,6 +1,27 @@
 # Punkt wznowienia StreamOO
 
 
+## Najnowsza poprawka FLAC — ADR0061 / 2026-10-31
+
+Log b040430e: FLAC44100/2/24, HTTP200, needed138240>131072, vendor-8;
+low/starts rosną także bez restartu, compressed bywa1. Nie uznawać ADR0058
+za odebrane ani wszystkich przerw za Wi-Fi/FFT. Live headerless FLAC teraz
+własny bounded CRC8/CRC16 scanner→pojedyncza ramka→SDK frame decoder,
+bez agregowania przez SimpleDecoder parser. Zwykłe pliki fLaC bez zmian.
+Cache128KiB+16 PSRAM przed I2S, scratch nadal128KiB; ring/PCM/ISR bez zmian.
+
+370 testów hostowych, scanner/header/adapter ASanUBSan (LSan off),
+niezależne FFprobe boundaries i FFmpeg PCM/refheaders PASS. Native build
+ESP-IDF6.1 PASS0x17a9a0,90% app wolne, GPIO/diff PASS. Binarnego raw FLAC
+SDK nie wykonano na hoście; odsłuch na S3 nadal OPEN. Zwykły flash bez erase/
+FS/reimport, ten sam TEST FLAC kilka minut i zmiana utworu. Nowy log:
+FLAC live: CRC-checked single frames, parser aggregation disabled.
+Sprawdzić brak vendor-8/needed138240 i low/hard/starts. Jeśli compressed
+nadal zanika do1, transport/rebuffer wymagają osobnego pomiaru. Agent nie
+flashował. Gesty/ustawienia/HLS z ADR0059/60 nadal do odbioru użytkownika;
+ROOT CA/FFT/RMS/wyglądWWW odłożone, OTA wyłączone. Starsze sekcje to historia.
+
+
 ## Bieżąca dostawa — ADR0059/0060 / 2026-10-31
 
 Punkty2/3/4/8 wdrożone: ostatnia stacja/start STOP lub autoplay, ID trwałe

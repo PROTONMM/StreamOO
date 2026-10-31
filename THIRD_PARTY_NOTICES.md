@@ -120,3 +120,11 @@ HLS implementation. MPEG-TS uses `esp_ts_dec` in the existing pinned
 Espressif audio codec2.6.2 under the already retained Espressif Modified MIT
 terms; underlying MP3/AAC registrations retained. API/configuration/license
 checked in the pinned headers. No new dependency or GPL code imported.
+
+## Live FLAC frame boundaries — ADR0061
+
+CRC8/CRC16 frame boundary scanning and its polynomial-generated lookup table
+are original StreamOO code based on RFC9639. Actual audio decoding remains
+in the same pinned Espressif codec2.6.2 using its documented frame-decoder
+mode. No external FLAC implementation or GPL code imported. FFmpeg/ffprobe
+serve only as host-side independent oracles on original synthetic signals.
