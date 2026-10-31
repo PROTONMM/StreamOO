@@ -463,3 +463,18 @@ tap_drop/gaps0, stabilnej pamięci. max_read_us dotyczy jednego pull240,
 nie ISR. PSRAM nie powinna zawierać poprzedniej alokacji1MiB całego klipu;
 pamięć wewnętrzna i własne bufory vendora mogą różnić się od batch PoC.
 W razie błędu lub niedoboru zachowaj log; bez automatycznego fallbacku.
+
+## Audio06g — źródło skompresowane z pierścieniem (bieżący obraz)
+
+Pozostawiono AAC-LC, stress OFF/tap_delay0. Po wgraniu oczekuj
+`AAC-LC streaming source ESP_OK ... compressed_bytes=4096; buffered source`.
+Włącz PLAY, VOL80–100, posłuchaj kilku cykli L/R/oba z celowymi przerwami.
+Sprawdź regulację VOL, STOP/PLAY, działanie listy/widżetu.
+
+Podeślij log stream (ok/cycles/frames/compressed/backpressure/waits/max_read_us/
+stack_hwm), PCM/buffers i platform heap oraz wynik odsłuchu. Oczekuj ok1,
+frames193536/cykl, rosnących cycles i backpressure, low0/hard0/invalid0,
+stabilnego heap i dźwięku. Backpressure nie oznacza utraty danych; waits
+może pozostać0, bo deterministyczny feeder uzupełnia źródło szybko. Bufor4KiB
+celowo jest mały do tego testu; to nie próba sieci ani wielowątkowości źródła.
+Przy błędzie prześlij poprzedzające linie; brak zastępczego tonu.

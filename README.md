@@ -60,3 +60,9 @@ Etap06d domyślnie wybiera własny plik MP3 zamiast sinusa. Na starcie
 ESP32-S3 dekoduje klip do PSRAM; PLAY odtwarza zapętlone sygnały kanałów
 z przerwami. Log MP3 PoC i odsłuch są nowym testem sprzętowym. Brak sieci
 i resamplingu; widżety TEST. Licencje komponentu w THIRD_PARTY_NOTICES.
+
+Bieżący06g: AAC-LC dekodowane podczas odtwarzania przez oddzielny interfejs
+źródła i testowy pierścień skompresowanych danych4KiB w PSRAM. Pełny bufor
+wstrzymuje zapis, chwilowy brak danych zachowuje częściowy blok PCM.
+Nadal własny klip testowy, bez sieci; start STOP, VOL/PLAY rzeczywiste.
+Bieżący test i punkt wznowienia: [RESUME](docs/RESUME.md).

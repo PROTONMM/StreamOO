@@ -1,26 +1,32 @@
 # Punkt wznowienia StreamOO
 
-Aktualizacja: **2026-10-25, AAC incremental decode06f odebrane logiem i odsłuchem**.
+Aktualizacja: **2026-10-31, źródło skompresowane06g gotowe do odbioru**.
 PCM/rebuffer/tap stress potwierdzone logiem i odsłuchem (`5664a90`).
-Gałąź feature/streamoo-implementation, szczegóły STATUS i ADR0023.
+Gałąź feature/streamoo-implementation, szczegóły STATUS i ADR0024.
 
-## Checkpoint na koniec dnia — 2026-10-25
+## Wznowienie — 2026-10-31, nowy etap06g
 
-Praca zatrzymana na prośbę użytkownika po odbiorze AAC06f.
-Kod: `3b18324`; zapis odbioru: `cfd4917`. Gałąź:
-`feature/streamoo-implementation`. Brak rozpoczętej implementacji kolejnego etapu.
+Checkpoint8df80f5 odczytany. AAC06f pozostaje odebrane (kod3b18324,
+odbiór cfd4917); nie powtarzać tych zaliczonych testów bez nowego powodu.
 
-Przy wznowieniu zacznij od interfejsu źródła skompresowanego i ograniczonego
-bufora z backpressure, najpierw z deterministycznym źródłem testowym;
-reader sieciowy będzie następnym krokiem. Zachowaj pojedynczych właścicieli,
-obsługę końca danych/błędu i brak blokowania/alokacji w callbacku I2S.
-Nie powtarzaj odebranych testów AAC06f ani PCM stress bez nowego powodu.
+06g oddziela pump od pliku: interfejs DATA/WAIT/END/ERROR i pierścień
+4096B w PSRAM, testowy feeder porcjami do997B. Pełny bufor zatrzymuje zapis
+bez utraty bajtów. Wszystkie operacje źródła należą do audio_control;
+przyszłego readera z innego zadania nie podłączać bez synchronizacji.
+WAIT zachowuje fragmenty wejścia/PCM oraz częściowo złożony blok240 ramek,
+nie modyfikuje output i nie publikuje niepełnego bloku do FIFO. EOS na
+ostatnim bajcie, reset/rewind w EOF nadal tylko polityką pliku testowego.
+ISR/gain/tap, piny i NVS bez zmian. Sieć nadal OPEN. Szczegóły ADR0024.
 
-Pozostawiona konfiguracja i obraz: AAC-LC incremental, stress OFF,
-tap_delay0; start STOP i volume/widżet z NVS. Płytka przetestowana przez
-użytkownika, dźwięk OK. Ostatnia weryfikacja kodu:152 testy hostowe,
-ASan/UBSan i build wariantów PASS. Checkpoint zmienia tylko dokumentację;
-nie wykonywano ponownie buildu ani flashowania.
+Bieżący lokalny obraz: AAC-LC, stress OFF/tap_delay0. Po wgraniu oczekuj
+compressed_bytes4096 i rosnących cycles/ok1/frames193536/backpressure.
+Odsłuch kilku cykli L/R/oba + VOL/PLAY/STOP; log stream/PCM/buffers/heap.
+low0/hard0/invalid0, stabilna pamięć i czysty odsłuch wymagają nowego odbioru.
+161 testów hostowych, ASan/UBSan i build AAC-LC/MP3/sinus PASS.
+Końcowy obraz AAC0x80d00B; runtime06g na S3 OPEN.
+Po odbiorze następny krok: adapter dla niezależnego readera/komunikacji
+z zadaniem dekodera, potem integracja sieci zgodnie z etapem09.
+Nie mylić testowego4KiB z produkcyjnym punktem wyjścia256KiB.
 
 ## Odebrane na płytce
 
@@ -104,7 +110,7 @@ stack_hwm22744. PCM low0/hard0/starts1, invalid0, tap_drop/gaps0, max_fill133us.
 Stabilny heap, zapis NVS volume83. Jednorazowo nieczytelny fragment konsoli
 około16s — użytkownik wyjaśnił, że poruszył przewodem UART i polecił kontynuować.
 
-## Bieżące06f — decode w trakcie odtwarzania
+## Odebrane06f — decode w trakcie odtwarzania
 
 AAC06e odebrane logiem i czystym odsłuchem („tak, wszystko grało ładnie”).
 Referencja193536 ramek,48kHz/stereo16. Dotychczasowy runtime MP3 także
@@ -128,8 +134,8 @@ nie zostały osobno potwierdzone; test długotrwały i sieć nadal OPEN.
 152 testy hostowe PASS; ASan/UBSan pump/konwertera PASS (bez LeakSanitizer).
 Build/link AAC-LC, MP3 i sinus PASS. Testy hostowe używają sztucznego
 backendu; prawdziwy dekoder wymaga S3.
-Następny krok: oddzielny interfejs źródła skompresowanego i bufor
-z backpressure, potem reader sieciowy. Nie ogłaszać pełnego radia.
+Etap06g implementuje interfejs źródła i bufor, opis bieżącego odbioru powyżej.
+Nie ogłaszać pełnego radia.
 Przy pierwszej konfiguracji wymagany dostęp do rejestru Component Manager;
 managed_components ignorowane przez Git, dependencies.lock śledzony.
 

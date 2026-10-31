@@ -69,3 +69,5 @@ Etap06d — pierwszy MP3: `adr/0021-mp3-decoder-file-poc.md`, `../assets/audio/R
 Etap06e — AAC-LC ADTS: `adr/0022-aac-lc-adts-file-poc.md`.
 
 Etap06f — incremental decode: `adr/0023-incremental-file-decode.md`.
+
+Etap06g — źródło skompresowane i bufor: `adr/0024-compressed-source-buffer.md`.

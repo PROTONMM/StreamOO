@@ -94,4 +94,15 @@ ogony wejścia/wyjścia i pull240 ramek. Decoder pozostaje otwarty w zadaniu,
 pełne FIFO zatrzymuje decode; EOF resetuje parser/dekoder. Początkowy zapas
 FIFO przed I2S, potem praca podczas DMA. ISR/gain/tap bez zmian.
 [ADR0023](adr/0023-incremental-file-decode.md). Źródło nadal we flash,
-bez sieci/resamplingu/HE-AAC. Odbiór wydajności i zapętlenia na S3 OPEN.
+bez sieci/resamplingu/HE-AAC. AAC06f odebrane logiem i odsłuchem (STATUS).
+
+## Część06g — źródło skompresowane i backpressure
+
+Pump odczytuje callback źródła zamiast pliku: DATA/WAIT/END/ERROR i last.
+Pierścień nie nadpisuje danych, częściowy zapis wstrzymuje feeder; ostatni
+bajt zatrzymany do finish zapewnia EOS na rzeczywistym wejściu. WAIT zachowuje
+częściowy blok PCM i nie publikuje go do FIFO. Nowy bufor testowy4096B PSRAM,
+feeder997B; to eksperyment zawijania, nie produkcyjny bufor256KiB.
+Wszystkie operacje źródła w jednym zadaniu; wielozadaniowy reader wymaga
+adaptera synchronizacji. [ADR0024](adr/0024-compressed-source-buffer.md).
+ISR/gain/tap bez zmian. Odbiór06g na S3 OPEN, sieć nadal niezaimplementowana.

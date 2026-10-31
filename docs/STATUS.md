@@ -9,7 +9,7 @@ Bieżący punkt wznowienia: [RESUME.md](RESUME.md).
 | 03 szkielet | baza zaimplementowana; odbiór sprzętowy i integracyjny OPEN | ESP-IDF v6.1 build PASS; ADR 0002 |
 | 04 UI/SSD1322 | HOME i lista odebrane na OLED; końcowe strojenie fontu OPEN | ADR 0012; odbiór użytkownika |
 | 05 encoder | dekoder/IRQ i gesty odebrane; interaktywny adapter odebrany w trybie A; preferencje NVS odebrane; shutdown/flush OPEN | ADR 0013–0017; 99 testów PASS |
-| 06 audio | I2S/gain/PCM stress odebrane; MP3 decode/PCM potwierdzone logiem; AAC-LC PoC odebrane; AAC incremental file decode06f odebrane logiem i odsłuchem; sieć/player OPEN | ADR 0018–0023; 152 testy hostowe PASS; build źródeł PASS |
+| 06 audio | I2S/gain/PCM stress odebrane; MP3 decode/PCM potwierdzone logiem; AAC-LC PoC odebrane; AAC incremental file decode06f odebrane logiem i odsłuchem; źródło/bufor06g gotowe do odbioru; sieć/player OPEN | ADR 0018–0024; 161 testów hostowych PASS; build trzech źródeł PASS |
 | 07 DSP | NIEZAIMPLEMENTOWANE | — |
 | 08 stacje | NIEZAIMPLEMENTOWANE | — |
 | 09 sieć | NIEZAIMPLEMENTOWANE | — |
@@ -904,3 +904,29 @@ Kod3b18324, odbiór cfd4917. Szczegóły i kolejność wznowienia w RESUME.md.
 Lokalny profil AAC-LC, stress OFF/tap_delay0. Kolejny etap nie rozpoczęty:
 interfejs źródła skompresowanego i bufor z backpressure, potem reader sieciowy.
 Checkpoint wyłącznie dokumentacyjny; poprzednie wyniki testów bez zmian.
+
+## Etap06g — interfejs źródła i bufor skompresowany (2026-10-31)
+
+- Wznowiono z checkpointu8df80f5; AAC06f nadal odebrane. Nowy własny
+  komponent compressed_source bez zewnętrznych zależności i bez RTOS:
+  DATA/WAIT/END/ERROR, partial write bez nadpisywania, finish/clear.
+- Test: feeder porcji do997B →4096B PSRAM ring → callback źródła → decoder
+  → PCM FIFO. Mały bufor wymusza zawijanie i backpressure, nie ustala
+  produkcyjnego bufora256KiB ani progów sieci. Jeden właściciel audio_control;
+  nowy reader w innym zadaniu wymaga synchronizacji/generacji, nadal OPEN.
+- Pump nie zna już adresu pliku. WAIT zachowuje częściowy blok PCM i nie
+  zmienia output; do FIFO tylko kompletny blok. Wstrzymanie producenta PCM
+  przy WAIT pozostawia działającą obsługę komend i istniejący rebuffer.
+  Ostatni bajt źródła zatrzymany do finish, EOS przekazywane z danymi.
+- ISR/gain/tap/piny/NVS bez zmian. Zależności/licencje bez zmian, brak nowego
+  kodu stron trzecich. Brak sieci, HE-AAC i resamplingu.
+- 161 testów hostowych PASS. ASan/UBSan:15 przypadków pump/konwertera/źródła
+  i4 pierścienia PASS; LeakSanitizer wyłączony, brak testu wycieków.
+- ADR0024, procedura HARDWARE_BRINGUP. Odbiór06g na S3 OPEN: cycles/frames,
+  liczniki compressed/backpressure/waits, PCM/heap/stos i odsłuch L/R/oba
+  oraz VOL/PLAY/STOP. Nie wykonywano flash/erase.
+
+Weryfikacja build06g: ESP-IDF6.1/esp32s3 build/link AAC-LC0x80d00B,
+MP3 0x87840B, sinus0x4acd0B PASS. Końcowy obraz AAC-LC, stress OFF/0,
+partycja aplikacji1MiB (AAC około50% wolnej). Walidator GPIO/platform
+oraz git diff --check PASS. Brak nowej alokacji/dekodera/I/O w callbacku I2S.

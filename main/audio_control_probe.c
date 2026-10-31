@@ -34,9 +34,14 @@ static bool tap_alive;
 
 static bool produce_pcm(void)
 {
+#ifdef CONFIG_STREAMOO_CODEC_FIXTURE_TEST
+    streamoo_codec_fixture_service();
+#endif
     for (unsigned i=0;i<32 && streamoo_pcm_count(&pcm_ring)<32;++i) {
 #ifdef CONFIG_STREAMOO_CODEC_FIXTURE_TEST
-        if (!streamoo_codec_fixture_read(producer_block.samples,STREAMOO_PCM_FRAMES)) return false;
+        streamoo_stream_result_t result=streamoo_codec_fixture_read(producer_block.samples,STREAMOO_PCM_FRAMES);
+        if (result==STREAMOO_STREAM_WAIT) break;
+        if (result!=STREAMOO_STREAM_READY) return false;
 #else
         if (!streamoo_audio_sine_fill(&producer_phase,producer_block.samples,STREAMOO_PCM_FRAMES)) return false;
 #endif

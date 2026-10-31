@@ -60,3 +60,9 @@ uzupełniania SRAM FIFO; AAC-Plus wyłączony, HE-AAC i źródło sieciowe OPEN.
 06f: codec_fixture używa streamoo_decode_stream (257B input/8192B PCM),
 nie pełnego klipu PCM w PSRAM. Decode/reset w zadaniu na żądanie miejsca
 w FIFO; ogony pakietów zachowane, EOF resetuje decoder. ISR bez zmian.
+
+06g: compressed_source to własny, task-only interfejs DATA/WAIT/END/ERROR
+oraz pierścień pożyczonej pamięci z częściowym zapisem i terminalnym finish.
+Wymaga jednego właściciela lub zewnętrznej serializacji, nie jest kolejką
+SPSC dla różnych zadań. Pump zachowuje częściowy blok PCM na WAIT.
+Test: feeder997B → ring4096B w PSRAM → decoder → SRAM FIFO. Brak sieci.
