@@ -11,6 +11,7 @@ typedef struct {
     streamoo_control_post_fn audio_post;
     void *audio_context;
     streamoo_ui_text_t audio_title;
+    char network_ip[16];
 } streamoo_encoder_demo_t;
 bool streamoo_encoder_demo_init(streamoo_encoder_demo_t *demo);
 bool streamoo_encoder_demo_input(streamoo_encoder_demo_t *demo,
@@ -23,3 +24,6 @@ bool streamoo_encoder_demo_draw(streamoo_encoder_demo_t *demo, uint8_t *frame,
 bool streamoo_encoder_demo_bind_audio(streamoo_encoder_demo_t *demo,
     streamoo_control_post_fn post, void *context);
 bool streamoo_encoder_demo_audio_state(streamoo_encoder_demo_t *demo, uint8_t volume, bool running);
+
+/* Copied address for the third HOME row; NULL clears it. */
+bool streamoo_encoder_demo_set_ip(streamoo_encoder_demo_t *, const char *);

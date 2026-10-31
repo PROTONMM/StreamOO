@@ -85,3 +85,5 @@ Przyszłe źródła sterowania RC5/telefon: `adr/0029-future-control-clients.md`
 Kilka sieci i prywatny import playlist: `adr/0030-multiple-wifi-and-private-playlist.md`, `../tools/check_playlist.py`.
 
 Konfiguracja WWW/STA i trwały import CSV: `adr/0031-web-configuration-wifi-and-playlist.md`; odbiór: `NETWORK_BRINGUP.md`.
+
+Otwarty lokalny panel i HOME/IP po STA: `adr/0032-open-local-portal-and-home-ip.md`.

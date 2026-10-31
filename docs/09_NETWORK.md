@@ -26,7 +26,7 @@ OPEN. Obecny firmware nadal nie zapisuje profili/nie łączy STA. ADR0030.
 - Reklamuj HTTP przez DNS-SD `_http._tcp`; po zmianie Wi-Fi odśwież usługę.
 
 ## Bezpieczeństwo
-Wspólne hasło AP zwiększa ryzyko nieautoryzowanego dostępu; ogranicz czas/warunki aktywacji AP, nie ujawniaj hasła w logach, zabezpiecz panel administracyjny. Preferuj proces build/secrets dla wartości wspólnej, bez umieszczania jej w Git.
+Wspólne hasło AP zwiększa ryzyko nieautoryzowanego dostępu; ogranicz czas/warunki aktywacji AP, nie ujawniaj hasła w logach, lokalny panel pozostaje bez dodatkowego logowania na polecenie użytkownika (ADR0032). Preferuj proces build/secrets dla wartości wspólnej, bez umieszczania jej w Git.
 
 ## Pierwszy zakres09a — test SoftAP
 
@@ -52,3 +52,5 @@ pipeline audio, enkoder w AP nie steruje playerem, portal pokazuje audio off.
 To zastępuje eksperymentalną współpracę lokalnego AAC z AP. MicroSD później,
 niezaimplementowane; przyszłe dynamiczne STA→AP wymaga kontrolowanego STOP.
 [ADR0028](adr/0028-ap-setup-without-audio.md).
+
+09d: po STA i AP-off OLED wraca do HOME z adresem IP w trzeciej linii; dostęp WWW lokalnie bez dodatkowego hasła. ADR0032.

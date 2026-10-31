@@ -29,7 +29,7 @@ static bool status(void *context,streamoo_portal_status_t *out)
 static void ready(void *context)
 {
     (void)context;
-    const streamoo_portal_actions_t actions={streamoo_network_authorize,streamoo_config_wifi_load,
+    const streamoo_portal_actions_t actions={streamoo_config_wifi_load,
         streamoo_network_submit_profiles,streamoo_config_playlist,streamoo_config_playlist_info};
     esp_err_t error=streamoo_portal_configure(&actions);
     if(error==ESP_OK) error=streamoo_portal_start(status,NULL);

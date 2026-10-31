@@ -1,4 +1,5 @@
 #include "encoder_demo.h"
+#include "streamoo_font5x8.h"
 #include <assert.h>
 #include <limits.h>
 #include <stdlib.h>
@@ -76,6 +77,25 @@ int main(int argc, char **argv)
         assert(d.volume==38 && !d.running && !d.control_pending);
         assert(!streamoo_encoder_demo_audio_state(&d,101,true));
         assert(d.volume==38 && !d.running);
+    } else if (scenario==8) {
+        streamoo_encoder_demo_t d; assert(streamoo_encoder_demo_init(&d));
+        uint8_t old[8192],frame[8192],expected[8*128]={0};
+        assert(streamoo_encoder_demo_draw(&d,old,sizeof old,0));
+        assert(streamoo_encoder_demo_set_ip(&d,"10.0.0.42"));
+        assert(streamoo_encoder_demo_draw(&d,frame,sizeof frame,0));
+        const char *label="IP: 10.0.0.42";size_t n=strlen(label);int start=(256-(int)(n*6-1))/2;
+        for(size_t i=0;i<n;++i) {
+            uint8_t glyph[5];assert(streamoo_font5x8(NULL,(uint8_t)label[i],glyph));
+            for(unsigned x=0;x<5;++x)for(unsigned y=0;y<8;++y)if(glyph[x]&(1u<<y)) {
+                unsigned px=start+i*6+x;expected[y*128+px/2]|=(uint8_t)(12u<<(px%2?0:4));
+            }
+        }
+        assert(!memcmp(frame+24*128,expected,sizeof expected));
+        assert(!memcmp(old,frame,24*128));assert(!memcmp(old+32*128,frame+32*128,32*128));
+        assert(!streamoo_encoder_demo_set_ip(&d,"192.168.0.1234567"));
+        assert(!streamoo_encoder_demo_set_ip(&d,"bad<ip>"));assert(!strcmp(d.network_ip,"10.0.0.42"));
+        assert(streamoo_encoder_demo_set_ip(&d,NULL));
+        assert(streamoo_encoder_demo_draw(&d,frame,sizeof frame,0));assert(!memcmp(old,frame,sizeof old));
     } else {
         streamoo_encoder_demo_t d; assert(streamoo_encoder_demo_init(&d));
         uint8_t frame[8194]; memset(frame,0xa5,sizeof frame);

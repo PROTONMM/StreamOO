@@ -46,9 +46,11 @@ static void display_task(void *context)
         streamoo_preferences_value_t restored = {50,0};
         const bool preferences_ready = streamoo_preferences_initial(&restored);
         demo.volume = restored.volume;
+        if (streamoo_network_boot_ap_enabled()) demo.running=false;
         if (!streamoo_ui_set_visualization(&demo.ui, restored.visualization)) error = ESP_ERR_INVALID_STATE;
 #ifdef CONFIG_STREAMOO_AUDIO_CONTROL_TEST
-        if (!streamoo_encoder_demo_bind_audio(&demo,streamoo_audio_control_post,NULL)) error=ESP_ERR_INVALID_STATE;
+        if (!streamoo_network_boot_ap_enabled() &&
+            !streamoo_encoder_demo_bind_audio(&demo,streamoo_audio_control_post,NULL)) error=ESP_ERR_INVALID_STATE;
         streamoo_encoder_demo_audio_state(&demo,restored.volume,false);
 #ifdef CONFIG_STREAMOO_MP3_FIXTURE_TEST
         static const uint8_t mp3_title[]="TEST: plik MP3, widżety TEST";
@@ -79,9 +81,12 @@ static void display_task(void *context)
 #endif
             streamoo_network_ap_display_t ap;
             bool ap_active=streamoo_network_ap_display(&ap);
-            bool setup=streamoo_network_boot_ap_enabled();
             streamoo_network_state_t network={0};
             streamoo_network_state(&network);
+            const bool setup=streamoo_network_boot_ap_enabled() && (ap_active || !network.sta_connected);
+            if (!streamoo_encoder_demo_set_ip(&demo,network.sta_connected ? network.sta_ip : NULL)) {
+                error=ESP_ERR_INVALID_ARG; break;
+            }
             if (ap_active && demo.ui.screen==STREAMOO_UI_STATIONS) streamoo_ui_cancel(&demo.ui);
             for (unsigned n=0; n<32 && streamoo_input_probe_receive(&event); ++n) {
 #ifdef CONFIG_STREAMOO_ENCODER_MODE_B

@@ -1,308 +1,53 @@
 # Punkt wznowienia StreamOO
 
-Aktualizacja: **2026-10-31, konfiguracja WWW 09c zaimplementowana; odbiór PCB OPEN**.
-Gałąź feature/streamoo-implementation. ADR0031, STATUS, NETWORK_BRINGUP.
+Aktualizacja: **2026-10-31, 09d: WWW bez logowania i HOME z IP gotowe do odbioru**.
+Gałąź feature/streamoo-implementation. Szczegóły STATUS i ADR0032.
 
-## Bieżący odbiór
+## Potwierdzony stan
 
-Gotowe: formularze 8 sieci/kolejność/usuwanie, autoryzacja kluczem AP,
-STA/fallback/rollback/zapis NVS, AP-off 5 s po IPv4, OLED z adresem LAN,
-import CSV preview/zatwierdzenie/atomowy LittleFS. Audio podczas tego boot
-pozostaje wyłączone; katalog nie steruje jeszcze syntetyczną listą OLED/playerem.
+Użytkownik potwierdził działanie 09c. Log: STA/GOT_IP, zapisany profil, AP
+wyłączony po około 5 s; AP clients=0/STA=1. Heap internal 142383 B stabilny,
+minimum 84512 B; network stack HWM 4676 B. Nie ponawiać diagnostyki UART:
+wcześniejsze nieczytelne znaki były potwierdzonym efektem poruszania przewodów.
 
-221 testów hostowych PASS, native build PASS, Chromium formularze 390px PASS.
-Nowa partitions.csv zachowuje NVS/PHY/app i dodaje storage 1 MiB. Użytkownik
-ma wykonać zwykłe idf.py -p PORT flash, obejmujące tablicę partycji, bez erase
-i bez obrazu FS. Potem Ctrl+F5, hasło AP w formularzu, import/preview/zapis,
-reboot/persistencja, próby kilku sieci i AP-off. Szczegóły NETWORK_BRINGUP.
+Gotowe: do 8 uporządkowanych sieci, NVS, STA/fallback/rollback, AP-off,
+import CSV preview/zatwierdzenie/atomowa podmiana LittleFS. Prywatny root
+/playlist.csv ignorowany/nieśledzony, nie kopiować do repo/build/testów.
+Parser na RAM-kopii: 267 rekordów/11 normalizacji URL/3 zachowane duplikaty.
+Nie zmieniać oryginału. Odbiór reboot/importu na PCB jeszcze bez osobnego dowodu.
 
-Prywatny /playlist.csv nadal ignorowany/nieśledzony, oryginał niezmieniony.
-Parser firmware sprawdził RAM-kopię: 267 rekordów/11 URL z U+200B/3 duplikaty.
-Nie kopiować danych do repo/build/testów. Nie usuwać powtórzeń po cichu.
-Brak flash/erase/eFuse przez agenta. Fizyczne power-cut/heap/stosy OPEN.
-D18 niezależnej administracji LAN/mobile pozostaje OPEN; bieżący lokalny
-setup wymaga dowodu znajomości klucza AP (ADR0031), HTTP bez TLS.
+## Nowa decyzja i kod 09d
 
-## Przyszły zakres dodany przez użytkownika
+Użytkownik usunął wymóg dodatkowego logowania WWW: lokalny panel AP/LAN
+dostępny bez hasła panelu, Basic/Authorization i sekcji dostępu. To jawnie
+zastępuje stare wymagania auth D18/D29/ADR0031; nie pytać ponownie o zgodę.
+Hasło samej sieci AP nadal stałe/prywatny build i OLED podczas AP.
+Zachowane Origin/custom header, limity, walidacja i brak zwracania haseł STA.
+WWW samo odczytuje zapisane ustawienia.
 
-Pilot RC5 i aplikacja telefoniczna przez API: wymagania ustalone, implementacja
-później (D25/D26, ADR0029). Wszystkie kontrolery używają wspólnych komend
-owner playera i tej samej polityki AP bez audio. Nie implementować teraz IR,
-nie zgadywać GPIO/mapy klawiszy ani platformy/frameworka aplikacji. Najpierw
-pozostaje bieżąca konfiguracja sieci/STA. Obecne API tylko do odczytu.
+Po STA i AP-off OLED wraca do HOME odtwarzacza, IP w trzeciej linii y24..31,
+gesty aktywne. Nie wiązać UI z nieuruchomionym ownerem audio. Boot konfiguracji
+nie startuje samoczynnie testowego tonu/klipu. Widok jest nadal diagnostycznym
+HOME z syntetycznymi stacjami/widżetami; stream player i podłączenie katalogu OPEN.
 
-## Najnowsze — AP bez audio
+222 testy hostowe PASS, dokładny raster IP i HTTP bez auth; Chromium 390px
+formularze bez logowania PASS, native build PASS. Flash/erase/eFuse nie wykonano.
+Odbiór: zwykły idf.py -p PORT flash, Ctrl+F5, formularze bez logowania,
+STA/AP-off → HOME/IP, enkoder, WWW pod adresem LAN. NETWORK_BRINGUP.
+Partycje z 09c bez dalszej zmiany: zachowane NVS/PHY/app i storage 1 MiB.
+Nie kasować flash, nie wgrywać obrazu FS. Użyć istniejącego prywatnego klucza,
+nie pytać ponownie i nie wypisywać go.
 
-Log a5ff0d9 i użytkownik potwierdzają czyste audio podczas AP/HTTP: do29
-cykli, low0/hard0/invalid0, max_fill133us. Tap_drop/gaps7 tylko w pomiarach.
-Nie powtarzać tego odsłuchu. OLED/wygląd portalu nieopisane osobno.
+## Dalszy zakres
 
-Nowa decyzja: AP jest do konfiguracji, bez odtwarzania. MicroSD ewentualnie
-później. Boot_ap_enabled z network pozwala aplikacji pominąć audio_control,
-fixture_reader/dekoder/tap i finite tone/I2S. Nie jest to mute. Enkoder w AP
-pomijany; portal audio.available=false z komunikatem „Audio wyłączone w trybie AP”.
-Dane AP na OLED, prywatny stały klucz i NVS bez zmian. AP off/brak klucza
-zachowuje dotychczasowe testy audio. Dynamiczne STA→AP/teardown jeszcze OPEN.
+Player HTTP(S)/ICY i spięcie importowanego katalogu ze stable ID/listą OLED,
+DSP, mDNS, OTA nadal przyszłe; nie twierdzić, że konfiguracja już odtwarza radio.
+Pilot RC5 i aplikacja telefonu przez API ustalone jako przyszłe (ADR0029),
+brak modelu/GPIO/mapy klawiszy i kontraktu mobilnego. MicroSD przyszłe, bez
+wymyślania pinów. AP bez odtwarzania pozostaje wymaganiem.
 
-202 testy hostowe PASS;5 nowych integruje main.c ze stubami urządzeń.
-Build AP on0x11b370B/AP off0x81500B PASS, końcowy profil AP on, stress OFF/0.
-Nowy odbiór S3: Audio disabled w logu, brak fixture_reader/codec/I2S i cisza,
-OLED oraz portal nadal dostępne. ADR0028. Nie implementować MicroSD/pinów
-bez odrębnej weryfikacji. Dalej: konfiguracja STA i AP off po udanym IP,
-z autoryzacją zapisu przed wystawieniem endpointów zmieniających ustawienia.
-
-## Portal i OLED09b — wcześniejszy test współpracy z audio
-
-Portal read-only pod http://192.168.4.1/ i GET/api/v1/status. Nowy komponent
-portal otrzymuje snapshot przez callback aplikacji; publiczne DTO sieci/audio
-nie ma hasła. Network hooks ready/stopped sterują HTTP z taska ownera.
-Serwer2/6144B,4 sockety/LRU/timeout3s; offline assets i poll JSco2s bez nakładania.
-
-Nowsza decyzja użytkownika: hasło AP stałe i wbudowane, SSID/hasło pokazane
-na OLED w AP, AP off po połączeniu STA. Stałość zapewnia dotychczasowy
-prywatny build, nie dodawać hasła do repo/logów/HTTP. OLED ui_ap pokazuje
-całe63 znaki w dwóch wierszach42+21. Ekran AP ma pierwszeństwo; enkoder
-steruje VOL/PLAY/STOP, nie otwiera niewidocznej listy/widżetu. AP off→HOME.
-
-Zapis Wi-Fi/STA i AP off po udanym IP NIE są jeszcze wdrożone. Portal ma
-wyłącznie odczyt, bez formularzy/mutations. Użytkownik nie ustalił osobnego
-auth administracji; nie uznawać ponownego opisu klucza AP za decyzję auth.
-Następny zakres: uwierzytelniony zapis/test STA/rollback i AP off po IP.
-
-Użyj istniejącego prywatnego pliku bez ponownego pytania o klucz. Zwykły
-build/flash, partycja1500KiB zachowana. Bez AP/private config działa HOME.
-197 testów hostowych PASS, ASan/UBSan handlerów PASS, Node i mobilny podgląd
-Chromium z przykładowym statusem PASS. Build AAC+AP0x11b2c0B, MP3+AP
-i AP off PASS. Końcowy profil AAC+AP, bez zmiany prywatnego klucza,
-stress OFF/0 i factory1500KiB. Runtime09b na S3 OPEN: ekran AP,
-strona/JSON/live VOL, dźwięk/PCM/heap podczas pollu. Postęp buildów w STATUS.
-UART problem wyjaśniony przewodami; nie diagnozować ponownie bez nowego objawu.
-
-## Najnowszy log09a i konsola UART
-
-Użytkownik wykonał prywatny build e369d49: AP i DHCP192.168.4.2 potwierdzone,
-clients1; lokalne PCM/cykle bez niedoborów/błędów do~101s. max_fill133us,
-max_read39437us od startu RF, internal87319B po kliencie, PSRAM8337172B.
-Odsłuch przy AP, zły klucz i rozłączenie jeszcze niepotwierdzone.
-
-Nieczytelny wpis fixture_reader80.776s wyjaśniony i zamknięty. Użytkownik
-powtórzył próbę i potwierdził poruszanie przewodami UART podczas dotykania
-enkodera; po sprawdzeniu „Jest OK”. Nie zmieniać firmware ani nie powtarzać
-diagnostyki UART bez nowego objawu. Pozostaje dokończyć odbiór09a wymieniony
-powyżej; nie wywodzić odsłuchu/odrzucenia złego klucza z potwierdzenia UART.
-
-## Historia09a — zabezpieczony SoftAP
-
-AAC06h odebrane (kod6031941, odbiór ed32109); nie powtarzać. Nowy komponent
-network uruchamia AP WPA2 StreamOO-XXXXXX z MAC, DHCP192.168.4.1/24,
-max4 klientów. Oddzielny task3/6144B, kod SDKESP-IDF6.1. Brak portalu/STA/
-mDNS/HTTP. Prywatny wspólny klucz potrzebny lokalnie, nie w czacie/repo.
-
-Przed flash użytkownik uruchamia `python3 tools/configure_network.py`
-i potem `idf.py reconfigure build` w aktywnym SDK. JSON poza repo,
-0600; domyślnie ~/.config/streamoo/network.json (XDG_CONFIG_HOME obsługiwany).
-Bez niego build działa, ale AP test inactive/ESP_ERR_NOT_FOUND: Wi-Fi off.
-Końcowy lokalny obraz celowo bez losowego klucza testowego. Nie wgrywać go
-z oczekiwaniem AP; najpierw prywatny build. Narzędzie nie loguje haseł,
-nie przyjmuje ich w argumentach, nie wpisuje do sdkconfig/defaults.
-
-Nowa factory1500KiB przez SDK SINGLE_APP_LARGE. NVS/PHY i offset factory
-bez zmian. Pierwszy flash09a musi objąć tablicę (`idf.py -p PORT flash`),
-bez erase-flash, nie sam app-flash. Instrukcja NETWORK_BRINGUP.md, ADR0026.
-179 testów hostowych PASS; natywny build AAC+AP0x10da90B, MP3+AP0x1145d0B
-i brak sekretu AAC0x812b0B PASS, factory1500KiB. Klucz testowy usunięty,
-cache prywatnej ścieżki pusty, header AVAILABLE0. Brak testowego klucza
-w logach i końcowym obrazie potwierdzony.
-
-Odbiór S3 OPEN: AP ready, telefon/komputer z DHCP192.168.4.x i clients>=1,
-złe hasło odrzucone, po rozłączeniu clients0. Współbieżnie AAC PLAY/VOL/STOP,
-czysty odsłuch i low0/hard0/invalid0, stabilne heap/stosy. HOME wciąż syntetyczne
-w zakresie sieci; nie oczekiwać strony WWW. Nie kasować NVS ani flashować
-za użytkownika. Następny krok po odbiorze: portal/STA z rollback, potem
-reader HTTP/HTTPS. Wartość hasła i admin auth D18 nadal prywatne/OPEN.
-
-## Odebrane06h — niezależne zadanie czytnika
-
-AAC06g odebrane (kod c451643, log3c3ee3f, odsłuch/sterowanie fa20f2c).
-Nie powtarzać tego odbioru. Nowy fixture_reader priorytet3/stos4096B posiada
-offset pliku i chunk997B. Audio_control nadal właścicielem dekodera i PCM.
-streamoo_buffered_source chroni byte_ring mutexem, token generacji odrzuca
-stare write/finish po rewind. Nie kopiować pod portMUX/wyłączonym IRQ.
-Read lock0→WAIT, rewind/stop/stats timeout5ms w tickach, minimum1tick.
-
-Release: stop + notify + ack do1s, potem destroy/free. Timeout zachowuje
-żywe bufory do restartu; bez wymuszonego usuwania readera. Sieć, anulowanie
-blokującego I/O, reconnect/player/HE-AAC/resampling nadal OPEN. Szczegóły ADR0025.
-
-Lokalny profil AAC-LC, stress OFF/tap_delay0. Runtime6031941 odebrany:
-reader generation1..7/input37039, min stos1980B; cycles1..7/frames193536,
-generation2..8/stats_ok1/stale0, waits1..7 po rewind bez niedoborów.
-max_read3854us, min stos audio_control22664B, PCM queued28..29/ACTIVE,
-low0/hard0/starts1, invalid0, tap_drop/gaps0, max_fill131us.
-Heap internal204743B i PSRAM8337620B stabilne w próbkach10–20s.
-Gesty/zapisy volume80/87 działają, użytkownik: „Dźwięk czysty, działa jak
-poprzednio”. Odbiór AAC06h zaliczony, nie powtarzać bez nowego powodu.
-
-168 testów hostowych PASS, ASan/UBSan adaptera PASS; bez TSan/LeakSanitizer.
-Build AAC0x81230B, MP3 i sinus PASS; kod/obraz bez zmian po odbiorze.
-Fault injection stop/join, wymuszony stale publish i długotrwały test na S3
-nadal OPEN. MP3 z nowym readerem nieodebrane. WAIT na EOF nie jest testem
-niedoboru sieci. Następny krok: konfiguracja Wi-Fi zgodnie z09, potem reader
-HTTP/HTTPS. Nie dodawać haseł do repo i nie ogłaszać gotowego radia.
-
-## Odebrane06g — źródło skompresowane
-
-Checkpoint8df80f5 odczytany. AAC06f pozostaje odebrane (kod3b18324,
-odbiór cfd4917); nie powtarzać tych zaliczonych testów bez nowego powodu.
-
-06g oddziela pump od pliku: interfejs DATA/WAIT/END/ERROR i pierścień
-4096B w PSRAM, testowy feeder porcjami do997B. Pełny bufor zatrzymuje zapis
-bez utraty bajtów. Wszystkie operacje źródła należą do audio_control;
-przyszłego readera z innego zadania nie podłączać bez synchronizacji.
-WAIT zachowuje fragmenty wejścia/PCM oraz częściowo złożony blok240 ramek,
-nie modyfikuje output i nie publikuje niepełnego bloku do FIFO. EOS na
-ostatnim bajcie, reset/rewind w EOF nadal tylko polityką pliku testowego.
-ISR/gain/tap, piny i NVS bez zmian. Sieć nadal OPEN. Szczegóły ADR0024.
-
-Bieżący lokalny obraz: AAC-LC, stress OFF/tap_delay0. Log c451643 odebrany:
-cycles1..10/ok1, frames193536, compressed3839B, backpressure160→1662,
-waits0, max_read3829us, stack_hwm min22728B. PCM queued28/ACTIVE,
-low0/hard0/starts1, invalid0, tap_drop/gaps0, max_fill133us.
-Heap internal209143B i PSRAM8337620B stabilne10–40s. Gesty i zapis NVS
-volume78 bez zatrzymania buforów. Nie powtarzać zaliczonych pomiarów.
-Użytkownik potwierdził czysty dźwięk i poprawne VOL/PLAY/STOP („tak”).
-Odbiór06g zaliczony; nie powtarzać. WAIT na S3 niewymuszony (waits0),
-ciągłość po WAIT sprawdzona dotąd na hoście. Nie deklarować testu sieci.
-161 testów hostowych, ASan/UBSan i build AAC-LC/MP3/sinus PASS.
-Końcowy obraz AAC0x80d00B; kod bez zmian po logu.
-Adapter niezależnego readera implementuje06h powyżej; następnie integracja
-sieci zgodnie z etapem09.
-Nie mylić testowego4KiB z produkcyjnym punktem wyjścia256KiB.
-
-## Odebrane na płytce
-
-- OLED: HOME/lista, polskie znaki, scroll wyłącznie w lewo, trzy widżety.
-  Wygląd czcionki do dopracowania później.
-- Enkoder półkrokowy **A5/B6/BTN7**, REVERSED=y: prawo zwiększa. B6 to
-  potwierdzony sprzęt użytkownika, wyjątek od B16 w schemacie referencyjnym.
-- Gesty trybu A i interaktywny UI. NVS volume/widżetu po5s i restart.
-- Audio06a: skończony test L1k/R2k/oba1k na I2S DOUT48/BCLK47/WS21,
-  Philips stereo32/48kHz, bez MCLK. Kod edb7c63, odbiór80e146c.
-
-## Nowe w06b — odebrane funkcjonalnie
-
-Nowy domyślny STREAMOO_AUDIO_CONTROL_TEST zastępuje skończony test
-ciągłym tonem1kHz stereo. Start w **STOP**, volume wraca z NVS.
-Długi klik (tryb A) przełącza rzeczywiste PLAY/STOP, obrót zmienia gain,
-VOL0 to cisza. Rampa50ms, gain100 unity. Źródło ma peak~-30dBFS przed
-gain; przy VOL50 dochodzi około30dB tłumienia — do odsłuchu ustaw80–100.
-Wyłącz AUDIO_CONTROL_TEST, aby wrócić do starego testu06a.
-
-Osobny właściciel przyjmuje VolumeDelta/Toggle przez kolejkę16, UI czyta
-snapshot. Czysty audio_gain używa Q16 i rampy2400 ramek bez float. Callbacki
-i gain są w IRAM, stan/tablice w DRAM; brak helperów flash w obliczeniach.
-UI jest jedynym producentem preferencji; revision zachowuje reset debounce
-przy sklejonych zmianach. ADR0019 opisuje architekturę i granice.
-
-**Katalog i widżety nadal są syntetyczne. MP3 z pliku jest nowym PoC06d;
-nie ma sieci, strumieni, pozostałych kodeków, produkcyjnego playera,
-analizy DSP ani WWW.**
-Potwierdzenie testowej stacji zmienia nazwę, ton pozostaje1kHz.
-STOP pozostawia I2S z zerami, nie jest pauzą strumienia. D12 autoplay
-radia nie rozstrzygnięte; kontrolowany shutdown/flush NVS nadal OPEN.
-
-## Nowe06c — PCM FIFO/tap, praca podstawowa potwierdzona
-
-Producent tonu działa w zadaniu. Raw PCM FIFO ma32 bloki/160ms, callback
-pobiera blok, kopiuje do niezależnego tap przed gain i nakłada rampę.
-Tap4 bloki/20ms, odrzuca nowe przy pełnej kolejce i numeruje bloki,
-żeby analiza wykryła luki. Wewnętrzny RAM, SPSC acquire/release, bez
-alokacji/blokowania/FFT/flash w próbkach. Właściwy DSP nadal niegotowy;
-odbiorca liczy tylko debug peak (dla tonu1036 niezależnie od VOL).
-
-Przy rezerwie10 bloków pipeline schodzi rampą50ms do ciszy, BUFFERING
-czeka na24 bloki/120ms i wraca płynnie. BUF w UI podczas tej ochrony.
-Opcje testowe domyślnie n/0: PCM_STALL_TEST i PCM_TAP_DELAY_MS.
-
-Log użytkownika dla368c724: max_fill129us, invalid0, queued28/ACTIVE,
-low0/hard0/starts1, tap_drop0/tap_gaps0, peak1036; stabilnie także po zapisie
-NVS volume38. To nie jest test VOL0/50/100 ani wymuszonych awarii.
-
-## Wynik testu stress i aktualna konfiguracja
-
-Log użytkownika dla3659b69: stall16.202–16.602s (400ms), potem do70.882s
-mode ACTIVE/queued28, low1/hard0/starts2 bez kolejnych zdarzeń. max_fill113us,
-invalid0; tap_drop/tap_gaps rosną przy tap-delay100ms, tap_peak16=1036.
-Przyrost1000 buforów/5s zachowany. Test liczników i odsłuch zaliczone: użytkownik potwierdził jedną łagodną
-przerwę i potem czysty ton („Tak, grał czysto”).
-
-Lokalny sdkconfig przywrócono do **PCM_STALL_TEST=n / PCM_TAP_DELAY_MS=0**
-i przebudowano zwykły profil. Płytka użytkownika nadal może mieć firmware
-stress, dopóki sam nie wgra normalnego. Opcjonalny fragment stresu oraz
-instrukcja pozostają w config/pcm_stress.defaults i PCM_STRESS_TEST.md.
-NVS pozostaje bez zmian; nie włączać stresu przypadkowo przy dekoderach.
-
-## Historia06d — MP3 batch PoC (zastąpione w06f)
-
-MP3_FIXTURE_TEST=y zastępuje sinus własnym plikiem4s MP3 L/R/stereo,
-przypięty esp_audio_codec2.6.2. Licencja Espressif Modified MIT (ESP-only),
-Apache notice MP3 zachowane w licenses. Zarejestrowany tylko MP3.
-
-Decoder działa przed I2S, daje PCM16 do1MiB PSRAM, handle zamykany po
-przygotowaniu. Producent/pcm_adapter konwertuje do istniejącego SRAM FIFO
-stereo32/48kHz. ISR nie dotyka PSRAM ani dekodera. To batch predecode,
-nie streaming ani benchmark czasu rzeczywistego. Brak resamplingu. Start STOP z NVS.
-Klip zawiera ciszę, więc peak tap jest teraz zmienny — nie oczekuj1036.
-Widżety/katalog nadal TEST. Obecnie źródło wybiera choice w menuconfig: AAC-LC, MP3 lub sinus.
-
-Log użytkownika dla3f761ae: MP3 PoC ESP_OK,64512B→193536 ramek
-(dokładnie referencja),48kHz/stereo16, peak985, decode337274us, wall501083us,
-stack_hwm22744. PCM low0/hard0/starts1, invalid0, tap_drop/gaps0, max_fill133us.
-Stabilny heap, zapis NVS volume83. Jednorazowo nieczytelny fragment konsoli
-około16s — użytkownik wyjaśnił, że poruszył przewodem UART i polecił kontynuować.
-
-## Odebrane06f — decode w trakcie odtwarzania
-
-AAC06e odebrane logiem i czystym odsłuchem („tak, wszystko grało ładnie”).
-Referencja193536 ramek,48kHz/stereo16. Dotychczasowy runtime MP3 także
-potwierdzony logiem. Nie powtarzać testu batch decode ani PCM stress.
-
-Nowy streamoo_decode_stream:257B input +8192B PCM, przechowuje ogony,
-wydaje240 ramek na żądanie producenta tylko przy miejscu w SRAM FIFO.
-Usunięto alokację1MiB całego PCM w PSRAM. Dekoder żyje w zadaniu audio_control,
-EOF resetuje parser/dekoder. ISR/gain/tap bez zmian; NVS i start STOP zachowane.
-Źródło nadal testowy plik we flash, nie sieć; HE-AAC/resampling/player/DSP OPEN.
-
-Lokalny profil AAC-LC, stress n/0, encoder A5/B6/BTN7 REVERSED=y.
-Odbiór AAC06f zaliczony: użytkownik potwierdził „Dżwięk OK”.
-Log3b18324: work_bytes8528, cycles1..5/ok1, frames193536/cykl,
-max_read4034us, stack_hwm22728B. PCM queued27..30/ACTIVE, low0/hard0,
-starts1, invalid0, tap_drop/gaps0, max_fill130us. Heap internal211223B,
-PSRAM8341720B stabilne10–20s. max_read to pull240 w zadaniu, nie ISR.
-Nie powtarzać zaliczonego odsłuchu. MP3 incremental i nowe próby VOL/STOP
-nie zostały osobno potwierdzone; test długotrwały i sieć nadal OPEN.
-
-152 testy hostowe PASS; ASan/UBSan pump/konwertera PASS (bez LeakSanitizer).
-Build/link AAC-LC, MP3 i sinus PASS. Testy hostowe używają sztucznego
-backendu; prawdziwy dekoder wymaga S3.
-Etap06g implementuje interfejs źródła i bufor, opis bieżącego odbioru powyżej.
-Nie ogłaszać pełnego radia.
-Przy pierwszej konfiguracji wymagany dostęp do rejestru Component Manager;
-managed_components ignorowane przez Git, dependencies.lock śledzony.
-
-```sh
-python3 -m unittest discover -s tests -q
-source /home/mariuszk/.espressif/tools/activate_idf_v6.1.sh
-export PATH=/usr/bin:$PATH
-idf.py build
-```
-
-Przed zmianami czytaj AGENTS, CODEX_MASTER_PROMPT, indeks, właściwy etap
-i STATUS. Nie powtarzaj odebranych kroków. Małe commity + test/build/ADR.
-Bez Arduino i kopiowania API yoRadio. Nie kasuj NVS ani nie flashuj płytki
-za użytkownika. Bez AI-Model/AI-Tokens i wymyślonych metryk w commitach.
-Nie wykonuj alokacji, flash, FFT, logowania ani blokującego I/O w próbkach.
-
-Pozostają otwarte: finalna czcionka/licencja zmian PL, wrap listy, format
-czasu/strefa, kroki/ząbek i graniczna szybkość wejść, shutdown/flush NVS,
-zanik podczas zapisu, dokładny model/zwory DAC i pełne pomiary audio.
+Odebrane: PL font (estetyka i licencja modyfikacji OPEN, użytkownik zgodził
+się kopiować tymczasowo), scroll tylko w lewo, encoder półkrok A5/B6/BTN7,
+REVERSED=y, preferencje NVS, PCM/I2S/stress oraz lokalny MP3/AAC odsłuchem.
+Dokładna historia w STATUS/ADR0012–0032. Nie dodawać AI-Model/AI-Tokens
+do commitów; metryki tylko ze zweryfikowanego źródła, bez zgadywania.

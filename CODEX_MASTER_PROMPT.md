@@ -21,7 +21,7 @@ Jesteś głównym inżynierem firmware ESP-IDF i systemów audio czasu rzeczywis
 - Stacje: import/eksport **dokładnego** pliku yoRadio po zweryfikowaniu prawdziwego formatu na przykładach, model wewnętrzny z trwałym ID, trwałe przechowywanie LittleFS, edycja listy bez zatrzymania grającej stacji, atomowa wymiana. Nie kopiuj API starego systemu.
 - Sieć: pierwsze uruchomienie SoftAP z unikalnym SSID z MAC i **tym samym hasłem AP na wszystkich urządzeniach** (wstrzykiwanym bez wpisywania do repo); po udanym Wi-Fi STA AP wyłączyć. Zmiana sieci przez WWW; zabezpieczyć odzyskiwanie po zmianie nieudanej. mDNS streamoo-xxxxxx.local, zmiana nazwy WWW w NVS i DNS-SD.
 - Oddzielne stany player, network, UI; jedyny właściciel stanu odtwarzania; kolejka poleceń od web/enkodera; stale response guard (generation id), retry backoff; brak automatycznego wyboru innej stacji przy niedostępności.
-- Nowy API REST v1 + nowy frontend WWW, uwierzytelnianie operacji administracyjnych; import pliku, edycja listy, sterowanie, Wi-Fi, OTA w późniejszym etapie.
+- Nowy API REST v1 + nowy frontend WWW. Lokalny panel konfiguracji AP/LAN bez dodatkowego logowania na jawne polecenie użytkownika (ADR0032); polityka przyszłego sterowania/aplikacji/OTA osobno. Import pliku, edycja listy, sterowanie, Wi-Fi, OTA etapami.
 
 ## Metoda wyboru bibliotek
 Preferuj istniejące, aktualnie utrzymywane komponenty ESP-IDF i ESP-DSP / dekodery Espressif po sprawdzeniu oficjalnej dokumentacji, licencji, wersji i punktu przechwytu PCM. Gdy biblioteka nie obsługuje wymaganego formatu, opisz alternatywy i wykonaj PoC. Nie zakładaj automatycznej akceleracji SIMD w każdym dekoderze.

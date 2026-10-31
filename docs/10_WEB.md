@@ -1,6 +1,6 @@
 # 10 — Nowe WWW i REST API StreamOO
 
-Stan implementacji 2026-10-31: Implementacja 09c dodaje rzeczywiste formularze sieci i importu playlist.csv, zabezpieczone potwierdzeniem klucza AP. Setup auth, kontrakt i limity: ADR0031. Produkcyjna administracja/API pozostają OPEN.
+Stan implementacji 2026-10-31: Formularze sieci i playlisty działają bez dodatkowego logowania na polecenie użytkownika (ADR0032, zastępuje auth ADR0031). Automatyczny odczyt ustawień po otwarciu strony. Kontrakt/limity ADR0031; polityka przyszłego API/OTA osobno.
 
 **USTALONE:** całkowicie własny serwer WWW/API, bez kompatybilności endpointów z yoRadio. ESP-IDF `esp_http_server` + pliki frontendu. Dostęp przez AP przy pierwszym uruchomieniu i przez unikalny mDNS/IP po połączeniu do LAN.
 
@@ -20,7 +20,7 @@ Stan implementacji 2026-10-31: Implementacja 09c dodaje rzeczywiste formularze s
 | POST | `/api/v1/wifi/config` | zmiana Wi-Fi |
 | GET/PUT | `/api/v1/config` | ustawienia dozwolone runtime |
 
-API ma osobne DTO od struktur aplikacji, waliduje JSON/rozmiary/wysyłkę plików i zapewnia kontrolę uprawnień (rozdziel tryb provisioning i tryb zarządzania). Zaplanuj odporność na CSRF, przechwycenie sesji LAN, brute force i niepoprawne długości pól; nie stosuj CORS `*` na administracji.
+API ma osobne DTO od struktur aplikacji, waliduje JSON/rozmiary/wysyłkę plików i pozostawia lokalną konfigurację dostępną bez osobnego logowania (ADR0032). Zachowaj kontrolę Origin i custom header dla mutacji oraz odporność na niepoprawne długości pól; nie stosuj CORS `*` na administracji.
 
 ## Frontend
 Responsywny prosty panel z zakładkami Player / Stations / Wi-Fi / System. Import z podglądem błędów; sortowanie drag-and-drop i manualna edycja URL, obsługa klawiatury. UI web nie powinno mieć logiki dekodowania ani zależeć od API wewnętrznych sterowników.

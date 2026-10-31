@@ -25,6 +25,5 @@ bool streamoo_network_state(streamoo_network_state_t *);
 typedef struct { char ssid[16]; unsigned char password[64]; unsigned password_bytes; } streamoo_network_ap_display_t;
 bool streamoo_network_ap_display(streamoo_network_ap_display_t *);
 
-/* Setup authorization validates proof; never exposes key to HTTP. */
-bool streamoo_network_authorize(const uint8_t *,size_t);
+/* Task-only profile change queue, independent of portal access policy. */
 esp_err_t streamoo_network_submit_profiles(const streamoo_wifi_profiles_t *);

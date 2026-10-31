@@ -12,8 +12,8 @@ Bieżący punkt wznowienia: [RESUME.md](RESUME.md).
 | 06 audio | I2S/gain/PCM stress odebrane; MP3 decode/PCM potwierdzone logiem; AAC-LC PoC odebrane; AAC incremental file decode06f odebrane logiem i odsłuchem; źródło/bufor AAC06g odebrane logiem, odsłuchem i sterowaniem; niezależny reader AAC06h odebrany logiem i odsłuchem; sieć/player OPEN | ADR 0018–0025; 168 testów hostowych PASS; build źródeł PASS |
 | 07 DSP | NIEZAIMPLEMENTOWANE | — |
 | 08 stacje | import/preview/trwały katalog gotowe do odbioru; player/ID OPEN | ADR0031 |
-| 09 sieć | AP potwierdzone; uporządkowane profile/STA/AP-off gotowe do odbioru; mDNS OPEN | ADR0031; build PASS |
-| 10 WWW | formularze Wi-Fi/upload i setup auth zaimplementowane; odbiór PCB OPEN | ADR0031; 221 testów PASS; Chromium PASS |
+| 09 sieć | AP/STA/IP/AP-off potwierdzone logiem; mDNS OPEN | ADR0031; build PASS |
+| 10 WWW | formularze Wi-Fi/upload bez dodatkowego logowania; odbiór nowego WWW/OLED OPEN | ADR0032; 222 testy PASS; Chromium PASS |
 | 11 storage/OTA | NVS preferencji odebrane; profile NVS/LittleFS katalog gotowe do odbioru; OTA OPEN | ADR0017/0031 |
 | 12 testy końcowe | NIEURUCHOMIONE | — |
 
@@ -1180,3 +1180,20 @@ HARDWARE_TEST_PENDING: zwykły pełny flash (nowa tablica partycji), Ctrl+F5,
 import i reboot, kolejność/fallback sieci, AP-off i OLED/URL, heap/stosy.
 Katalog jest przechowywany, ale syntetyczna lista OLED i odtwarzanie streamów
 nie są jeszcze połączone z katalogiem. Audio pozostaje wyłączone w tym boot.
+
+## Etap 09d — otwarty panel i HOME z IP (2026-10-31)
+
+Użytkownik potwierdził działanie 09c; log dowodzi STA/IP i AP-off około 5 s
+później. Heap internal po AP-off stabilny 142383 B, minimum 84512 B; network
+stack HWM 4676 B. Osobny odbiór katalogu/restartu nie wynika z tego logu.
+
+Na jawne polecenie usunięto dodatkowe logowanie WWW i sprawdzanie klucza AP
+w HTTP. Panel sam odczytuje ustawienia. Zapis nadal walidowany i chroniony
+przed obcym Origin, bez zmiany hasła sieci AP. Po AP-off/STA HOME, aktywne
+gesty, IP w trzeciej linii y24..31. Brak samoczynnego uruchamiania tonu;
+stream player/katalog OLED nadal przyszłe. ADR0032.
+
+222 testy hostowe PASS, raster HOME/IP i HTTP bez auth; Chromium 390px pełne
+formularze bez logowania PASS; node --check i native ESP-IDF6.1 build PASS.
+Nie wykonano flash/erase/eFuse. HARDWARE_TEST_PENDING: nowy panel po Ctrl+F5,
+HOME/IP po STA, gesty enkodera, dostęp WWW pod adresem LAN.

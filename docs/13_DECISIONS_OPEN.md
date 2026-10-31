@@ -19,7 +19,7 @@
 | D15 | OTWARTE | ESP-IDF 6.1 USTALONE (v6.1 zweryfikowane, ADR 0002); nadal OTWARTE: component registry, licencje i kompatybilność kodeków. |
 | D16 | OTWARTE | Dokładne zachowanie overflow/underrun, rozmiary partycji, wybór enkodera half/full quadrature po pomiarze. |
 | D17 | OTWARTE | Model SSD1322 i R5/R8=4SPI potwierdzone przez użytkownika (ADR 0003); nadal OTWARTE: odbiór zasilania/resetu/obrazu OLED, modułu audio i kierunku enkodera na PCB. |
-| D18 | OTWARTE | Hasło AP stałe/wbudowane z prywatnego buildu i wyświetlane na OLED w AP (potwierdzenie użytkownika2026-10-31); osobne uwierzytelnianie administracji WWW nadal OPEN. |
+| D18 | OTWARTE | Hasło AP stałe/wbudowane z prywatnego buildu i wyświetlane na OLED w AP (potwierdzenie użytkownika2026-10-31); lokalna konfiguracja WWW AP/LAN bez dodatkowego logowania na jawne polecenie użytkownika (ADR0032); przyszła aplikacja/OTA osobno. |
 | D19 | OTWARTE | Czy lista stacji ma zawijać się (wrap-around), parametr timeout menu. |
 | D20 | OTWARTE | Format czasu/strefa i polityka bez SNTP nadal otwarte. W HOME 04i do testu użyto YYYY-MM-DD i HH:MM:SS z jawnego czasu cywilnego; renderer nie wybiera strefy ani nie synchronizuje czasu. |
 | D21 | USTALONE | Scroll ma poruszać tekst wyłącznie od prawej do lewej; nowsza decyzja użytkownika, ADR 0009. |
@@ -36,3 +36,5 @@ Doprecyzowanie D03/D17: enkoder 5/6/7 i kierunek potwierdzone na sprzęcie
 połączenia I2S oraz dźwięk/parametry analogowe nadal wymagają odbioru.
 
 D29 — implementacja lokalnego setupu: potwierdzenie kluczem AP, preview/commit katalogu i custom storage, ADR0031. Docelowy niezależny auth administracji D18 nadal OPEN.
+
+D30 — po STA/AP-off normalny HOME i adres IP w trzeciej linii; WWW bez sekcji dostępu i dodatkowego logowania. Jawna decyzja użytkownika zastępuje auth D29/ADR0031. ADR0032.

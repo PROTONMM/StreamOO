@@ -40,14 +40,6 @@ bool streamoo_network_state(streamoo_network_state_t *out) {
   portEXIT_CRITICAL(&state_lock);
   return true;
 }
-bool streamoo_network_authorize(const uint8_t *proof, size_t bytes) {
-  if (!proof)
-    return false;
-  unsigned diff = (unsigned)(bytes ^ (sizeof streamoo_ap_password - 1));
-  for (size_t i = 0; i < sizeof streamoo_ap_password - 1; ++i)
-    diff |= streamoo_ap_password[i] ^ (i < bytes ? proof[i] : 0);
-  return diff == 0;
-}
 bool streamoo_network_ap_display(streamoo_network_ap_display_t *out) {
   if (!out)
     return false;
@@ -395,11 +387,6 @@ bool streamoo_network_boot_ap_enabled(void) { return false; }
 bool streamoo_network_ap_display(streamoo_network_ap_display_t *out) {
   if (out)
     *out = (streamoo_network_ap_display_t){0};
-  return false;
-}
-bool streamoo_network_authorize(const uint8_t *p, size_t n) {
-  (void)p;
-  (void)n;
   return false;
 }
 esp_err_t streamoo_network_submit_profiles(const streamoo_wifi_profiles_t *p) {

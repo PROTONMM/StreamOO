@@ -1,15 +1,15 @@
-# Odbiór 09c — konfiguracja WWW, sieci i playlista
+# Odbiór 09d — otwarta konfiguracja WWW i HOME z IP
 
 Aktualny firmware zastępuje historyczny portal odczytu opisany niżej.
-Decyzje i limity: ADR0031.
+Decyzje i limity: ADR0031; bieżący dostęp/ekran: ADR0032.
 
 1. Wykonaj zwykłe `idf.py -p PORT flash` z aktualnym prywatnym kluczem AP.
    Ten etap zmienia tablicę partycji: potrzebny jest pełny flash, obejmujący
    tablicę, zamiast samego app-flash. Nie kasuj flash/NVS i nie wgrywaj obrazu FS.
 2. Połącz się z AP, otwórz http://192.168.4.1/ i odśwież Ctrl+F5.
-   Widać sekcje „Zapisane sieci” i „Wgraj playlist.csv”. Wpisz hasło AP
-   z OLED w „Dostęp do konfiguracji”, wybierz odczyt ustawień. Błędne hasło
-   ma blokować operacje; hasło nigdy nie jest zwracane przez API.
+   Widać sekcje „Zapisane sieci” i „Wgraj playlist.csv”, bez dodatkowego
+   logowania/sekcji dostępu. Zapisane ustawienia są odczytywane automatycznie;
+   ich hasła nie są zwracane. Przycisk odświeżenia ponawia odczyt.
 3. Najpierw przetestuj upload prywatnej playlisty: wybierz plik, sprawdź,
    oczekuj 267 stacji, 11 oczyszczonych adresów, 3 zachowanych powtórzeń.
    Dopiero „Zatwierdź i zapisz” zastępuje katalog. Zrestartuj i odczytaj
@@ -18,7 +18,9 @@ Decyzje i limity: ADR0031.
 4. Dodaj sieć domową i zapisz. Przyjęcie listy jest asynchroniczne; czekaj
    na próbę STA (do 15 s na profil). Po IP lista zostaje zapisana, AP
    wyłącza się po 5 s. Połącz komputer/telefon z domową siecią i otwórz
-   adres widoczny na OLED. Przy izolacji klientów router może blokować dostęp.
+   adres widoczny w trzeciej linii normalnego HOME na OLED (IP: …). Po AP-off
+   mają działać gesty enkodera zamiast stałego ekranu konfiguracji.
+   Przy izolacji klientów router może blokować dostęp.
 5. Sprawdź dwie sieci: nieosiągalna/błędne hasło pierwszej, poprawna druga;
    zmiana kolejności przyciskiem ↑/↓. Sprawdź, że błędna cała nowa lista
    zachowuje poprzednią. Po restarcie urządzenie próbuje listę z NVS.
@@ -29,6 +31,7 @@ Decyzje i limity: ADR0031.
 7. Oczekuj ciszy, bez fixture_reader/codec/audio_control; obecny boot setupu
    nie uruchamia odtwarzacza także po STA. Import przechowuje katalog,
    nie zmienia jeszcze syntetycznej listy OLED i nie uruchamia streamów.
+   Wyświetlenie HOME po STA nie uruchamia automatycznie testowego klipu.
 
 Do oceny prześlij wyniki formularzy/reboot/AP-off i logi network/portal/heap,
 bez haseł, Authorization, nazw/URL prywatnych stacji. Zmierz wolną pamięć

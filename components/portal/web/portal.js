@@ -41,20 +41,16 @@ async function update() {
   } finally { clearTimeout(timeout); setTimeout(update, 2000); }
 }
 const messages = {
-  authorization_required: 'Nieprawidłowe hasło AP. Wpisz hasło z wyświetlacza.',
-  auth_rate_limit: 'Zbyt wiele błędnych prób. Odczekaj minutę.',
   invalid_profiles: 'Sprawdź nazwy i hasła sieci (SSID do 32 bajtów, hasło 8–63 bajtów; bez duplikatów).',
   connection_test_in_progress: 'Trwa poprzednia próba połączenia. Poczekaj na wynik.',
   playlist_storage_unavailable: 'Pamięć playlisty niedostępna. Sprawdź log urządzenia i tablicę partycji.',
   profiles_unavailable: 'Nie można odczytać zapisanych sieci.',
 };
 async function api(url, options = {}) {
-  const key = document.getElementById('ap-key').value;
-  if (!key || !/^[\x20-\x7e]{8,63}$/.test(key)) throw new Error('Wpisz hasło AP z wyświetlacza radia.');
   const controller = new AbortController(), timeout = setTimeout(() => controller.abort(), 30000);
   try {
     const response = await fetch(url, {...options, cache: 'no-store', signal: controller.signal,
-      headers: {'Authorization': `Basic ${btoa(`setup:${key}`)}`, 'X-StreamOO-Request': '1', ...options.headers}});
+      headers: {'X-StreamOO-Request': '1', ...options.headers}});
     const value = await response.json();
     if (!response.ok) throw new Error(messages[value.error] || (value.error_line ? `Błąd w wierszu ${value.error_line}: ${value.error}. Poprzednia playlista nie została zmieniona.` : 'Operacja nie powiodła się.'));
     return value;
@@ -87,13 +83,13 @@ function setupForms() {
     rows.appendChild(fragment); refreshRows();
   }
   document.getElementById('add-network').onclick = () => add(null);
-  document.getElementById('load-settings').onclick = async () => {
+  const loadSettings = async () => {
     try {
       const profiles = await api('/api/v1/wifi/profiles'); rows.replaceChildren(); profiles.profiles.forEach(add);
       if (!profiles.profiles.length) add(null);
-      text('auth-result', 'Ustawienia odczytane. Zapisane hasła pozostają ukryte.');
+      text('settings-result', 'Ustawienia odczytane. Zapisane hasła pozostają ukryte.');
       const catalog = await api('/api/v1/stations/import/status'); text('catalog-status', `Zapisana playlista: ${catalog.rows} stacji.`);
-    } catch (error) { text('auth-result', error.message); }
+    } catch (error) { text('settings-result', error.message); }
   };
   document.getElementById('wifi-form').onsubmit = async event => {
     event.preventDefault();
@@ -139,7 +135,9 @@ function setupForms() {
       text('catalog-status', `Zapisana playlista: ${report.rows} stacji.`); previewFile = null;
     } catch (error) { text('playlist-result', error.message); commit.disabled = !previewFile; }
   };
+  document.getElementById('load-settings').onclick = loadSettings;
   add(null);
+  loadSettings();
 }
 if (document.getElementById('wifi-form')?.addEventListener) setupForms();
 update();

@@ -2,6 +2,7 @@
 #include "streamoo_font5x8.h"
 #include "streamoo_text_layout.h"
 #include <stdio.h>
+#include <string.h>
 
 static const streamoo_ui_station_t stations[] = {
     {1001, (const uint8_t *)"TEST: Pierwsza", sizeof("TEST: Pierwsza")-1},
@@ -99,10 +100,11 @@ bool streamoo_encoder_demo_draw(streamoo_encoder_demo_t *d, uint8_t *frame,
     }
     if (!streamoo_ui_draw_home(&d->ui,&canvas,now)) return false;
     char status[44];
-    int length=snprintf(status,sizeof(status),"TEST VOL %d  %s  W%u",d->volume,
+    int length=d->network_ip[0] ? snprintf(status,sizeof(status),"IP: %s",d->network_ip) :
+        snprintf(status,sizeof(status),"TEST VOL %d  %s  W%u",d->volume,
                         d->running ? (d->buffering ? "BUF" : "PLAY") : "STOP",(unsigned)d->ui.visualization+1);
     if (length<0 || (size_t)length>=sizeof(status)) return false;
-    /* Explicit test status in description row, outside production renderer. */
+    /* Third HOME row shows the LAN address when connected, otherwise test status. */
     streamoo_canvas_fill(&canvas,(streamoo_rect_t){0,24,256,8},0);
     return streamoo_text_line(&canvas,(streamoo_rect_t){0,24,256,8},
         (const uint8_t *)status,(size_t)length,STREAMOO_TEXT_CENTER,0,0,0,12,streamoo_font5x8,NULL);
@@ -118,5 +120,21 @@ bool streamoo_encoder_demo_audio_state(streamoo_encoder_demo_t *d, uint8_t volum
 {
     if (!d || !d->audio_post || volume>100) return false;
     d->volume=volume; d->running=running;
+    return true;
+}
+
+bool streamoo_encoder_demo_set_ip(streamoo_encoder_demo_t *d, const char *ip)
+{
+    if (!d) return false;
+    char copy[16]={0};
+    if (ip) {
+        size_t i=0;
+        while (i<sizeof copy && ip[i]) {
+            if ((ip[i]<'0' || ip[i]>'9') && ip[i]!='.') return false;
+            copy[i]=ip[i]; ++i;
+        }
+        if (i==sizeof copy) return false;
+    }
+    memcpy(d->network_ip,copy,sizeof copy);
     return true;
 }

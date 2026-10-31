@@ -1,6 +1,6 @@
 # 11 — Przechowywanie, OTA, bezpieczeństwo
 
-Stan implementacji 2026-10-31: Implementacja 09c: wersjonowany blob profili NVS i atomowa podmiana playlisty LittleFS, nowa storage 1 MiB. Lokalny setup wymaga dowodu znajomości klucza AP; niezależna administracja produkcyjna D18 nadal OPEN. Szczegóły i ograniczenia: ADR0031.
+Stan implementacji 2026-10-31: Implementacja 09c: wersjonowany blob profili NVS i atomowa podmiana playlisty LittleFS, nowa storage 1 MiB. Lokalna konfiguracja WWW bez dodatkowego logowania na polecenie użytkownika (ADR0032), zapisane hasła nie są zwracane. Polityka przyszłej aplikacji/OTA OPEN. Trwałość i ograniczenia: ADR0031.
 
 ## NVS (USTALONE)
 - Wi-Fi credentials, wybrany wariant runtime jeśli dopuszczony, aktualna głośność, ostatnia stacja stable_id, wizualizacja, własna nazwa mDNS, stan startowy.
@@ -12,7 +12,7 @@ Lista stacji, ewentualnie WWW assets, tymczasowy staging importu. 16 MB flash po
 
 ## Sekrety i sieć
 - Hasło AP stałe w produktach, ale NIE commitowane do `sdkconfig.defaults` ani logowane. Dobór metody injekcji sekretów musi uwzględnić, że firmware może być wyciągnięte z urządzenia — wspólne hasło nie stanowi silnego zabezpieczenia.
-- Wybierz tryb admin authentication (hasło sesyjne lub tokeny) przed wystawieniem API w LAN; bez uwierzytelnienia nie wolno dopuścić zmian ustawień.
+- Lokalny panel konfiguracji AP/LAN dostępny bez osobnego uwierzytelniania na jawne polecenie użytkownika (ADR0032). Dostęp sieciowy pozwala zmieniać ustawienia. Zachowaj Origin/custom header i walidację; politykę przyszłej aplikacji/OTA ustal osobno.
 - TLS w HTTP streams z weryfikacją certyfikatu; sprawdź synchronizację czasu.
 - OTA: dwie partycje app, walidacja podpisów/hash, rollback po nieudanym starcie; Secure Boot/Flash Encryption jako ewentualny profil produkcyjny, nie udawaj że są włączone na starcie.
 
