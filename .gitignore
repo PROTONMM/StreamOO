@@ -12,3 +12,7 @@ secrets/
 
 # Private user station catalog, kept locally only.
 /playlist.csv
+
+# Private outputs of the local playlist probe.
+/playlist.*.csv
+/playlist.*.json

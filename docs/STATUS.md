@@ -1421,3 +1421,15 @@ nie wykonuje I/O; FFT/RMS/geometria/audio bez zmian.
 (LSan off). Native ESP-IDF6.1 build PASS,0x15f690 (6% wolne),
 check_config --platform/diff --check PASS. Bez nowych zależności,
 flash/erase/eFuse/partycji. Odbiór nowego panelu na OLED OPEN.
+
+## Host: test playlisty/kodeków/bitrate (2026-10-31)
+
+Użytkownik widzi MP3 na sprawdzonych stacjach, AAC nie znalazł. Dodano
+Python probe_playlist: dostępność z retries/timeouts, codec/profile/bitrate
+z pakietów ffprobe, tabela i JSON, osobna active.csv. Oryginał zachowany,
+kolejność/ovol/duplikaty zachowane, prywatne wyjścia ignorowane. ADR0045.
+314 testów hostowych PASS,7 nowych; realny loopback HTTP/ffprobe6.1.1:
+MP3 128kb/s, AAC-LC około73.5kb/s,404 rozpoznane. Native incremental build
+PASS, firmware bez zmian. diff --check PASS; brak flash/erase/eFuse.
+Nie odpytano prywatnej playlisty; wyniki dostępności OPEN. Instrukcja
+PLAYLIST_PROBE.md. Host ACTIVE nie gwarantuje obsługi kodeka przez firmware.

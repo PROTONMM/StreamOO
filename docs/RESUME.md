@@ -181,3 +181,11 @@ retry/offline; bitrate nadal --. Geometria bez zmian.
 Bez erase/NVS/obrazu FS. Czasy S3/max_fft i długi soak nadal OPEN bez logu.
 Zegar/data/strefa, bitrate, backend ESP-DSP/sc16/SIMD i reszta roadmapy
 pozostają dalsze; nie zakładać wyboru strefy/DST bez decyzji użytkownika.
+
+Najnowszy krok: narzędzie hostowe tools/probe_playlist.py (ADR0045),
+na prośbę użytkownika o test dostępności, codec/profile/bitrate i usunięcie
+nieaktywnych. Oryginał nietknięty, nowe playlist.active.csv/report.json,
+zachowane duplikaty/order/ovol. CLI wymaga ffprobe (lokalnie6.1.1),
+bez importu GPL do firmware.314 testów i incremental build PASS;
+realne lokalne HTTP MP3/AAC/404 PASS. Prywatnych267 stacji nie odpytano.
+Instrukcja PLAYLIST_PROBE.md. Firmware nie zmieniony, nie trzeba flashować.
