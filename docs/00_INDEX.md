@@ -79,3 +79,5 @@ Etap09a — SoftAP: `adr/0026-secured-softap-bringup.md`, `NETWORK_BRINGUP.md`.
 Etap09b — portal odczytu i OLED AP: `adr/0027-readonly-portal-and-ap-oled.md`.
 
 Polityka AP bez audio: `adr/0028-ap-setup-without-audio.md`.
+
+Przyszłe źródła sterowania RC5/telefon: `adr/0029-future-control-clients.md`.

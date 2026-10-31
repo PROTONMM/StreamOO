@@ -34,3 +34,13 @@ HOME. Bez metod modyfikujących, formularzy credentials i CORS '*'.
 Panel nie pokazuje kluczy; hasło AP wyłącznie na OLED na polecenie użytkownika.
 Auth administracji i pełna konfiguracja Wi-Fi pozostają OPEN przed dodaniem
 zapisu. [ADR0027](adr/0027-readonly-portal-and-ap-oled.md).
+
+## Przyszła aplikacja telefoniczna
+
+Użytkownik ustalił sterowanie radiem z aplikacji telefonu przez API.
+WWW i aplikacja korzystają ze wspólnego wersjonowanego kontraktu i ownera
+odtwarzania, bez oddzielnej implementacji playera. Obecnie gotowy tylko
+odczyt statusu; akcje sterowania, uprawnienia/auth i kontrakt nadal OPEN.
+Platformy/forma aplikacji i sposób aktualizacji stanu zostaną ustalone później.
+Nie deklarować działającego sterowania telefonem na podstawie portalu09b.
+ADR0029; blokada odtwarzania w AP dotyczy także przyszłego klienta API.

@@ -4,6 +4,14 @@ Aktualizacja: **2026-10-31, AP bez odtwarzania przygotowane; odsłuch poprzednie
 PCM/rebuffer/tap stress potwierdzone logiem i odsłuchem (`5664a90`).
 Gałąź feature/streamoo-implementation, szczegóły STATUS i ADR0028.
 
+## Przyszły zakres dodany przez użytkownika
+
+Pilot RC5 i aplikacja telefoniczna przez API: wymagania ustalone, implementacja
+później (D25/D26, ADR0029). Wszystkie kontrolery używają wspólnych komend
+owner playera i tej samej polityki AP bez audio. Nie implementować teraz IR,
+nie zgadywać GPIO/mapy klawiszy ani platformy/frameworka aplikacji. Najpierw
+pozostaje bieżąca konfiguracja sieci/STA. Obecne API tylko do odczytu.
+
 ## Najnowsze — AP bez audio
 
 Log a5ff0d9 i użytkownik potwierdzają czyste audio podczas AP/HTTP: do29

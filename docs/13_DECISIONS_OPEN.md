@@ -26,6 +26,8 @@
 | D22 | OTWARTE | Obecny font tymczasowo zaakceptowany, polskie znaki poprawne według użytkownika; docelowy wygląd czcionki wymaga dopracowania. |
 | D23 | USTALONE | Tryb konfiguracji AP bez odtwarzania; dotychczasowe AAC/AP służyło testowi współpracy. ADR0028. |
 | D24 | OTWARTE | MicroSD jako przyszłe lokalne źródło MP3; brak implementacji, zweryfikowanych pinów/drivera/filesystemu. |
+| D25 | USTALONE | Docelowo pilot RC5; model odbiornika/GPIO, mapa i zachowanie klawiszy OPEN. ADR0029. |
+| D26 | USTALONE | Docelowo aplikacja telefonu sterująca przez API StreamOO; platformy, forma aplikacji i auth/kontrakt OPEN. ADR0029. |
 
 Doprecyzowanie D03/D17: enkoder 5/6/7 i kierunek potwierdzone na sprzęcie
 (ADR0015); stary schemat ma B16. W 06a model i strapping modułu DAC,

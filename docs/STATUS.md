@@ -1135,3 +1135,13 @@ Build polityki AP: ESP-IDF6.1 AAC+AP/portal0x11b370B i AP off0x81500B PASS,
 factory1500KiB. Końcowy lokalny profil AP on, AAC wybrane jako test poza AP,
 stress OFF/0, prywatny klucz i NVS bez zmian. Walidator GPIO/platform i
 diff --check PASS.
+
+## Rozszerzenie przyszłego zakresu — RC5 i telefon (2026-10-31)
+
+Użytkownik zaplanował pilot RC5 i aplikację telefonu do sterowania przez API.
+Wymagania zapisane w01/05/10, decyzje D25/D26 i ADR0029. Implementacja obu
+funkcji OPEN: bez pinów/kodów pilota, wyboru bibliotek i technologii aplikacji.
+Wspólne komendy/owner playera dla enkodera, RC5, WWW i telefonu; policy AP
+bez odtwarzania obowiązuje wszystkich klientów. Nie dodano kodu ani nie
+zmieniono kolejności bieżącego kroku (AP bez audio, potem STA). Weryfikacja
+wyłącznie git diff --check, bez zbędnego powtarzania buildu/testów firmware.

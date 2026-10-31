@@ -76,3 +76,11 @@ Zmiany trafiają przez nieblokującą skrzynkę do osobnego zadania preferences:
 zapis po 5s bez zmian, tylko przy różnicy. [ADR 0017](adr/0017-deferred-ui-preferences.md).
 Testowy katalog i PLAY/STOP nie są zapisywane. Reset przed zapisem może
 utracić zmianę; flush kontrolowanego shutdown pozostaje do integracji.
+
+## Przyszły pilot RC5
+
+Użytkownik dodał RC5 do zakresu docelowego. Pozostaje jeden enkoder;
+pilot jest dodatkowym źródłem komend. Własny adapter wejścia kieruje je do
+wspólnego ownera playera/UI przez jawne interfejsy, bez dostępu do I2S.
+GPIO/odbiornik, mapa klawiszy, powtarzanie i obsługa menu pozostają OPEN;
+nie wybierać pinów z dawnych definicji Arduino. ADR0029.
