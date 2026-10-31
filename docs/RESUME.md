@@ -7,7 +7,9 @@ nie z pełnym opróżnieniem PCM (`hard=0`). `http_reader` jest teraz core0 wraz
 z Wi-Fi, player/dekoder core1. Brak zmian ringów, I2S, NVS, partycji i
 playlist. Odbiór: zwykły flash bez erase/importu, logo task placement core0/1,
 FLAC kilka minut i zmiana utworu; porównać `low`/`starts`, hard ma pozostać0.
-381 testów, targeted player11+HTTP23 i native build0x17bd40 PASS; S3 OPEN.
+Użytkownik odebrał TEST FLAC native lossless: czysto bez przerw; log116–151s
+low0/hard0/starts1/PCM30..32 mimo src_wait2→6. Nie jest to soak/wszystkie
+FLAC. 381 testów, targeted player11+HTTP23 i native build0x17bd40 PASS.
 
 ## Najnowsze — logo do startu odtwarzania / ADR0068 / 2026-10-31
 

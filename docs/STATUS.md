@@ -13,7 +13,9 @@ partycji. Log bootowy pokaże rzeczywiste core obu tasków.
 PASS0x17bd40 (90% app wolne); odbiór S3 OPEN. Wgrać zwyczajnie bez
 erase/importu, FLAC kilka minut/zmiana utworu. Oczekiwane mniej `low`/`starts`,
 `hard=0`; przy dalszych przerwach mierzyć przejście low, nie zmieniać progów
-fade na ślepo. Agent nie flashował.
+fade na ślepo. Użytkownik odebrał `TEST FLAC native lossless`: czysto, bez
+przerw; log116–151s: low0/hard0/starts1/PCM30..32 mimo src_wait2→6. Nie jest
+to jeszcze wielogodzinny soak ani odbiór wszystkich FLAC. Agent nie flashował.
 
 ## Najnowsze — logo do startu odtwarzania / ADR0068 / 2026-10-31
 

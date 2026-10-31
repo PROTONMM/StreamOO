@@ -1,6 +1,6 @@
 # ADR0069 — rozdzielenie HTTP i dekodera FLAC między rdzenie
 
-Data: 2026-10-31. Status: wdrożone do odbioru sprzętowego.
+Data: 2026-10-31. Status: odebrane dla `TEST FLAC native lossless`.
 
 ## Dowód
 
@@ -37,4 +37,13 @@ lossless` odtworzyć kilka minut oraz zmianę utworu. Oczekiwane: logi
 `Task placement ... core=0/1`, mniej lub brak wzrostu `low` i `starts`;
 `hard` pozostaje 0. Jeśli krótkie przerwy pozostaną, kolejnym krokiem będzie
 zmierzenie czasu i stanu readera dokładnie przy przejściu `low`, a nie
-zmiana progów PCM na ślepo. Odbiór sprzętowy pozostaje OPEN.
+zmiana progów PCM na ślepo.
+
+## Odbiór sprzętowy
+
+Użytkownik potwierdził czysty, nieprzerywany dźwięk. Log sesji `gen=15`
+między około 116 a 151 s utrzymuje `low=0`, `hard=0`, `starts=1` oraz
+30–32 bloki PCM, mimo że `src_wait` wzrasta z 2 do 6. Czytnik potwierdza
+`core=0`; początkowy log playera nie został objęty przechwytem UART. Wynik
+potwierdza poprawę dla tej stacji, nie stanowi jeszcze wielogodzinnego
+soak-testu ani odbioru innych wariantów FLAC.
