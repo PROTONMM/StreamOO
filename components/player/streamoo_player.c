@@ -109,6 +109,25 @@ bool streamoo_player_set_volume(uint8_t volume) {
   command_t c={.kind=COMMAND_VOLUME,.value=volume};
   return xQueueSend(queue,&c,0)==pdTRUE;
 }
+static void station_label(char out[129],const streamoo_station_t *station){
+  if(!station||!station->name||!station->name_bytes){strcpy(out,"<none>");return;}
+  size_t n=station->name_bytes;if(n>128)n=128;
+  if(n<station->name_bytes)while(n&&(station->name[n]&0xc0)==0x80)--n;
+  for(size_t i=0;i<n;++i){uint8_t c=station->name[i];out[i]=c<32||c==127?'?':(char)c;}
+  out[n]=0;
+}
+static void log_transport(const streamoo_http_stream_info_t *i,uint64_t generation){
+  const char *resource=i->resource[0]?i->resource:"none",*stage=i->stage[0]?i->stage:"none",*reason=i->reason[0]?i->reason:"none";
+  ESP_LOGW("player","Reader gen=%" PRIu64 " ended=%u error=%s(%d) resource=%s stage=%s reason=%s"
+    " HTTP=%d mime=\"%s\" read=%d rx=%" PRIu64 "/%" PRIu64 " redirects=%" PRIu32
+    " HLS=%u seq=%" PRIu64 " next=%" PRIu64 " media=%" PRIu64 "+%" PRIu32 " segments=%" PRIu32
+    " reloads=%" PRIu32 " socket_errno=%d tls=%s(%d) tls_code=%d tls_flags=0x%x",
+    generation,(unsigned)i->ended,esp_err_to_name(i->error),i->error,resource,stage,reason,
+    i->http_status,i->content_type,i->last_read,i->response_bytes,i->received_bytes,i->redirects,
+    (unsigned)i->hls,i->hls_sequence,i->hls_next,i->hls_media_sequence,i->hls_media_count,
+    i->hls_segments,i->hls_reloads,i->socket_errno,esp_err_to_name(i->tls_error),i->tls_error,
+    i->tls_code,(unsigned)i->tls_flags);
+}
 typedef struct {
   streamoo_decoder_t *decoder;
   streamoo_pcm_ring_t *ring;
@@ -160,6 +179,7 @@ static void task(void *context) {
   streamoo_player_state_t current;
   streamoo_player_state(&current);
   bool restored=false;
+  uint64_t logged_station=0;char name[129]="<none>";
   for (;;) {
     if(!restored){
       streamoo_catalog_snapshot_t *initial=streamoo_config_catalog_acquire();
@@ -264,6 +284,11 @@ static void task(void *context) {
       target_gain = 0;
       portEXIT_CRITICAL(&lock);
     }
+    station_label(name,station);
+    if(logged_station!=current.station_id){
+      ESP_LOGI("player","Station changed gen=%" PRIu64 " previous=%016" PRIx64 " id=%016" PRIx64 " name=\"%s\" running=%u",current.generation,logged_station,current.station_id,name,(unsigned)current.running);
+      logged_station=current.station_id;
+    }
     if (retiring) {
       if (now >= fade_until && output) {
         esp_err_t e = streamoo_audio_output_close(output);
@@ -311,13 +336,13 @@ static void task(void *context) {
               : ESP_ERR_INVALID_STATE;
       if (current.error != ESP_OK) {
         ESP_LOGW("player",
-                 "Connect failed gen=%" PRIu64 " stage=http_open error=%s",
-                 current.generation, esp_err_to_name(current.error));
+                 "Connect failed gen=%" PRIu64 " station=%016" PRIx64 " name=\"%s\" stage=http_open error=%s(%d)",
+                 current.generation,current.station_id,name,esp_err_to_name(current.error),current.error);
         current.phase = STREAMOO_PLAYER_RETRY;
         retry_at = now + (int64_t)backoff * 1000000;
         backoff = backoff < 8 ? backoff * 2 : 15;
       } else
-        ESP_LOGI("player", "Connect generation=%" PRIu64, current.generation);
+        ESP_LOGI("player", "Connect generation=%" PRIu64 " station=%016" PRIx64 " name=\"%s\"", current.generation,current.station_id,name);
     }
     if (session && !retiring && current.running && online) {
       streamoo_http_stream_info_t info = {0};
@@ -420,22 +445,26 @@ static void task(void *context) {
         portENTER_CRITICAL(&lock);
         target_gain = 0;
         portEXIT_CRITICAL(&lock);
-        /* UART diagnostics must not delay the fade command. */
+        /* UART diagnostics must not delay the fade command. Refresh after
+         * source EOF so the reader's original terminal cause is not stale. */
         fade_until = esp_timer_get_time() + 100000;
+        streamoo_http_stream_info(session,&info);
         ESP_LOGW("player",
                  "Stream failed gen=%" PRIu64 " stage=%s cause=%s"
-                 " HTTP=%d codec=%u error=%s decoder=%d vendor=%" PRId32
-                 " previous=%" PRIu32 "/%u/%u format=%" PRIu32 "/%u/%u",
+                 " HTTP=%d codec=%u error=%s decoder=%s(%d) vendor=%" PRId32
+                 " previous=%" PRIu32 "/%u/%u format=%" PRIu32 "/%u/%u station=%016" PRIx64 " name=\"%s\"",
                  current.generation, failure_stage,
                  pump ? streamoo_live_failure_name(pump->failure) : "none",
                  info.http_status, (unsigned)info.codec, esp_err_to_name(current.error),
+                 esp_err_to_name(pump?pump->decoder_error:ESP_OK),
                  pump ? pump->decoder_error : 0, pump ? pump->codec_status : 0,
                  pump ? pump->format.rate : 0,
                  pump ? (unsigned)pump->format.channels : 0,
                  pump ? (unsigned)pump->format.bits : 0,
                  pump ? pump->observed.rate : 0,
                  pump ? (unsigned)pump->observed.channels : 0,
-                 pump ? (unsigned)pump->observed.bits : 0);
+                 pump ? (unsigned)pump->observed.bits : 0,current.station_id,name);
+        log_transport(&info,current.generation);
         log_decode_profile(&profile,pump,flac_refill);
         if (pump)
           ESP_LOGW("player",

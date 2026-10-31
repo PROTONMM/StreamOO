@@ -1,5 +1,6 @@
 #include "sdkconfig.h"
 #include "esp_log.h"
+#include "esp_app_desc.h"
 #include "streamoo_board.h"
 #include "streamoo_platform.h"
 #include "streamoo_input_probe.h"
@@ -29,7 +30,10 @@ void app_main(void)
     if(settings_error!=ESP_OK)ESP_LOGW(TAG,"System settings unavailable: %s",esp_err_to_name(settings_error));
     esp_err_t clock_error=streamoo_clock_settings_start();
     if(clock_error!=ESP_OK)ESP_LOGW(TAG,"Clock settings unavailable: %s; no erase",esp_err_to_name(clock_error));
-    ESP_LOGI(TAG, "StreamOO scaffold (no radio functionality yet)");
+    const esp_app_desc_t *app=esp_app_get_description();
+    if(app)ESP_LOGI(TAG,"StreamOO firmware=%s IDF=%s ELF=%02x%02x%02x%02x diagnostics=2",
+        app->version,app->idf_ver,(unsigned)app->app_elf_sha256[0],(unsigned)app->app_elf_sha256[1],
+        (unsigned)app->app_elf_sha256[2],(unsigned)app->app_elf_sha256[3]);
     ESP_LOGI(TAG, "SSD1322 SPI: MOSI=%d SCLK=%d CS=%d DC=%d",
              CONFIG_STREAMOO_LCD_MOSI, CONFIG_STREAMOO_LCD_SCLK,
              CONFIG_STREAMOO_LCD_CS, CONFIG_STREAMOO_LCD_DC);

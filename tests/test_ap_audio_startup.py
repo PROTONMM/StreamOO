@@ -10,6 +10,8 @@ HEADER=r'''
 #include <stdint.h>
 #include <stddef.h>
 #include <assert.h>
+typedef struct{char version[32],idf_ver[32];uint8_t app_elf_sha256[32];} esp_app_desc_t;
+const esp_app_desc_t *esp_app_get_description(void);
 typedef int esp_err_t;
 #define ESP_OK 0
 #define ESP_FAIL -1
@@ -48,6 +50,7 @@ CONFIG=r'''
 HARNESS=r'''
 #include "common.h"
 #include <stdlib.h>
+const esp_app_desc_t *esp_app_get_description(void){static const esp_app_desc_t a={.version="fixture",.idf_ver="fake"};return &a;}
 static int mode,controlled,finite,network,display,player,clock_started;
 esp_err_t streamoo_settings_start(void){return ESP_OK;}
 esp_err_t streamoo_clock_settings_start(void){++clock_started;return mode==3?ESP_FAIL:ESP_OK;}
@@ -83,7 +86,7 @@ class APAudioStartupTests(unittest.TestCase):
     def setUpClass(cls):
         cls.temp=tempfile.TemporaryDirectory();cls.addClassCleanup(cls.temp.cleanup)
         base=Path(cls.temp.name);(base/'common.h').write_text(HEADER);(base/'sdkconfig.h').write_text(CONFIG)
-        for name in ('esp_log.h','streamoo_board.h','streamoo_platform.h','streamoo_input_probe.h',
+        for name in ('esp_app_desc.h','esp_log.h','streamoo_board.h','streamoo_platform.h','streamoo_input_probe.h',
                      'display_smoke.h','audio_probe.h','audio_control_probe.h','streamoo_preferences.h',
                      'streamoo_network.h','network_portal.h','streamoo_player.h','streamoo_clock_settings.h','streamoo_settings.h'):
             (base/name).write_text('#include "common.h"\n')

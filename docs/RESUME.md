@@ -1,6 +1,33 @@
 # Punkt wznowienia StreamOO
 
 
+## Najnowsze — nazwa stacji i diagnostyka błędów / ADR0066 / 2026-10-31
+
+User: HLS64k-heaacv2-stereo też przerywa; log bf6f3367 kończy295413B
+po low0/starts1 i HTTP200/NOT_SUPPORTED, wzorzec ADR0065. Nie potwierdza
+aktualizacji (brak Decode perf); nie deklarować kolejnego błędu dekodera.
+
+Dodano Station changed z ID/nazwąPL i generation; Connect/Stream failed
+również z ID/nazwą. No-op grającego ID nie loguje zmiany i nie restartuje.
+Boot: firmware/IDF/krótki ELFhash z metadanych oraz diagnostics=2. Reader
+na awarii: resource/stage/reason, HTTP/MIME, read/rx, HLS sekwencje/liczniki,
+errno/TLS kody i flags. Końcowy snapshot przed EOF i refresh przy awarii
+zachowują pierwotną przyczynę, nawet gdy pipeline raportuje source_eof.
+HWM mierzony także w HLS. Nazwy/kontrolne znaki bounded/sanitized;
+bez nowych logów URL/query/haseł. Długie Reader tylko na awarii po fade,
+bez zwiększenia okresowego UART w aktywnej ścieżce. I2S/bufory bez zmian.
+
+377 host tests, HTTP/player ASanUBSan (LSan off), native ESP-IDF6.1 build
+PASS0x17b990,90% app wolne, GPIO/diff PASS. Test obejmuje nazwęPL/ESC/no-op,
+root HLS error po późnym EOF, TLS/errno przed cleanup i HLS counters.
+Teraz zwykły flash bez erase/importu. Z logu potrzebne firmware z boot,
+Station changed/Connect oraz Stream failed + Reader + Decode perf/diag dla
+tej samej gen. Odbiór logów i stabilności HLS/FLAC S3 nadal OPEN. Queryfix
+ADR0065 oraz profilowanieADR0064 pozostają w firmware; logo/ustawienia
+bez zmian. ROOT CA/FFT/RMS/WWW odłożone, OTA wyłączone, agent nie flashował.
+Starsze sekcje poniżej to historia.
+
+
 ## Najnowsze — HLS128k MP3 / ADR0065 / 2026-10-31
 
 Użytkownik wskazał HLS MP3, nie FLAC: początek phase4/44100/PCM32/low0/

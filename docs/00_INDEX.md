@@ -151,3 +151,5 @@ Logo OLED: `adr/0063-native-oled-boot-mark.md`, `../assets/branding/README.md`.
 FLAC nadal przerywa — porcje wejścia i pomiar terminów: `adr/0064-live-decode-batches-and-deadline-measurements.md`.
 
 Zachowanie sesji HLS przy reload: `adr/0065-hls-session-query-preservation.md`.
+
+Nazwa stacji i źródłowe błędy czytnika: `adr/0066-station-and-reader-failure-diagnostics.md`.

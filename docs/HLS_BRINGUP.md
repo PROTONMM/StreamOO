@@ -44,3 +44,10 @@ oraz segmentach ze znakowanym URL. Host odtwarza błąd starego wariantu i
 poprawne wielokrotne reload nowego. Po zwykłym flash bez erase/importu
 sprawdzić TEST HLS128k-mp3-stereo>=3min, gen/starts bez restartów, low0.
 Odbiór poprawki S3 OPEN; ograniczenia AES/fMP4/discontinuity pozostają.
+
+ADR0066: zgłoszony HE-AACv2 HLS ma podobny wzorzec HTTP200/NOT_SUPPORTED po
+trzech segmentach. Nowe logi mają nazwę stacji/ID i wersję firmware; przy
+awarii Reader pokaże dokładny resource/stage/reason, sequence/reload/segments
+oraz errno/TLS. Przy source_eof zachowuje pierwotny błąd HLS zamiast go
+maskować. Po nowym flash zbierać komplet z tą samą generation (instrukcja
+HTTP_PLAYER_BRINGUP). Odbiór queryfixu na S3 i FLAC wciąż osobno OPEN.

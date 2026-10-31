@@ -25,6 +25,8 @@ int esp_http_client_set_url(void *,const char *);
 int esp_http_client_close(void *);
 int esp_http_client_read(void *,char *,int);
 int esp_http_client_cleanup(void *);
+int esp_http_client_get_errno(void *);
+int esp_http_client_get_and_clear_last_tls_error(void *,int *,int *);
 '''
 HARNESS=r'''
 #include "streamoo_http_stream.h"
@@ -56,7 +58,7 @@ void vTaskDelete(void *p){(void)p;longjmp(completed,1);}
 int esp_crt_bundle_attach(void *p){(void)p;return ESP_OK;}
 void *esp_http_client_init(const esp_http_client_config_t *c){config=*c;strcpy(selected_url,c->url);assert(c->timeout_ms==3000&&c->disable_auto_redirect&&c->crt_bundle_attach==esp_crt_bundle_attach&&c->auth_type==0);return (void *)1;}
 int esp_http_client_set_header(void *h,const char *key,const char *value){(void)h;if(!strcmp(key,"Icy-MetaData"))assert(!strcmp(value,"1")||!strcmp(value,"0"));else assert(!strcmp(key,"Accept-Encoding")&&!strcmp(value,"identity"));return ESP_OK;}
-int esp_http_client_open(void *h,int size){(void)h;assert(!size);++opened;return ESP_OK;}
+int esp_http_client_open(void *h,int size){(void)h;assert(!size);++opened;return mode==40?ESP_FAIL:ESP_OK;}
 static void header(const char *name,const char *value){esp_http_client_event_t e={HTTP_EVENT_ON_HEADER,config.user_data,(char *)name,(char *)value};assert(config.event_handler(&e)==ESP_OK);}
 long long esp_http_client_fetch_headers(void *h){(void)h;
  if((mode==2||mode==3||mode==10||mode==14)&&!redirected)header("Location",mode==10?"http://user:key@radio.invalid":mode==3?"http://radio.invalid":"https://radio.invalid");
@@ -81,6 +83,7 @@ int esp_http_client_get_status_code(void *h){(void)h;
 int esp_http_client_get_url(void *h,char *out,int cap){(void)h;++sdk_get_urls;assert((size_t)cap>strlen(selected_url));strcpy(out,selected_url);char *q=strchr(out,'?');if(q)*q=0;return ESP_OK;}
 static void hls_wire(const char *url){
  cursor=0;const char *doc=NULL;
+ if(mode==42){strcpy((char *)wire,"#EXTM3U\n/live.mp3\n");wire_bytes=strlen((char *)wire);return;}
  if((mode==37&&strstr(url,"?lsid=first"))||((mode==38||mode==39)&&strstr(url,"segment1")&&!strstr(url,"token="))){wire_bytes=0;return;}
  if(strstr(url,"segment")){
   ++segments;memset(wire,0,768);size_t offset=0;
@@ -111,12 +114,14 @@ static void hls_wire(const char *url){
  else doc="#EXTM3U\n#EXT-X-TARGETDURATION:1\n#EXTINF:1,\nsegment1.aac\n#EXTINF:1,\nsegment2.aac\n#EXT-X-ENDLIST\n";
  strcpy((char *)wire,doc);wire_bytes=strlen(doc);
 }
-int esp_http_client_set_url(void *h,const char *url){(void)h;strcpy(selected_url,url);++resolved;cursor=0;
+int esp_http_client_set_url(void *h,const char *url){(void)h;if(mode==41||mode==42)return ESP_ERR_NO_MEM;strcpy(selected_url,url);++resolved;cursor=0;
  if(mode==2||mode==3||mode==10||mode==14){redirected=1;return ESP_OK;}
  if(mode>=27)hls_wire(url);else if(mode!=21){memcpy(wire,"ID3test",7);wire_bytes=7;}
  return ESP_OK;}
 int esp_http_client_set_redirection(void *h){(void)h;assert(0);return ESP_OK;}
 int esp_http_client_close(void *h){(void)h;return ESP_OK;}
+int esp_http_client_get_errno(void *h){assert(h&&!cleaned);return mode==40?104:0;}
+int esp_http_client_get_and_clear_last_tls_error(void *h,int *code,int *flags){assert(h&&!cleaned);*code=mode==40?-0x3000:0;*flags=mode==40?8:0;return mode==40?ESP_FAIL:ESP_OK;}
 int esp_http_client_cleanup(void *h){assert(h);++cleaned;return ESP_OK;}
 int esp_http_client_read(void *h,char *out,int cap){(void)h;++reads;if(mode==9||(mode==8&&reads<=2))return -ESP_ERR_HTTP_EAGAIN;if(mode==6)streamoo_http_stream_stop(stream);if(mode==25&&!resolved){streamoo_http_stream_stop(stream);return -1;}
  if(mode==23&&!resolved){memset(out,'x',(size_t)cap);return cap;}
@@ -138,19 +143,21 @@ int main(int argc,char **argv){assert(argc==2);mode=atoi(argv[1]);
  assert(cleaned==1&&!sdk_get_urls);if(mode==8)assert(opened==1);
  streamoo_http_stream_info_t info;assert(streamoo_http_stream_info(stream,&info)&&info.ended);
  assert(info.bitrate_kbps==(mode==12?192u:0u));
+ if(mode==41||mode==42){assert(info.error==ESP_ERR_NO_MEM&&!strcmp(info.reason,"set_url_failed")&&!strcmp(info.stage,"set_url")&&!strcmp(info.resource,mode==41?"hls_manifest":"playlist"));streamoo_http_stream_stop(stream);assert(streamoo_http_stream_dispose(stream)&&!semaphores&&!allocations);return 0;}
+ if(mode==40){assert(info.ended&&info.error==ESP_FAIL&&!strcmp(info.stage,"open")&&!strcmp(info.reason,"http_open")&&info.http_status==0&&info.socket_errno==104&&info.tls_code==-0x3000&&info.tls_flags==8&&info.tls_error==ESP_FAIL);streamoo_http_stream_stop(stream);assert(streamoo_http_stream_dispose(stream)&&!semaphores&&!allocations);return 0;}
  if(mode>=36){
  if(mode==39)assert(!segments&&!streamoo_http_stream_queued(stream)&&info.error==ESP_ERR_INVALID_RESPONSE);
- else assert(segments==3&&media_loads==3&&info.codec_known&&info.codec==STREAMOO_CODEC_MP3&&streamoo_http_stream_queued(stream)==48);
+ else assert(segments==3&&media_loads==3&&info.codec_known&&info.codec==STREAMOO_CODEC_MP3&&streamoo_http_stream_queued(stream)==48&&info.hls_segments==3&&info.hls_reloads==2&&info.hls_next==4&&info.hls_media_sequence==2&&info.hls_media_count==2&&!strcmp(info.reason,"endlist")&&info.reader_stack_hwm==8000);
  streamoo_http_stream_stop(stream);assert(streamoo_http_stream_dispose(stream)&&!semaphores&&!allocations);return 0;
  }
  if(mode>=27){
  if(mode==27||mode==28||mode==29){assert(segments==2);assert(info.codec_known&&info.codec==(mode==28?STREAMOO_CODEC_MPEG_TS:STREAMOO_CODEC_AAC_LC));assert(streamoo_http_stream_queued(stream)==(mode==28?1128u:32u));if(mode==29)assert(media_loads==2);}
  else if(mode==30){assert(segments==1&&media_loads==1);}
- else if(mode==31){assert(segments==1&&info.error==ESP_ERR_NOT_SUPPORTED);}
+ else if(mode==31){assert(segments==1&&info.error==ESP_ERR_NOT_SUPPORTED&&!strcmp(info.reason,"discontinuity")&&info.hls_sequence==1);}
  else if(mode==32){assert(!streamoo_http_stream_queued(stream)&&info.error==ESP_ERR_INVALID_SIZE);}
  else if(mode==33){assert(!segments&&resolved==3&&info.error==ESP_ERR_NOT_SUPPORTED);}
  else if(mode==34){assert(!segments&&info.error==ESP_ERR_INVALID_RESPONSE);}
- else if(mode==35){assert(segments==2&&info.error==ESP_ERR_NOT_SUPPORTED&&streamoo_http_stream_queued(stream)==16);}
+ else if(mode==35){assert(segments==2&&info.error==ESP_ERR_NOT_SUPPORTED&&streamoo_http_stream_queued(stream)==16&&!strcmp(info.reason,"codec_change"));}
  streamoo_http_stream_stop(stream);assert(streamoo_http_stream_dispose(stream));assert(!semaphores&&!allocations);return 0;
  }
  if(mode>=15){
@@ -218,3 +225,9 @@ class HTTPStreamTests(unittest.TestCase):
   for mode in (36,37,38):
    with self.subTest(mode=mode):self.run_case(mode)
  def test_hls_redirect_rejects_https_downgrade_with_query(self):self.run_case(39)
+
+ def test_connection_failure_preserves_errno_tls_and_resource_stage(self):self.run_case(40)
+
+ def test_sdk_set_url_error_is_not_overwritten_for_hls_or_m3u(self):
+  for mode in (41,42):
+   with self.subTest(mode=mode):self.run_case(mode)

@@ -4,7 +4,7 @@ import os,subprocess,tempfile,unittest
 ROOT=Path(__file__).resolve().parents[1]
 HEADERS={
  'streamoo_settings.h':'#pragma once\n#include <stdbool.h>\n#include <stdint.h>\ntypedef struct{uint32_t list_timeout_s;bool list_autoselect,autoplay;char hostname[64];} streamoo_settings_t;\nstatic inline streamoo_settings_t streamoo_settings_get(void){return (streamoo_settings_t){.list_timeout_s=5,.list_autoselect=true};}\nstatic inline uint64_t streamoo_settings_last_station(void){return 0;}\nstatic inline void streamoo_settings_station_changed(uint64_t id){(void)id;}\n',
- 'esp_err.h':'#pragma once\ntypedef int esp_err_t;\n#define ESP_OK 0\n#define ESP_FAIL -1\n#define ESP_ERR_INVALID_STATE 1\n#define ESP_ERR_INVALID_ARG 2\n#define ESP_ERR_NO_MEM 3\nstatic inline const char *esp_err_to_name(int e){(void)e;return "error";}\n',
+ 'esp_err.h':'#pragma once\ntypedef int esp_err_t;\n#define ESP_OK 0\n#define ESP_FAIL -1\n#define ESP_ERR_INVALID_STATE 1\n#define ESP_ERR_INVALID_ARG 2\n#define ESP_ERR_NO_MEM 3\n#define ESP_ERR_NOT_SUPPORTED 5\nstatic inline const char *esp_err_to_name(int e){(void)e;return "error";}\n',
  'esp_attr.h':'#pragma once\n#define IRAM_ATTR\n#define DRAM_ATTR\n',
  'esp_log.h':'#pragma once\nvoid fake_log(const char *,const char *,...) __attribute__((format(printf,2,3)));\n#define ESP_LOGI fake_log\n#define ESP_LOGW fake_log\n',
  'esp_timer.h':'#pragma once\n#include <stdint.h>\nint64_t esp_timer_get_time(void);\n',
@@ -27,7 +27,8 @@ HARNESS=r'''
 #include <string.h>
 #include <stdarg.h>
 #include <stdio.h>
-static char failure_log[1024],diagnostic_log[1024],perf_log[1024];
+static char failure_log[1024],diagnostic_log[1024],perf_log[1024],reader_log[2048],station_log[1024];
+static unsigned station_changes;static bool transport_eof_test,reader_done;
 static bool profile_test;static streamoo_stream_decode_fn measured_decode;static void *measured_context;static bool measured_once;
 static void (*actor)(void *);static jmp_buf completed;
 static unsigned ring_epoch,decoder_epoch;
@@ -41,15 +42,17 @@ static streamoo_audio_fill_fn output_fill;static void *output_context;
 struct streamoo_http_stream{unsigned stopped;bool closing;};
 struct streamoo_decoder{int unused;};
 struct streamoo_catalog_snapshot{unsigned refs;streamoo_catalog_view_t view;};
-static const streamoo_station_t entries[]={{.stable_id=11,.url=(const uint8_t *)"http://a.invalid"},{.stable_id=22,.url=(const uint8_t *)"http://b.invalid"}};
-static const streamoo_station_t reversed[]={{.stable_id=22,.url=(const uint8_t *)"http://b.invalid"},{.stable_id=11,.url=(const uint8_t *)"http://a.invalid"}};
+static const streamoo_station_t entries[]={{.stable_id=11,.name=(const uint8_t *)"Zażółć A",.name_bytes=sizeof "Zażółć A"-1,.url=(const uint8_t *)"http://a.invalid"},{.stable_id=22,.name=(const uint8_t *)"Test B\x1b[31m",.name_bytes=sizeof "Test B\x1b[31m"-1,.url=(const uint8_t *)"http://b.invalid"}};
+static const streamoo_station_t reversed[]={{.stable_id=22,.name=(const uint8_t *)"Test B\x1b[31m",.name_bytes=sizeof "Test B\x1b[31m"-1,.url=(const uint8_t *)"http://b.invalid"},{.stable_id=11,.name=(const uint8_t *)"Zażółć A",.name_bytes=sizeof "Zażółć A"-1,.url=(const uint8_t *)"http://a.invalid"}};
 static streamoo_catalog_snapshot_t first={.view={entries,2,1}},second={.view={NULL,0,3}},reordered={.view={reversed,2,2}},*catalog=&first;
 void fake_log(const char *tag,const char *fmt,...){(void)tag;va_list args;va_start(args,fmt);
- if(strstr(fmt,"Stream failed"))vsnprintf(failure_log,sizeof failure_log,fmt,args);
+ if(strstr(fmt,"Station changed")){++station_changes;vsnprintf(station_log,sizeof station_log,fmt,args);}
+ else if(strstr(fmt,"Reader gen="))vsnprintf(reader_log,sizeof reader_log,fmt,args);
+ else if(strstr(fmt,"Stream failed"))vsnprintf(failure_log,sizeof failure_log,fmt,args);
  else if(strstr(fmt,"Decode perf:"))vsnprintf(perf_log,sizeof perf_log,fmt,args);
  else if(strstr(fmt,"Decode diag"))vsnprintf(diagnostic_log,sizeof diagnostic_log,fmt,args);
  va_end(args);}
-const char *streamoo_live_failure_name(streamoo_live_failure_t f){return f==STREAMOO_LIVE_DECODER_NO_PROGRESS?"decoder_no_progress":"none";}
+const char *streamoo_live_failure_name(streamoo_live_failure_t f){return f==STREAMOO_LIVE_SOURCE_EOF?"source_eof":f==STREAMOO_LIVE_DECODER_NO_PROGRESS?"decoder_no_progress":"none";}
 int64_t esp_timer_get_time(void){return now;}
 void *heap_caps_calloc(size_t n,size_t size,unsigned caps){(void)caps;void *p=calloc(n,size);if(p){++allocations;if(n==32)++ring_epoch;}return p;}
 void heap_caps_free(void *p){if(p){assert(allocations);--allocations;free(p);}}
@@ -63,8 +66,8 @@ streamoo_catalog_snapshot_t *streamoo_config_catalog_acquire(void){++catalog->re
 streamoo_catalog_view_t streamoo_config_catalog_view(const streamoo_catalog_snapshot_t *s){return s?s->view:(streamoo_catalog_view_t){0};}
 void streamoo_config_catalog_release(streamoo_catalog_snapshot_t *s){if(s){assert(s->refs);--s->refs;}}
 bool streamoo_network_state(streamoo_network_state_t *s){*s=(streamoo_network_state_t){.sta_connected=online,.ap_ready=ap};return true;}
-esp_err_t streamoo_http_stream_open(const char *url,streamoo_http_stream_t **s){assert(!strcmp(url,(manual==1&&opens==2)?"http://b.invalid":"http://a.invalid"));assert(online&&!ap);++opens;force_fail=false;*s=heap_caps_calloc(1,sizeof **s,0);return *s?ESP_OK:ESP_ERR_NO_MEM;}
-bool streamoo_http_stream_info(streamoo_http_stream_t *s,streamoo_http_stream_info_t *i){(void)s;*i=(streamoo_http_stream_info_t){.codec_known=true,.codec=flac_case?STREAMOO_CODEC_FLAC:STREAMOO_CODEC_MP3,.bitrate_kbps=flac_case?1500:192,.ended=force_fail,.error=force_fail?ESP_FAIL:ESP_OK};return true;}
+esp_err_t streamoo_http_stream_open(const char *url,streamoo_http_stream_t **s){assert(!strcmp(url,(manual==1&&opens==2)?"http://b.invalid":"http://a.invalid"));assert(online&&!ap);++opens;force_fail=false;reader_done=false;*s=heap_caps_calloc(1,sizeof **s,0);return *s?ESP_OK:ESP_ERR_NO_MEM;}
+bool streamoo_http_stream_info(streamoo_http_stream_t *s,streamoo_http_stream_info_t *i){(void)s;*i=(streamoo_http_stream_info_t){.codec_known=true,.codec=flac_case?STREAMOO_CODEC_FLAC:STREAMOO_CODEC_MP3,.bitrate_kbps=flac_case?1500:192,.ended=transport_eof_test?reader_done:force_fail,.error=transport_eof_test?(reader_done?ESP_ERR_NOT_SUPPORTED:ESP_OK):force_fail?ESP_FAIL:ESP_OK};if(reader_done){strcpy(i->resource,"hls_reload");strcpy(i->stage,"parse");strcpy(i->reason,"master_after_media");i->hls=true;i->hls_segments=3;i->hls_reloads=1;}return true;}
 streamoo_byte_source_t streamoo_http_stream_source(streamoo_http_stream_t *s){(void)s;return (streamoo_byte_source_t){0};}
 size_t streamoo_http_stream_queued(streamoo_http_stream_t *s){(void)s;return flac_case?flac_queued:force_fail?0:8192;}
 void streamoo_http_stream_stop(streamoo_http_stream_t *s){if(!s->closing){s->closing=true;s->stopped=tick;}}
@@ -73,7 +76,7 @@ esp_err_t streamoo_decoder_open(streamoo_codec_t codec,streamoo_decoder_t **d){a
 void streamoo_decoder_close(streamoo_decoder_t *d){heap_caps_free(d);}
 esp_err_t streamoo_decoder_process(streamoo_decoder_t *d,uint8_t *in,size_t n,bool eos,uint8_t *pcm,size_t cap,streamoo_decode_result_t *r){(void)d;(void)in;(void)n;(void)eos;(void)pcm;(void)cap;(void)r;if(profile_test){now+=125000;*r=(streamoo_decode_result_t){.consumed=n,.produced=16384};}return ESP_OK;}
 bool streamoo_live_decode_init(streamoo_live_decode_t *p,streamoo_byte_source_t s,void *d,streamoo_stream_decode_fn f){(void)s;measured_once=false;measured_context=d;measured_decode=f;p->format=(streamoo_pcm_format_t){44100,2,16};return true;}
-streamoo_stream_result_t streamoo_live_decode_read(streamoo_live_decode_t *p,int32_t *out){(void)p;if(profile_test&&!measured_once){uint8_t in=0,pcm=0;streamoo_decode_result_t result={0};assert(measured_decode(measured_context,&in,1,false,&pcm,1,&result)==ESP_OK);measured_once=true;}if(flac_case){++flac_reads;if(flac_queued==1)return STREAMOO_STREAM_WAIT;}if(force_fail){p->failure=STREAMOO_LIVE_DECODER_NO_PROGRESS;p->last_input=19;return STREAMOO_STREAM_FAILED;}for(unsigned i=0;i<480;++i)out[i]=65536;return STREAMOO_STREAM_READY;}
+streamoo_stream_result_t streamoo_live_decode_read(streamoo_live_decode_t *p,int32_t *out){(void)p;if(profile_test&&!measured_once){uint8_t in=0,pcm=0;streamoo_decode_result_t result={0};assert(measured_decode(measured_context,&in,1,false,&pcm,1,&result)==ESP_OK);measured_once=true;}if(flac_case){++flac_reads;if(flac_queued==1)return STREAMOO_STREAM_WAIT;}if(force_fail){if(transport_eof_test)reader_done=true;p->failure=transport_eof_test?STREAMOO_LIVE_SOURCE_EOF:STREAMOO_LIVE_DECODER_NO_PROGRESS;p->last_input=19;return STREAMOO_STREAM_FAILED;}for(unsigned i=0;i<480;++i)out[i]=65536;return STREAMOO_STREAM_READY;}
 esp_err_t streamoo_audio_output_open(streamoo_audio_pins_t p,streamoo_audio_fill_fn fn,void *ctx,streamoo_audio_output_t **out){(void)p;assert(!output_live&&online&&!ap);output_live=true;output_fill=fn;output_context=ctx;*out=(void *)1;return ESP_OK;}
 esp_err_t streamoo_audio_output_close(streamoo_audio_output_t *out){assert(out&&output_live);output_live=false;++closes;return ESP_OK;}
 bool streamoo_audio_output_stats(streamoo_audio_output_t *s,streamoo_audio_stats_t *out){(void)s;*out=(streamoo_audio_stats_t){tick,10,0};return true;}
@@ -131,16 +134,17 @@ void vTaskDelay(unsigned ms){now+=(int64_t)ms*1000;++tick;
  }
  if(tick<=2)assert(!opens&&!output_live);
  if(tick==3){streamoo_player_spectrum_enabled(true);online=true;ap=false;assert(streamoo_player_select(NULL,&(streamoo_ui_select_command_t){11,1}));}
- if(tick==9)assert(s.phase==STREAMOO_PLAYER_PLAYING&&s.station_id==11&&s.running);
+ if(tick==9){assert(s.phase==STREAMOO_PLAYER_PLAYING&&s.station_id==11&&s.running);assert(station_changes==1&&strstr(station_log,"name=\"Zażółć A\"")&&!strstr(station_log,"http"));}
  if(tick==10){if(web_commands)assert(streamoo_player_set_playing(false));else assert(streamoo_player_control(NULL,&(streamoo_control_command_t){.kind=STREAMOO_CONTROL_TOGGLE}));}
  if(web_commands&&tick==11){stop_gen=s.generation;assert(streamoo_player_set_playing(false));}
  if(web_commands&&tick==12)assert(s.generation==stop_gen);
  if(tick==12)assert(streamoo_player_select(NULL,&(streamoo_ui_select_command_t){22,1}));
+ if(tick==13)assert(station_changes==2&&strstr(station_log,"Test B?[31m")&&!strchr(station_log,27));
  if(tick==14)assert(streamoo_player_select(NULL,&(streamoo_ui_select_command_t){11,1}));
  if(tick==49)assert(opens==1&&!output_live);
  if(tick==60){streamoo_player_spectrum_enabled(false);streamoo_player_state_t check;assert(streamoo_player_state(&check)&&!check.metering.spectrum_valid);}
  if(tick==65){assert(opens==2&&s.phase==STREAMOO_PLAYER_PLAYING);streamoo_player_spectrum_enabled(true);play_gen=s.generation;assert(streamoo_player_select(NULL,&(streamoo_ui_select_command_t){11,1}));}
- if(tick==66)assert(s.generation==play_gen&&opens==2&&s.phase==STREAMOO_PLAYER_PLAYING);
+ if(tick==66)assert(s.generation==play_gen&&opens==2&&s.phase==STREAMOO_PLAYER_PLAYING&&station_changes==3);
  if(web_commands&&tick==65){play_gen=s.generation;assert(streamoo_player_set_playing(true));assert(streamoo_player_set_playing(true));}
  if(web_commands&&tick==66){assert(s.generation==play_gen);assert(streamoo_player_set_volume(57));assert(streamoo_player_control(NULL,&(streamoo_control_command_t){.kind=STREAMOO_CONTROL_VOLUME_DELTA,.delta=3}));}
  if(web_commands&&tick==67){assert(s.volume==60&&s.volume_revision==2);assert(streamoo_player_set_volume(60));assert(!streamoo_player_set_volume(101));}
@@ -148,7 +152,7 @@ void vTaskDelay(unsigned ms){now+=(int64_t)ms*1000;++tick;
  if(web_commands&&tick==69){assert(s.volume==0);assert(streamoo_player_set_volume(100));}
  if(web_commands&&tick==70)assert(s.volume==100);
  if(tick==70)force_fail=true;
- if(tick==120){assert(strstr(failure_log,"stage=decode cause=decoder_no_progress"));assert(strstr(diagnostic_log,"in=19 used=0 out=0 needed=0"));online=false;ap=true;}
+ if(tick==120){assert(strstr(failure_log,transport_eof_test?"stage=decode cause=source_eof":"stage=decode cause=decoder_no_progress"));assert(strstr(failure_log,"name=\"Zażółć A\"")&&!strstr(failure_log,"http://"));if(transport_eof_test)assert(strstr(reader_log,"error=error(5)")&&strstr(reader_log,"reason=master_after_media")&&strstr(reader_log,"segments=3 reloads=1"));assert(strstr(diagnostic_log,"in=19 used=0 out=0 needed=0"));online=false;ap=true;}
  if(tick==130){online=true;assert(!output_live);}
  if(tick==139)assert(s.phase==STREAMOO_PLAYER_WAIT_NETWORK);
  if(tick==140)ap=false;
@@ -168,7 +172,7 @@ void vTaskDelay(unsigned ms){now+=(int64_t)ms*1000;++tick;
  if(tick==340)catalog=&second;
  if(tick==420){if(profile_test)assert(strstr(perf_log,"codec_max=125000us")&&strstr(perf_log,"block_max=125000us")&&strstr(perf_log,"pcm_at_max=16384"));assert(!s.running&&!s.station_id&&!output_live&&opens==3&&closes==3&&!allocations&&first.refs==0&&reordered.refs==0);longjmp(completed,1);}
 }
-int main(int argc,char **argv){assert(streamoo_player_reserve(false,1500)==8192);assert(streamoo_player_reserve(true,1500)==93750);assert(streamoo_player_reserve(true,0)==65536);assert(streamoo_player_reserve(true,1)==32768);assert(streamoo_player_reserve(true,UINT32_MAX)==196608);manual=argc>1?atoi(argv[1]):0;flac_case=manual==10;profile_test=manual==11;disable_meter=manual==3;wrong_meter_generation=manual==4;web_commands=manual==5;web_retry=manual==6;if(manual>=7&&manual<=9){boot=manual;fixture_last=manual==9?99:11;fixture_autoplay=manual==8;}if(manual>=3)manual=0;assert(streamoo_player_start(50)==ESP_OK);assert(!streamoo_player_select(NULL,&(streamoo_ui_select_command_t){11,99}));assert(first.refs==0);if(!setjmp(completed))actor(NULL);return 0;}
+int main(int argc,char **argv){assert(streamoo_player_reserve(false,1500)==8192);assert(streamoo_player_reserve(true,1500)==93750);assert(streamoo_player_reserve(true,0)==65536);assert(streamoo_player_reserve(true,1)==32768);assert(streamoo_player_reserve(true,UINT32_MAX)==196608);manual=argc>1?atoi(argv[1]):0;flac_case=manual==10;profile_test=manual==11;transport_eof_test=manual==12;disable_meter=manual==3;wrong_meter_generation=manual==4;web_commands=manual==5;web_retry=manual==6;if(manual>=7&&manual<=9){boot=manual;fixture_last=manual==9?99:11;fixture_autoplay=manual==8;}if(manual>=3)manual=0;assert(streamoo_player_start(50)==ESP_OK);assert(!streamoo_player_select(NULL,&(streamoo_ui_select_command_t){11,99}));assert(first.refs==0);if(!setjmp(completed))actor(NULL);return 0;}
 '''
 class NetworkPlayerTests(unittest.TestCase):
  def run_case(self,mode):
@@ -200,3 +204,5 @@ class NetworkPlayerTests(unittest.TestCase):
  def test_flac_preroll_refill_keeps_same_session_and_reserves_pcm_first(self):self.run_case(10)
 
  def test_decode_wall_time_and_pcm_size_are_logged_from_actual_wrapper(self):self.run_case(11)
+
+ def test_source_eof_log_refreshes_original_hls_error_and_station_name(self):self.run_case(12)

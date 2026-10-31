@@ -64,3 +64,18 @@ calls/reads oraz liczniki sumaryczne. `format` sam nie dowodzi przyczyny.
 22050 Hz w końcowym wpisie. Tabela wszystkich przyczyn: ADR0035.
 Nowy log służy wyjaśnieniu pojedynczego zdarzenia; podstawowy odsłuch kilku
 stacji jest już zaliczony.
+
+## Identyfikacja logu i błędu — ADR0066
+
+Po flash zachowaj linię `StreamOO firmware=... IDF=... ELF=... diagnostics=2`.
+Zmiana stacji: `Station changed ... id=... name="..."`, potem `Connect` z tą
+samą nazwą/ID i nową generation. Przy przerwie zapisz komplet dla tej samej
+gen: `Stream failed`, `Reader`, `Decode perf`, `Decode diag` oraz sąsiednie
+phase/heap. Reader rozdziela zasób/operację/powód i pokazuje status/MIME,
+read/rx, liczniki HLS oraz errno/TLS. `source_eof` w pumpie nie wystarcza
+jako przyczyna: Reader może wskazać np. `hls_reload / parse / master_after_media`.
+`rx` to bajty body odpowiedzi/sesji, z manifestami i ID3, nie bajty PCM ani
+ruchTCP. TLS to ostatnie dostępne kody SDK, errno-1 oznacza niedostępny.
+Rozbudowane Reader tylko przy awarii po wyciszeniu; okresowe pomiary bez
+nowej długiej linii. Logi nie dodają URL/query/sekretów. HWM HLS jest teraz
+mierzony. Test sprzętowy nowych wpisów i odsłuch nadal OPEN.
