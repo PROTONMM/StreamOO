@@ -1471,3 +1471,16 @@ Nowy format i fizyczny power-cycle strefy do odbioru. Brak flash/erase/eFuse.
 Weryfikacja:329 testów hostowych PASS, clock-settings ASan/UBSan PASS
 (LSan off), native ESP-IDF6.1 build PASS,0x160ff0 (6% wolne),
 check_config --platform i diff --check PASS. Bez flash/erase/eFuse.
+
+## Bitrate strumienia — deklaracja ICY (2026-10-31)
+
+Użytkownik fizyczny test strefy po power-cycle wykona w międzyczasie;
+nie traktujemy go jako zaliczonego. Kontynuacja ADR0049: icy-br1..4096
+z HTTP do playera/UI, błędne opcjonalne dane bez wpływu na audio, reset
+na redirect i przy STOP/retry/offline. Bez nagłówka --; bez udawania
+pomiaru VBR. Native tor audio/FFT i ustawienia NVS bez zmian.
+332 testy PASS; HTTP/actor ASan/UBSan PASS (LSan off). Sprzętowy bitrate
+i data po zmianie formatu oraz power-cycle strefy pozostają OPEN.
+
+Native ESP-IDF6.1 build PASS,0x161080 (6% wolne), GPIO validator
+i diff --check PASS. Bez nowych zależności, flash/erase/eFuse i zmian partycji.

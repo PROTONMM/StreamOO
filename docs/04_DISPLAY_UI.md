@@ -159,3 +159,7 @@ przez WWW. Przed potwierdzonym sync kreski. Format DD.MM.YYYY/HH:MM:SS
 bez zmiany geometrii; zegar niezależny od stacji, bez resetowania marquee.
 
 ADR0048: data na polecenie użytkownika DD.MM.YYYY, nieznana --.--.----. Godzina i geometria bez zmian.
+
+ADR0049: pole bitrate używa poprawnego nagłówka icy-br serwera (np.192k),
+bez nagłówka nadal --. Jest to deklarowany nominalny bitrate, nie pomiar VBR.
+Czyszczenie razem z kodekiem przy STOP/retry/braku sieci.

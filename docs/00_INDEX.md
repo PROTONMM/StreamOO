@@ -119,3 +119,5 @@ Odstęp RSSI od wizualizacji: `adr/0046-rssi-visualization-spacing.md`.
 Zegar SNTP i strefa przez WWW: `adr/0047-sntp-clock-and-web-timezone.md`, `CLOCK_BRINGUP.md`.
 
 Data dzień–miesiąc–rok i trwałość strefy: `adr/0048-day-first-date-and-timezone-persistence.md`.
+
+Bitrate deklarowany przez serwer ICY: `adr/0049-server-declared-stream-bitrate.md`.

@@ -8,6 +8,7 @@ typedef struct {
   esp_err_t error;
   int http_status;
   uint32_t reader_stack_hwm;
+  uint32_t bitrate_kbps; /* Server-declared icy-br,0=unknown; not measured VBR. */
   uint32_t metadata_revision;
   char title[257];
 } streamoo_http_stream_info_t;

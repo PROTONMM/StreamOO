@@ -1,6 +1,6 @@
 # Punkt wznowienia StreamOO
 
-Aktualizacja: **2026-10-31 — zegar/strefa odebrane, data DD.MM.YYYY i test trwałości NVS gotowe**.
+Aktualizacja: **2026-10-31 — bitrate ICY gotowy do odbioru, fizyczny test NVS użytkownik wykona osobno**.
 Gałąź feature/streamoo-implementation. ADR0034–0035, STATUS i HTTP_PLAYER_BRINGUP.
 
 ## Potwierdzone przez użytkownika
@@ -215,3 +215,14 @@ chwili, ale wybór strefy pozostaje nieulotny.
 Weryfikacja:329 testów hostowych PASS, clock-settings ASan/UBSan PASS
 (LSan off), native ESP-IDF6.1 build PASS,0x160ff0 (6% wolne),
 check_config --platform i diff --check PASS. Bez flash/erase/eFuse.
+
+Najnowsze ADR0049: użytkownik nie blokuje pracy na fizycznym teście strefy,
+sprawdzi go w międzyczasie. Nie uznawać tego testu za zaliczony.
+Dodano bitrate nominalny z icy-br do dolnego panelu. Brak/błąd nagłówka
+daje --, bez estymacji z sample rate/bufora. Reset na redirect/sesję/STOP/
+retry/offline; wyświetlenie dopiero przy znanym PCM.332 testy i HTTP/actor
+ASan/UBSan PASS. Wgrać standardowo bez erase/NVS, sprawdzić np.128k/192k
+na stacjach z nagłówkiem. FFT/RMS/clock settings bez zmian.
+
+Native ESP-IDF6.1 build PASS,0x161080 (6% wolne), GPIO validator
+i diff --check PASS. Bez nowych zależności, flash/erase/eFuse i zmian partycji.

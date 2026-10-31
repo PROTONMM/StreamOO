@@ -55,8 +55,11 @@ int esp_http_client_set_header(void *h,const char *key,const char *value){(void)
 int esp_http_client_open(void *h,int size){(void)h;assert(!size);++opened;return ESP_OK;}
 static void header(const char *name,const char *value){esp_http_client_event_t e={HTTP_EVENT_ON_HEADER,config.user_data,(char *)name,(char *)value};assert(config.event_handler(&e)==ESP_OK);}
 long long esp_http_client_fetch_headers(void *h){(void)h;
+ if(mode==12)header("icy-br","192");
+ if(mode==13){header("icy-br","-128");header("icy-br","128junk");header("icy-br","99999999999999");}
+ if(mode==14&&!redirected)header("icy-br","320");
  header("Content-Type",mode==5?"text/html":mode==11?"audio/mpegjunk":mode==1?"application/octet-stream":"audio/mpeg");header("icy-metaint",mode==4?"999999999":"3");if(mode==10)header("Location","http://user:key@radio.invalid");return 0;}
-int esp_http_client_get_status_code(void *h){(void)h;return (mode==2||mode==3||mode==10)&&!redirected?302:200;}
+int esp_http_client_get_status_code(void *h){(void)h;return (mode==2||mode==3||mode==10||mode==14)&&!redirected?302:200;}
 int esp_http_client_get_url(void *h,char *out,int cap){(void)h;const char *url=mode==3?(redirected?"http://radio.invalid":"https://radio.invalid"):(redirected?"https://radio.invalid":"http://radio.invalid");assert((size_t)cap>strlen(url));strcpy(out,url);return ESP_OK;}
 int esp_http_client_set_redirection(void *h){(void)h;redirected=1;return ESP_OK;}
 int esp_http_client_close(void *h){(void)h;return ESP_OK;}
@@ -71,7 +74,8 @@ int main(int argc,char **argv){assert(argc==2);mode=atoi(argv[1]);
  if(!setjmp(completed))reader(reader_context);
  assert(cleaned==1);if(mode==8)assert(opened==1);
  streamoo_http_stream_info_t info;assert(streamoo_http_stream_info(stream,&info)&&info.ended);
- if(mode<=2||mode==8){assert(info.codec_known&&info.codec==STREAMOO_CODEC_MP3&&!info.title[0]);
+ assert(info.bitrate_kbps==(mode==12?192u:0u));
+ if(mode<=2||mode==8||mode>=12){assert(info.codec_known&&info.codec==STREAMOO_CODEC_MP3&&!info.title[0]);
  streamoo_byte_source_t source=streamoo_http_stream_source(stream);assert(!source.rewind);uint8_t audio[16];size_t n;bool last;
  assert(source.read(source.context,audio,2,&n,&last)==STREAMOO_SOURCE_DATA&&n==2&&!memcmp(audio,"ID",2));
  assert(streamoo_http_stream_info(stream,&info)&&!info.title[0]);
@@ -108,3 +112,7 @@ class HTTPStreamTests(unittest.TestCase):
 
  def test_reject_credentials_in_redirect(self):self.run_case(10)
  def test_mime_token_boundary(self):self.run_case(11)
+
+ def test_declared_icy_bitrate(self):self.run_case(12)
+ def test_invalid_optional_bitrate_does_not_break_audio(self):self.run_case(13)
+ def test_redirect_bitrate_does_not_leak_to_final_stream(self):self.run_case(14)

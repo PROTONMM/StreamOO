@@ -62,6 +62,16 @@ static esp_err_t header(esp_http_client_event_t *e) {
       s->bad_header = true;
     else
       s->interval = n;
+  } else if (!strcasecmp(e->header_key, "icy-br")) {
+    uint32_t kbps=0;bool valid=*e->header_value!=0;
+    for(const unsigned char *p=(const unsigned char *)e->header_value;*p;++p){
+      if(*p<'0'||*p>'9'){valid=false;break;}
+      kbps=kbps*10u+(*p-'0');
+      if(kbps>4096){valid=false;break;}
+    }
+    portENTER_CRITICAL(&info_lock);
+    s->info.bitrate_kbps=valid && kbps ? kbps:0;
+    portEXIT_CRITICAL(&info_lock);
   } else if (!strcasecmp(e->header_key, "Content-Type")) {
     streamoo_codec_t codec;
     bool known = true;
@@ -125,6 +135,7 @@ static void reader(void *context) {
     s->bad_location = false;
     portENTER_CRITICAL(&info_lock);
     s->info.codec_known = false;
+    s->info.bitrate_kbps = 0;
     portEXIT_CRITICAL(&info_lock);
     error = esp_http_client_open(client, 0);
     if (error != ESP_OK)

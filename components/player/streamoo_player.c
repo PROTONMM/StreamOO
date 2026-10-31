@@ -309,7 +309,10 @@ static void task(void *context) {
           }
         }
         current.rate = pump->format.rate;
-        if(current.rate)strcpy(current.codec,info.codec==STREAMOO_CODEC_MP3 ? "MP3" : "AAC");
+        if(current.rate){
+          strcpy(current.codec,info.codec==STREAMOO_CODEC_MP3 ? "MP3" : "AAC");
+          current.bitrate_kbps=info.bitrate_kbps;
+        }
         portENTER_CRITICAL(&lock);
         streamoo_pcm_stats_t pcm = stats;
         portEXIT_CRITICAL(&lock);
@@ -363,7 +366,7 @@ static void task(void *context) {
     if (!session && current.running && online && now < retry_at)
       current.phase = STREAMOO_PLAYER_RETRY;
   publish: {
-    if(retiring || !output || !online || !current.running)current.codec[0]=0;
+    if(retiring || !output || !online || !current.running){current.codec[0]=0;current.bitrate_kbps=0;}
     portENTER_CRITICAL(&lock);
     bool spectrum_on=spectrum_requested;
     portEXIT_CRITICAL(&lock);

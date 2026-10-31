@@ -16,6 +16,7 @@ typedef struct {
     char network_ip[16], codec[8];
     bool wifi_connected, rssi_valid;
     int rssi_dbm;
+    uint32_t bitrate_kbps;
     bool imported_catalog, levels_valid;
     streamoo_visualization_model_t levels;
     streamoo_ui_post_fn station_post;

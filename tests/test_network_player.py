@@ -56,7 +56,7 @@ streamoo_catalog_view_t streamoo_config_catalog_view(const streamoo_catalog_snap
 void streamoo_config_catalog_release(streamoo_catalog_snapshot_t *s){if(s){assert(s->refs);--s->refs;}}
 bool streamoo_network_state(streamoo_network_state_t *s){*s=(streamoo_network_state_t){.sta_connected=online,.ap_ready=ap};return true;}
 esp_err_t streamoo_http_stream_open(const char *url,streamoo_http_stream_t **s){assert(!strcmp(url,(manual==1&&opens==2)?"http://b.invalid":"http://a.invalid"));assert(online&&!ap);++opens;force_fail=false;*s=heap_caps_calloc(1,sizeof **s,0);return *s?ESP_OK:ESP_ERR_NO_MEM;}
-bool streamoo_http_stream_info(streamoo_http_stream_t *s,streamoo_http_stream_info_t *i){(void)s;*i=(streamoo_http_stream_info_t){.codec_known=true,.codec=STREAMOO_CODEC_MP3,.ended=force_fail,.error=force_fail?ESP_FAIL:ESP_OK};return true;}
+bool streamoo_http_stream_info(streamoo_http_stream_t *s,streamoo_http_stream_info_t *i){(void)s;*i=(streamoo_http_stream_info_t){.codec_known=true,.codec=STREAMOO_CODEC_MP3,.bitrate_kbps=192,.ended=force_fail,.error=force_fail?ESP_FAIL:ESP_OK};return true;}
 streamoo_byte_source_t streamoo_http_stream_source(streamoo_http_stream_t *s){(void)s;return (streamoo_byte_source_t){0};}
 size_t streamoo_http_stream_queued(streamoo_http_stream_t *s){(void)s;return force_fail?0:8192;}
 void streamoo_http_stream_stop(streamoo_http_stream_t *s){if(!s->closing){s->closing=true;s->stopped=tick;}}
@@ -98,8 +98,8 @@ void vTaskDelay(unsigned ms){now+=(int64_t)ms*1000;++tick;
  if(output_live){int32_t samples[480];output_fill(output_context,samples,240);}
  if(active_meter){int32_t raw[480];while(streamoo_pcm_pop(&active_meter->tap,raw,NULL)){} }
  streamoo_player_state_t s;assert(streamoo_player_state(&s));
- if(s.phase==STREAMOO_PLAYER_PLAYING)assert(!strcmp(s.codec,"MP3"));
- if(!s.running||s.phase==STREAMOO_PLAYER_WAIT_NETWORK||s.phase==STREAMOO_PLAYER_RETRY)assert(!s.codec[0]);
+ if(s.phase==STREAMOO_PLAYER_PLAYING)assert(!strcmp(s.codec,"MP3")&&s.bitrate_kbps==192);
+ if(!s.running||s.phase==STREAMOO_PLAYER_WAIT_NETWORK||s.phase==STREAMOO_PLAYER_RETRY)assert(!s.codec[0]&&!s.bitrate_kbps);
  if(s.phase!=STREAMOO_PLAYER_PLAYING||disable_meter||wrong_meter_generation){assert(!s.metering.levels.valid);assert(!s.metering.spectrum_valid);}
  if(s.metering.spectrum_valid)assert(s.metering.generation==s.generation&&s.metering.bands[0]==12345);
  if(s.metering.levels.valid){assert(s.metering.generation==s.generation);assert(s.metering.levels.rms[0]==1234);}

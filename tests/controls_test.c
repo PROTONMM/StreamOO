@@ -149,6 +149,8 @@ int main(int argc, char **argv)
         assert(d.ui.home.wifi_connected&&d.ui.home.rssi_valid&&d.ui.home.rssi_dbm==-65);
         assert(d.ui.home.audio_info_valid&&d.ui.home.codec.bytes==3);
         assert(!memcmp(d.ui.home.codec.data,"MP3",3)&&!d.ui.home.bitrate_kbps);
+        d.bitrate_kbps=192;assert(streamoo_encoder_demo_draw(&d,frame,sizeof frame,20));
+        assert(d.ui.home.bitrate_kbps==192);
         assert(!streamoo_encoder_demo_technical(&d,true,true,2,"AAC"));
         assert(!streamoo_encoder_demo_technical(&d,true,true,-65,"12345678"));
         assert(d.rssi_dbm==-65&&!strcmp(d.codec,"MP3"));
@@ -157,7 +159,7 @@ int main(int argc, char **argv)
         assert(!d.ui.home.rssi_valid&&d.ui.home.codec.bytes==3);
         assert(streamoo_encoder_demo_technical(&d,false,false,0,NULL));
         assert(streamoo_encoder_demo_draw(&d,frame,sizeof frame,80));
-        assert(!d.ui.home.wifi_connected&&!d.ui.home.audio_info_valid);
+        assert(!d.ui.home.wifi_connected&&!d.ui.home.audio_info_valid&&!d.ui.home.bitrate_kbps);
     } else if (scenario==11) {
         streamoo_encoder_demo_t d; assert(streamoo_encoder_demo_init(&d));
         const streamoo_ui_station_t list[]={{12,(const uint8_t *)"Live",4}};
