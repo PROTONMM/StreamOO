@@ -1,6 +1,6 @@
 # ADR0053 — użyteczniejszy początek skali głośności
 
-Data:2026-10-31. Status: wdrożone, odsłuch na płytce OPEN.
+Data:2026-10-31. Status: wdrożone, charakterystyka odebrana odsłuchowo przez użytkownika.
 
 Użytkownik zgłasza, że do około1/3 skali prawie nic nie słychać i chce
 bardziej liniowej charakterystyki. Dotychczasowa regulacja miała liniowy
@@ -31,3 +31,8 @@ Odbiór: po zwykłym flash rozpocząć od małej głośności, ocenić zakres
 10/20/33/50 oraz płynność regulacji enkoderem i WWW. Nie zmieniać NVS,
 partycji ani FFT przy tym teście. Dotychczasowa specyfikacja krzywej
 w ADR0019 pozostaje opisem historycznego etapu, zastąpionym tą decyzją.
+
+## Odbiór — 2026-10-31
+
+Użytkownik potwierdził: „charakterystyka głośności jest teraz dobra”.
+Przyjęto obecną krzywą kwadratową; dalsze strojenie nie jest potrzebne.

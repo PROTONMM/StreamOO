@@ -1555,3 +1555,7 @@ Potwierdzenie 2026-10-31: użytkownik otworzył stronę pod nazwą mDNS
 swojego radia i zgłosił „działa”. Podstawowy dostęp .local/HTTP odebrany
 na płytce (ADR0052). Reconnect/konflikty/DNS-SD/heap nadal OPEN. Odsłuch
 krzywej głośności ADR0053 pozostaje OPEN; wiadomość dotyczyła adresu WWW.
+
+Odbiór ADR0053 (2026-10-31): użytkownik potwierdził, że nowa
+charakterystyka głośności jest dobra. Odsłuch krzywej zakończony
+pozytywnie; pozostawiamy `(VOL/100)^2` i rampę50ms.
