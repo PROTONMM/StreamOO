@@ -38,12 +38,22 @@ static bool status(void *context,streamoo_portal_status_t *out)
     }
     return true;
 }
+static esp_err_t player_command(streamoo_portal_player_action_t action,uint8_t volume)
+{
+    streamoo_network_state_t network={0};streamoo_player_state_t player;
+    if(!streamoo_network_state(&network)||!network.sta_connected||network.ap_ready||
+       !streamoo_player_state(&player)||!player.ready ||
+       (action==STREAMOO_PORTAL_PLAY&&!player.station_id))return ESP_ERR_INVALID_STATE;
+    bool queued=action==STREAMOO_PORTAL_VOLUME ? streamoo_player_set_volume(volume):
+        streamoo_player_set_playing(action==STREAMOO_PORTAL_PLAY);
+    return queued ? ESP_OK:ESP_FAIL;
+}
 static const char *clock_zone(void){return streamoo_clock_zone_name(streamoo_clock_settings_get());}
 static void ready(void *context)
 {
     (void)context;
     const streamoo_portal_actions_t actions={streamoo_config_wifi_load,
-        streamoo_network_submit_profiles,streamoo_config_playlist,streamoo_config_playlist_info,clock_zone,streamoo_clock_settings_set};
+        streamoo_network_submit_profiles,streamoo_config_playlist,streamoo_config_playlist_info,clock_zone,streamoo_clock_settings_set,player_command};
     esp_err_t error=streamoo_portal_configure(&actions);
     if(error==ESP_OK) error=streamoo_portal_start(status,NULL);
     if (error!=ESP_OK) ESP_LOGE("portal","Portal unavailable: %s; AP/audio remain independent",esp_err_to_name(error));

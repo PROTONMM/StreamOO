@@ -15,7 +15,10 @@
 #include "streamoo_pcm.h"
 #include <inttypes.h>
 #include <string.h>
+typedef enum { COMMAND_ENCODER,COMMAND_PLAYING,COMMAND_VOLUME } command_kind_t;
 typedef struct {
+  command_kind_t kind;
+  uint8_t value;
   streamoo_catalog_snapshot_t *catalog;
   uint64_t id;
   streamoo_control_command_t control;
@@ -92,6 +95,16 @@ bool streamoo_player_control(void *context,
   command_t c = {.control = *control};
   return xQueueSend(queue, &c, 0) == pdTRUE;
 }
+bool streamoo_player_set_playing(bool running) {
+  if(!queue)return false;
+  command_t c={.kind=COMMAND_PLAYING,.value=running};
+  return xQueueSend(queue,&c,0)==pdTRUE;
+}
+bool streamoo_player_set_volume(uint8_t volume) {
+  if(!queue||volume>100)return false;
+  command_t c={.kind=COMMAND_VOLUME,.value=volume};
+  return xQueueSend(queue,&c,0)==pdTRUE;
+}
 static esp_err_t decode(void *d, uint8_t *in, size_t n, bool eos, uint8_t *pcm,
                         size_t cap, streamoo_decode_result_t *r) {
   return streamoo_decoder_process(d, in, n, eos, pcm, cap, r);
@@ -133,8 +146,17 @@ static void task(void *context) {
         backoff = 1;
         retry_at = 0;
         restart = true;
-      } else if (cmd.control.kind == STREAMOO_CONTROL_TOGGLE) {
-        current.running = current.station_id && !current.running;
+      } else if (cmd.kind==COMMAND_PLAYING ||
+                 (cmd.kind==COMMAND_ENCODER && cmd.control.kind == STREAMOO_CONTROL_TOGGLE)) {
+        bool desired=current.station_id && (cmd.kind==COMMAND_PLAYING ? cmd.value!=0:!current.running);
+        if(desired==current.running){
+          if(desired && cmd.kind==COMMAND_PLAYING && current.error!=ESP_OK &&
+             (retiring || !session || current.phase==STREAMOO_PLAYER_RETRY)){
+            current.error=ESP_OK;backoff=1;retry_at=0;
+          }
+          continue;
+        }
+        current.running = desired;
         ++current.generation;
         current.title[0] = 0;
         if (current.running) {
@@ -144,7 +166,8 @@ static void task(void *context) {
         }
         restart = true;
       } else {
-        int64_t v = (int64_t)current.volume + cmd.control.delta;
+        int64_t v = cmd.kind==COMMAND_VOLUME ? cmd.value:
+                    (int64_t)current.volume + cmd.control.delta;
         uint8_t next = v < 0 ? 0 : v > 100 ? 100 : (uint8_t)v;
         if (next != current.volume) {
           current.volume = next;

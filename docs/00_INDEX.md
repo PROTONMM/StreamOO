@@ -121,3 +121,5 @@ Zegar SNTP i strefa przez WWW: `adr/0047-sntp-clock-and-web-timezone.md`, `CLOCK
 Data dzień–miesiąc–rok i trwałość strefy: `adr/0048-day-first-date-and-timezone-persistence.md`.
 
 Bitrate deklarowany przez serwer ICY: `adr/0049-server-declared-stream-bitrate.md`.
+
+Sterowanie WWW playerem: `adr/0050-web-player-controls.md`, `WEB_PLAYER_BRINGUP.md`.

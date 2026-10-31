@@ -62,3 +62,11 @@ i Data i czas z selectem strefy i zapisem NVS. GET/POST /api/v1/clock,
 POST JSON {"timezone":"Europe/Warsaw"}, limit128B i whitelist. Origin/
 custom header bez zmian, bez dodatkowego loginu. Błąd commit503 zachowuje
 poprzednią aktywną strefę. Pierwszy katalog8 stref europejskich/UTC.
+
+## Sterowanie playerem — ADR0050
+
+Status ma Odtwarzaj/Zatrzymaj i suwak volume0..100. POST/player/control
+pod /api/v1, JSON action play/stop/volume,202 przyjęte. Wspólny owner
+z encoderem, idempotentny PLAY/STOP i absolute volume. Tylko STA/AP-off,
+bez dodatkowego loginu; Origin/header/limity. Wybór stacji przez WWW
+i aplikacja telefonu nadal OPEN. Procedura WEB_PLAYER_BRINGUP.

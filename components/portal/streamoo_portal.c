@@ -51,7 +51,7 @@ esp_err_t streamoo_portal_start(streamoo_portal_status_fn getter,void *context)
     if (server) return ESP_ERR_INVALID_STATE;
     httpd_config_t config=HTTPD_DEFAULT_CONFIG();
     config.task_priority=2; config.stack_size=8192;
-    config.max_open_sockets=4; config.max_uri_handlers=11; config.lru_purge_enable=true;
+    config.max_open_sockets=4; config.max_uri_handlers=12; config.lru_purge_enable=true;
     config.recv_wait_timeout=3; config.send_wait_timeout=3;
     read_status=getter; status_context=context;
     esp_err_t error=httpd_start(&server,&config);

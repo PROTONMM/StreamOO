@@ -1,6 +1,6 @@
 # Punkt wznowienia StreamOO
 
-Aktualizacja: **2026-10-31 — bitrate ICY gotowy do odbioru, fizyczny test NVS użytkownik wykona osobno**.
+Aktualizacja: **2026-10-31 — PLAY/STOP/volume WWW gotowe do odbioru, test NVS osobno**.
 Gałąź feature/streamoo-implementation. ADR0034–0035, STATUS i HTTP_PLAYER_BRINGUP.
 
 ## Potwierdzone przez użytkownika
@@ -226,3 +226,13 @@ na stacjach z nagłówkiem. FFT/RMS/clock settings bez zmian.
 
 Native ESP-IDF6.1 build PASS,0x161080 (6% wolne), GPIO validator
 i diff --check PASS. Bez nowych zależności, flash/erase/eFuse i zmian partycji.
+
+Najnowsze ADR0050: użytkownik potwierdza bieżący firmware. Dodano do
+Status WWW PLAY/STOP/volume i POST /api/v1/player/control. Wspólny owner
+z encoderem, explicit idempotent PLAY/STOP, absolute volume0..100,
+PLAY przy retry nie toggle; brak AP/offline i brak zastępczej stacji.
+Najpierw wybór stacji enkoderem; wybór WWW to kolejny mały krok.
+334 testy/actor ASan/UBSan/Chromium390px/native build PASS,0x161f00,6% app.
+Teraz zwykły flash, Ctrl+F5 i WEB_PLAYER_BRINGUP: UI/audio/enkoder/suwak.
+Nie powtarzać strojenia FFT/RMS. NVS strefy po fizycznym power-cycle
+użytkownik sprawdza osobno; nie ogłaszać tego odbioru jako zaliczonego.

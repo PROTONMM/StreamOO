@@ -31,3 +31,7 @@ bool streamoo_player_state(streamoo_player_state_t *);
 
 /* Task-only visualization preference, independent of playback commands. */
 void streamoo_player_spectrum_enabled(bool);
+
+/* Explicit/idempotent web/API commands, copied to the same owner queue. */
+bool streamoo_player_set_playing(bool running);
+bool streamoo_player_set_volume(uint8_t volume);

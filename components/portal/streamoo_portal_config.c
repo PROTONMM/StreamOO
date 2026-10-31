@@ -12,7 +12,7 @@ esp_err_t streamoo_portal_configure(const streamoo_portal_actions_t *a) {
   if (serving)
     return ESP_ERR_INVALID_STATE;
   if (!a || !a->wifi_load || !a->wifi_submit || !a->playlist ||
-      !a->playlist_info || !a->timezone_get || !a->timezone_set)
+      !a->playlist_info || !a->timezone_get || !a->timezone_set || !a->player_command)
     return ESP_ERR_INVALID_ARG;
   actions = *a;
   configured = true;
@@ -208,6 +208,31 @@ static esp_err_t clock_post(httpd_req_t *r) {
   return error==ESP_OK ? reply(r,"200 OK","{\"saved\":true}"):
       reply(r,"503 Service Unavailable","{\"error\":\"clock_save_failed\"}");
 }
+static esp_err_t player_post(httpd_req_t *r) {
+  if(!request_allowed(r))return ESP_FAIL;
+  if(!content_type(r,"application/json"))return reply(r,"415 Unsupported Media Type","{\"error\":\"json_required\"}");
+  uint8_t *data=body(r,128);if(!data)return ESP_FAIL;
+  cJSON *root=memchr(data,0,r->content_len) ? NULL:cJSON_ParseWithLengthOpts((char *)data,r->content_len+1,NULL,true);
+  cJSON *action=root ? cJSON_GetObjectItemCaseSensitive(root,"action"):NULL;
+  cJSON *value=root ? cJSON_GetObjectItemCaseSensitive(root,"value"):NULL;
+  bool valid=cJSON_IsObject(root) && cJSON_IsString(action);
+  streamoo_portal_player_action_t kind=STREAMOO_PORTAL_STOP;uint8_t volume=0;
+  if(valid && !strcmp(action->valuestring,"volume")) {
+    kind=STREAMOO_PORTAL_VOLUME;
+    valid=cJSON_GetArraySize(root)==2 && cJSON_IsNumber(value) && value->valuedouble>=0 &&
+        value->valuedouble<=100 && value->valuedouble==value->valueint;
+    if(valid)volume=(uint8_t)value->valueint;
+  } else if(valid) {
+    valid=cJSON_GetArraySize(root)==1 && (!strcmp(action->valuestring,"play") || !strcmp(action->valuestring,"stop"));
+    kind=!strcmp(action->valuestring,"play") ? STREAMOO_PORTAL_PLAY:STREAMOO_PORTAL_STOP;
+  }
+  cJSON_Delete(root);heap_caps_free(data);
+  if(!valid)return reply(r,"400 Bad Request","{\"error\":\"invalid_player_command\"}");
+  esp_err_t error=actions.player_command(kind,volume);
+  if(error==ESP_ERR_INVALID_STATE)return reply(r,"409 Conflict","{\"error\":\"player_unavailable\"}");
+  return error==ESP_OK ? reply(r,"202 Accepted","{\"accepted\":true}"):
+      reply(r,"503 Service Unavailable","{\"error\":\"player_busy\"}");
+}
 esp_err_t streamoo_portal_register_configuration(httpd_handle_t server) {
   if (!configured)
     return ESP_OK;
@@ -237,6 +262,9 @@ esp_err_t streamoo_portal_register_configuration(httpd_handle_t server) {
     esp_err_t error=httpd_register_uri_handler(server,&clock_routes[i]);
     if(error!=ESP_OK)return error;
   }
+  const httpd_uri_t player_route={.uri="/api/v1/player/control",.method=HTTP_POST,.handler=player_post};
+  esp_err_t player_error=httpd_register_uri_handler(server,&player_route);
+  if(player_error!=ESP_OK)return player_error;
   serving = true;
   return ESP_OK;
 }

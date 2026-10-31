@@ -1484,3 +1484,17 @@ i data po zmianie formatu oraz power-cycle strefy pozostają OPEN.
 
 Native ESP-IDF6.1 build PASS,0x161080 (6% wolne), GPIO validator
 i diff --check PASS. Bez nowych zależności, flash/erase/eFuse i zmian partycji.
+
+## Sterowanie WWW playerem (2026-10-31)
+
+Użytkownik: wszystko działa, kontynuować. Odbiór bieżącego panelu bitrate
+potwierdzony ogólnie; fizyczny test NVS strefy nadal niezależny/OPEN.
+ADR0050: Status WWW z PLAY/STOP/volume, POST /api/v1/player/control,
+explicit idempotent commands i absolute volume w kolejce jednego ownera
+z encoderem. Blokada AP/offline, PLAY tylko wybrana stacja. Bez zmian
+DSP/ISR/audio ramp i zapisów preferencji.
+334 testy PASS, actor ASan/UBSan PASS (LSan off), node --check i Chromium
+390px PASS (AP-disabled, LAN slider/STOP/PLAY/status oraz stare formularze).
+Native ESP-IDF6.1 build PASS,0x161f00 (6% wolne), config/diff PASS.
+Bez nowych zależności, partycji, flash/erase/eFuse. Odbiór sprzętowy
+WEB_PLAYER_BRINGUP OPEN; wybór stacji WWW nadal następny zakres.

@@ -1,6 +1,11 @@
 'use strict';
 const text = (id, value) => { document.getElementById(id).textContent = value; };
 let connectedIP = '', pendingConnection = false, configGeneration = 0;
+let playerPending=false, volumeEditing=false, playerAvailable=false;
+function refreshPlayerControls() {
+  for(const id of ['player-play','player-stop','player-volume'])
+    document.getElementById(id).disabled=!playerAvailable||playerPending;
+}
 async function update() {
   const generation = configGeneration;
   const controller = new AbortController();
@@ -34,7 +39,14 @@ async function update() {
       'Audio wyłączone w trybie AP' : !state.audio.available ? 'Odtwarzacz nie jest uruchomiony' :
       !state.audio.running ? 'Zatrzymane' : state.audio.buffering ? 'Buforowanie…' : 'Odtwarzanie');
     text('volume', state.audio.available ? `${state.audio.volume} / 100` : '—');
+    playerAvailable=Boolean(state.audio.available&&network.connected&&!network.ap_ready&&state.audio.source==='network_stream');
+    if(!volumeEditing&&!playerPending){
+      document.getElementById('player-volume').value=state.audio.volume ?? 50;
+      text('player-volume-value',state.audio.available ? String(state.audio.volume):'—');
+    }
+    refreshPlayerControls();
   } catch (_) {
+    playerAvailable=false;refreshPlayerControls();
     document.body.classList.add('offline');
     text('connection', connectedIP ? `AP zostało wyłączone. Połącz się z domową siecią i otwórz http://${connectedIP}/` :
       'Brak aktualnego połączenia. Sprawdź sieć StreamOO.');
@@ -45,6 +57,9 @@ const messages = {
   connection_test_in_progress: 'Trwa poprzednia próba połączenia. Poczekaj na wynik.',
   playlist_storage_unavailable: 'Pamięć playlisty niedostępna. Sprawdź log urządzenia i tablicę partycji.',
   profiles_unavailable: 'Nie można odczytać zapisanych sieci.',
+  invalid_player_command: 'Niepoprawne polecenie odtwarzacza.',
+  player_unavailable: 'Odtwarzacz niedostępny. Połącz Wi-Fi i wybierz stację na radiu.',
+  player_busy: 'Kolejka poleceń jest zajęta. Spróbuj ponownie.',
   invalid_timezone: 'Wybierz jedną z dostępnych stref czasowych.',
   clock_save_failed: 'Nie udało się zapisać strefy. Poprzednie ustawienie pozostaje aktywne.',
 };
@@ -181,6 +196,25 @@ async function setupClock() {
     finally { select.disabled = save.disabled = false; }
   };
 }
+function setupPlayer() {
+  const play=document.getElementById('player-play'), stop=document.getElementById('player-stop');
+  const slider=document.getElementById('player-volume');
+  if(!play?.addEventListener)return;
+  async function send(command){
+    if(playerPending)return;
+    if(!playerAvailable){volumeEditing=false;return;}
+    playerPending=true;++configGeneration;refreshPlayerControls();
+    try{
+      await api('/api/v1/player/control',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(command)});
+      text('player-result','Polecenie przyjęte. Stan odświeży się automatycznie.');
+    }catch(error){text('player-result',error.message);}
+    finally{playerPending=false;volumeEditing=false;refreshPlayerControls();}
+  }
+  play.onclick=()=>send({action:'play'});stop.onclick=()=>send({action:'stop'});
+  slider.oninput=()=>{volumeEditing=true;text('player-volume-value',slider.value);};
+  slider.onchange=()=>send({action:'volume',value:Number(slider.value)});
+}
+setupPlayer();
 setupTabs();
 if (document.getElementById('wifi-form')?.addEventListener) setupForms();
 setupClock();

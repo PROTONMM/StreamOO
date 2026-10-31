@@ -29,7 +29,7 @@ static char failure_log[1024],diagnostic_log[1024];
 static void (*actor)(void *);static jmp_buf completed;
 static unsigned tick,opens,closes,head,tail,count,allocations;static size_t command_bytes;
 static uint8_t messages[16][128];static int64_t now;
-static bool online,ap=true,output_live,force_fail,disable_meter,wrong_meter_generation;static int manual;
+static bool online,ap=true,output_live,force_fail,disable_meter,wrong_meter_generation,web_commands,web_retry;static uint64_t stop_gen,play_gen;static int manual;
 static streamoo_audio_fill_fn output_fill;static void *output_context;
 struct streamoo_http_stream{unsigned stopped;bool closing;};
 struct streamoo_decoder{int unused;};
@@ -107,18 +107,28 @@ void vTaskDelay(unsigned ms){now+=(int64_t)ms*1000;++tick;
  if(tick<=2)assert(!opens&&!output_live);
  if(tick==3){streamoo_player_spectrum_enabled(true);online=true;ap=false;assert(streamoo_player_select(NULL,&(streamoo_ui_select_command_t){11,1}));}
  if(tick==9)assert(s.phase==STREAMOO_PLAYER_PLAYING&&s.station_id==11&&s.running);
- if(tick==10)assert(streamoo_player_control(NULL,&(streamoo_control_command_t){.kind=STREAMOO_CONTROL_TOGGLE}));
+ if(tick==10){if(web_commands)assert(streamoo_player_set_playing(false));else assert(streamoo_player_control(NULL,&(streamoo_control_command_t){.kind=STREAMOO_CONTROL_TOGGLE}));}
+ if(web_commands&&tick==11){stop_gen=s.generation;assert(streamoo_player_set_playing(false));}
+ if(web_commands&&tick==12)assert(s.generation==stop_gen);
  if(tick==12)assert(streamoo_player_select(NULL,&(streamoo_ui_select_command_t){22,1}));
  if(tick==14)assert(streamoo_player_select(NULL,&(streamoo_ui_select_command_t){11,1}));
  if(tick==49)assert(opens==1&&!output_live);
  if(tick==60){streamoo_player_spectrum_enabled(false);streamoo_player_state_t check;assert(streamoo_player_state(&check)&&!check.metering.spectrum_valid);}
  if(tick==65){assert(opens==2&&s.phase==STREAMOO_PLAYER_PLAYING);streamoo_player_spectrum_enabled(true);}
+ if(web_commands&&tick==65){play_gen=s.generation;assert(streamoo_player_set_playing(true));assert(streamoo_player_set_playing(true));}
+ if(web_commands&&tick==66){assert(s.generation==play_gen);assert(streamoo_player_set_volume(57));assert(streamoo_player_control(NULL,&(streamoo_control_command_t){.kind=STREAMOO_CONTROL_VOLUME_DELTA,.delta=3}));}
+ if(web_commands&&tick==67){assert(s.volume==60&&s.volume_revision==2);assert(streamoo_player_set_volume(60));assert(!streamoo_player_set_volume(101));}
+ if(web_commands&&tick==68){assert(s.volume_revision==2);assert(streamoo_player_set_volume(0));}
+ if(web_commands&&tick==69){assert(s.volume==0);assert(streamoo_player_set_volume(100));}
+ if(web_commands&&tick==70)assert(s.volume==100);
  if(tick==70)force_fail=true;
  if(tick==120){assert(strstr(failure_log,"stage=decode cause=decoder_no_progress"));assert(strstr(diagnostic_log,"in=19 used=0 out=0 needed=0"));online=false;ap=true;}
  if(tick==130){online=true;assert(!output_live);}
  if(tick==139)assert(s.phase==STREAMOO_PLAYER_WAIT_NETWORK);
  if(tick==140)ap=false;
  if(tick==150)assert(opens==2);
+ if(web_retry&&tick==151)assert(streamoo_player_set_playing(true));
+ if(web_retry&&tick==155)assert(opens==3&&s.phase==STREAMOO_PLAYER_PLAYING);
  if(manual){
   if(tick==150&&manual==2)assert(streamoo_player_control(NULL,&(streamoo_control_command_t){.kind=STREAMOO_CONTROL_TOGGLE}));
   if(tick==151){if(manual==1)assert(streamoo_player_select(NULL,&(streamoo_ui_select_command_t){22,1}));else assert(streamoo_player_control(NULL,&(streamoo_control_command_t){.kind=STREAMOO_CONTROL_TOGGLE}));}
@@ -132,7 +142,7 @@ void vTaskDelay(unsigned ms){now+=(int64_t)ms*1000;++tick;
  if(tick==340)catalog=&second;
  if(tick==420){assert(!s.running&&!s.station_id&&!output_live&&opens==3&&closes==3&&!allocations&&first.refs==0&&reordered.refs==0);longjmp(completed,1);}
 }
-int main(int argc,char **argv){manual=argc>1?atoi(argv[1]):0;disable_meter=manual==3;wrong_meter_generation=manual==4;if(manual>=3)manual=0;assert(streamoo_player_start(50)==ESP_OK);assert(!streamoo_player_select(NULL,&(streamoo_ui_select_command_t){11,99}));assert(first.refs==0);if(!setjmp(completed))actor(NULL);return 0;}
+int main(int argc,char **argv){manual=argc>1?atoi(argv[1]):0;disable_meter=manual==3;wrong_meter_generation=manual==4;web_commands=manual==5;web_retry=manual==6;if(manual>=3)manual=0;assert(streamoo_player_start(50)==ESP_OK);assert(!streamoo_player_select(NULL,&(streamoo_ui_select_command_t){11,99}));assert(first.refs==0);if(!setjmp(completed))actor(NULL);return 0;}
 '''
 class NetworkPlayerTests(unittest.TestCase):
  def run_case(self,mode):
@@ -150,3 +160,6 @@ class NetworkPlayerTests(unittest.TestCase):
 
  def test_meter_failure_does_not_stop_audio(self):self.run_case(3)
  def test_old_meter_generation_never_reaches_ui(self):self.run_case(4)
+
+ def test_web_play_stop_idempotence_and_absolute_volume_with_encoder(self):self.run_case(5)
+ def test_explicit_web_play_retries_without_toggling_stop(self):self.run_case(6)
