@@ -45,3 +45,5 @@ class ControlsTests(unittest.TestCase):
     def test_network_selection_waits_for_owner_ack(self): self.run_case(10)
 
     def test_live_levels_and_unavailable_spectrum(self): self.run_case(11)
+
+    def test_live_codec_rssi_copied_validated_and_cleared(self): self.run_case(12)

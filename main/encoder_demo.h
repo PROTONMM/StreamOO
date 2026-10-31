@@ -11,7 +11,9 @@ typedef struct {
     streamoo_control_post_fn audio_post;
     void *audio_context;
     streamoo_ui_text_t audio_title;
-    char network_ip[16];
+    char network_ip[16], codec[8];
+    bool wifi_connected, rssi_valid;
+    int rssi_dbm;
     bool imported_catalog, levels_valid;
     streamoo_visualization_model_t levels;
     streamoo_ui_post_fn station_post;
@@ -40,3 +42,7 @@ void streamoo_encoder_demo_bind_station_owner(streamoo_encoder_demo_t *, streamo
 
 /* Copies live visualization levels; NULL invalidates. No fabricated bands. */
 bool streamoo_encoder_demo_levels(streamoo_encoder_demo_t *, const streamoo_visualization_model_t *);
+
+/* Copies technical display data; NULL codec clears unknown format. */
+bool streamoo_encoder_demo_technical(streamoo_encoder_demo_t *, bool connected,
+    bool rssi_valid, int rssi_dbm, const char *codec);

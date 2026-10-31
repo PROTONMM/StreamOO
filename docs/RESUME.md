@@ -1,6 +1,6 @@
 # Punkt wznowienia StreamOO
 
-Aktualizacja: **2026-10-31, 07f — poprawione DC i opadanie słupków FFT do odbioru**.
+Aktualizacja: **2026-10-31 — rzeczywisty kodek/RSSI w HOME gotowe do odbioru; widmo zaakceptowane do strojenia później**.
 Gałąź feature/streamoo-implementation. ADR0034–0035, STATUS i HTTP_PLAYER_BRINGUP.
 
 ## Potwierdzone przez użytkownika
@@ -170,3 +170,14 @@ bez zmiany RMS/peak, taktu10Hz i freshness200ms/resetu sesji.
 Teraz zwykły flash i ocena słupków na mowie/muzyce oraz log FFT max_fft/
 gaps i meters drop/PCM/heap. Nie uznawać szerokości na log osi za dowód
 przecieku. Czasy S3 nadal OPEN bez nowego logu.
+
+Najnowsze: użytkownik potwierdził07f: dźwięk OK, słupki lepsze, zostawić
+do późniejszego strojenia. Nie zmieniać teraz parametrów FFT/RMS.
+ADR0044 dodaje MP3/AAC po poprawnym PCM i RSSI/ikonę Wi-Fi w dolnym lewym
+panelu. RSSI snapshot ownera co1s, bez I/O w UI. Codec czyści się na STOP/
+retry/offline; bitrate nadal --. Geometria bez zmian.
+307 testów i targeted ASan/UBSan PASS; native ESP-IDF6.1 build PASS,
+0x15f690 (6% wolne). Teraz zwykły flash i odbiór MP3/AAC/RSSI na OLED.
+Bez erase/NVS/obrazu FS. Czasy S3/max_fft i długi soak nadal OPEN bez logu.
+Zegar/data/strefa, bitrate, backend ESP-DSP/sc16/SIMD i reszta roadmapy
+pozostają dalsze; nie zakładać wyboru strefy/DST bez decyzji użytkownika.

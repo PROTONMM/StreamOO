@@ -69,3 +69,8 @@ niepowodzenie całej listy włącza AP i portal konfiguracji. Nieudana zmiana
 z LAN najpierw przywraca poprzednią listę; AP dopiero gdy ona też zawiedzie.
 Jeśli AP już działało, po udanym IP zachowujemy5s na zakończenie odpowiedzi
 WWW przed AP-off. mDNS i aktywny roaming pozostają OPEN.
+
+ADR0044: RSSI w snapshotach sieci. Worker odczytuje po połączeniu i co1s,
+bez skanowania/zmiany sieci; brak STA lub błąd odczytu unieważnia wynik.
+Dodatnie wartości SDK clamped do0, -128 nieznane. Dane dla ikony HOME,
+bez połączenia renderera z SDK.

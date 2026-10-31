@@ -1405,3 +1405,19 @@ uśredniania FFT/RMS i bez zmiany ich kalibracji. ADR0043.
 Native ESP-IDF6.1 build PASS,0x15f3e0 (6% wolne); check_config/diff PASS.
 Brak nowych zależności, alokacji, zmian ISR/audio/partycji i flash/erase/eFuse.
 Odbiór OLED/nowych czasów max_fft na urządzeniu OPEN.
+
+## Odbiór07f i dane techniczne HOME (2026-10-31)
+
+Użytkownik potwierdził: dźwięk OK, słupki lepsze; strojenie widma/RMS
+zostaje do późniejszego dopracowania. Nowych czasów max_fft nie podano,
+więc wydajność/SIMD/soak nadal OPEN.
+
+ADR0044: rzeczywisty kodek MP3/AAC po znanym formacie PCM, czyszczenie
+przy STOP/retry/braku sieci; RSSI aktualizowane co1s w ownerze sieci,
+ikona/dBm w HOME. Brak bitrate pozostaje --, bez estymacji. Renderer
+nie wykonuje I/O; FFT/RMS/geometria/audio bez zmian.
+
+307 testów hostowych PASS; network/actor/controls ASan/UBSan PASS
+(LSan off). Native ESP-IDF6.1 build PASS,0x15f690 (6% wolne),
+check_config --platform/diff --check PASS. Bez nowych zależności,
+flash/erase/eFuse/partycji. Odbiór nowego panelu na OLED OPEN.

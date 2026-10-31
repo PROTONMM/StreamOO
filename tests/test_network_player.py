@@ -98,6 +98,8 @@ void vTaskDelay(unsigned ms){now+=(int64_t)ms*1000;++tick;
  if(output_live){int32_t samples[480];output_fill(output_context,samples,240);}
  if(active_meter){int32_t raw[480];while(streamoo_pcm_pop(&active_meter->tap,raw,NULL)){} }
  streamoo_player_state_t s;assert(streamoo_player_state(&s));
+ if(s.phase==STREAMOO_PLAYER_PLAYING)assert(!strcmp(s.codec,"MP3"));
+ if(!s.running||s.phase==STREAMOO_PLAYER_WAIT_NETWORK||s.phase==STREAMOO_PLAYER_RETRY)assert(!s.codec[0]);
  if(s.phase!=STREAMOO_PLAYER_PLAYING||disable_meter||wrong_meter_generation){assert(!s.metering.levels.valid);assert(!s.metering.spectrum_valid);}
  if(s.metering.spectrum_valid)assert(s.metering.generation==s.generation&&s.metering.bands[0]==12345);
  if(s.metering.levels.valid){assert(s.metering.generation==s.generation);assert(s.metering.levels.rms[0]==1234);}

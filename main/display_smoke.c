@@ -116,11 +116,13 @@ static void display_task(void *context)
                 }
             }
 #endif
+            char live_codec[8]={0};
             if(streamoo_network_boot_ap_enabled()) {
                 streamoo_player_spectrum_enabled(demo.ui.screen==STREAMOO_UI_HOME &&
                     demo.ui.visualization==STREAMOO_VIS_SPECTRUM);
                 streamoo_player_state_t player;
                 if(streamoo_player_state(&player)) {
+                    memcpy(live_codec,player.codec,sizeof live_codec);
                     if(demo.station_id!=player.station_id||player_generation!=player.generation){
                         demo.station_id=player.station_id;++demo.generation;
                         streamoo_ui_set_playing(&demo.ui,demo.station_id);player_generation=player.generation;
@@ -162,6 +164,8 @@ static void display_task(void *context)
             bool ap_active=streamoo_network_ap_display(&ap);
             streamoo_network_state_t network={0};
             streamoo_network_state(&network);
+            streamoo_encoder_demo_technical(&demo,network.sta_connected,
+                network.rssi_valid,network.rssi_dbm,live_codec);
             const bool setup=streamoo_network_boot_ap_enabled() && (ap_active || !network.sta_connected);
             if (!streamoo_encoder_demo_set_ip(&demo,network.sta_connected ? network.sta_ip : NULL)) {
                 error=ESP_ERR_INVALID_ARG; break;

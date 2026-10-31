@@ -90,6 +90,11 @@ bool streamoo_encoder_demo_draw(streamoo_encoder_demo_t *d, uint8_t *frame,
             (streamoo_ui_text_t){choose,sizeof choose-1};
         if(d->audio_post&&d->audio_title.bytes)s.title=d->audio_title;
     }
+    s.wifi_connected=d->wifi_connected;
+    s.rssi_valid=d->rssi_valid;
+    s.rssi_dbm=d->rssi_dbm;
+    s.audio_info_valid=d->codec[0]!=0;
+    s.codec=(streamoo_ui_text_t){(const uint8_t *)d->codec,strlen(d->codec)};
     for (unsigned i=0; i<24; ++i) {
         unsigned phase=(unsigned)(now%2000+i*61)%2000;
         s.visualization.bands[i]=d->running ? (phase<1000 ? phase : 2000-phase)*32 : 0;
@@ -187,5 +192,25 @@ bool streamoo_encoder_demo_levels(streamoo_encoder_demo_t *d,
     }
     d->levels_valid=model!=NULL;
     d->levels=model ? *model : (streamoo_visualization_model_t){0};
+    return true;
+}
+
+bool streamoo_encoder_demo_technical(streamoo_encoder_demo_t *d,bool connected,
+                                    bool valid,int dbm,const char *codec)
+{
+    if(!d || (connected && valid && (dbm < -127 || dbm > 0)))return false;
+    char copy[8]={0};
+    if(codec) {
+        unsigned n=0;
+        for(;n<sizeof copy && codec[n];++n) {
+            if((unsigned char)codec[n]<32 || (unsigned char)codec[n]>126)return false;
+            copy[n]=codec[n];
+        }
+        if(n==sizeof copy)return false;
+    }
+    d->wifi_connected=connected;
+    d->rssi_valid=connected&&valid;
+    d->rssi_dbm=d->rssi_valid ? dbm:0;
+    memcpy(d->codec,copy,sizeof copy);
     return true;
 }

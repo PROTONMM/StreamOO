@@ -1,3 +1,9 @@
+Aktualny krok HOME/ADR0044: zwykły flash bez erase/NVS. Po wybraniu stacji
+w dolnym lewym panelu oczekuj MP3 lub AAC oraz RSSI (dBm) i słupków Wi-Fi.
+STOP czyści kodek do placeholdera; następny PLAY odtwarza informację po
+dekodowaniu. Bitrate nadal --. RSSI odświeżane co1s, nie steruje roamingiem.
+Sprawdź MP3/AAC na znanych źródłach; wygląd FFT/RMS pozostawiony bez zmian.
+
 Aktualizacja07f (ADR0043): poprawione DC ważone Hann, FFT z natychmiastowym
 atakiem i opadaniem pełnej skali320ms. Sprawdź mowę/muzykę: krótka cicha
 klatka nie powinna zerować wysokich słupków natychmiast. Pełna cisza daje

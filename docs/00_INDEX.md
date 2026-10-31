@@ -109,3 +109,5 @@ Referencyjny rdzeń FFT07d: `adr/0041-spectrum-reference-core.md`.
 Widmo z rzeczywistego audio07e: `adr/0042-live-spectrum-bringup.md`.
 
 Korekta DC i opadanie FFT07f: `adr/0043-spectrum-leakage-and-release.md`.
+
+Rzeczywisty kodek i Wi-Fi RSSI w HOME: `adr/0044-live-codec-and-wifi-info.md`.

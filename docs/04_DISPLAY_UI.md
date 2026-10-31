@@ -143,3 +143,11 @@ mają normalną jasność15; wnętrze78×4 pokazuje ustawienie głośności,
 nie poziom sygnału PCM. Renderer z clippingiem, bez alokacji i I/O.
 Podczas prób STA komunikat oczekiwania; SSID/hasło konfiguracji wyłącznie
 po uruchomieniu AP. Czytelność jasności6 wymaga odbioru na OLED.
+
+## HOME — rzeczywiste dane techniczne (ADR0044)
+
+Dolny lewy panel pokazuje kodek MP3/AAC z ownera playera po poprawnym PCM
+i rzeczywisty RSSI/ikonę Wi-Fi z worker-snapshotu odświeżanego co1s.
+Nieznany kodek ma placeholder, brak RSSI oznacza ?, offline OFF. Bitrate
+nadal -- (brak wiarygodnego producenta wartości). Brak wywołań SDK/IO
+w rendererze, bez zmiany geometrii i parametrów FFT/RMS.

@@ -13,6 +13,8 @@ typedef struct {
     uint8_t clients,saved_profiles;
     bool ap_ready,sta_connected,configuring;
     uint32_t last_error;
+    bool rssi_valid;
+    int8_t rssi_dbm;
 } streamoo_network_state_t;
 /* Task-only owner starts once; hooks run in its task, outside state lock.
  * Hook/context lifetime extends to shutdown. Missing key keeps radio off. */

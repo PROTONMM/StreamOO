@@ -18,6 +18,7 @@ typedef struct {
   streamoo_player_phase_t phase;
   esp_err_t error;
   char title[257];
+  char codec[8]; /* Empty until decoded PCM format is known. */
   streamoo_metering_state_t metering;
 } streamoo_player_state_t;
 /* Task-only service; ready means command owner exists, not that I2S is open.

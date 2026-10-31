@@ -39,6 +39,7 @@ bool streamoo_network_state(streamoo_network_state_t *out) {
     return false;
   portENTER_CRITICAL(&state_lock);
   *out = state;
+  if(!out->sta_connected)out->rssi_valid=false;
   portEXIT_CRITICAL(&state_lock);
   return true;
 }
@@ -135,6 +136,8 @@ static bool connect_profiles(const streamoo_wifi_profiles_t *profiles,
       snprintf(address, sizeof address, IPSTR, IP2STR(&ip.ip));
       portENTER_CRITICAL(&state_lock);
       state.sta_connected = true;
+      state.rssi_valid = connected.rssi>=-127;
+      state.rssi_dbm = connected.rssi>0 ? 0 : connected.rssi;
       memcpy(state.sta_ip, address, sizeof state.sta_ip);
       memcpy(state.sta_ssid, p->ssid, sizeof state.sta_ssid);
       portEXIT_CRITICAL(&state_lock);
@@ -274,7 +277,7 @@ static void network_task(void *context) {
     if (hooks.ready)
       hooks.ready(hooks.context);
     int64_t retry_at = saved.count ? esp_timer_get_time() + 1000000 : INT64_MAX,
-            last_log = 0, off_at = INT64_MAX;
+            last_log = 0, off_at = INT64_MAX, rssi_at = 0;
     unsigned retry_seconds = 1;
     for (;;) {
       bool update =
@@ -372,6 +375,15 @@ static void network_task(void *context) {
       streamoo_network_state(&snapshot);
       if (snapshot.sta_connected && snapshot.ap_ready && now >= off_at) {
         off_at = ap_off() ? INT64_MAX : now + 1000000;
+      }
+      if(snapshot.sta_connected && now>=rssi_at) {
+        wifi_ap_record_t info={0};
+        bool valid=esp_wifi_sta_get_ap_info(&info)==ESP_OK && info.rssi>=-127;
+        portENTER_CRITICAL(&state_lock);
+        state.rssi_valid=valid;
+        state.rssi_dbm=valid && info.rssi<0 ? info.rssi : 0;
+        portEXIT_CRITICAL(&state_lock);
+        rssi_at=now+1000000;
       }
       if (now - last_log >= 10000000) {
         wifi_sta_list_t clients = {0};
