@@ -1,6 +1,6 @@
-# StreamOO: preserve NVS, PHY, factory offset and existing storage; use the former app/storage gap.
+# StreamOO 16MiB: one factory app, no OTA; keep NVS/PHY and 1MiB station filesystem.
 # Name, Type, SubType, Offset, Size, Flags
 nvs,data,nvs,0x9000,0x6000,
 phy_init,data,phy,0xf000,0x1000,
-factory,app,factory,0x10000,0x180000,
-storage,data,littlefs,0x190000,0x100000,
+factory,app,factory,0x10000,0xEF0000,
+storage,data,littlefs,0xF00000,0x100000,

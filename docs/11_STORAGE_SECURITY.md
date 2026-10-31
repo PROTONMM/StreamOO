@@ -1,6 +1,6 @@
 # 11 — Przechowywanie, OTA, bezpieczeństwo
 
-Stan implementacji 2026-10-31: Implementacja 09c: wersjonowany blob profili NVS i atomowa podmiana playlisty LittleFS, nowa storage 1 MiB. Lokalna konfiguracja WWW bez dodatkowego logowania na polecenie użytkownika (ADR0032), zapisane hasła nie są zwracane. Polityka przyszłej aplikacji/OTA OPEN. Trwałość i ograniczenia: ADR0031.
+Stan implementacji 2026-10-31: Implementacja 09c: wersjonowany blob profili NVS i atomowa podmiana playlisty LittleFS, nowa storage 1 MiB. Lokalna konfiguracja WWW bez dodatkowego logowania na polecenie użytkownika (ADR0032), zapisane hasła nie są zwracane. Polityka przyszłej aplikacji OPEN. OTA wyłączone decyzją użytkownika (ADR0055). Trwałość i ograniczenia: ADR0031.
 
 ## NVS (USTALONE)
 - Wi-Fi credentials, wybrany wariant runtime jeśli dopuszczony, aktualna głośność, ostatnia stacja stable_id, wizualizacja, własna nazwa mDNS, stan startowy.
@@ -8,13 +8,13 @@ Stan implementacji 2026-10-31: Implementacja 09c: wersjonowany blob profili NVS 
 - Wybór trybu enkodera A/B jest domyślnie build-time `menuconfig`, nie opcją dynamiczną.
 
 ## LittleFS
-Lista stacji, ewentualnie WWW assets, tymczasowy staging importu. 16 MB flash pozwala przewidzieć partycje 2×OTA + filesystem, ale podział przestrzeni ustalać po zmierzeniu firmware i potrzeb komponentów. Zastosuj wersjonowanie formatu stacji i kopię/rollback.
+Lista stacji, ewentualnie WWW assets, tymczasowy staging importu. 16MiB flash: jedna duża factory (offset0x10000, size0xEF0000) i LittleFS1MiB na końcu (offset0xF00000). OTA nie jest planowane, zgodnie z ADR0055. Zastosuj wersjonowanie formatu stacji i kopię/rollback.
 
 ## Sekrety i sieć
 - Hasło AP stałe w produktach, ale NIE commitowane do `sdkconfig.defaults` ani logowane. Dobór metody injekcji sekretów musi uwzględnić, że firmware może być wyciągnięte z urządzenia — wspólne hasło nie stanowi silnego zabezpieczenia.
-- Lokalny panel konfiguracji AP/LAN dostępny bez osobnego uwierzytelniania na jawne polecenie użytkownika (ADR0032). Dostęp sieciowy pozwala zmieniać ustawienia. Zachowaj Origin/custom header i walidację; politykę przyszłej aplikacji/OTA ustal osobno.
+- Lokalny panel konfiguracji AP/LAN dostępny bez osobnego uwierzytelniania na jawne polecenie użytkownika (ADR0032). Dostęp sieciowy pozwala zmieniać ustawienia. Zachowaj Origin/custom header i walidację; politykę przyszłej aplikacji ustal osobno.
 - TLS w HTTP streams z weryfikacją certyfikatu; sprawdź synchronizację czasu.
-- OTA: dwie partycje app, walidacja podpisów/hash, rollback po nieudanym starcie; Secure Boot/Flash Encryption jako ewentualny profil produkcyjny, nie udawaj że są włączone na starcie.
+- OTA: wyłączone na polecenie użytkownika (ADR0055). Aktualizacje przewodowe, jedna factory, bez otadata/slotów rollback. Secure Boot/Flash Encryption nie są włączone.
 
 ## Testy
 NVS flash wear, restarty w trakcie importu/OTA, niskie zasoby, weryfikacja kontenera, brak hasła w serial log, zachowanie na utratę zasilania.
@@ -58,3 +58,10 @@ ADR0054/06k: factory powiększona0x177000→0x180000 wyłącznie do istniejącej
 pustej luki; offset0x10000 bez zmian. LittleFS nadal0x190000/0x100000,
 NVS/PHY bez zmian. Pełny flash obejmuje nową tablicę, bez erase/migracji.
 Nie jest to docelowy układ OTA; dodatkowe sloty pozostają OPEN.
+
+ADR0055 zastępuje poprzedni układ06k: użytkownik rezygnuje z OTA i zgadza
+się ponownie zaimportować stacje. Factory0x10000/0xEF0000, storage
+0xF00000/0x100000. NVS/PHY zachowane; marker init per adres partycji
+sfs_00f00000/init. Nowy blank storage przygotuje się mimo starego markera
+w NVS; niepusty uszkodzony FS nadal bez autoformatowania. Instrukcja
+LARGE_FLASH_BRINGUP.md. Historyczne plany OTA powyżej są zastąpione.

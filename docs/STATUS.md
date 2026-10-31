@@ -14,7 +14,7 @@ Bieżący punkt wznowienia: [RESUME.md](RESUME.md).
 | 08 stacje | lista z katalogu i wybór odebrane; import live/reboot i edycja ID OPEN | ADR0033 |
 | 09 sieć | AP/STA/IP/AP-off odebrane; mDNS .local/HTTP odebrane; rozszerzone próby OPEN | ADR0052 |
 | 10 WWW | tryby AP/LAN, player i edytor playlisty odebrane; wygląd do dopracowania | ADR0051; potwierdzenie użytkownika |
-| 11 storage/OTA | NVS preferencji odebrane; profile NVS/LittleFS katalog gotowe do odbioru; OTA OPEN | ADR0017/0031 |
+| 11 storage/flash | jedna duża factory bez OTA; NVS zachowane; przeniesiony LittleFS do ponownego importu | ADR0055; odbiór płytki OPEN |
 | 12 testy końcowe | NIEURUCHOMIONE | — |
 
 Aktualizuj tabelę dopiero po wykonaniu i zapisaniu wyniku testów.
@@ -1592,3 +1592,30 @@ OPEN. Host uruchamia wyłącznie nasze adaptery z atrapami vendor binary.
 Instrukcja EXTENDED_FORMATS_BRINGUP.md, generator tools/generate_extended_fixtures.py.
 Nie deklarujemy HLS, Ogg-FLAC/chained, raw Opus/RTP,>48kHz/>2 kanały ani
 ramek wymagających>64KiB PCM. Dalsze miejsce na większy transport/OTA OPEN.
+
+## Duża factory bez OTA — ADR0055 (2026-10-31)
+
+Jawna decyzja użytkownika: bez OTA, stacje wgra ponownie. Jedna factory
+0x10000/0xEF0000 (14,9375MiB), LittleFS1MiB na0xF00000. NVS/PHY bez zmian;
+Wi-Fi, volume/widget i timezone mają pozostać. Stary filesystem porzucony,
+bez migracji. Pełny flash z nową tablicą, bez erase-flash. Cele OTA usunięte
+z bieżącego mastera/planu; wcześniejsze wpisy to historia.
+
+Marker init storage teraz per adres partycji (sfs_00f00000/init), aby stary
+phase2 w zachowanym NVS nie blokował pierwszego formatu nowego blank
+storage. Pozostały zabezpieczenia przed formatem nonblank/uszkodzonego
+FS i błędami commit; recovery phase1 tylko w namespace bieżącej partycji.
+
+347 testów PASS, store ASan/UBSan PASS (LSan off), native IDF6.1 build
+PASS: obraz0x176250, app capacity15663104B, wolne14130608B/90%.
+Test układu: jeden factory, brak slotów/otadata, NVS/PHYoffsety, alignment,
+no overlap, koniec16MiB. GPIO validator i diff --check PASS. Agent nie
+wykonał flash/erase-region/erase-flash/eFuse.
+
+Przygotowano lokalne playlist.codecs.csv (13 poprawnych wierszy TAB),
+playlist.codecs.details.csv i JSON raportu. Host potwierdził próbki MP3,
+AAC-LC,HE-AACv1/v2,Vorbis,Opus,nativeFLAC oraz cele M3U/PLS rozwiązywane
+naszym adapterem; HTTPS certificate verification,64KiB/ffprobe. SomaFM403
+odrzucone. Prywatny playlist.csv nietknięty, pliki wynikowe ignorowane Git.
+Źródła: RadioMast/RNŚ/RadioBrowser. Odsłuch S3 i nowy FS/reimport OPEN;
+procedura LARGE_FLASH_BRINGUP.md. HLS i Ogg-FLAC nie są testami pozytywnymi.

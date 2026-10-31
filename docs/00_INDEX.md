@@ -16,7 +16,7 @@ Statusy: **USTALONE** = użytkownik podjął decyzję; **PROPONOWANE** = sugesti
 | 08 | `08_STATIONS.md` | lista, import yoRadio, ICY, LittleFS |
 | 09 | `09_NETWORK.md` | Wi-Fi provisioning, AP, mDNS |
 | 10 | `10_WEB.md` | własne API i panel WWW |
-| 11 | `11_STORAGE_SECURITY.md` | NVS, PSRAM, OTA, ochrona danych |
+| 11 | `11_STORAGE_SECURITY.md` | NVS, PSRAM, flash bez OTA, ochrona danych |
 | 12 | `12_TESTS_DELIVERY.md` | testy i kryteria końcowe |
 | — | `13_DECISIONS_OPEN.md` | jawne decyzje/ryzyka |
 | — | `14_TRACEABILITY.md` | macierz wymaganie→test |
@@ -131,3 +131,5 @@ Nazwa odtwarzacza w LAN: `adr/0052-lan-mdns-advertisement.md`, `MDNS_BRINGUP.md`
 Krzywa głośności: `adr/0053-more-usable-volume-curve.md`.
 
 Rozszerzone kodeki i M3U/PLS: `adr/0054-extended-codecs-and-playlist-resolution.md`, `EXTENDED_FORMATS_BRINGUP.md`.
+
+Duża factory, bez OTA: `adr/0055-single-large-app-without-ota.md`, `LARGE_FLASH_BRINGUP.md`.

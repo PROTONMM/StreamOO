@@ -15,7 +15,7 @@
 Startowe założenie: zadania Wi-Fi/stack zgodnie z konfiguracją ESP-IDF, ciężkie dekodowanie/DSP na rdzeniu dobranym pomiarami. Nie wymuszaj arbitralnie powinowactwa bez profilowania.
 
 ## Pamięć
-- 16 MB flash z docelowymi partycjami OTA, NVS i LittleFS: **partycje do obliczenia na podstawie realnego rozmiaru firmware**.
+- 16MiB flash: jedna factory0x10000/0xEF0000, LittleFS0xF00000/1MiB, NVS/PHY zachowane. Bez OTA na polecenie użytkownika (ADR0055).
 - 8 MB PSRAM na compressed ring, większe PCM i dane WWW/stacji.
 - DMA/I²S i najbardziej wrażliwe dane DSP we właściwej pamięci wewnętrznej, z wymaganym wyrównaniem.
 - Nie alokuj dynamicznie w ścieżce audio czasu rzeczywistego. Wykrywaj utratę Wi-Fi, heap pressure, underrun i uszkodzone dekodery.

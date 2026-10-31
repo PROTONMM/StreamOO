@@ -305,3 +305,26 @@ rawOpus/RTP,>48kHz/multichannel/ramki>64KiB nie deklarowane. FFT/RMS i
 wyglądWWW odłożone, krzywaVOL oraz podstawowe mDNS wcześniej odebrane.
 Bez flash/erase/eFuse przez agenta. HLS opcjonalny, wymaga osobnego readera
 segmentów oraz planu miejsca; jeszcze niezaimplementowany.
+
+Najnowsze ADR0055: użytkownik REZYGNUJE Z OTA, chce jedną dużą aplikację,
+zgadza się ponownie zaimportować stacje. Factory0x10000/0xEF0000,
+LittleFS1MiB przeniesiony na0xF00000. NVS/PHY pozostają (Wi-Fi/volume/
+widget/timezone). Starego katalogu nie migrować. Pełny flash z tablicą,
+bez erase-flash. Master/plan zmienione, OTA nie jest już zadaniem.
+
+Marker FS inicjalizacji per adres sfs_00f00000/init, aby zachowane NVS
+phase2 starego FS nie blokowało formatowania nowej blank partycji. Nadal
+bez autoformatowania nierozpoznanego niepustego FS. Conditional ręczne
+czyszczenie tylko nowego storage w LARGE_FLASH_BRINGUP, agent nie wykonał.
+347 host tests/store ASan/UBSan/native build PASS. Obraz0x176250,
+14 130 608B/90% wolnego slotu. GPIO validator/diff PASS.
+
+Gotowa lista do importu: root playlist.codecs.csv,13 wpisów; details.csv
+z kodekami i JSONraport, wszystkie ignorowaneGit. MP3stereo/mono,AAC-LC,
+HE-AACv1/v2,Vorbis,Opus,nativeFLAC z RadioMast; KissFM/RNŚ/Radio357;
+M3URadioMast i PLSRNŚ. RealneHTTPSpróbki/ffprobe i naszresolver hostPASS,
+SomaFM403 odrzucone. Nie zmieniono prywatnego playlist.csv.
+
+Teraz user flash/reimport, odbiór nowychkodeków i heap/stack/underrun S3.
+Nie deklarować odbioru na podstawie hostpróbek. OTA zamknięte przez
+rezygnację, HLS nadal osobnoOPEN. FFT/RMS/wyglądWWW odłożone.

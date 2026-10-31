@@ -112,7 +112,14 @@ static esp_err_t mount_storage(void) {
   if (error != ESP_OK && error != ESP_FAIL)
     return error;
   nvs_handle_t handle;
-  if (nvs_open("streamoo_fs", NVS_READWRITE, &handle) != ESP_OK)
+  /* A moved filesystem must not inherit the old partition's init/recovery phase.
+   * NVS settings stay in place; only the per-partition format marker changes. */
+  const esp_partition_t *partition=esp_partition_find_first(
+      ESP_PARTITION_TYPE_DATA,ESP_PARTITION_SUBTYPE_ANY,"storage");
+  if(!partition)return ESP_FAIL;
+  char marker_namespace[16];
+  snprintf(marker_namespace,sizeof marker_namespace,"sfs_%08lx",(unsigned long)partition->address);
+  if (nvs_open(marker_namespace, NVS_READWRITE, &handle) != ESP_OK)
     return error;
   uint8_t phase = 0;
   esp_err_t found = nvs_get_u8(handle, "init", &phase);

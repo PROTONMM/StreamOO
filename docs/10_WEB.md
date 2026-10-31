@@ -1,6 +1,6 @@
 # 10 — Nowe WWW i REST API StreamOO
 
-Stan implementacji 2026-10-31: Formularze sieci i playlisty działają bez dodatkowego logowania na polecenie użytkownika (ADR0032, zastępuje auth ADR0031). Automatyczny odczyt ustawień po otwarciu strony. Kontrakt/limity ADR0031; polityka przyszłego API/OTA osobno.
+Stan implementacji 2026-10-31: Formularze sieci i playlisty działają bez dodatkowego logowania na polecenie użytkownika (ADR0032, zastępuje auth ADR0031). Automatyczny odczyt ustawień po otwarciu strony. Kontrakt/limity ADR0031; polityka przyszłego API osobno; OTA wyłączone decyzją użytkownika (ADR0055).
 
 **USTALONE:** całkowicie własny serwer WWW/API, bez kompatybilności endpointów z yoRadio. ESP-IDF `esp_http_server` + pliki frontendu. Dostęp przez AP przy pierwszym uruchomieniu i przez unikalny mDNS/IP po połączeniu do LAN.
 

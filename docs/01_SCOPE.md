@@ -12,6 +12,7 @@
 - Docelowo obsługuj pilot RC5 oraz aplikację telefoniczną sterującą radiem przez API; implementacja w późniejszych etapach (ADR0029).
 
 ## Granice
+- Bez OTA na polecenie użytkownika (ADR0055); jedna duża partycja aplikacji, aktualizacja przewodowa.
 - Bez kopiowania kodu lub API z yoRadio; przed użyciem biblioteki należy sprawdzić licencję i wsparcie ESP-IDF.
 - Animacja i UI są funkcjonalnymi wymaganiami, natomiast efekty graficzne trzeba dostroić po testach OLED.
 - Nie przewiduje się dwóch enkoderów w bieżącej wersji firmware mimo istnienia złącza na PCB.

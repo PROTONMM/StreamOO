@@ -43,3 +43,8 @@ D20 uzupełnienie2026-10-31: użytkownik wymaga wyboru strefy przez WWW
 w zakładce Konfiguracja i automatycznego DST. ADR0047 wdraża pierwsze8
 stref, zapis NVS i rzeczywisty SNTP na OLED; odbiór sprzętowy OPEN.
 Dotychczasowy format daty/godziny zachowany.
+
+D31 — USTALONE2026-10-31: użytkownik rezygnuje z OTA. Jedna duża factory
+0x10000/0xEF0000 i LittleFS1MiB na0xF00000, NVS/PHY zachowane. Stacje
+wgra ponownie, bez migracji starego filesystemu. ADR0055 zastępuje
+wcześniejszy plan2×OTA i ograniczenie przesuwania LittleFS.

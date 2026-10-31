@@ -29,16 +29,16 @@ void *xSemaphoreCreateMutex(void){return (void *)1;}
 int xSemaphoreTake(void *p,unsigned t){(void)p;(void)t;return 1;}
 int xSemaphoreGive(void *p){(void)p;return 1;}
 int nvs_flash_init(void){return ESP_OK;}
-int nvs_open(const char *ns,int mode,nvs_handle_t *h){(void)mode;*h=!strcmp(ns,"streamoo_fs")?1:2;return ESP_OK;}
+int nvs_open(const char *ns,int mode,nvs_handle_t *h){(void)mode;*h=!strcmp(ns,"sfs_00f00000")?1:!strcmp(ns,"streamoo_fs")?3:2;return ESP_OK;}
 void nvs_close(nvs_handle_t h){(void)h;}
-int nvs_get_u8(nvs_handle_t h,const char *key,uint8_t *out){(void)h;(void)key;if(!phase)return ESP_ERR_NVS_NOT_FOUND;*out=phase;return ESP_OK;}
+int nvs_get_u8(nvs_handle_t h,const char *key,uint8_t *out){(void)key;if(h==3){*out=2;return ESP_OK;}if(!phase)return ESP_ERR_NVS_NOT_FOUND;*out=phase;return ESP_OK;}
 int nvs_set_u8(nvs_handle_t h,const char *key,uint8_t value){(void)h;(void)key;phase=value;return ESP_OK;}
 int nvs_commit(nvs_handle_t h){(void)h;return commit_error?ESP_FAIL:ESP_OK;}
 int nvs_get_blob(nvs_handle_t h,const char *key,void *out,size_t *n){(void)h;(void)key;if(!blob_bytes)return ESP_ERR_NVS_NOT_FOUND;assert(*n>=blob_bytes);memcpy(out,blob,blob_bytes);*n=blob_bytes;return ESP_OK;}
 int nvs_set_blob(nvs_handle_t h,const char *key,const void *p,size_t n){(void)h;(void)key;assert(n<=sizeof blob);memcpy(blob,p,n);blob_bytes=n;return ESP_OK;}
 int esp_vfs_littlefs_register(const esp_vfs_littlefs_conf_t *c){assert(!c->format_if_mount_failed);return mount_result;}
 int esp_littlefs_format(const char *label){assert(!strcmp(label,"storage"));++formats;mount_result=ESP_OK;return ESP_OK;}
-const esp_partition_t *esp_partition_find_first(int t,int s,const char *label){(void)t;(void)s;(void)label;static esp_partition_t p={2048};return &p;}
+const esp_partition_t *esp_partition_find_first(int t,int s,const char *label){(void)t;(void)s;(void)label;static esp_partition_t p={.size=2048,.address=0xf00000};return &p;}
 int esp_partition_read(const esp_partition_t *p,size_t offset,void *out,size_t n){(void)p;(void)offset;memset(out,blank?255:0,n);return ESP_OK;}
 void *heap_caps_malloc(size_t n,unsigned c){(void)c;if(allocation_failure&&!--allocation_failure)return NULL;return malloc(n);}
 void *heap_caps_calloc(size_t n,size_t s,unsigned c){(void)c;if(allocation_failure&&!--allocation_failure)return NULL;return calloc(n,s);}
@@ -87,7 +87,7 @@ class ConfigurationStoreTests(unittest.TestCase):
                 'nvs.h':'#pragma once\n#include <stdint.h>\n#include <stddef.h>\n#include "esp_err.h"\ntypedef int nvs_handle_t;\n#define NVS_READONLY 0\n#define NVS_READWRITE 1\nint nvs_open(const char *,int,nvs_handle_t *);\nvoid nvs_close(nvs_handle_t);\nint nvs_get_u8(nvs_handle_t,const char *,uint8_t *);\nint nvs_set_u8(nvs_handle_t,const char *,uint8_t);\nint nvs_commit(nvs_handle_t);\nint nvs_get_blob(nvs_handle_t,const char *,void *,size_t *);\nint nvs_set_blob(nvs_handle_t,const char *,const void *,size_t);\n',
                 'nvs_flash.h':'#pragma once\nint nvs_flash_init(void);\n',
                 'esp_littlefs.h':'#pragma once\n#include <stdbool.h>\ntypedef struct {const char *base_path,*partition_label;bool format_if_mount_failed;} esp_vfs_littlefs_conf_t;\nint esp_vfs_littlefs_register(const esp_vfs_littlefs_conf_t *);\nint esp_littlefs_format(const char *);\n',
-                'esp_partition.h':'#pragma once\n#include <stddef.h>\ntypedef struct {size_t size;} esp_partition_t;\n#define ESP_PARTITION_TYPE_DATA 1\n#define ESP_PARTITION_SUBTYPE_ANY 255\nconst esp_partition_t *esp_partition_find_first(int,int,const char *);\nint esp_partition_read(const esp_partition_t *,size_t,void *,size_t);\n',
+                'esp_partition.h':'#pragma once\n#include <stddef.h>\ntypedef struct {size_t size;unsigned address;} esp_partition_t;\n#define ESP_PARTITION_TYPE_DATA 1\n#define ESP_PARTITION_SUBTYPE_ANY 255\nconst esp_partition_t *esp_partition_find_first(int,int,const char *);\nint esp_partition_read(const esp_partition_t *,size_t,void *,size_t);\n',
                 'esp_heap_caps.h':'#pragma once\n#include <stddef.h>\n#define MALLOC_CAP_SPIRAM 1\n#define MALLOC_CAP_8BIT 2\nvoid *heap_caps_malloc(size_t,unsigned);\nvoid *heap_caps_calloc(size_t,size_t,unsigned);\nvoid heap_caps_free(void *);\n'}
             for name,body in files.items():(base/name).write_text(body)
             (base/'test.c').write_text(HARNESS)
