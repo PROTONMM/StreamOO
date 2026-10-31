@@ -2,6 +2,8 @@
 #include "streamoo_bitmap_font.h"
 #include "streamoo_font5x8.h"
 
+#define STREAMOO_UI_VISUALIZATION_HOLD_MS 800u
+
 static bool text_valid(streamoo_ui_text_t text)
 {
     return text.data || !text.bytes;
@@ -55,6 +57,13 @@ bool streamoo_ui_update_home(streamoo_ui_t *ui, const streamoo_home_snapshot_t *
         ui->home.text_revision != s->text_revision || data_match(&ui->home) != match ||
         ui->home.metadata_valid != (match && s->metadata_valid) ||
         ui->home.audio_info_valid != (match && s->audio_info_valid);
+    const bool retain_visualization = ui->home_received && !ui->home_scroll_reset_pending && match &&
+        ui->home.station_id == s->station_id &&
+        ui->home.stream_generation == s->stream_generation && !s->visualization_valid &&
+        ui->home.visualization_valid && ui->visualization_valid_kind == ui->visualization &&
+        now >= ui->visualization_valid_at_ms &&
+        now - ui->visualization_valid_at_ms <= STREAMOO_UI_VISUALIZATION_HOLD_MS;
+    const streamoo_visualization_model_t previous_visualization = ui->home.visualization;
     ui->home = *s;
     if (!s->station_id) ui->home.station_name = (streamoo_ui_text_t){0};
     if (!match || !s->metadata_valid) {
@@ -67,8 +76,16 @@ bool streamoo_ui_update_home(streamoo_ui_t *ui, const streamoo_home_snapshot_t *
         ui->home.bitrate_kbps = 0;
     }
     if (!match || !s->visualization_valid) {
-        ui->home.visualization_valid = false;
-        ui->home.visualization = (streamoo_visualization_model_t){0};
+        if (retain_visualization) {
+            ui->home.visualization_valid = true;
+            ui->home.visualization = previous_visualization;
+        } else {
+            ui->home.visualization_valid = false;
+            ui->home.visualization = (streamoo_visualization_model_t){0};
+        }
+    } else {
+        ui->visualization_valid_at_ms = now;
+        ui->visualization_valid_kind = ui->visualization;
     }
     ui->playing_id = s->station_id;
     if (reset) ui->home_text_start_ms = now;

@@ -32,6 +32,8 @@ typedef struct {
     void *post_context;
     streamoo_home_snapshot_t home;
     uint64_t home_text_start_ms;
+    uint64_t visualization_valid_at_ms;
+    streamoo_visualization_kind_t visualization_valid_kind;
     bool home_received, home_scroll_reset_pending;
     streamoo_visualization_kind_t visualization;
     bool running;

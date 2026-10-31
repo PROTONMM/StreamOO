@@ -144,6 +144,25 @@ class HomeTests(unittest.TestCase):
         self.assertTrue(self.ui.home.audio_info_valid)
         self.assertEqual(self.ui.home.bitrate_kbps, 192)
 
+    def test_visualization_bridges_short_gap_but_not_expired_or_new_stream(self):
+        snapshot = self.snapshot()
+        self.assertTrue(self.apply(snapshot, 1000))
+        self.assertEqual(self.ui.home.visualization.bands[5], 6000)
+        snapshot.visualization_valid = False
+        snapshot.visualization = type(snapshot.visualization)()
+        snapshot.text_revision = 2
+        self.assertTrue(self.apply(snapshot, 1700))
+        self.assertTrue(self.ui.home.visualization_valid)
+        self.assertEqual(self.ui.home.visualization.bands[5], 6000)
+        self.assertTrue(self.apply(snapshot, 1801))
+        self.assertFalse(self.ui.home.visualization_valid)
+        self.assertEqual(self.ui.home.visualization.bands[5], 0)
+        snapshot.station_id = snapshot.data_station_id = 2
+        snapshot.stream_generation = snapshot.data_generation = 11
+        snapshot.text_revision = 2
+        self.assertTrue(self.apply(snapshot, 1900))
+        self.assertFalse(self.ui.home.visualization_valid)
+
     def test_clock_remains_visible_when_wifi_is_offline(self):
         s = self.snapshot()
         self.assertTrue(self.apply(s))

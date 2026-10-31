@@ -46,7 +46,8 @@ class UI(C.Structure):
                 ('animation_from_q16', C.c_int64), ('animation_start_ms', C.c_uint64),
                 ('selection_start_ms', C.c_uint64), ('animation_ms', C.c_uint16),
                 ('post', POST), ('post_context', C.c_void_p), ('home', HomeSnapshot),
-                ('home_text_start_ms', C.c_uint64), ('home_received', C.c_bool),
+                ('home_text_start_ms', C.c_uint64), ('visualization_valid_at_ms', C.c_uint64),
+                ('visualization_valid_kind', C.c_int), ('home_received', C.c_bool),
                 ('home_scroll_reset_pending', C.c_bool), ('visualization', C.c_int),('running',C.c_bool),('last_activity_ms',C.c_uint64)]
 
 

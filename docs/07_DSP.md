@@ -104,3 +104,13 @@ więc mniej wysokości, a głośniejsze częstotliwości odróżniają się wyra
 Korpus słupka ma jasność 8, a pojedynczy piksel jego bieżącego szczytu 15.
 To nie jest peak-hold: pozycja jasnej linii podąża za istniejącym envelope.
 FFT, takt, audio i ścieżka I2S pozostają bez zmian.
+
+## 07h — krótkie luki danych widma
+
+Przy ciężkim dekoderze HLS HE-AACv2 tap pomiarów jest celowo droppable. Gdy
+zadanie meteringu nie przetworzy nowego FFT przez 200 ms, diagnostyka nadal
+unieważnia wynik, ale HOME zachowuje ostatnią poprawną klatkę maksymalnie
+800 ms. Dotyczy to wyłącznie identycznej stacji, generacji i typu widżetu;
+STOP, zmiana stacji, zmiana widżetu lub dłuższa luka nadal natychmiast albo
+po limicie pokazują „Brak danych”. Nie zmienia to FFT, PCM, I2S ani logów
+ważności meteringu.
