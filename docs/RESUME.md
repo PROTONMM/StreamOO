@@ -1,6 +1,6 @@
 # Punkt wznowienia StreamOO
 
-Aktualizacja: **2026-10-31, niezależny reader06h gotowy do odbioru**.
+Aktualizacja: **2026-10-31, niezależny reader AAC06h odebrany logiem i odsłuchem**.
 PCM/rebuffer/tap stress potwierdzone logiem i odsłuchem (`5664a90`).
 Gałąź feature/streamoo-implementation, szczegóły STATUS i ADR0025.
 
@@ -17,17 +17,21 @@ Release: stop + notify + ack do1s, potem destroy/free. Timeout zachowuje
 żywe bufory do restartu; bez wymuszonego usuwania readera. Sieć, anulowanie
 blokującego I/O, reconnect/player/HE-AAC/resampling nadal OPEN. Szczegóły ADR0025.
 
-Lokalny profil końcowy AAC-LC, stress OFF/tap_delay0. Boot independent reader,
-log fixture_reader generation/input/stack_hwm i stream cycles/generation/stale/
-stats_ok. Odbiór06h: kilka cykli i czysty odsłuch L/R/oba, VOL/PLAY/STOP,
-log PCM/buffers/heap. Oczekuj frames193536, stats_ok1 i low0/hard0/invalid0.
-WAIT może rosnąć przy starcie/rewind, compressed0 wtedy dopuszczalne.
-Stale0 nie unieważnia testu; race wymuszone tylko na hoście.
+Lokalny profil AAC-LC, stress OFF/tap_delay0. Runtime6031941 odebrany:
+reader generation1..7/input37039, min stos1980B; cycles1..7/frames193536,
+generation2..8/stats_ok1/stale0, waits1..7 po rewind bez niedoborów.
+max_read3854us, min stos audio_control22664B, PCM queued28..29/ACTIVE,
+low0/hard0/starts1, invalid0, tap_drop/gaps0, max_fill131us.
+Heap internal204743B i PSRAM8337620B stabilne w próbkach10–20s.
+Gesty/zapisy volume80/87 działają, użytkownik: „Dźwięk czysty, działa jak
+poprzednio”. Odbiór AAC06h zaliczony, nie powtarzać bez nowego powodu.
+
 168 testów hostowych PASS, ASan/UBSan adaptera PASS; bez TSan/LeakSanitizer.
-Build AAC0x81230B, MP3 i sinus PASS; końcowy lokalny obraz AAC-LC.
-Runtime06h, fault injection stop/join oraz długotrwała praca na S3 OPEN.
-Po odbiorze: reader sieciowy wymaga najpierw konfiguracji Wi-Fi zgodnie z09;
-nie dodawać haseł do repo. Nie ogłaszać gotowego radia.
+Build AAC0x81230B, MP3 i sinus PASS; kod/obraz bez zmian po odbiorze.
+Fault injection stop/join, wymuszony stale publish i długotrwały test na S3
+nadal OPEN. MP3 z nowym readerem nieodebrane. WAIT na EOF nie jest testem
+niedoboru sieci. Następny krok: konfiguracja Wi-Fi zgodnie z09, potem reader
+HTTP/HTTPS. Nie dodawać haseł do repo i nie ogłaszać gotowego radia.
 
 ## Odebrane06g — źródło skompresowane
 

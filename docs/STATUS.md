@@ -9,7 +9,7 @@ Bieżący punkt wznowienia: [RESUME.md](RESUME.md).
 | 03 szkielet | baza zaimplementowana; odbiór sprzętowy i integracyjny OPEN | ESP-IDF v6.1 build PASS; ADR 0002 |
 | 04 UI/SSD1322 | HOME i lista odebrane na OLED; końcowe strojenie fontu OPEN | ADR 0012; odbiór użytkownika |
 | 05 encoder | dekoder/IRQ i gesty odebrane; interaktywny adapter odebrany w trybie A; preferencje NVS odebrane; shutdown/flush OPEN | ADR 0013–0017; 99 testów PASS |
-| 06 audio | I2S/gain/PCM stress odebrane; MP3 decode/PCM potwierdzone logiem; AAC-LC PoC odebrane; AAC incremental file decode06f odebrane logiem i odsłuchem; źródło/bufor AAC06g odebrane logiem, odsłuchem i sterowaniem; niezależny reader06h gotowy, odbiór S3 OPEN; sieć/player OPEN | ADR 0018–0025; 168 testów hostowych PASS; build źródeł PASS |
+| 06 audio | I2S/gain/PCM stress odebrane; MP3 decode/PCM potwierdzone logiem; AAC-LC PoC odebrane; AAC incremental file decode06f odebrane logiem i odsłuchem; źródło/bufor AAC06g odebrane logiem, odsłuchem i sterowaniem; niezależny reader AAC06h odebrany logiem i odsłuchem; sieć/player OPEN | ADR 0018–0025; 168 testów hostowych PASS; build źródeł PASS |
 | 07 DSP | NIEZAIMPLEMENTOWANE | — |
 | 08 stacje | NIEZAIMPLEMENTOWANE | — |
 | 09 sieć | NIEZAIMPLEMENTOWANE | — |
@@ -986,3 +986,23 @@ Build06h ESP-IDF6.1/esp32s3: AAC0x81230B, MP3 0x87d70B, sinus0x4acd0B
 PASS. Końcowy obraz AAC-LC, stress OFF/tap_delay0, partycja1MiB około50%
 wolnej. Walidator GPIO/platform oraz git diff --check PASS. Callback render
 oraz pcm_fill pozostają w IRAM, adapter źródła poza ścieżką IRQ.
+
+## Odbiór06h — niezależny reader AAC (2026-10-31)
+
+Użytkownik przekazał log6031941 i potwierdził: „Dźwięk czysty, działa jak
+poprzednio”. Reader generacje1..7, każda input37039B, min stack_hwm1980B.
+Pump cycles1..7/ok1, frames193536/cykl, generation2..8, stats_ok1, stale0.
+WAIT1→7 i compressed0 po rewind są normalne; brak utraty ciągłości audio.
+Backpressure317→2289. max_read3854us, min stack_hwm audio_control22664B.
+PCM queued28..29/ACTIVE, low0/hard0/starts1, invalid0, tap_drop/gaps0,
+max_fill131us w próbkach do25.946s. Log cykli trwa do28.986s.
+Heap internal204743B (min169088, largest126976) i PSRAM8337620B
+(min8337620, largest8257536) stabilne w próbkach10.846/20.846s.
+Obroty/LONG i zapisy NVS volume80 oraz87 nie przerwały pracy; użytkownik
+potwierdził zachowanie jak wcześniej. Funkcjonalny odbiór AAC06h zaliczony.
+Stale0 nie testuje wymuszonego spóźnionego publish na S3; ten race sprawdzono
+na hoście. Stop/join fault injection, długotrwała praca, MP3 z niezależnym
+readerem i sieć pozostają osobno OPEN. WAIT w granicy EOF nie zastępuje
+wymuszonego niedoboru w środku strumienia ani testu jitter/deadline.
+Zapis tylko dokumentacji, bez powtarzania buildu/testów i bez flashowania.
+Następny zakres: konfiguracja Wi-Fi według09 przed readerem HTTP/HTTPS.

@@ -1,6 +1,6 @@
 # ADR0025 — osobne zadanie czytnika i generacje źródła
 
-Data:2026-10-31. Status: wdrożone; odbiór sprzętowy06h OPEN.
+Data:2026-10-31. Status: AAC06h odebrane logiem i czystym odsłuchem.
 
 ## Kontekst
 
@@ -80,3 +80,15 @@ stats_ok1, poprawny reader stack_hwm, stabilne PCM i heap, czysty odsłuch
 kilku cykli i VOL/PLAY/STOP. WAIT może rosnąć na starcie/rewind bez underrun;
 stale może być0 (nie wymuszamy hardware race). max_read nie jest czasem ISR.
 EOF/reset oraz stabilność nowych dwóch zadań wymagają tego nowego odbioru.
+
+## Wynik odbioru AAC06h
+
+Log6031941: reader generation1..7/input37039/min stos1980B, pump cycles1..7
+po193536 ramek, generation2..8/stats_ok1/stale0. waits1..7 po rewind bez
+niedoborów. max_read3854us, min stos audio_control22664B; PCM queued28..29,
+ACTIVE, low0/hard0/starts1, invalid0, tap_drop/gaps0, max_fill131us.
+Heap internal204743B i PSRAM8337620B stabilne w próbkach10–20s.
+Gesty/zapisy NVS bez przerwania postępu. Użytkownik: „Dźwięk czysty, działa
+jak poprzednio”. Funkcjonalny odbiór dwóch zadań i AAC EOF/rewind zaliczony.
+To nie odbiór MP3, wymuszonego stale publish, stop/join fault injection,
+długotrwałej pracy ani niedoborów/opóźnień sieciowych.
