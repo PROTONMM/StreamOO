@@ -30,6 +30,12 @@ static void analyze(void *context) {
     streamoo_spectrum_envelope_init(&spectrum_envelope,esp_timer_get_time());
     for (;;) {
         if (atomic_load_explicit(&m->stop, memory_order_acquire)) break;
+#if defined(ESP_PLATFORM)
+        const BaseType_t core = xPortGetCoreID();
+        if ((unsigned)core < 2) {
+            ++current.core_samples[core];
+        }
+#endif
         int64_t start = esp_timer_get_time();
         uint32_t request = atomic_load_explicit(&m->spectrum_request, memory_order_acquire);
         if(request != request_seen) {

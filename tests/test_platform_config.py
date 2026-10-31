@@ -25,3 +25,9 @@ class PlatformTests(unittest.TestCase):
 
     def test_missing_options_rejected(self):
         self.assertEqual(len(mod.check_platform({})), 8)
+
+    def test_cpu_profile_uses_stable_64_bit_esp_timer(self):
+        data = mod.parse(ROOT / 'sdkconfig.defaults')
+        self.assertEqual(data['FREERTOS_GENERATE_RUN_TIME_STATS'], 'y')
+        self.assertEqual(data['FREERTOS_RUN_TIME_COUNTER_TYPE_U64'], 'y')
+        self.assertEqual(data['FREERTOS_RUN_TIME_STATS_USING_ESP_TIMER'], 'y')

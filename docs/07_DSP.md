@@ -114,3 +114,16 @@ unieważnia wynik, ale HOME wygasza ostatni poprawny model przez maksymalnie
 STOP, zmiana stacji, zmiana widżetu lub dłuższa luka nadal natychmiast albo
 po limicie pokazują „Brak danych”. Nie zmienia to FFT, PCM, I2S ani logów
 ważności meteringu.
+
+## 07i — profil CPU przed zmianą DSP
+
+Runtime statistics FreeRTOS z `esp_timer` zbierają co10s wykorzystanie obu
+rdzeni oraz sześć najbardziej aktywnych tasków; snapshot nie działa w ścieżce
+I2S, dekoderze ani FFT. `audio_levels` zostaje tymczasowo unpinned i raportuje
+liczbę iteracji core0/core1. To pomiar przed decyzją o affinity lub zmianie
+struktur danych, nie optymalizacja sama w sobie.
+
+Aktualny referencyjny FFT jest skalarnym float: disassembly GCC15.2.0/-Os
+potwierdza scalar FPU i brak automatycznych SIMD/ESP-DSP. Dane workspace są
+w PSRAM z naturalnym wyrównaniem; przebudowa do sc16/SIMD lub inne wyrównanie
+pozostają OPEN aż do porównania obciążenia/czasów na S3. Szczegóły ADR0073.

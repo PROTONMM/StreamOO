@@ -12,6 +12,9 @@ typedef struct {
     bool spectrum_valid, spectrum_available;
     uint16_t bands[24];
     uint32_t spectrum_request, fft_windows, fft_skipped, fft_gaps, max_fft_us;
+    /* Sampling counts, not elapsed CPU time. The task is intentionally
+     * unpinned, so this records which core ran each metering iteration. */
+    uint32_t core_samples[2];
     int64_t spectrum_completed_us;
 } streamoo_metering_state_t;
 /* Task-only lifecycle owner is the player. Independent low-priority consumer

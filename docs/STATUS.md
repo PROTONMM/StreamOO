@@ -1,5 +1,22 @@
 # Status implementacji
 
+## Najnowsze — profil CPU i punkt odniesienia FFT / ADR0073 / 2026-10-31
+
+Do firmware dodano diagnostykę FreeRTOS runtime statistics: po rozgrzaniu
+jednego okresu log `platform` co10s pokaże zajętość core0/core1 oraz sześć
+najbardziej aktywnych tasków z ich obciążeniem i maską affinity. Task
+`audio_levels` pozostaje nieprzypięty, a linia `meters` ma licznik jego
+iteracji `core_samples=0/1`. Pomiar nie wchodzi do I2S, PCM callbacku ani
+dekodera i nie zmienia jeszcze scheduling, priorytetów, ringów lub DSP.
+
+Inspekcja dostępnego obiektu FFT GCC15.2.0/-Os pokazuje scalar FPU
+(`mul.s`/`madd.s`/`msub.s`), bez SIMD/ESP-DSP. Opcja SIMD nie wybiera dziś
+backendu; zmiana struktur i wyrównania jest odłożona do danych ze sprzętu.
+Po flashu potrzeba bloków CPU, player i meters/FFT dla HLS64 HE-AACv2 i
+FLAC. 383 testy hostowe, oba walidatory konfiguracji i syntaktyczna kompilacja
+targetowym GCC15.2.0 PASS. Pełny native build ESP-IDF6.1 nadal wymaga
+odtworzenia brakującego local virtualenv; nie flashowano.
+
 ## Najnowsze — krótkie luki widma HLS / ADR0072 / 2026-10-31
 
 Log `TEST HLS 64k-heaacv2-stereo` pokazał ciągłe audio (`PCM=32`, `low=0`,

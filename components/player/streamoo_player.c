@@ -530,10 +530,12 @@ static void task(void *context) {
         streamoo_metering_state(meter, &measurement);
         ESP_LOGI("player", "meters valid=%u windows=%" PRIu64
                  " gaps=%" PRIu32 " drop=%" PRIu32 " max_work=%" PRIu32
-                 "us stack_hwm=%" PRIu32 " rms=%u/%u peak=%u/%u",
+                 "us stack_hwm=%" PRIu32 " core_samples=%" PRIu32 "/%" PRIu32
+                 " rms=%u/%u peak=%u/%u",
                  (unsigned)measurement.levels.valid, measurement.levels.windows,
                  measurement.levels.discontinuities, pcm.tap_drops,
                  measurement.max_work_us, measurement.stack_hwm,
+                 measurement.core_samples[0], measurement.core_samples[1],
                  (unsigned)measurement.levels.rms[0], (unsigned)measurement.levels.rms[1],
                  (unsigned)measurement.levels.peak[0], (unsigned)measurement.levels.peak[1]);
       }

@@ -1,5 +1,16 @@
 # Punkt wznowienia StreamOO
 
+## Najnowsze — profil CPU i punkt odniesienia FFT / ADR0073 / 2026-10-31
+
+Firmware ma teraz profiler runtime FreeRTOS: po około22s od startu log
+`platform` pokaże `CPU interval`, core0/core1 i do sześciu tasków wraz z
+maską affinity. `meters` zawiera dodatkowo `core_samples=0/1` dla
+nieprzypiętego `audio_levels`. Nie zmieniono przypisań `http_reader` core0 i
+`player` core1 ani ścieżki PCM/I2S. Po zwykłym flashu potrzebne są dwa bloki
+CPU + player/meters/FFT dla HLS64 HE-AACv2 oraz FLAC. Nie zmieniaj jeszcze
+struktur FFT: obiekt GCC15.2.0/-Os jest skalarny FPU, bez SIMD/ESP-DSP; o
+optymalizacji zdecydują wyniki pomiaru.
+
 ## Najnowsze — krótkie luki widma HLS / ADR0072 / 2026-10-31
 
 TEST HLS64k HE-AACv2 ma ciągłe PCM (`low=0`, `hard=0`), lecz droppable tap
