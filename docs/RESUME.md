@@ -1,6 +1,6 @@
 # Punkt wznowienia StreamOO
 
-Aktualizacja: **2026-10-31, AAC źródło/bufor06g potwierdzone logiem; odsłuch OPEN**.
+Aktualizacja: **2026-10-31, AAC źródło/bufor06g odebrane logiem, odsłuchem i sterowaniem**.
 PCM/rebuffer/tap stress potwierdzone logiem i odsłuchem (`5664a90`).
 Gałąź feature/streamoo-implementation, szczegóły STATUS i ADR0024.
 
@@ -24,12 +24,12 @@ waits0, max_read3829us, stack_hwm min22728B. PCM queued28/ACTIVE,
 low0/hard0/starts1, invalid0, tap_drop/gaps0, max_fill133us.
 Heap internal209143B i PSRAM8337620B stabilne10–40s. Gesty i zapis NVS
 volume78 bez zatrzymania buforów. Nie powtarzać zaliczonych pomiarów.
-Odsłuch L/R/oba i słyszalne VOL/PLAY/STOP06g nadal OPEN; zapytać tylko
-czy grało czysto i sterowanie działało. WAIT na S3 niewymuszony (waits0),
+Użytkownik potwierdził czysty dźwięk i poprawne VOL/PLAY/STOP („tak”).
+Odbiór06g zaliczony; nie powtarzać. WAIT na S3 niewymuszony (waits0),
 ciągłość po WAIT sprawdzona dotąd na hoście. Nie deklarować testu sieci.
 161 testów hostowych, ASan/UBSan i build AAC-LC/MP3/sinus PASS.
 Końcowy obraz AAC0x80d00B; kod bez zmian po logu.
-Po odbiorze następny krok: adapter dla niezależnego readera/komunikacji
+Następny krok: adapter dla niezależnego readera/komunikacji
 z zadaniem dekodera, potem integracja sieci zgodnie z etapem09.
 Nie mylić testowego4KiB z produkcyjnym punktem wyjścia256KiB.
 

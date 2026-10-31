@@ -1,6 +1,6 @@
 # ADR0024 — źródło skompresowane i ograniczony bufor
 
-Data:2026-10-31. Status: AAC źródło/bufor potwierdzone logiem; odsłuch06g OPEN.
+Data:2026-10-31. Status: AAC06g odebrane logiem, odsłuchem i sterowaniem.
 
 ## Kontekst
 
@@ -81,3 +81,9 @@ max_fill133us. Heap internal209143B i PSRAM8337620B stabilne10–40s.
 Gesty oraz zapis preferencji nie przerwały postępu audio. Odsłuch i skutki
 VOL/PLAY/STOP nieopisane przez użytkownika, pozostają OPEN. waits0 nie
 testuje niedoboru źródła na S3; test WAIT dotychczas tylko hostowy.
+
+### Potwierdzenie odsłuchu i sterowania
+
+Użytkownik odpowiedział „tak” na pytanie o czysty dźwięk i poprawne
+VOL/PLAY/STOP. Odbiór AAC06g zaliczony. Nie zastępuje testu wymuszonego
+WAIT na S3, pracy wielozadaniowego readera, sieci ani MP3 z nowym buforem.
