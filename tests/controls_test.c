@@ -96,6 +96,31 @@ int main(int argc, char **argv)
         assert(!streamoo_encoder_demo_set_ip(&d,"bad<ip>"));assert(!strcmp(d.network_ip,"10.0.0.42"));
         assert(streamoo_encoder_demo_set_ip(&d,NULL));
         assert(streamoo_encoder_demo_draw(&d,frame,sizeof frame,0));assert(!memcmp(old,frame,sizeof old));
+    } else if (scenario==9) {
+        streamoo_encoder_demo_t d;assert(streamoo_encoder_demo_init(&d));
+        uint8_t frame[8192];
+        assert(streamoo_encoder_demo_set_catalog(&d,NULL,0,1));
+        assert(!d.station_id&&!d.running&&d.imported_catalog);
+        assert(streamoo_encoder_demo_draw(&d,frame,sizeof frame,0));
+        uint8_t old_name[]="One";
+        streamoo_ui_station_t first[]={{91,old_name,3},{92,(const uint8_t *)"Two",3}};
+        assert(streamoo_encoder_demo_set_catalog(&d,first,2,2));
+        assert(streamoo_encoder_demo_input(&d,(streamoo_input_event_t){STREAMOO_INPUT_SHORT,0},0,1));
+        assert(streamoo_encoder_demo_input(&d,(streamoo_input_event_t){STREAMOO_INPUT_SHORT,0},0,2));
+        assert(d.station_id==91);
+        assert(streamoo_encoder_demo_draw(&d,frame,sizeof frame,3));
+        assert(d.ui.home.station_name.data==old_name);
+        assert(streamoo_encoder_demo_input(&d,(streamoo_input_event_t){STREAMOO_INPUT_SHORT,0},0,4));
+        streamoo_ui_station_t next[]={{92,(const uint8_t *)"Two",3},{91,(const uint8_t *)"One",3}};
+        assert(streamoo_encoder_demo_set_catalog(&d,next,2,3));
+        memset(old_name,0,sizeof old_name);
+        assert(d.ui.screen==STREAMOO_UI_HOME&&d.station_id==91&&!d.ui.home.station_name.data);
+        assert(streamoo_encoder_demo_draw(&d,frame,sizeof frame,5));
+        assert(d.ui.home.station_name.data==next[1].name);
+        assert(!d.ui.home.visualization_valid);
+        assert(streamoo_encoder_demo_set_catalog(&d,next,1,4));
+        assert(!d.station_id&&!d.running);
+        assert(streamoo_encoder_demo_draw(&d,frame,sizeof frame,6));
     } else {
         streamoo_encoder_demo_t d; assert(streamoo_encoder_demo_init(&d));
         uint8_t frame[8194]; memset(frame,0xa5,sizeof frame);

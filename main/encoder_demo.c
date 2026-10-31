@@ -72,14 +72,21 @@ bool streamoo_encoder_demo_draw(streamoo_encoder_demo_t *d, uint8_t *frame,
         .text_revision=d->generation, .metadata_valid=true,
         .visualization_valid=true, .visualization={.band_count=24},
     };
-    for (unsigned i=0; i<5; ++i)
-        if (stations[i].stable_id == d->station_id)
-            s.station_name=(streamoo_ui_text_t){stations[i].name,stations[i].name_bytes};
+    for (uint32_t i=0; i<d->ui.count; ++i)
+        if (d->ui.stations[i].stable_id == d->station_id)
+            s.station_name=(streamoo_ui_text_t){d->ui.stations[i].name,d->ui.stations[i].name_bytes};
     static const char silent[]="TEST sterowania - bez audio";
     static const char audible[]="TEST: ton 1kHz, widżety TEST";
     s.title=d->audio_post ? (streamoo_ui_text_t){(const uint8_t *)audible,sizeof audible-1} :
                             (streamoo_ui_text_t){(const uint8_t *)silent,sizeof silent-1};
     if (d->audio_post && d->audio_title.data) s.title=d->audio_title;
+    if (d->imported_catalog) {
+        static const uint8_t choose[]="Wybierz stację z listy", selected[]="Odtwarzanie niedostępne", empty[]="Wgraj playlistę przez WWW";
+        s.visualization_valid=false;
+        s.title=!d->ui.count ? (streamoo_ui_text_t){empty,sizeof empty-1} :
+            d->station_id ? (streamoo_ui_text_t){selected,sizeof selected-1} :
+            (streamoo_ui_text_t){choose,sizeof choose-1};
+    }
     for (unsigned i=0; i<24; ++i) {
         unsigned phase=(unsigned)(now%2000+i*61)%2000;
         s.visualization.bands[i]=d->running ? (phase<1000 ? phase : 2000-phase)*32 : 0;
@@ -93,8 +100,8 @@ bool streamoo_encoder_demo_draw(streamoo_encoder_demo_t *d, uint8_t *frame,
     if (!streamoo_canvas_init(&canvas,frame,bytes,256,64,128)) return false;
     if (d->ui.screen == STREAMOO_UI_STATIONS) {
         streamoo_canvas_fill(&canvas,(streamoo_rect_t){0,0,256,64},0);
-        const uint8_t label[]="TEST - lista stacji";
-        return streamoo_text_line(&canvas,(streamoo_rect_t){0,0,256,8},label,sizeof(label)-1,
+        const char *label=d->imported_catalog ? "Lista stacji" : "TEST - lista stacji";
+        return streamoo_text_line(&canvas,(streamoo_rect_t){0,0,256,8},(const uint8_t *)label,strlen(label),
             STREAMOO_TEXT_CENTER,0,0,0,10,streamoo_font5x8,NULL) &&
             streamoo_ui_draw_list(&d->ui,&canvas,(streamoo_rect_t){0,8,256,56},now);
     }
@@ -136,5 +143,21 @@ bool streamoo_encoder_demo_set_ip(streamoo_encoder_demo_t *d, const char *ip)
         if (i==sizeof copy) return false;
     }
     memcpy(d->network_ip,copy,sizeof copy);
+    return true;
+}
+
+bool streamoo_encoder_demo_set_catalog(streamoo_encoder_demo_t *d,const streamoo_ui_station_t *stations,uint32_t count,uint64_t generation)
+{
+    if (!d || !streamoo_ui_set_catalog(&d->ui,stations,count,generation)) return false;
+    bool retained=false;
+    for(uint32_t i=0;i<count;++i) if(stations[i].stable_id==d->station_id) retained=true;
+    if(!retained) {d->station_id=0;d->running=false;}
+    d->selection_pending=false;
+    ++d->generation;
+    d->imported_catalog=true;
+    /* Old snapshot may be released immediately after this call. */
+    d->ui.home=(streamoo_home_snapshot_t){0};
+    d->ui.home_received=false;
+    streamoo_ui_set_playing(&d->ui,d->station_id);
     return true;
 }

@@ -2,6 +2,7 @@
 #include "encoder_demo.h"
 #include "streamoo_ui_ap.h"
 #include "streamoo_network.h"
+#include "streamoo_config_store.h"
 #include "audio_control_probe.h"
 #include "streamoo_preferences.h"
 #include "streamoo_input_probe.h"
@@ -19,6 +20,25 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "streamoo_ssd1322.h"
+
+#ifdef CONFIG_STREAMOO_ENCODER_UI_TEST
+static bool sync_catalog(streamoo_encoder_demo_t *demo,streamoo_catalog_snapshot_t **held,streamoo_ui_station_t **entries)
+{
+    streamoo_catalog_snapshot_t *next=streamoo_config_catalog_acquire();
+    if (!next || next==*held) {streamoo_config_catalog_release(next);return true;}
+    streamoo_catalog_view_t view=streamoo_config_catalog_view(next);
+    streamoo_ui_station_t *items=view.count ? heap_caps_calloc(view.count,sizeof *items,MALLOC_CAP_SPIRAM|MALLOC_CAP_8BIT) : NULL;
+    if(view.count&&!items) {streamoo_config_catalog_release(next);return false;}
+    for(uint32_t i=0;i<view.count;++i) items[i]=(streamoo_ui_station_t){view.stations[i].stable_id,view.stations[i].name,view.stations[i].name_bytes};
+    if(!streamoo_encoder_demo_set_catalog(demo,items,view.count,view.generation)) {
+        heap_caps_free(items);streamoo_config_catalog_release(next);return false;
+    }
+    streamoo_config_catalog_release(*held);heap_caps_free(*entries);
+    *held=next;*entries=items;
+    ESP_LOGI("display_smoke","Station catalog rows=%" PRIu32 " generation=%" PRIu64,view.count,view.generation);
+    return true;
+}
+#endif
 
 static void display_task(void *context)
 {
@@ -41,12 +61,16 @@ static void display_task(void *context)
     if (error == ESP_OK) error = streamoo_ssd1322_enable(display, true);
 #ifdef CONFIG_STREAMOO_ENCODER_UI_TEST
     if (error == ESP_OK) {
+        streamoo_catalog_snapshot_t *catalog_snapshot=NULL;
+        streamoo_ui_station_t *catalog_entries=NULL;
+        uint64_t catalog_check_at=0;
         streamoo_encoder_demo_t demo;
         if (!streamoo_encoder_demo_init(&demo)) error = ESP_ERR_INVALID_STATE;
         streamoo_preferences_value_t restored = {50,0};
         const bool preferences_ready = streamoo_preferences_initial(&restored);
         demo.volume = restored.volume;
-        if (streamoo_network_boot_ap_enabled()) demo.running=false;
+        if (streamoo_network_boot_ap_enabled() &&
+            !streamoo_encoder_demo_set_catalog(&demo,NULL,0,0)) error=ESP_ERR_INVALID_STATE;
         if (!streamoo_ui_set_visualization(&demo.ui, restored.visualization)) error = ESP_ERR_INVALID_STATE;
 #ifdef CONFIG_STREAMOO_AUDIO_CONTROL_TEST
         if (!streamoo_network_boot_ap_enabled() &&
@@ -65,9 +89,16 @@ static void display_task(void *context)
         /* Discard input captured before this UI session was ready. */
         while (streamoo_input_probe_receive(&event)) {}
         TickType_t wake = xTaskGetTickCount();
-        ESP_LOGI("display_smoke", "Interactive encoder TEST ready; synthetic catalog/widgets; no stream player");
+        ESP_LOGI("display_smoke", "%s",streamoo_network_boot_ap_enabled() ?
+            "Encoder UI ready; stored station catalog; no stream player" :
+            "Interactive encoder TEST ready; synthetic catalog/widgets; no stream player");
         while (error == ESP_OK) {
             uint64_t now = (uint64_t)esp_timer_get_time() / 1000;
+            if(streamoo_network_boot_ap_enabled() && now>=catalog_check_at) {
+                if(!sync_catalog(&demo,&catalog_snapshot,&catalog_entries))
+                    ESP_LOGW("display_smoke","Catalog update deferred; previous snapshot retained");
+                catalog_check_at=now+1000;
+            }
 #ifdef CONFIG_STREAMOO_AUDIO_CONTROL_TEST
             streamoo_audio_control_state_t audio;
             if (streamoo_audio_control_state(&audio)) {
@@ -115,6 +146,8 @@ static void display_task(void *context)
             error = streamoo_ssd1322_present(display,frame,SSD1322_FRAME_BYTES);
             vTaskDelayUntil(&wake,pdMS_TO_TICKS(40) ? pdMS_TO_TICKS(40) : 1);
         }
+        streamoo_config_catalog_release(catalog_snapshot);
+        heap_caps_free(catalog_entries);
     }
 #else
     if (error == ESP_OK) {

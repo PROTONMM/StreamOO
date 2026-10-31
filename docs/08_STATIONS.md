@@ -9,7 +9,7 @@
 - Upload→ parser zgodny ze **sprawdzonym na rzeczywistych plikach** formatem yoRadio→ walidacja pól/UTF-8/długości/url/duplikatów→ podgląd→ commit atomowy.
 - Tryby: replace lub merge (proponowane); duplikaty raportować, bez cichego nadpisania.
 - Zapis przez staging + walidacja CRC/checksum + atomowe przełączenie pliku/manifestu; przerwany import pozostawia poprzednią listę.
-- Eksport zgodny z tym samym formatem (weryfikować testem round-trip). **FORMAT SPRAWDZONY2026-10-31:** lokalny playlist.csv to UTF-8 i3 literalne pola TAB: nazwa/URL/ovol, bez nagłówka. Firmware parser/preview/zapis nadal OPEN; szczegóły ADR0030.
+- Eksport zgodny z tym samym formatem (weryfikować testem round-trip). **FORMAT SPRAWDZONY2026-10-31:** lokalny playlist.csv to UTF-8 i3 literalne pola TAB: nazwa/URL/ovol, bez nagłówka. Parser/preview/atomowy zapis zaimplementowane (ADR0031), publikacja i lista OLED gotowe do odbioru (ADR0033).
 
 ## Zarządzanie
 - WWW: dodaj/usuń/edytuj nazwę+URL/zmień kolejność, import/export.
@@ -37,3 +37,12 @@ korekty/duplikaty przed zatwierdzeniem. Pole ovol zachowane, mapowanie na DSP
 jeszcze nieustalone. Gramatyka i źródło licencyjne w ADR0030; kod upstream
 nie został skopiowany. Narzędzie nie zastępuje uploadu, parsera firmware,
 LittleFS, stabilnych ID ani atomowej podmiany katalogu.
+
+## Implementacja 08a
+
+Zapisany katalog jest źródłem listy OLED w profilu sieciowym; snapshoty PSRAM
+z refcount i aktualizacja do 1 s po commit bez restartu. ID v1 niezależne od
+pozycji dla unikalnych par name/URL, duplikaty zachowane. Reorder zachowuje
+wybór, usunięcie czyści go bez losowego fallback. Edycja nazwy/URL/ID oraz
+player HTTP i zapamiętanie ostatniego wyboru nadal OPEN. Granice ID w ADR0033.
+Odsłuch nie jest częścią odbioru katalogu: wybór na HOME nie uruchamia streamu.

@@ -177,3 +177,19 @@ zmienić preferencji na ekranie AP. OLED z SSID/hasłem/URL i portal działają;
 strona mówi „Audio wyłączone w trybie AP”, głośność jest niedostępna.
 To nowa procedura zamiast wcześniejszego polecenia PLAY podczas AP.
 Do testów samego audio wyłącz NETWORK_AP_TEST; MicroSD nadal przyszłościowe.
+
+## Odbiór 08a — lista zapisanej playlisty
+
+HOME/IP z 09d użytkownik potwierdził. Po zwykłym flash bez erase/obrazu FS:
+
+1. Po STA/AP-off otwórz listę enkoderem. Mają pojawić się nazwy z zapisanej
+   playlisty zamiast pięciu stacji TEST. W logu `Station catalog rows=...`.
+2. Wybierz pozycję: HOME pokazuje jej nazwę, IP nadal w trzeciej linii.
+   Stream jeszcze się nie uruchamia — tytuł „Odtwarzanie niedostępne”.
+3. Wgraj playlistę przez WWW podczas otwartej listy OLED. Po commit do 1 s
+   widok wraca na HOME i korzysta z nowej listy; podgląd bez zatwierdzenia
+   nie zmienia OLED. Ten sam ID zachowuje wybór, usunięcie pozycji go czyści.
+4. Reboot: katalog pozostaje, ostatni wybór nie jest jeszcze zapamiętywany.
+   Bez katalogu zobaczysz wskazanie importu, bez nazw TEST.
+5. Podeślij liczbę rekordów i potwierdzenie nazwy/wyboru/scroll/live-import,
+   heap i stack_hwm. Bez prywatnych nazw/URL i haseł w przesyłanym logu.

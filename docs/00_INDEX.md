@@ -87,3 +87,5 @@ Kilka sieci i prywatny import playlist: `adr/0030-multiple-wifi-and-private-play
 Konfiguracja WWW/STA i trwały import CSV: `adr/0031-web-configuration-wifi-and-playlist.md`; odbiór: `NETWORK_BRINGUP.md`.
 
 Otwarty lokalny panel i HOME/IP po STA: `adr/0032-open-local-portal-and-home-ip.md`.
+
+Katalog LittleFS i lista OLED: `adr/0033-stored-catalog-to-oled.md`.

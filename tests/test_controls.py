@@ -39,3 +39,5 @@ class ControlsTests(unittest.TestCase):
     def test_external_audio_owner_and_rejection(self): self.run_case(7)
 
     def test_home_ip_in_third_row_and_clear(self): self.run_case(8)
+
+    def test_live_catalog_selection_reorder_and_removal(self): self.run_case(9)

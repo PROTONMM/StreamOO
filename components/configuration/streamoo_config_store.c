@@ -13,6 +13,76 @@
 static SemaphoreHandle_t mutex;
 static bool mounted;
 static streamoo_playlist_report_t catalog;
+struct streamoo_catalog_snapshot {
+  unsigned references;
+  streamoo_catalog_view_t view;
+  uint8_t *data;
+  streamoo_station_t *entries;
+};
+static portMUX_TYPE catalog_lock = portMUX_INITIALIZER_UNLOCKED;
+static streamoo_catalog_snapshot_t *active_catalog;
+static uint64_t catalog_generation;
+static streamoo_catalog_snapshot_t *
+snapshot_create(const uint8_t *data, size_t bytes, uint32_t rows) {
+  streamoo_catalog_snapshot_t *s =
+      heap_caps_calloc(1, sizeof *s, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+  if (!s)
+    return NULL;
+  s->references = 1;
+  if (rows) {
+    s->data = heap_caps_malloc(bytes + 1, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+    s->entries = heap_caps_calloc(rows, sizeof *s->entries,
+                                  MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+    if (!s->data || !s->entries)
+      goto failed;
+    memcpy(s->data, data, bytes);
+    s->data[bytes] = 0;
+    size_t count = 0;
+    if (!streamoo_stations_build(s->data, bytes, s->entries, rows, &count) ||
+        count != rows)
+      goto failed;
+    s->view.stations = s->entries;
+    s->view.count = rows;
+  }
+  return s;
+failed:
+  heap_caps_free(s->data);
+  heap_caps_free(s->entries);
+  heap_caps_free(s);
+  return NULL;
+}
+streamoo_catalog_snapshot_t *streamoo_config_catalog_acquire(void) {
+  portENTER_CRITICAL(&catalog_lock);
+  streamoo_catalog_snapshot_t *s = active_catalog;
+  if (s)
+    ++s->references;
+  portEXIT_CRITICAL(&catalog_lock);
+  return s;
+}
+streamoo_catalog_view_t
+streamoo_config_catalog_view(const streamoo_catalog_snapshot_t *s) {
+  return s ? s->view : (streamoo_catalog_view_t){0};
+}
+void streamoo_config_catalog_release(streamoo_catalog_snapshot_t *s) {
+  if (!s)
+    return;
+  portENTER_CRITICAL(&catalog_lock);
+  bool last = --s->references == 0;
+  portEXIT_CRITICAL(&catalog_lock);
+  if (last) {
+    heap_caps_free(s->data);
+    heap_caps_free(s->entries);
+    heap_caps_free(s);
+  }
+}
+static void publish(streamoo_catalog_snapshot_t *s) {
+  portENTER_CRITICAL(&catalog_lock);
+  s->view.generation = ++catalog_generation;
+  streamoo_catalog_snapshot_t *old = active_catalog;
+  active_catalog = s;
+  portEXIT_CRITICAL(&catalog_lock);
+  streamoo_config_catalog_release(old);
+}
 static bool take(void) {
   return mutex && xSemaphoreTake(mutex, pdMS_TO_TICKS(5000)) == pdTRUE;
 }
@@ -77,6 +147,9 @@ esp_err_t streamoo_config_store_init(void) {
     return ESP_ERR_NO_MEM;
   error = mount_storage();
   mounted = error == ESP_OK;
+  streamoo_catalog_snapshot_t *initial = snapshot_create(NULL, 0, 0);
+  if (!initial)
+    return ESP_ERR_NO_MEM;
   if (mounted) {
     FILE *file = fopen("/stations/playlist.csv", "rb");
     if (file) {
@@ -88,16 +161,26 @@ esp_err_t streamoo_config_store_init(void) {
             heap_caps_malloc(size, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
         if (data && fread(data, 1, size, file) == (size_t)size) {
           streamoo_playlist_report_t report = {0};
-          if (streamoo_config_playlist(data, size, false, &report) == ESP_OK)
+          streamoo_playlist_workspace_t *ws = heap_caps_calloc(
+              1, sizeof *ws, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+          size_t normalized = (size_t)size;
+          streamoo_catalog_snapshot_t *loaded = NULL;
+          if (ws && streamoo_playlist_validate(data, &normalized, &report, ws))
+            loaded = snapshot_create(data, normalized, report.rows);
+          heap_caps_free(ws);
+          if (loaded) {
+            streamoo_config_catalog_release(initial);
+            initial = loaded;
             catalog = report;
-          else
-            catalog.error = "stored_catalog_invalid";
+          } else
+            catalog.error = "stored_catalog_invalid_or_memory";
         }
         heap_caps_free(data);
       }
       fclose(file);
     }
   }
+  publish(initial);
   return error;
 }
 bool streamoo_config_wifi_load(streamoo_wifi_profiles_t *out) {
@@ -155,8 +238,14 @@ esp_err_t streamoo_config_playlist(uint8_t *data, size_t bytes, bool commit,
     return ESP_ERR_INVALID_ARG;
   if (!commit)
     return ESP_OK;
-  if (!take())
+  streamoo_catalog_snapshot_t *candidate =
+      snapshot_create(data, bytes, report->rows);
+  if (!candidate)
+    return ESP_ERR_NO_MEM;
+  if (!take()) {
+    streamoo_config_catalog_release(candidate);
     return ESP_ERR_TIMEOUT;
+  }
   esp_err_t error = ESP_FAIL;
   if (mounted) {
     FILE *file = fopen("/stations/playlist.tmp", "wb");
@@ -169,12 +258,15 @@ esp_err_t streamoo_config_playlist(uint8_t *data, size_t bytes, bool commit,
       if (written &&
           rename("/stations/playlist.tmp", "/stations/playlist.csv") == 0) {
         catalog = *report;
+        publish(candidate);
+        candidate = NULL;
         error = ESP_OK;
       } else
         unlink("/stations/playlist.tmp");
     }
   }
   xSemaphoreGive(mutex);
+  streamoo_config_catalog_release(candidate);
   return error;
 }
 bool streamoo_config_playlist_info(streamoo_playlist_report_t *out) {

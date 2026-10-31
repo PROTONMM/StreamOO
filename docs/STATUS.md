@@ -11,9 +11,9 @@ Bieżący punkt wznowienia: [RESUME.md](RESUME.md).
 | 05 encoder | dekoder/IRQ i gesty odebrane; interaktywny adapter odebrany w trybie A; preferencje NVS odebrane; shutdown/flush OPEN | ADR 0013–0017; 99 testów PASS |
 | 06 audio | I2S/gain/PCM stress odebrane; MP3 decode/PCM potwierdzone logiem; AAC-LC PoC odebrane; AAC incremental file decode06f odebrane logiem i odsłuchem; źródło/bufor AAC06g odebrane logiem, odsłuchem i sterowaniem; niezależny reader AAC06h odebrany logiem i odsłuchem; sieć/player OPEN | ADR 0018–0025; 168 testów hostowych PASS; build źródeł PASS |
 | 07 DSP | NIEZAIMPLEMENTOWANE | — |
-| 08 stacje | import/preview/trwały katalog gotowe do odbioru; player/ID OPEN | ADR0031 |
+| 08 stacje | import/preview/trwały katalog i lista OLED gotowe do odbioru; player/edycja ID OPEN | ADR0033 |
 | 09 sieć | AP/STA/IP/AP-off potwierdzone logiem; mDNS OPEN | ADR0031; build PASS |
-| 10 WWW | formularze Wi-Fi/upload bez dodatkowego logowania; odbiór nowego WWW/OLED OPEN | ADR0032; 222 testy PASS; Chromium PASS |
+| 10 WWW | formularze Wi-Fi/upload bez dodatkowego logowania; HOME/IP odebrane; lista z katalogu OPEN | ADR0032; 222 testy PASS; Chromium PASS |
 | 11 storage/OTA | NVS preferencji odebrane; profile NVS/LittleFS katalog gotowe do odbioru; OTA OPEN | ADR0017/0031 |
 | 12 testy końcowe | NIEURUCHOMIONE | — |
 
@@ -1197,3 +1197,20 @@ stream player/katalog OLED nadal przyszłe. ADR0032.
 formularze bez logowania PASS; node --check i native ESP-IDF6.1 build PASS.
 Nie wykonano flash/erase/eFuse. HARDWARE_TEST_PENDING: nowy panel po Ctrl+F5,
 HOME/IP po STA, gesty enkodera, dostęp WWW pod adresem LAN.
+
+## Etap 08a — katalog LittleFS → OLED (2026-10-31)
+
+Użytkownik potwierdził: „nowy ekran działa” — odbiór HOME/IP z 09d zaliczony.
+Nowy komponent stations, deterministyczne ID name/URL/wystąpienie, snapshoty
+PSRAM z referencjami. Startup i commit importu publikują katalog bez blokowania
+UI na flash. Lista OLED używa wgranych nazw, aktualizacja do 1 s bez restartu;
+wybór pokazuje nazwę na HOME, zachowując IP. Pusta lista wskazuje import WWW.
+Brak uruchamiania streamu; nie pokazujemy fikcyjnej wizualizacji audio. ADR0033.
+
+226 testów hostowych PASS; store/controls również ASan/UBSan PASS (LSan off,
+bez TSan). Native ESP-IDF6.1 build PASS. Parser/katalog prywatnego pliku tylko
+w RAM: 267 rekordów/267 różnych ID, reorder stabilny; oryginał bez zmian.
+check_config --platform i diff --check PASS. Nowych zależności zewnętrznych brak.
+Brak flash/erase/eFuse. Odbiór OLED/listy/wyboru/live-import/heap/stosów OPEN.
+Następnie: źródło HTTP/ICY i połączenie wyboru z ownerem playera. Trwałe ID
+przy edycji nazwy/URL oraz zapamiętywanie ostatniego wyboru nadal OPEN.
