@@ -363,3 +363,16 @@ udających test callbackaSDK; handshakeS3 nadalOPEN. Teraz user zwykłyflash
 bez erase/reimportu, sprawdzić RNŚAAC+ i poprzedniąFLACfixADR0056.
 WeryfikacjaFLACS3 też nadalOPEN. Nie twierdzić żeAACdekoderodebrany:
 tenlogdotyczyłwyłącznieTLS. Bez flash/erase/eFuse przez agenta.
+
+Najnowsze ADR0058: FLAC po bootstrap ruszył, potem przerywał. Logparsera
+maxframe20480, neededPCM82944>65536; HTTP200/pełnycompressed, nie brak
+sieci. Host3MiB/179pakietów:24bitstereo44100,4608próbek/frame,max25839B.
+Ustawiono maxframesize bootstrap128KiB (limit obsługi, nie pomiar całego
+strumienia), PCM scratch128KiB PSRAM. Nie zostawiamy0, bo SDK wybiera20KiB.
+I2S/ring/gain/playlist/partycje bez zmian, bezreallocwdecode.
+357testów, header/liveASanUBsan, FFmpegoracle noise24bit>20KiB/frame,
+dużyPCM82944 regression i nativebuild PASS0x176810,90%wolne.
+Teraz zwykłyflash i ten samFLACkilkaminut/zmianautworu; oczekiwanylog
+max_frame131072. OdbiórS3/heapOPEN, brakflash/erase/eFuseprzezagenta.
+RNŚTLSfixADR0057 nadal osobno do potwierdzenia. ImportROOTCA przyszłość,
+OTA wyłączone. FFT/RMS/wyglądWWW odłożone.

@@ -89,3 +89,23 @@ const uint8_t valid[]={255,248,89,172,247,190,157,155,0};assert(streamoo_flac_he
   # Joining a live stream after frame0 must retain only the remaining samples.
   skip=int(packets[0]['duration'])*4
   self.assertEqual(decode(original)[skip:],decode(repaired))
+ def test_high_entropy_24bit_stereo_exceeds_old_parser_window(self):
+  import json,random
+  if not shutil.which('ffmpeg') or not shutil.which('ffprobe'):self.skipTest('FFmpeg oracle needed')
+  base=Path(self.tmp.name);raw=base/'noise.s24le';original=base/'noise.flac'
+  raw.write_bytes(random.Random(704).randbytes(4608*2*3*4))
+  subprocess.run(['ffmpeg','-v','error','-f','s24le','-ar','44100','-ac','2','-i',str(raw),'-c:a','flac','-y',str(original)],check=True)
+  packets=json.loads(subprocess.check_output(['ffprobe','-v','error','-show_packets','-of','json',str(original)]))['packets']
+  largest=max(int(p['size']) for p in packets)
+  self.assertGreater(largest,20480)
+  data=original.read_bytes();at=4
+  while True:
+   last=data[at]&128;size=int.from_bytes(data[at+1:at+4],'big');at+=4+size
+   if last:break
+  frames=data[at:];status,info,_=self.parse(frames[:16],131072)
+  self.assertEqual(status,2)
+  self.assertGreaterEqual(int.from_bytes(info[15:18],'big'),largest)
+  self.assertLessEqual(int.from_bytes(info[15:18],'big'),131072)
+  repaired=base/'noise-repaired.flac';repaired.write_bytes(info+frames)
+  def decode(path):return subprocess.check_output(['ffmpeg','-v','error','-i',str(path),'-f','s32le','-'])
+  self.assertEqual(decode(original),decode(repaired))

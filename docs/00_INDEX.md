@@ -137,3 +137,5 @@ Duża factory, bez OTA: `adr/0055-single-large-app-without-ota.md`, `LARGE_FLASH
 Live FLAC bez nagłówka pliku: `adr/0056-headerless-live-flac.md`.
 
 TLS cross-signed RNŚ: `adr/0057-cross-signed-tls-chains.md`.
+
+Większe ramki live FLAC: `adr/0058-live-flac-parser-window.md`.

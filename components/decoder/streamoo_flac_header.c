@@ -57,9 +57,15 @@ streamoo_flac_header_result_t streamoo_flac_header(const uint8_t *p,size_t n,
     if(max_block>65535)max_block=65535;
     out[8]=(uint8_t)(min_block>>8);out[9]=(uint8_t)min_block;
     out[10]=(uint8_t)(max_block>>8);out[11]=(uint8_t)max_block;
+    /* Zero makes Espressif2.6.2 choose a20KiB parser window, too small for
+     * live24-bit stereo. Declare our supported upper bound, not a measured
+     * frame length or a bitrate estimate. Larger frames remain unsupported. */
+    out[15]=(uint8_t)(STREAMOO_FLAC_MAX_FRAME_BYTES>>16);
+    out[16]=(uint8_t)(STREAMOO_FLAC_MAX_FRAME_BYTES>>8);
+    out[17]=(uint8_t)STREAMOO_FLAC_MAX_FRAME_BYTES;
     uint64_t info=((uint64_t)rate<<44)|((uint64_t)(channels-1)<<41)|((uint64_t)(bits-1)<<36);
     for(unsigned i=0;i<8;++i)out[18+i]=(uint8_t)(info>>(56-8*i));
-    /* Unknown frame byte sizes, sample count and MD5 are zero, per STREAMINFO. */
+    /* Unknown minimum frame size, sample count and MD5 stay zero. */
     *header_bytes=length;
     return STREAMOO_FLAC_FRAME;
 }

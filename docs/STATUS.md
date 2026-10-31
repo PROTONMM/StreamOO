@@ -1677,3 +1677,19 @@ Końcowy build ADR0057 obejmuje HAVE_TIME_DATE=y; generated sdkconfig.h
 potwierdza oba nowe flagi i TRUSTED_CERT_CALLBACK. Object bundle zawiera
 CAcallback, object X509 odwołuje się do time()/porównania dat. To kontrola
 kompilacji, nie wynik handshake radia.
+
+## Przerwy live FLAC — ADR0058 (2026-10-31)
+
+Log użytkownika: działa44,1kHz/stereo24, potem parser Not found frame
+w20480B i vendor-8/needed82944, restart. Compressed niemal pełny, PCM32,
+invalid0. Pomiar3MiB host:179 pakietów/4608 próbek, max25839B. Bootstrap
+maxframesize0 dawał zbyt mały fallback SDK. Teraz jawne okno128KiB i
+PCM scratch128KiB PSRAM, stałe limity; I2S/ring/gain/DSP/lista bez zmian.
+
+357 testów PASS; header/live ASan/UBSan PASS (LSan off). Nowy regression:
+oryginalny szum24bit FLAC>20KiB/frame z identycznym PCM w oracle FFmpeg;
+duży pakiet PCM82944B w rzeczywistym live adapterze. Native build PASS
+0x176810, wolne0xd797f0/90%; GPIO i diff PASS. Logi /tmp/streamoo-flac-window-*.log,
+pomiar /tmp/streamoo-flac-frame-probe.log. Bez flash/erase/eFuse.
+Odbiór poprawki S3 OPEN: zwykły flash, kilka minut i zmiana utworu,
+parser ma logować max_frame131072. ROOT CA import w przyszłości, OTA brak.

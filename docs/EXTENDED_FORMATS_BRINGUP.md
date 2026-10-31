@@ -79,3 +79,9 @@ Root R4 już jest w pełnym bundle. Włączono natywne cross-signed verify
 ESP-IDF. Bez nowych CA, wyłączania walidacji lub zmiany URL. Po zwykłym
 flash sprawdź ten sam RNŚAAC+ i log Certificate validated/HTTP/PCM. Nie
 trzeba importować stacji ponownie. Odbiór handshake/dekodera S3 OPEN.
+
+ADR0058: po starcie FLAC występowały przerwy — parser miał fallback20KiB,
+a zmierzone ramki24-bit stereo dochodzą do25839B. Teraz okno parsera
+bootstrap128KiB i PCM128KiB PSRAM. Po zwykłym flash sprawdzić kilka minut,
+w tym zmianę utworu; parser powinien pokazać max_frame131072. Wcześniejsze
+opisy scratch64KiB w tej instrukcji zastępuje nowy limit128KiB.

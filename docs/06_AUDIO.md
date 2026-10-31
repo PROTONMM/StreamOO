@@ -146,3 +146,7 @@ ADR0056: native live FLAC bez nagłówka pliku wymaga adaptera STREAMINFO;
 sprawdzony header/CRC8 dostarcza parametry, potem oryginalny parser/decoder.
 Pierwszy build06k obsługiwał tylko strumienie z nagłówkiem fLaC. Poprawka
 ma testy hostowe i oracle FFmpeg, odbiór na S3 OPEN. RNŚAAC+ osobno OPEN.
+
+ADR0058: live FLAC24-bit przekraczał domyślne okno parsera20KiB. Bootstrap
+maxframe teraz128KiB, live PCM scratch128KiB PSRAM zamiast64KiB. To limity
+implementacji, nie deklaracja pomiaru całego strumienia; odbiór S3 OPEN.

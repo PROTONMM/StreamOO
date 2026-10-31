@@ -19,7 +19,7 @@ typedef struct {
   void *context;
   streamoo_stream_decode_fn decode;
   uint8_t input[257];
-  _Alignas(int32_t) uint8_t pcm[65536];
+  _Alignas(int32_t) uint8_t pcm[131072];
   size_t pending, input_cursor, pcm_bytes, pcm_cursor, assembled;
   streamoo_pcm_format_t format, observed;
   int32_t codec_status;
