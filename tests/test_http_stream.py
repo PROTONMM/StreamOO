@@ -64,6 +64,8 @@ long long esp_http_client_fetch_headers(void *h){(void)h;
  if((mode==2||mode==3||mode==10||mode==14)&&!redirected)header("Location",mode==10?"http://user:key@radio.invalid":mode==3?"http://radio.invalid":"https://radio.invalid");
  if(mode==37&&strstr(selected_url,"?lsid=first"))header("Location","?lsid=keep%2Ftoken&x=1");
  if((mode==38||mode==39)&&strstr(selected_url,"segment1")&&!strstr(selected_url,"token="))header("Location",mode==39?"http://radio.invalid/signed/segment1.mp3?token=x":"../signed/segment1.mp3?token=x%2Fy");
+ if(mode==44&&strstr(selected_url,"segment"))header("icy-br","999");
+ if(mode==28&&strstr(selected_url,"segment"))header("icy-br","192");
  if(mode>=27){header("Content-Type",strstr(selected_url,"segment")?"application/octet-stream":"application/vnd.apple.mpegurl");return 0;}
  if(mode>=15){
   const char *type=mode==15?"audio/flac":mode==16||mode==17?"audio/ogg":mode==18||mode==26?"application/octet-stream":resolved&&mode!=21?"audio/mpeg":mode==20?"audio/x-scpls":"audio/x-mpegurl";
@@ -112,6 +114,7 @@ static void hls_wire(const char *url){
  }
  else if(mode==31)doc="#EXTM3U\n#EXT-X-TARGETDURATION:1\n#EXTINF:1,\nsegment1.aac\n#EXT-X-DISCONTINUITY\n#EXTINF:1,\nsegment2.aac\n#EXT-X-ENDLIST\n";
  else doc="#EXTM3U\n#EXT-X-TARGETDURATION:1\n#EXTINF:1,\nsegment1.aac\n#EXTINF:1,\nsegment2.aac\n#EXT-X-ENDLIST\n";
+ if(mode==43&&!strstr(url,"media"))doc="#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=128000,AVERAGE-BANDWIDTH=112000\nmedia.m3u8?lsid=keep%2Ftoken&x=1\n";
  strcpy((char *)wire,doc);wire_bytes=strlen(doc);
 }
 int esp_http_client_set_url(void *h,const char *url){(void)h;if(mode==41||mode==42)return ESP_ERR_NO_MEM;strcpy(selected_url,url);++resolved;cursor=0;
@@ -142,7 +145,7 @@ int main(int argc,char **argv){assert(argc==2);mode=atoi(argv[1]);
  if(!setjmp(completed))reader(reader_context);
  assert(cleaned==1&&!sdk_get_urls);if(mode==8)assert(opened==1);
  streamoo_http_stream_info_t info;assert(streamoo_http_stream_info(stream,&info)&&info.ended);
- assert(info.bitrate_kbps==(mode==12?192u:0u));
+ assert(info.bitrate_kbps==((mode==12||mode==28)?192u:mode==43?112u:mode==27||(mode>=36&&mode<=39)||mode==41||mode==44?128u:mode==33?64u:0u));
  if(mode==41||mode==42){assert(info.error==ESP_ERR_NO_MEM&&!strcmp(info.reason,"set_url_failed")&&!strcmp(info.stage,"set_url")&&!strcmp(info.resource,mode==41?"hls_manifest":"playlist"));streamoo_http_stream_stop(stream);assert(streamoo_http_stream_dispose(stream)&&!semaphores&&!allocations);return 0;}
  if(mode==40){assert(info.ended&&info.error==ESP_FAIL&&!strcmp(info.stage,"open")&&!strcmp(info.reason,"http_open")&&info.http_status==0&&info.socket_errno==104&&info.tls_code==-0x3000&&info.tls_flags==8&&info.tls_error==ESP_FAIL);streamoo_http_stream_stop(stream);assert(streamoo_http_stream_dispose(stream)&&!semaphores&&!allocations);return 0;}
  if(mode>=36){
@@ -230,4 +233,8 @@ class HTTPStreamTests(unittest.TestCase):
 
  def test_sdk_set_url_error_is_not_overwritten_for_hls_or_m3u(self):
   for mode in (41,42):
+   with self.subTest(mode=mode):self.run_case(mode)
+
+ def test_hls_declared_bitrate_persists_across_reloads_and_segment_headers(self):
+  for mode in (43,44):
    with self.subTest(mode=mode):self.run_case(mode)

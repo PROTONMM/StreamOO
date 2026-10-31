@@ -9,7 +9,7 @@ typedef struct {
   int http_status;
   uint32_t reader_stack_hwm;
   uint32_t
-      bitrate_kbps; /* Server-declared icy-br,0=unknown; not measured VBR. */
+      bitrate_kbps; /* icy-br or selected HLS variant declaration;0=unknown, not measured VBR. */
   uint32_t metadata_revision;
   char title[257];
   /* Reader-owned diagnostic snapshot; no URLs, headers with secrets or

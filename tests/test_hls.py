@@ -7,7 +7,7 @@ ROOT=Path(__file__).resolve().parents[1]
 class Segment(C.Structure):
  _fields_=[('url',C.c_char*2049),('discontinuity',C.c_bool)]
 class Manifest(C.Structure):
- _fields_=[('sequence',C.c_uint64),('target_s',C.c_uint32),('count',C.c_uint32),('endlist',C.c_bool),('variant',C.c_char*2049),('segments',Segment*32)]
+ _fields_=[('sequence',C.c_uint64),('target_s',C.c_uint32),('count',C.c_uint32),('endlist',C.c_bool),('variant',C.c_char*2049),('segments',Segment*32),('bitrate_bps',C.c_uint32)]
 class HLSTests(unittest.TestCase):
  @classmethod
  def setUpClass(cls):
@@ -23,7 +23,7 @@ class HLSTests(unittest.TestCase):
   self.assertEqual((result,m.sequence,m.target_s,m.count,m.endlist),(0,99,6,2,True));self.assertEqual(m.segments[0].url,b'https://radio.invalid/hls/a.aac?token=x');self.assertEqual(m.segments[1].url,b'https://radio.invalid/b.ts');self.assertTrue(m.segments[1].discontinuity)
  def test_master_selects_audio_lowest_bitrate(self):
   result,m=self.parse('#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=1000000,RESOLUTION=1280x720,CODECS="avc1.42,mp4a.40.2"\nvideo.m3u8\n#EXT-X-STREAM-INF:BANDWIDTH=128000,CODECS="mp4a.40.2"\nhi.m3u8\n#EXT-X-STREAM-INF:BANDWIDTH=64000,CODECS="mp4a.40.5"\nlow.m3u8\n')
-  self.assertEqual(result,1);self.assertEqual(m.variant,b'https://radio.invalid/hls/low.m3u8')
+  self.assertEqual(result,1);self.assertEqual(m.variant,b'https://radio.invalid/hls/low.m3u8');self.assertEqual(m.bitrate_bps,64000)
  def test_master_alternate_audio_overrides_video(self):
   result,m=self.parse('#EXTM3U\n#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",NAME="PL",DEFAULT=YES,URI="polish.m3u8"\n#EXT-X-STREAM-INF:BANDWIDTH=128000,CODECS="mp4a.40.2"\nother.m3u8\n')
   self.assertEqual(result,1);self.assertTrue(m.variant.endswith(b'/polish.m3u8'))
@@ -51,3 +51,15 @@ int main(void){char *p=malloc(16386);streamoo_hls_manifest_t *m=malloc(sizeof *m
  free(m);free(p);return 0;}''')
   subprocess.run(['cc','-std=c11','-Wall','-Wextra','-Werror',*os.environ.get('STREAMOO_HLS_SANITIZE','').split(),'-Icomponents/streaming/include',str(src),'components/streaming/streamoo_hls.c','components/streaming/streamoo_playlist_resolver.c','-o',str(binary)],cwd=ROOT,check=True)
   subprocess.run([str(binary)],check=True,timeout=20)
+
+ def test_selected_variant_average_and_invalid_average_fallback(self):
+  for average,expected in [('96000',96000),('0',128000),('-1',128000),('129000',128000),('99999999999999999999999999',128000),('64.5',128000)]:
+   with self.subTest(average=average):
+    result,m=self.parse('#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=128000,AVERAGE-BANDWIDTH='+average+'\naudio.m3u8\n')
+    self.assertEqual((result,m.bitrate_bps),(1,expected))
+ def test_audio_rendition_has_no_unrelated_variant_bitrate(self):
+  audio='#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="a",NAME="PL",DEFAULT=YES,URI="pl.m3u8"\n'
+  variant='#EXT-X-STREAM-INF:BANDWIDTH=128000\nother.m3u8\n'
+  for body in (audio+variant,variant+audio):
+   with self.subTest(body=body):
+    result,m=self.parse('#EXTM3U\n'+body);self.assertEqual((result,m.bitrate_bps),(1,0));self.assertTrue(m.variant.endswith(b'/pl.m3u8'))

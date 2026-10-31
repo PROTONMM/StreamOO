@@ -68,7 +68,7 @@ streamoo_hls_result_t streamoo_hls_parse(char *doc, size_t bytes,
   size_t at = bytes >= 3 && !memcmp(doc, "\xef\xbb\xbf", 3) ? 3 : 0;
   bool first = true, pending = false, variant = false, allow_variant = false,
        discontinuity = false, sequence_seen = false;
-  uint64_t best_bandwidth = UINT64_MAX, bandwidth = 0;
+  uint64_t best_bandwidth = UINT64_MAX, bandwidth = 0, declared_bitrate = 0;
   while (at < bytes) {
     char *line = doc + at;
     while (at < bytes && doc[at] != '\r' && doc[at] != '\n')
@@ -92,7 +92,8 @@ streamoo_hls_result_t streamoo_hls_parse(char *doc, size_t bytes,
                !strncmp(line, "#EXT-X-BYTERANGE:", 17) ||
                !strncmp(line, "#EXT-X-SESSION-KEY:", 19) ||
                !strncmp(line, "#EXT-X-PART:", 12) ||
-               !strcmp(line, "#EXT-X-I-FRAMES-ONLY") || !strcmp(line, "#EXT-X-GAP"))
+               !strcmp(line, "#EXT-X-I-FRAMES-ONLY") ||
+               !strcmp(line, "#EXT-X-GAP"))
       return STREAMOO_HLS_UNSUPPORTED;
     else if (!strncmp(line, "#EXT-X-TARGETDURATION:", 22)) {
       uint64_t n;
@@ -118,6 +119,7 @@ streamoo_hls_result_t streamoo_hls_parse(char *doc, size_t bytes,
           if (!streamoo_url_resolve(base, uri, m->variant))
             return STREAMOO_HLS_INVALID;
           best_bandwidth = 0;
+          m->bitrate_bps = 0; /* Rendition has no own bandwidth declaration. */
         }
       }
     } else if (!strncmp(line, "#EXT-X-STREAM-INF:", 18)) {
@@ -127,6 +129,12 @@ streamoo_hls_result_t streamoo_hls_parse(char *doc, size_t bytes,
       allow_variant = attribute(line + 18, "BANDWIDTH", text, sizeof text) &&
                       number(text, &n) && n > 0 && n <= 512000;
       bandwidth = allow_variant ? n : UINT64_MAX;
+      declared_bitrate = allow_variant ? n : 0;
+      uint64_t average = 0;
+      if (allow_variant &&
+          attribute(line + 18, "AVERAGE-BANDWIDTH", text, sizeof text) &&
+          number(text, &average) && average > 0 && average <= bandwidth)
+        declared_bitrate = average;
       if (attribute(line + 18, "RESOLUTION", resolution, sizeof resolution))
         allow_variant = false;
       if (attribute(line + 18, "CODECS", text, sizeof text) &&
@@ -161,6 +169,7 @@ streamoo_hls_result_t streamoo_hls_parse(char *doc, size_t bytes,
           if (!streamoo_url_resolve(base, line, m->variant))
             return STREAMOO_HLS_INVALID;
           best_bandwidth = bandwidth;
+          m->bitrate_bps = (uint32_t)declared_bitrate;
         }
         variant = false;
       } else {

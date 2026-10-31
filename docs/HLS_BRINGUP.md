@@ -51,3 +51,9 @@ awarii Reader pokaże dokładny resource/stage/reason, sequence/reload/segments
 oraz errno/TLS. Przy source_eof zachowuje pierwotny błąd HLS zamiast go
 maskować. Po nowym flash zbierać komplet z tą samą generation (instrukcja
 HTTP_PLAYER_BRINGUP). Odbiór queryfixu na S3 i FLAC wciąż osobno OPEN.
+
+ADR0067: wskaźnik bitrate odczytuje wybrany AVERAGE-BANDWIDTH/BANDWIDTH
+z mastera, po konwersji do kb/s, np.128k/64k. Wartość zachowana po reload
+oraz redirect/segmentach; jest deklaracją nadawcy, nie pomiarem VBR. Brak
+atrybutów lub osobny audio rendition bez bitrate i bez icy-br nadal daje --.
+Po zwykłym flash sprawdzić OLED po kilku segmentach; odbiór wizualny OPEN.

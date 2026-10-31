@@ -1,6 +1,23 @@
 # Punkt wznowienia StreamOO
 
 
+## Najnowsze — bitrate HLS / ADR0067 / 2026-10-31
+
+HLS używa bitrate wybranego wariantu: poprawne AVERAGE-BANDWIDTH, inaczej
+BANDWIDTH, bit/s→kb/s. Media reload/segmenty nie zerują deklaracji; oddzielny
+audio rendition bez własnego bitrate nie dziedziczy obcego. Fallback icy-br
+pozostaje możliwy przy braku wartości. Bez wiarygodnej deklaracji nadal --.
+To deklaracja nadawcy (peak/średnia), nie pomiar VBR ani sample rate.
+
+380 host tests i HLS/HTTP ASanUBSan (LSan off), native ESP-IDF6.1 build
+PASS0x17ba90 (90% app), GPIO/diff PASS. Teraz zwykły flash bez erase/importu:
+na HLS128k/64k sprawdzić bitrate OLED także po kilku reload. Odbiór OLED
+OPEN. Diagnostyka/LSIDfix/logo/bufory bez zmian; brak nowych zależności,
+NVS/partycje i prywatne playlisty nietknięte. HLS/FLAC stabilność nadal
+osobno OPEN, ROOT CA/FFT/RMS/WWW odłożone, OTA wyłączone. Agent nie flashował.
+Starsze sekcje są historią.
+
+
 ## Najnowsze — nazwa stacji i diagnostyka błędów / ADR0066 / 2026-10-31
 
 User: HLS64k-heaacv2-stereo też przerywa; log bf6f3367 kończy295413B

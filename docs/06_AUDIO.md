@@ -173,3 +173,9 @@ Oddzielone source_wait/work_yield. Task player mierzy wall time process i
 przygotowania bloku, ring przed/po najwolniejszym wywołaniu oraz rozmiary/
 postęp. Log Decode perf co5s służy do pomiaru S3 przed następną decyzją;
 nie zmienia rozmiaru ring/PCM/prebuffer ani I2S. Stabilność nadal OPEN.
+
+ADR0067 rozszerza źródło bitrate z ADR0049 o wybrany wariant HLS:
+AVERAGE-BANDWIDTH jeśli poprawne, inaczej BANDWIDTH. Wartość deklarowana,
+trwała przez media reload/segmenty, bez estymacji z rate czy napełnienia.
+Istniejące przekazywanie do UI i czyszczenie STOP/retry pozostają. Przy
+braku wiarygodnej deklaracji nadal --. Odbiór OLED po flash OPEN.

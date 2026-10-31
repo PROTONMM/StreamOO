@@ -137,7 +137,7 @@ static esp_err_t header(esp_http_client_event_t *e) {
       }
     }
     portENTER_CRITICAL(&info_lock);
-    s->info.bitrate_kbps = valid && kbps ? kbps : 0;
+    if(!s->hls_active || !s->info.bitrate_kbps)s->info.bitrate_kbps = valid && kbps ? kbps : 0;
     portEXIT_CRITICAL(&info_lock);
   } else if (!strcasecmp(e->header_key, "Content-Type")) {
     portENTER_CRITICAL(&info_lock);
@@ -439,6 +439,11 @@ static esp_err_t hls_run(streamoo_http_stream_t *s,
                      ESP_ERR_NOT_SUPPORTED);
         break;
       }
+      /* Media reloads and segment headers do not redefine the variant's
+       * declaration. A newly selected nested master can replace or clear it. */
+      portENTER_CRITICAL(&info_lock);
+      s->info.bitrate_kbps=(h->manifest.bitrate_bps+500u)/1000u;
+      portEXIT_CRITICAL(&info_lock);
       trace(s, "hls_manifest", NULL);
       error = hls_open(s, client, h->manifest.variant);
       if (error == ESP_OK)
