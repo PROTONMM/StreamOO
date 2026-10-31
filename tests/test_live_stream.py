@@ -34,7 +34,7 @@ static void resample(unsigned rate,unsigned channels){
  assert(output[i*2]==expected);assert(output[i*2+1]==(channels==1?expected:-expected));}
  produced+=240;
  }
- assert(produced==960&&waits);
+ assert(produced==960&&waits&&s.source_waits==waits&&!s.work_yields);
  fake.bad=true;bool failed=false;for(unsigned i=0;i<100;++i)if(streamoo_live_decode_read(&s,output)==STREAMOO_STREAM_FAILED){failed=true;break;}assert(failed);
  assert(streamoo_live_decode_read(&s,output)==STREAMOO_STREAM_FAILED);
  fake_t ended={.rate=48000,.channels=2,.end=true};assert(streamoo_live_decode_init(&s,(streamoo_byte_source_t){&ended,read_source,NULL},&ended,decode));
@@ -120,7 +120,22 @@ static void diagnostic(unsigned fault){
  assert(streamoo_live_decode_init(&s,(streamoo_byte_source_t){&d,diagnostic_source,NULL},&d,diagnostic_decode));
  assert(!s.failed&&s.failure==STREAMOO_LIVE_FAILURE_NONE&&!s.decode_calls&&!s.source_calls&&!s.fetched_total&&!s.last_input);
 }
-int main(int argc,char **argv){assert(argc==2);int mode=atoi(argv[1]);if(mode==301)wide(24,23040);else if(mode==302)wide(32,65535);else if(mode==300)wide(24,13824);else if(mode>=200)wide((unsigned)(mode-200),64);else if(mode>=100)diagnostic(mode-100);else if(mode<3)resample(mode==0?48000:mode==1?44100:22050,mode==2?1:2);else icy(mode-2);return 0;}
+typedef struct{size_t bytes;unsigned reads,packets;} batch_t;
+static streamoo_source_result_t batch_source(void *ctx,uint8_t *p,size_t cap,size_t *n,bool *last){
+ batch_t *b=ctx;assert(cap==4096);++b->reads;memset(p,0,cap);*n=cap;*last=false;return STREAMOO_SOURCE_DATA;
+}
+static esp_err_t batch_decode(void *ctx,uint8_t *p,size_t n,bool eos,uint8_t *out,size_t cap,streamoo_decode_result_t *r){
+ batch_t *b=ctx;(void)p;(void)eos;assert(n==4096&&cap>=960);b->bytes+=n;
+ *r=(streamoo_decode_result_t){.consumed=n};
+ if(b->bytes==98304){b->bytes=0;++b->packets;memset(out,0,960);r->produced=960;r->format=(streamoo_pcm_format_t){48000,2,16};}return ESP_OK;
+}
+static void batched(void){
+ batch_t b={0};streamoo_live_decode_t s;int32_t out[480];assert(streamoo_live_decode_init(&s,(streamoo_byte_source_t){&b,batch_source,NULL},&b,batch_decode));
+ streamoo_stream_result_t r;unsigned waits=0;do{r=streamoo_live_decode_read(&s,out);if(r==STREAMOO_STREAM_WAIT)++waits;}while(r==STREAMOO_STREAM_WAIT&&waits<10);
+ assert(r==STREAMOO_STREAM_READY&&b.packets==2&&b.reads==48&&s.decode_calls==48&&s.fetched_total==196608&&s.source_waits==0&&s.work_yields==2);
+ for(unsigned i=0;i<480;++i)assert(!out[i]);
+}
+int main(int argc,char **argv){assert(argc==2);int mode=atoi(argv[1]);if(mode==400)batched();else if(mode==301)wide(24,23040);else if(mode==302)wide(32,65535);else if(mode==300)wide(24,13824);else if(mode>=200)wide((unsigned)(mode-200),64);else if(mode>=100)diagnostic(mode-100);else if(mode<3)resample(mode==0?48000:mode==1?44100:22050,mode==2?1:2);else icy(mode-2);return 0;}
 '''
 class LiveStreamTests(unittest.TestCase):
  @classmethod
@@ -149,3 +164,6 @@ class LiveStreamTests(unittest.TestCase):
  def test_flac_observed_138240_and_maximum_stereo_32bit_block(self):
   for mode in (301,302):
    with self.subTest(mode=mode):subprocess.run([str(self.binary),str(mode)],check=True)
+
+ def test_production_4k_reads_keep_byte_budget_and_do_not_report_network_wait(self):
+  subprocess.run([str(self.binary),'400'],check=True)

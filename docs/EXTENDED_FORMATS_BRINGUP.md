@@ -101,3 +101,10 @@ Powrót do parsera/STREAMINFO, PCM512KiB, ring przed codec_open oraz zapas
 FLAC przed startem i po wyczerpaniu wejścia. Sprawdzić po zwykłym flash:
 brak raw/CRC logu, brak needed138240, stabilność low/starts i heap przy
 kilku utworach. Compressed nadal256KiB; polepszenie na S3 pozostaje OPEN.
+
+ADR0064: po kolejnym zgłoszeniu przerw input produkcji4KiB i pomiar
+Decode perf. Wgrać standardowo bez erase; po przerwie zebrać2–3 kolejne
+zestawy phase/Decode perf dla tej samej generation. codec_max/block_max
+są w mikrosekundach czasu ściennego; ring_at_max to stan PCM przed/po
+najwolniejszym wywołaniu, src_wait i budget_yield to różne przyczyny WAIT.
+Nie powtarzać importu/ustawień/logo. Poprawa odsłuchu nadal OPEN.

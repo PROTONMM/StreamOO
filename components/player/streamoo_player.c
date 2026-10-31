@@ -109,9 +109,37 @@ bool streamoo_player_set_volume(uint8_t volume) {
   command_t c={.kind=COMMAND_VOLUME,.value=volume};
   return xQueueSend(queue,&c,0)==pdTRUE;
 }
-static esp_err_t decode(void *d, uint8_t *in, size_t n, bool eos, uint8_t *pcm,
-                        size_t cap, streamoo_decode_result_t *r) {
-  return streamoo_decoder_process(d, in, n, eos, pcm, cap, r);
+typedef struct {
+  streamoo_decoder_t *decoder;
+  streamoo_pcm_ring_t *ring;
+  uint64_t codec_calls,codec_us;
+  uint32_t codec_max_us,block_max_us,pcm_before_max,pcm_after_max;
+  size_t pcm_max_bytes,pcm_at_max;
+} decode_profile_t;
+static uint32_t duration_us(int64_t start){
+  int64_t elapsed=esp_timer_get_time()-start;
+  return elapsed<=0?0:elapsed>UINT32_MAX?UINT32_MAX:(uint32_t)elapsed;
+}
+static esp_err_t decode(void *context,uint8_t *in,size_t n,bool eos,uint8_t *pcm,
+                        size_t cap,streamoo_decode_result_t *r){
+  decode_profile_t *p=context;
+  uint32_t before=streamoo_pcm_count(p->ring);int64_t start=esp_timer_get_time();
+  esp_err_t error=streamoo_decoder_process(p->decoder,in,n,eos,pcm,cap,r);
+  uint32_t elapsed=duration_us(start);++p->codec_calls;p->codec_us+=elapsed;
+  if(r->produced>p->pcm_max_bytes)p->pcm_max_bytes=r->produced;
+  if(elapsed>p->codec_max_us){p->codec_max_us=elapsed;p->pcm_before_max=before;
+    p->pcm_after_max=streamoo_pcm_count(p->ring);p->pcm_at_max=r->produced;}
+  return error;
+}
+static void log_decode_profile(const decode_profile_t *p,const streamoo_live_decode_t *s,bool refill){
+  if(!s)return;
+  ESP_LOGI("player","Decode perf: codec_max=%" PRIu32 "us block_max=%" PRIu32
+    "us codec_total=%" PRIu64 "us calls=%" PRIu64 " pcm_at_max=%zu pcm_max=%zu"
+    " ring_at_max=%" PRIu32 "/%" PRIu32 " src_wait=%" PRIu64 " budget_yield=%" PRIu64
+    " reads=%" PRIu64 " fetched=%" PRIu64 " produced=%" PRIu64 " cache=%zu input=%zu refill=%u",
+    p->codec_max_us,p->block_max_us,p->codec_us,p->codec_calls,p->pcm_at_max,p->pcm_max_bytes,
+    p->pcm_before_max,p->pcm_after_max,s->source_waits,s->work_yields,s->source_calls,
+    s->fetched_total,s->produced_total,s->pcm_bytes-s->pcm_cursor,sizeof s->input,(unsigned)refill);
 }
 static void task(void *context) {
   (void)context;
@@ -120,6 +148,7 @@ static void task(void *context) {
   streamoo_http_stream_t *session = NULL;
   streamoo_decoder_t *decoder = NULL;
   streamoo_live_decode_t *pump = NULL;
+  decode_profile_t profile={0};
   streamoo_audio_output_t *output = NULL;
   streamoo_pcm_block_t *storage = NULL, *block = NULL;
   streamoo_metering_t *meter = NULL;
@@ -255,6 +284,7 @@ static void task(void *context) {
         decoder = NULL;
         heap_caps_free(pump);
         pump = NULL;
+        profile=(decode_profile_t){0};
         heap_caps_free(storage);
         storage = NULL;
         heap_caps_free(block);
@@ -297,7 +327,7 @@ static void task(void *context) {
       size_t reserve=streamoo_player_reserve(info.codec==STREAMOO_CODEC_FLAC,info.bitrate_kbps);
       if (!decoder && info.codec_known &&
           (queued >= reserve || (info.ended && queued))) {
-        flac_refill=false;
+        flac_refill=false;profile=(decode_profile_t){0};
         /* Reserve the contiguous DMA/ISR ring before codec allocations can
          * fragment internal RAM. Large decode scratch belongs in PSRAM. */
         failure_stage = "pcm_memory";
@@ -316,9 +346,10 @@ static void task(void *context) {
             if (meter_error != ESP_OK)
               ESP_LOGW("player", "Audio meters disabled: %s", esp_err_to_name(meter_error));
             failure_stage = "pipeline_init";
+            profile.decoder=decoder;profile.ring=&ring;
             if (!streamoo_live_decode_init(pump,
                                            streamoo_http_stream_source(session),
-                                           decoder, decode) ||
+                                           &profile, decode) ||
                 !streamoo_pcm_ring_init(&ring, storage, 32) ||
                 !streamoo_pcm_pipeline_init(&pipeline, &ring, streamoo_metering_tap(meter)))
               current.error = ESP_FAIL;
@@ -342,8 +373,10 @@ static void task(void *context) {
         for (unsigned burst = 0; !flac_refill && burst < 8 && streamoo_pcm_count(&ring) < 32;
              ++burst) {
           failure_stage = "decode";
-          streamoo_stream_result_t r =
-              streamoo_live_decode_read(pump, block->samples);
+          int64_t block_at=esp_timer_get_time();
+          streamoo_stream_result_t r = streamoo_live_decode_read(pump, block->samples);
+          uint32_t block_us=duration_us(block_at);
+          if(block_us>profile.block_max_us)profile.block_max_us=block_us;
           if (r == STREAMOO_STREAM_WAIT){
             if(info.codec==STREAMOO_CODEC_FLAC&&streamoo_pcm_count(&ring)<=STREAMOO_PCM_LOW_BLOCKS&&
                streamoo_http_stream_queued(session)<=1)flac_refill=true;
@@ -403,6 +436,7 @@ static void task(void *context) {
                  pump ? pump->observed.rate : 0,
                  pump ? (unsigned)pump->observed.channels : 0,
                  pump ? (unsigned)pump->observed.bits : 0);
+        log_decode_profile(&profile,pump,flac_refill);
         if (pump)
           ESP_LOGW("player",
                    "Decode diag gen=%" PRIu64
@@ -457,6 +491,7 @@ static void task(void *context) {
                pcm.hard_underflows, pcm.restarts,
                (unsigned)uxTaskGetStackHighWaterMark(NULL),
                (unsigned)reader_hwm);
+      log_decode_profile(&profile,pump,flac_refill);
       if (meter) {
         streamoo_metering_state_t measurement = {0};
         streamoo_metering_state(meter, &measurement);

@@ -1,6 +1,30 @@
 # Punkt wznowienia StreamOO
 
 
+## Bieżący problem — FLAC nadal przerywa / ADR0064 / 2026-10-31
+
+Użytkownik: po ADR0062 nadal źle. Nowy log31..51s: gen2, low5→11/starts5→11,
+PCM0 mimo dodatnich snapshotów compressed35..138KiB; brak decoder/OOM w tym
+fragmencie. Nie przypisywać zrzutów5s dokładnie do chwili niedoboru. FFT0,
+max_fill~90us. Nie oznaczać ADR0062 jako naprawione odsłuchem.
+
+Produkcja: input257B→4096B PSRAM, zachowana obsługa1B/partial. Packet work
+max256calls/około64KiB, osobne source_waits/work_yields. Backend parsera,
+scratch512KiB/ring/PCM/prebuffer bez zmian. Nowa linia Decode perf co5s i
+przy awarii: codec_max/block_max, ring przed/po najwolniejszym decode,
+rozmiar PCM, źródłowe WAIT/yield oraz postęp wejścia/wyjścia i refill.
+To czas ścienny, nie czystyCPU; kod tylko w tasku, bez zmian I2S callbacku.
+
+372 testy hostowe i live/actor ASanUBSan (LSan off) PASS. Shim125000us
+potwierdza wrapper/log/reset; porcje4KiB i rozdzielenie WAIT/yield sprawdzone.
+Native ESP-IDF6.1 build PASS0x17aba0 (90% app), GPIO/diff PASS. Następny
+krok: zwykły flash bez erase/FS/reimport, ten sam FLAC; po przerwach2–3
+kolejne pary phase=.../Decode perf... dla tej samej gen. Odsłuch/stabilność
+nowej wersji i dokładna przyczyna wciąż OPEN, nie obiecywać naprawy na bazie
+host fakes. Agent nie flashował. Logo/ustawienia/HLS bez zmian, ROOT CA i
+strojenie FFT/RMS/WWW odłożone, OTA wyłączone. Starsze sekcje są historią.
+
+
 ## Bieżące — 2026-10-31 / FLAC recovery ADR0062 i logo ADR0063
 
 Użytkownik: po ADR0061 gra gorzej. Log bca642b2: memory/NO_MEM,

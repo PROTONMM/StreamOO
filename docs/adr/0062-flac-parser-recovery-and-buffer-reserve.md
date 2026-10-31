@@ -1,6 +1,10 @@
 # ADR0062 — wycofanie raw FLAC, pełny PCM i zapas danych sieciowych
 
-Data:2026-10-31. Status: host/build PASS, poprawa odsłuchu S3 OPEN.
+Data:2026-10-31. Status: host/build PASS, odsłuch S3 nadal nieprawidłowy.
+
+Kolejny log gen2 potwierdza niedobory PCM bez widocznego błędu kodeka/pamięci
+w tym fragmencie. Kontynuacja pomiarowa w ADR0064; nie uznawać tej zmiany
+za zakończenie naprawy FLAC.
 
 Użytkownik potwierdził pogorszenie po ADR0061. Log bca642b2: wielokrotne
 stage=memory/ESP_ERR_NO_MEM przy starcie, później raw single-frame stream

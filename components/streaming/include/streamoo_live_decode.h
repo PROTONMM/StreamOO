@@ -18,13 +18,14 @@ typedef struct {
   streamoo_byte_source_t source;
   void *context;
   streamoo_stream_decode_fn decode;
-  uint8_t input[257];
+  uint8_t input[4096]; /* Production batches; sources may still return1 byte. */
   _Alignas(int32_t) uint8_t pcm[524288];
   size_t pending, input_cursor, pcm_bytes, pcm_cursor, assembled;
   streamoo_pcm_format_t format, observed;
   int32_t codec_status;
   esp_err_t decoder_error;
   streamoo_live_failure_t failure;
+  uint64_t source_waits, work_yields;
   uint64_t source_calls, decode_calls, fetched_total, consumed_total,
       produced_total;
   size_t last_input, last_consumed, last_produced, last_needed;

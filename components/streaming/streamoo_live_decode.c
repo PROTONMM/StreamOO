@@ -40,7 +40,8 @@ bool streamoo_live_decode_init(streamoo_live_decode_t *s,
   return true;
 }
 static streamoo_stream_result_t packet(streamoo_live_decode_t *s) {
-  for (unsigned work = 0; work < 256; ++work) {
+  size_t work_bytes=0;
+  for (unsigned work = 0; work < 256 && work_bytes < 65536; ++work) {
     if (!s->pending) {
       if (s->eof)
         return failure(s, STREAMOO_LIVE_SOURCE_EOF);
@@ -51,8 +52,9 @@ static streamoo_stream_result_t packet(streamoo_live_decode_t *s) {
                                                   sizeof s->input, &n, &last);
       if (r != STREAMOO_SOURCE_DATA && (n || last))
         return failure(s, STREAMOO_LIVE_SOURCE_CONTRACT);
-      if (r == STREAMOO_SOURCE_WAIT)
-        return STREAMOO_STREAM_WAIT;
+      if (r == STREAMOO_SOURCE_WAIT){
+        ++s->source_waits;return STREAMOO_STREAM_WAIT;
+      }
       if (r == STREAMOO_SOURCE_END)
         return failure(s, STREAMOO_LIVE_SOURCE_EOF);
       if (r == STREAMOO_SOURCE_ERROR)
@@ -82,6 +84,7 @@ static streamoo_stream_result_t packet(streamoo_live_decode_t *s) {
       return failure(s, STREAMOO_LIVE_DECODER_BOUNDS);
     if (!r.consumed && !r.produced)
       return failure(s, STREAMOO_LIVE_DECODER_NO_PROGRESS);
+    work_bytes+=r.consumed;
     s->consumed_total += r.consumed;
     s->produced_total += r.produced;
     s->pending -= r.consumed;
@@ -100,6 +103,7 @@ static streamoo_stream_result_t packet(streamoo_live_decode_t *s) {
       return STREAMOO_STREAM_READY;
     }
   }
+  ++s->work_yields;
   return STREAMOO_STREAM_WAIT;
 }
 static streamoo_stream_result_t sample(streamoo_live_decode_t *s,

@@ -166,3 +166,10 @@ PCM scratch512KiB PSRAM, ring internal przed codec_open. FLAC preroll/refill
 ~500ms według icy-br, fallback64KiB/clamp32..192KiB, bez restartu sesji.
 Log sprzętowy poprzedniego eksperymentu wykazał regresję; poprawa odsłuchu
 nowego wariantu nadal OPEN. Większy scratch nie deklaruje nieograniczonego FLAC.
+
+ADR0064: odsłuch nadal nieprawidłowy po ADR0062. Produkcyjne wejście dekodera
+4096B zamiast257B, zachowane partial/WAIT i limit pracy około64KiB/256calls.
+Oddzielone source_wait/work_yield. Task player mierzy wall time process i
+przygotowania bloku, ring przed/po najwolniejszym wywołaniu oraz rozmiary/
+postęp. Log Decode perf co5s służy do pomiaru S3 przed następną decyzją;
+nie zmienia rozmiaru ring/PCM/prebuffer ani I2S. Stabilność nadal OPEN.
