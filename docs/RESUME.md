@@ -189,3 +189,5 @@ zachowane duplikaty/order/ovol. CLI wymaga ffprobe (lokalnie6.1.1),
 bez importu GPL do firmware.314 testów i incremental build PASS;
 realne lokalne HTTP MP3/AAC/404 PASS. Prywatnych267 stacji nie odpytano.
 Instrukcja PLAYLIST_PROBE.md. Firmware nie zmieniony, nie trzeba flashować.
+
+Najnowsza drobna poprawka ADR0046: RSSI o6px w lewo i węższa ikona Wi-Fi, odstęp od wizualizacji. Native build PASS, nowy widok do odbioru OLED. Audio/FFT bez zmian.

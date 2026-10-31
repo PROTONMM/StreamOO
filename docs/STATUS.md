@@ -1433,3 +1433,12 @@ MP3 128kb/s, AAC-LC około73.5kb/s,404 rozpoznane. Native incremental build
 PASS, firmware bez zmian. diff --check PASS; brak flash/erase/eFuse.
 Nie odpytano prywatnej playlisty; wyniki dostępności OPEN. Instrukcja
 PLAYLIST_PROBE.md. Host ACTIVE nie gwarantuje obsługi kodeka przez firmware.
+
+## HOME — odstęp RSSI (2026-10-31)
+
+ADR0046: RSSI przesunięte6px w lewo, ikona zwężona, odstęp przed wizualizacją.
+Również -127 mieści się bez kolizji. Golden frames zaktualizowane po
+sprawdzeniu podglądu; różnice tylko w lewym dolnym panelu. Native build
+PASS (0x15f690,6% wolne), bez flash/erase/eFuse. Odbiór OLED OPEN.
+
+Pełne314 testów hostowych PASS, diff --check PASS.

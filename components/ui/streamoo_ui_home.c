@@ -116,19 +116,19 @@ static bool info_panel(streamoo_canvas_t *c, const streamoo_home_snapshot_t *s)
         bars = 1 + (s->rssi_dbm >= -80) + (s->rssi_dbm >= -70) + (s->rssi_dbm >= -60);
     for (unsigned i = 0; i < 4; ++i) {
         const int16_t h = (i + 1) * 3;
-        streamoo_canvas_fill(c, (streamoo_rect_t){2 + i * 4, 64 - h, 3, h}, i < bars ? 12 : 3);
+        streamoo_canvas_fill(c, (streamoo_rect_t){1 + i * 3, 64 - h, 2, h}, i < bars ? 12 : 3);
     }
     uint8_t rssi[4] = {'O', 'F', 'F'};
     bytes = 3;
     if (!s->wifi_connected) {
-        streamoo_canvas_line(c, 1, 51, 17, 63, 10);
-        streamoo_canvas_line(c, 17, 51, 1, 63, 10);
+        streamoo_canvas_line(c, 1, 51, 11, 63, 10);
+        streamoo_canvas_line(c, 11, 51, 1, 63, 10);
     } else if (s->rssi_valid) {
         bytes = 0;
         if (s->rssi_dbm < 0) rssi[bytes++] = '-';
         bytes += decimal(rssi + bytes, s->rssi_dbm < 0 ? -s->rssi_dbm : s->rssi_dbm);
     } else { rssi[0] = '?'; bytes = 1; }
-    return small(c, (streamoo_rect_t){20, 56, 24, 8}, rssi, bytes, STREAMOO_TEXT_RIGHT, 0, 10);
+    return small(c, (streamoo_rect_t){14, 56, 24, 8}, rssi, bytes, STREAMOO_TEXT_RIGHT, 0, 10);
 }
 
 static void two_digits(uint8_t *out, unsigned value)

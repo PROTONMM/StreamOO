@@ -113,3 +113,5 @@ Korekta DC i opadanie FFT07f: `adr/0043-spectrum-leakage-and-release.md`.
 Rzeczywisty kodek i Wi-Fi RSSI w HOME: `adr/0044-live-codec-and-wifi-info.md`.
 
 Sprawdzanie playlisty/kodeków na komputerze: `PLAYLIST_PROBE.md`, `adr/0045-host-playlist-stream-probe.md`.
+
+Odstęp RSSI od wizualizacji: `adr/0046-rssi-visualization-spacing.md`.
