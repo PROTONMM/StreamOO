@@ -10,7 +10,7 @@ Bieżący punkt wznowienia: [RESUME.md](RESUME.md).
 | 04 UI/SSD1322 | HOME i lista odebrane na OLED; końcowe strojenie fontu OPEN | ADR 0012; odbiór użytkownika |
 | 05 encoder | dekoder/IRQ i gesty odebrane; interaktywny adapter odebrany w trybie A; preferencje NVS odebrane; shutdown/flush OPEN | ADR 0013–0017; 99 testów PASS |
 | 06 audio | I2S/gain/PCM stress odebrane; MP3 decode/PCM potwierdzone logiem; AAC-LC PoC odebrane; AAC incremental file decode06f odebrane logiem i odsłuchem; źródło/bufor AAC06g odebrane logiem, odsłuchem i sterowaniem; niezależny reader AAC06h odebrany; player06i: kilka stacji i 44,1/48kHz odebrane; rozszerzone testy OPEN | ADR0018–0025/0034–0035; 248 testów hostowych PASS; build PASS |
-| 07 DSP | NIEZAIMPLEMENTOWANE | — |
+| 07 DSP | 07a: niezależny analizator RMS/peak stereo; task/widżety/FFT OPEN | ADR0037; testy referencyjne i rzeczywisty tap PCM |
 | 08 stacje | lista z katalogu i wybór odebrane; import live/reboot i edycja ID OPEN | ADR0033 |
 | 09 sieć | AP/STA/IP/AP-off potwierdzone logiem; mDNS OPEN | ADR0031; build PASS |
 | 10 WWW | formularze Wi-Fi/upload bez dodatkowego logowania; HOME/IP odebrane; lista z katalogu OPEN | ADR0032; 222 testy PASS; Chromium PASS |
@@ -1292,3 +1292,24 @@ więc22,05kHz nie jest wykluczone. W gen13/14/20 stage=http_end/cause=none,
 HTTP0/decoder0/vendor0/format0: timeout transportu/nagłówków przed dekoderem.
 Nie dowodzi to przyczyny starego gen7 ani awarii HTTPS. Widoczne także
 dwa błędy ramki MP3, po których jest PLAYING48000. Dalszy soak nadal OPEN.
+
+## Odbiór09e i etap07a — fundament pomiarów stereo (2026-10-31)
+
+Użytkownik po c5cd59c: „jest dobrze, idziemy dalej”. Zmiana STA-first i
+wiersz IP/VOL zaakceptowane; osobne pomiary czasu RF i scenariuszy wszystkich
+niedostępnych sieci nie wynikają z tego krótkiego potwierdzenia.
+
+Własny komponent levels: RMS i peak L/R z signed32 stereo48kHz, przed gain.
+Okna bez nakładania, domyślnie1920 ramek/40ms. Q15 z jawną kwantyzacją,
+sumy64bit, brak przepełnienia na ujemnej pełnej skali. Luki/duplikaty
+sekwencji kasują niepełne okno i unieważniają stary wynik. Brak alokacji,
+I/O, zależności zewnętrznych, RTOS i zmian callbacku I2S. ADR0037.
+
+To fundament obliczeń, jeszcze bez zadania analizy i publikowania do OLED.
+FFT/smoothing/peak-hold, mapowanie dB/VU i pomiary CPU pozostają OPEN.
+Nowego firmware nie trzeba wgrywać dla tego kroku — obraz UI bez zmian.
+
+Weryfikacja07a:275 testów hostowych PASS;9 testów levels także ASan/UBSan
+PASS (LSan off). Native ESP-IDF6.1 build PASS; levels skompilowany dla S3,
+nieużywany kod usuwany przez linker, obraz nadal0x15b530 (7% wolne).
+check_config --platform i diff --check PASS. Bez flash/erase/eFuse.

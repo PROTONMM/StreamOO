@@ -1,6 +1,6 @@
 # Punkt wznowienia StreamOO
 
-Aktualizacja: **2026-10-31, 09e — STA przed AP i nowy wiersz IP/VOL gotowe do odbioru**.
+Aktualizacja: **2026-10-31, 07a — rdzeń RMS/peak gotowy; użytkownik zaakceptował09e**.
 Gałąź feature/streamoo-implementation. ADR0034–0035, STATUS i HTTP_PLAYER_BRINGUP.
 
 ## Potwierdzone przez użytkownika
@@ -65,9 +65,13 @@ naprawy na domysł i bez zmiany formatu/resamplera/ISR. UART po komendzie fade,
 100ms liczone od aktualnego czasu. 15 wektorów błędów i formatowanie logów rzeczywistego kodu actor
 sprawdzone na hoście. ADR0035. Brak nowych zależności i nowych alokacji.
 
-Teraz odbiór09e według NETWORK_BRINGUP: zapisane STA bez AP, fallback dopiero
-po całej liście; IP przyciemnione po lewej oraz jasne VOL/belka. ADR0036.
-266 testów i native build PASS (0x15b530, 7% wolne). Bez flash/erase/eFuse.
+Użytkownik zaakceptował09e: „jest dobrze”. Nie wymaga powtarzania zwykłego
+odbioru IP/VOL. Scenariusze RF i dokładne czasy osobno w NETWORK_BRINGUP.
+07a dodaje levels: RMS/peak stereo, osobne okna40ms, sekwencje i luki,
+jeszcze bez uruchamiania analizy i bez zmiany ekranu. ADR0037.
+Kolejny krok: osobny konsument droppable tap i snapshot do bargraph/analog,
+reset przy STOP/zmianie generacji, bez analizy w I2S. Potem FFT/Hann/ESP-DSP.
+Nie trzeba teraz wgrywać firmware; ten krok sprawdzany testami obliczeń.
 Nowy log potwierdza również PLAYING22050; timeouty HTTP0 przed dekoderem
 nie wyjaśniają dawnego gen7. Przy retry nadal analizuj stage/cause i Decode diag.
 
@@ -98,3 +102,6 @@ edycja trwałych ID, mDNS, OTA, sterowanie WWW i telefon przez API, RC5 i MicroS
 RC5/GPIO/mapy i platforma mobilna OPEN; nie wymyślać pinów. Licencja modyfikacji
 małego fontu PL nadal OPEN na wcześniejszą jawną decyzję użytkownika.
 Nie dodawać AI-Model/AI-Tokens do commitów; metryki wyłącznie ze zweryfikowanych danych.
+
+Weryfikacja07a:275 testów PASS, levels ASan/UBSan PASS (LSan off),
+native build PASS (0x15b530, 7% wolne); kod analizatora jeszcze nieuruchamiany.

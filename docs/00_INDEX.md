@@ -95,3 +95,5 @@ Player HTTP/ICY06i: `adr/0034-http-icy-network-player.md`; pierwszy odsłuch: `H
 Diagnostyka przyczyn retry06j: `adr/0035-live-decode-failure-diagnostics.md`.
 
 Start STA przed AP i IP/VOL/belka: `adr/0036-sta-first-and-volume-row.md`.
+
+Rdzeń pomiarów stereo07a: `adr/0037-stereo-level-analysis-core.md`.

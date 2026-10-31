@@ -32,3 +32,13 @@ peak ostatniego bloku; widżety wciąż TEST. Dla tonu peak1036 ma pozostać
 stały przy VOL0/50/100. FFT/RMS, kalibracja i prawdziwy model wizualizacji
 nie są zaimplementowane. Przyszły DSP powinien rozpoznawać luki przed
 składaniem okien FFT. [ADR0020](adr/0020-pcm-fifo-and-pre-gain-tap.md).
+
+## 07a — rdzeń RMS/peak
+
+Własny komponent levels z jawnym API: signed32 stereo48kHz przed gain,
+Q15 RMS/peak, domyślnie okna1920 ramek (40ms), uint64 suma kwadratów.
+Luki/duplikaty bloków unieważniają stary wynik i resetują niepełne okno.
+Dziewięć testów, w tym niezależna referencja sinusów i rzeczywisty PCM tap
+przy volume0/50/100. Szczegóły/ograniczenia ADR0037. Brak nowych bibliotek.
+Jeszcze bez odbiorcy RTOS i wizualizacji na urządzeniu; istniejący player
+i ekran bez zmian. Kolejny krok: niezależne zadanie DSP i snapshot do UI.
