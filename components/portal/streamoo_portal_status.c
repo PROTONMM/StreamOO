@@ -10,10 +10,16 @@ bool streamoo_portal_status_json(const streamoo_portal_status_t *s,char *out,siz
         for (unsigned i=9;i<15;++i) if (!((s->ap_ssid[i]>='0' && s->ap_ssid[i]<='9') ||
             (s->ap_ssid[i]>='A' && s->ap_ssid[i]<='F'))) return false;
     } else if (s->ap_ready) return false;
+    size_t ip_bytes=0;while(ip_bytes<sizeof s->sta_ip&&s->sta_ip[ip_bytes])++ip_bytes;
+    if(ip_bytes==sizeof s->sta_ip||s->saved_profiles>8)return false;
+    for(size_t i=0;i<ip_bytes;++i)if((s->sta_ip[i]<'0'||s->sta_ip[i]>'9')&&s->sta_ip[i]!='.')return false;
+    const char *mode=s->sta_connected?(s->ap_ready?"apsta":"sta"):"ap";
+    const char *ip=s->sta_connected?s->sta_ip:(s->ap_ready?"192.168.4.1":"");
     int count=snprintf(out,capacity,
-        "{\"schema_version\":1,\"network\":{\"mode\":\"ap\",\"ready\":%s,\"ssid\":\"%s\",\"clients\":%u},"
+        "{\"schema_version\":1,\"network\":{\"mode\":\"%s\",\"ready\":%s,\"ssid\":\"%s\",\"clients\":%u,\"ap_ready\":%s,\"connected\":%s,\"configuring\":%s,\"ip\":\"%s\",\"profiles\":%u,\"error\":%u},"
         "\"audio\":{\"available\":%s,\"source\":\"test_fixture\",\"running\":%s,\"buffering\":%s,\"volume\":%u},"
-        "\"uptime_ms\":%" PRIu64 "}",s->ap_ready ? "true":"false",s->ap_ssid,(unsigned)s->clients,
+        "\"uptime_ms\":%" PRIu64 "}",mode,(s->ap_ready||s->sta_connected) ? "true":"false",s->ap_ssid,(unsigned)s->clients,
+        s->ap_ready?"true":"false",s->sta_connected?"true":"false",s->configuring?"true":"false",ip,(unsigned)s->saved_profiles,(unsigned)s->network_error,
         s->audio_available ? "true":"false",s->running ? "true":"false",s->buffering ? "true":"false",
         (unsigned)s->volume,s->uptime_ms);
     return count>=0 && (size_t)count<capacity;

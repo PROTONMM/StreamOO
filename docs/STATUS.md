@@ -11,10 +11,10 @@ Bieżący punkt wznowienia: [RESUME.md](RESUME.md).
 | 05 encoder | dekoder/IRQ i gesty odebrane; interaktywny adapter odebrany w trybie A; preferencje NVS odebrane; shutdown/flush OPEN | ADR 0013–0017; 99 testów PASS |
 | 06 audio | I2S/gain/PCM stress odebrane; MP3 decode/PCM potwierdzone logiem; AAC-LC PoC odebrane; AAC incremental file decode06f odebrane logiem i odsłuchem; źródło/bufor AAC06g odebrane logiem, odsłuchem i sterowaniem; niezależny reader AAC06h odebrany logiem i odsłuchem; sieć/player OPEN | ADR 0018–0025; 168 testów hostowych PASS; build źródeł PASS |
 | 07 DSP | NIEZAIMPLEMENTOWANE | — |
-| 08 stacje | NIEZAIMPLEMENTOWANE | — |
-| 09 sieć | SoftAP/DHCP potwierdzone; portal odczytu i OLED AP09b gotowe do odbioru; STA/mDNS OPEN | ADR0026–0027; 202 testy hostowe PASS |
-| 10 WWW | portal odczytu i GET/api/v1/status09b; zapis/auth administracji OPEN | ADR0027; testy handlerów/DOM PASS |
-| 11 storage/OTA | NVS volume/widżet odebrane; flush i pozostały zakres OPEN | ADR 0017; odbiór użytkownika |
+| 08 stacje | import/preview/trwały katalog gotowe do odbioru; player/ID OPEN | ADR0031 |
+| 09 sieć | AP potwierdzone; uporządkowane profile/STA/AP-off gotowe do odbioru; mDNS OPEN | ADR0031; build PASS |
+| 10 WWW | formularze Wi-Fi/upload i setup auth zaimplementowane; odbiór PCB OPEN | ADR0031; 221 testów PASS; Chromium PASS |
+| 11 storage/OTA | NVS preferencji odebrane; profile NVS/LittleFS katalog gotowe do odbioru; OTA OPEN | ADR0017/0031 |
 | 12 testy końcowe | NIEURUCHOMIONE | — |
 
 Aktualizuj tabelę dopiero po wykonaniu i zapisaniu wyniku testów.
@@ -1162,3 +1162,21 @@ ostrzeżenia. Nie normalizowano pliku ani nie łączono się z URL stacji.
 firmware; bez nowego buildu/flash. ADR0030, D27/D28. WWW zapis profili/STA,
 upload/preview/atomowy commit oraz admin auth nadal OPEN; nie przedstawiać
 narzędzia hostowego jako działającego importera urządzenia.
+
+## Etap 09c — zapis konfiguracji WWW (2026-10-31)
+
+Formularze do 8 uporządkowanych sieci, autoryzacja kluczem AP, próby STA
+z rollback i AP-off po IPv4. Import playlisty: preview → osobne zatwierdzenie
+→ atomowy zapis LittleFS, bez prywatnej playlisty w repo. OLED pokazuje nowy
+adres po wyłączeniu AP. Pełne decyzje i ograniczenia: ADR0031.
+
+Weryfikacja: 221 testów hostowych PASS, Chromium 390px pełny przebieg formularzy
+na syntetycznym backendzie PASS, node --check PASS, check_config --platform PASS,
+native ESP-IDF6.1 build PASS: obraz 0x12dd60 B, 20% wolnej partycji aplikacji.
+Parser firmware na RAM-kopii prywatnego CSV: 267 rekordów/11 normalizacji/3
+duplikaty, oryginał niezmieniony. Nie wykonano flash/erase/eFuse.
+
+HARDWARE_TEST_PENDING: zwykły pełny flash (nowa tablica partycji), Ctrl+F5,
+import i reboot, kolejność/fallback sieci, AP-off i OLED/URL, heap/stosy.
+Katalog jest przechowywany, ale syntetyczna lista OLED i odtwarzanie streamów
+nie są jeszcze połączone z katalogiem. Audio pozostaje wyłączone w tym boot.

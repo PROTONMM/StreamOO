@@ -7,7 +7,7 @@ import unittest
 ROOT=Path(__file__).resolve().parents[1]
 class Status(C.Structure):
     _fields_=[('ssid',C.c_char*16),('clients',C.c_uint8),('volume',C.c_uint8),
-              ('ready',C.c_bool),('available',C.c_bool),('running',C.c_bool),('buffering',C.c_bool),('uptime',C.c_uint64)]
+              ('ready',C.c_bool),('available',C.c_bool),('running',C.c_bool),('buffering',C.c_bool),('uptime',C.c_uint64),('ip',C.c_char*16),('connected',C.c_bool),('configuring',C.c_bool),('profiles',C.c_uint8),('error',C.c_uint32)]
 class PortalStatusTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -22,7 +22,7 @@ class PortalStatusTests(unittest.TestCase):
         out=C.create_string_buffer(512);self.assertTrue(self.render(C.byref(self.state()),out,512))
         value=json.loads(out.value)
         self.assertEqual(value['schema_version'],1)
-        self.assertEqual(value['network'],{'mode':'ap','ready':True,'ssid':'StreamOO-123ABC','clients':1})
+        self.assertEqual(value['network'],{'mode':'ap','ready':True,'ssid':'StreamOO-123ABC','clients':1,'ap_ready':True,'connected':False,'configuring':False,'ip':'192.168.4.1','profiles':0,'error':0})
         self.assertEqual(value['audio'],{'available':True,'source':'test_fixture','running':True,'buffering':False,'volume':87})
         self.assertEqual(value['uptime_ms'],12345)
     def test_nonterminated_and_injectable_ssid_rejected(self):
@@ -47,3 +47,11 @@ class PortalStatusTests(unittest.TestCase):
         out=C.create_string_buffer(512);self.assertTrue(self.render(C.byref(s),out,512))
         value=json.loads(out.value);self.assertFalse(value['audio']['running'])
         self.assertTrue(value['audio']['buffering']);self.assertEqual(value['uptime_ms'],2**64-1)
+    def test_sta_and_transition_addresses(self):
+        s=self.state();s.connected=True;s.ip=b'192.168.1.73';s.profiles=3
+        out=C.create_string_buffer(512)
+        self.assertTrue(self.render(C.byref(s),out,512));value=json.loads(out.value)
+        self.assertEqual(value['network']['mode'],'apsta');self.assertEqual(value['network']['ip'],'192.168.1.73')
+        s.ready=False;self.assertTrue(self.render(C.byref(s),out,512));value=json.loads(out.value)
+        self.assertEqual(value['network']['mode'],'sta');self.assertTrue(value['network']['ready'])
+        s.ip=b'\"/><script>';self.assertFalse(self.render(C.byref(s),out,512))

@@ -29,10 +29,12 @@ HARNESS=r'''
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+esp_err_t streamoo_portal_register_configuration(httpd_handle_t h) {(void)h;return ESP_OK;}
+void streamoo_portal_config_stopped(void) {}
 static httpd_uri_t routes[4]; static int count,stops,fail_register,fail_stop,unavailable;
 static char type[80],body[1024],response_status[80]; static bool no_store,csp,nosniff;
 esp_err_t httpd_start(httpd_handle_t *h,const httpd_config_t *c) {
-    assert(c->task_priority==2 && c->stack_size==6144 && c->max_open_sockets==4);
+    assert(c->task_priority==2 && c->stack_size==8192 && c->max_open_sockets==4);
     assert(c->lru_purge_enable && c->recv_wait_timeout==3 && c->send_wait_timeout==3);
     count=0;*h=(void *)1; return ESP_OK;
 }
@@ -44,7 +46,7 @@ esp_err_t httpd_register_uri_handler(httpd_handle_t h,const httpd_uri_t *r) {
 esp_err_t httpd_resp_set_type(httpd_req_t *r,const char *s) { (void)r;strcpy(type,s);return ESP_OK; }
 esp_err_t httpd_resp_set_hdr(httpd_req_t *r,const char *key,const char *value) {
     (void)r;if (!strcmp(key,"Cache-Control")) no_store=!strcmp(value,"no-store");
-    if (!strcmp(key,"Content-Security-Policy")) csp=strstr(value,"form-action 'none'")!=NULL;
+    if (!strcmp(key,"Content-Security-Policy")) csp=strstr(value,"form-action 'self'")!=NULL;
     if (!strcmp(key,"X-Content-Type-Options")) nosniff=!strcmp(value,"nosniff");
     assert(strcmp(key,"Access-Control-Allow-Origin")); return ESP_OK;
 }

@@ -1,5 +1,6 @@
 #pragma once
 #include "esp_err.h"
+#include "streamoo_config_model.h"
 #include <stdbool.h>
 #include <stdint.h>
 typedef struct {
@@ -7,7 +8,12 @@ typedef struct {
     void (*stopped)(void *);
     void *context;
 } streamoo_network_hooks_t;
-typedef struct { char ap_ssid[16]; uint8_t clients; bool ap_ready; } streamoo_network_state_t;
+typedef struct {
+    char ap_ssid[16],sta_ip[16],sta_ssid[33];
+    uint8_t clients,saved_profiles;
+    bool ap_ready,sta_connected,configuring;
+    uint32_t last_error;
+} streamoo_network_state_t;
 /* Task-only owner starts once; hooks run in its task, outside state lock.
  * Hook/context lifetime extends to shutdown. Missing key keeps radio off. */
 /* Bootstrap policy; true reserves this boot for AP configuration (no player). */
@@ -18,3 +24,7 @@ bool streamoo_network_state(streamoo_network_state_t *);
  * Returns credentials only while AP ready. Key remains fixed in firmware. */
 typedef struct { char ssid[16]; unsigned char password[64]; unsigned password_bytes; } streamoo_network_ap_display_t;
 bool streamoo_network_ap_display(streamoo_network_ap_display_t *);
+
+/* Setup authorization validates proof; never exposes key to HTTP. */
+bool streamoo_network_authorize(const uint8_t *,size_t);
+esp_err_t streamoo_network_submit_profiles(const streamoo_wifi_profiles_t *);

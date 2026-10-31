@@ -1,5 +1,7 @@
 # 11 — Przechowywanie, OTA, bezpieczeństwo
 
+Stan implementacji 2026-10-31: Implementacja 09c: wersjonowany blob profili NVS i atomowa podmiana playlisty LittleFS, nowa storage 1 MiB. Lokalny setup wymaga dowodu znajomości klucza AP; niezależna administracja produkcyjna D18 nadal OPEN. Szczegóły i ograniczenia: ADR0031.
+
 ## NVS (USTALONE)
 - Wi-Fi credentials, wybrany wariant runtime jeśli dopuszczony, aktualna głośność, ostatnia stacja stable_id, wizualizacja, własna nazwa mDNS, stan startowy.
 - Każda zmiana głośności lub wizualizacji zeruje timer; **zapis po 5 sekundach bez nowych zmian**, gdy różni się od ostatniego trwałego stanu. Flush podczas kontrolowanego restartu; przy nagłym zaniku zasilania można utracić ostatnie 5 s zmian.

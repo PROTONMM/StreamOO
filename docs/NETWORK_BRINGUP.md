@@ -1,3 +1,49 @@
+# Odbiór 09c — konfiguracja WWW, sieci i playlista
+
+Aktualny firmware zastępuje historyczny portal odczytu opisany niżej.
+Decyzje i limity: ADR0031.
+
+1. Wykonaj zwykłe `idf.py -p PORT flash` z aktualnym prywatnym kluczem AP.
+   Ten etap zmienia tablicę partycji: potrzebny jest pełny flash, obejmujący
+   tablicę, zamiast samego app-flash. Nie kasuj flash/NVS i nie wgrywaj obrazu FS.
+2. Połącz się z AP, otwórz http://192.168.4.1/ i odśwież Ctrl+F5.
+   Widać sekcje „Zapisane sieci” i „Wgraj playlist.csv”. Wpisz hasło AP
+   z OLED w „Dostęp do konfiguracji”, wybierz odczyt ustawień. Błędne hasło
+   ma blokować operacje; hasło nigdy nie jest zwracane przez API.
+3. Najpierw przetestuj upload prywatnej playlisty: wybierz plik, sprawdź,
+   oczekuj 267 stacji, 11 oczyszczonych adresów, 3 zachowanych powtórzeń.
+   Dopiero „Zatwierdź i zapisz” zastępuje katalog. Zrestartuj i odczytaj
+   ponownie: 267 stacji ma pozostać. Błędny plik nie zmienia katalogu.
+   Oryginał lokalny nie jest edytowany ani dołączany do firmware.
+4. Dodaj sieć domową i zapisz. Przyjęcie listy jest asynchroniczne; czekaj
+   na próbę STA (do 15 s na profil). Po IP lista zostaje zapisana, AP
+   wyłącza się po 5 s. Połącz komputer/telefon z domową siecią i otwórz
+   adres widoczny na OLED. Przy izolacji klientów router może blokować dostęp.
+5. Sprawdź dwie sieci: nieosiągalna/błędne hasło pierwszej, poprawna druga;
+   zmiana kolejności przyciskiem ↑/↓. Sprawdź, że błędna cała nowa lista
+   zachowuje poprzednią. Po restarcie urządzenie próbuje listę z NVS.
+   Restart udostępnia ponownie AP na czas prób; po udanym IP znowu go wyłącza.
+6. Zmieniając hasło istniejącego SSID, wpisz nowe; puste pole zachowuje
+   stare. Sieć otwarta wymaga jawnego zaznaczenia checkboxa. Usunięcie
+   wszystkich wierszy i potwierdzenie zapisuje pustą listę i utrzymuje AP.
+7. Oczekuj ciszy, bez fixture_reader/codec/audio_control; obecny boot setupu
+   nie uruchamia odtwarzacza także po STA. Import przechowuje katalog,
+   nie zmienia jeszcze syntetycznej listy OLED i nie uruchamia streamów.
+
+Do oceny prześlij wyniki formularzy/reboot/AP-off i logi network/portal/heap,
+bez haseł, Authorization, nazw/URL prywatnych stacji. Zmierz wolną pamięć
+i stack_hwm po największym uploadzie. Fizyczne power-cut/odporność flash OPEN.
+Lokalny test formularzy bez PCB: `python3 tools/check_portal_browser.py`
+(wymaga Chromium /usr/bin/google-chrome i lokalnych socketów, dane syntetyczne).
+
+---
+
+# Historyczne procedury 09a/09b
+
+Poniższe opisy zachowano jako historię poprzednich wersji, nie aktualne
+instrukcje. W 09c klucz AP jest wysyłany do urządzenia w nagłówku Basic
+przy operacjach setupu; nadal nie pojawia się w odpowiedziach HTTP ani UART.
+
 # Wi-Fi09a — zabezpieczony SoftAP
 
 To test natywnego Wi-Fi równolegle z odebranym lokalnym audio AAC. Nie ma

@@ -1,25 +1,27 @@
 # Punkt wznowienia StreamOO
 
-Aktualizacja: **2026-10-31, AP bez odtwarzania przygotowane; odsłuch poprzedniego testu zaliczony**.
-PCM/rebuffer/tap stress potwierdzone logiem i odsłuchem (`5664a90`).
-Gałąź feature/streamoo-implementation, szczegóły STATUS i ADR0028.
+Aktualizacja: **2026-10-31, konfiguracja WWW 09c zaimplementowana; odbiór PCB OPEN**.
+Gałąź feature/streamoo-implementation. ADR0031, STATUS, NETWORK_BRINGUP.
 
-## Nowe wymagania konfiguracji — sieci i playlista
+## Bieżący odbiór
 
-WWW: kilka profili Wi-Fi, pierwsza dostępna według kolejności listy; po
-nieudanym połączeniu kolejna. AP off dopiero po STA/IP. Stały klucz AP
-nie jest hasłem zapisanych sieci STA. Trwały model/provisioning jeszcze OPEN.
+Gotowe: formularze 8 sieci/kolejność/usuwanie, autoryzacja kluczem AP,
+STA/fallback/rollback/zapis NVS, AP-off 5 s po IPv4, OLED z adresem LAN,
+import CSV preview/zatwierdzenie/atomowy LittleFS. Audio podczas tego boot
+pozostaje wyłączone; katalog nie steruje jeszcze syntetyczną listą OLED/playerem.
 
-Upload playlist.csv przez WWW wymagany. Prywatny plik root ma267 rekordów,
-UTF-8 i3 literalne pola TAB (nazwa/URL/ovol), bez nagłówka. /playlist.csv
-w .gitignore, nieśledzony; nie dodawać kopii, nazw/URL, fixture ani EMBED_FILES.
-Walidator hostowy: python3 tools/check_playlist.py playlist.csv (read-only,
-raport bez treści).256 poprawnych/11 URL z U+200B,3 ostrzeżenia duplikatów.
-Oryginał niezmieniony. Nie usuwać niewidocznych znaków/duplikatów po cichu.
-211 testów hostowych PASS; nowy kod to tylko narzędzie audytu, nie importer
-firmware. ADR0030/D27/D28. Format sprawdzony w źródle yoRadio GPLv3 wyłącznie
-jako referencja, bez kopiowania implementacji/API. Dalej zabezpieczony zapis
-profili i STA, potem upload/preview/atomowa wymiana katalogu LittleFS.
+221 testów hostowych PASS, native build PASS, Chromium formularze 390px PASS.
+Nowa partitions.csv zachowuje NVS/PHY/app i dodaje storage 1 MiB. Użytkownik
+ma wykonać zwykłe idf.py -p PORT flash, obejmujące tablicę partycji, bez erase
+i bez obrazu FS. Potem Ctrl+F5, hasło AP w formularzu, import/preview/zapis,
+reboot/persistencja, próby kilku sieci i AP-off. Szczegóły NETWORK_BRINGUP.
+
+Prywatny /playlist.csv nadal ignorowany/nieśledzony, oryginał niezmieniony.
+Parser firmware sprawdził RAM-kopię: 267 rekordów/11 URL z U+200B/3 duplikaty.
+Nie kopiować danych do repo/build/testów. Nie usuwać powtórzeń po cichu.
+Brak flash/erase/eFuse przez agenta. Fizyczne power-cut/heap/stosy OPEN.
+D18 niezależnej administracji LAN/mobile pozostaje OPEN; bieżący lokalny
+setup wymaga dowodu znajomości klucza AP (ADR0031), HTTP bez TLS.
 
 ## Przyszły zakres dodany przez użytkownika
 

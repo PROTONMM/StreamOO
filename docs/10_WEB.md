@@ -1,5 +1,7 @@
 # 10 — Nowe WWW i REST API StreamOO
 
+Stan implementacji 2026-10-31: Implementacja 09c dodaje rzeczywiste formularze sieci i importu playlist.csv, zabezpieczone potwierdzeniem klucza AP. Setup auth, kontrakt i limity: ADR0031. Produkcyjna administracja/API pozostają OPEN.
+
 **USTALONE:** całkowicie własny serwer WWW/API, bez kompatybilności endpointów z yoRadio. ESP-IDF `esp_http_server` + pliki frontendu. Dostęp przez AP przy pierwszym uruchomieniu i przez unikalny mDNS/IP po połączeniu do LAN.
 
 ## Proponowane endpointy (nie kontrakt zamknięty)

@@ -73,3 +73,16 @@ esp_wifi/lib/LICENSE reviewed as Apache2.0. Retained Apache-2.0.txt and
 09b also uses native esp_http_server from the same pinned SDK, public header
 copyright2018–2026 Espressif Systems, Apache-2.0. Retained Apache-2.0.txt.
 Portal HTML/CSS/JS and OLED layout are original; no external frontend assets.
+
+## Configuration storage and JSON (09c)
+
+Exact managed versions: **joltwallet/littlefs 1.20.4** and
+**espressif/cjson 1.7.19~2**, pinned in dependencies.lock. API/manifests and
+upstream license files checked before integration on ESP-IDF 6.1.
+LittleFS adapter: MIT, Brian Pugh 2020; bundled littlefs: BSD-3-Clause,
+littlefs authors 2022 and Arm Limited 2017. cJSON: MIT, Dave Gamble 2009–2017.
+Unmodified sources supplied by the component manager, no GPL code imported.
+Retained texts: [adapter MIT](licenses/ESP-LittleFS-MIT.txt),
+[littlefs BSD](licenses/LittleFS-BSD-3-Clause.txt), [cJSON MIT](licenses/cJSON-MIT.txt).
+The native SDK mbedtls base64 decoder is used for HTTP Basic setup proof;
+no third-party authentication or frontend code copied.

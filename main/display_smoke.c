@@ -79,6 +79,9 @@ static void display_task(void *context)
 #endif
             streamoo_network_ap_display_t ap;
             bool ap_active=streamoo_network_ap_display(&ap);
+            bool setup=streamoo_network_boot_ap_enabled();
+            streamoo_network_state_t network={0};
+            streamoo_network_state(&network);
             if (ap_active && demo.ui.screen==STREAMOO_UI_STATIONS) streamoo_ui_cancel(&demo.ui);
             for (unsigned n=0; n<32 && streamoo_input_probe_receive(&event); ++n) {
 #ifdef CONFIG_STREAMOO_ENCODER_MODE_B
@@ -86,7 +89,7 @@ static void display_task(void *context)
 #else
                 const streamoo_control_mode_t mode = STREAMOO_CONTROL_MODE_A;
 #endif
-                if (ap_active) continue;
+                if (setup) continue;
                 if (!streamoo_encoder_demo_input(&demo,event,mode,now))
                     ESP_LOGW("display_smoke", "TEST gesture rejected; state preserved");
                 const streamoo_preferences_value_t preferences = {(uint8_t)demo.volume, (uint8_t)demo.ui.visualization};
@@ -95,6 +98,9 @@ static void display_task(void *context)
             }
             bool drawn=ap_active ? streamoo_ui_ap_draw(frame,SSD1322_FRAME_BYTES,
                 (const uint8_t *)ap.ssid,15,ap.password,ap.password_bytes) :
+                setup ? streamoo_ui_sta_draw(frame,SSD1322_FRAME_BYTES,
+                    (const uint8_t *)network.sta_ssid,strlen(network.sta_ssid),
+                    (const uint8_t *)network.sta_ip,network.sta_connected?strlen(network.sta_ip):0) :
                 streamoo_encoder_demo_draw(&demo,frame,SSD1322_FRAME_BYTES,now);
             memset(&ap,0,sizeof ap);
             if (!drawn) {

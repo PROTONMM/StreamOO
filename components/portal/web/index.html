@@ -1,22 +1,19 @@
 <!doctype html>
 <html lang="pl">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>StreamOO</title>
-<link rel="stylesheet" href="/portal.css">
-<script src="/portal.js" defer></script>
-</head>
-<body>
-<main>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>StreamOO — konfiguracja</title><link rel="stylesheet" href="/portal.css"><script src="/portal.js" defer></script></head>
+<body><main>
 <header><span class="brand">StreamOO<span class="dot">●</span></span><span class="label">Twoje radio</span></header>
-<section class="welcome"><p class="eyebrow">Panel urządzenia</p><h1>Jesteś na miejscu.</h1><p id="connection" role="status" aria-live="polite">Łączenie z urządzeniem…</p></section>
+<section class="welcome"><p class="eyebrow">Panel urządzenia</p><h1>Ustaw swoje radio.</h1><p id="connection" role="status" aria-live="polite">Łączenie z urządzeniem…</p><p id="sta-result" role="status"></p><a id="sta-link" hidden>Otwórz radio w sieci Wi-Fi</a></section>
 <div class="cards">
-<section class="card" aria-labelledby="network-title"><p class="eyebrow">Połączenie</p><h2 id="network-title">Sieć urządzenia</h2><dl><div><dt>Tryb</dt><dd>Punkt dostępu</dd></div><div><dt>Nazwa sieci</dt><dd id="ssid">—</dd></div><div><dt>Adres urządzenia</dt><dd>192.168.4.1</dd></div><div><dt>Połączone urządzenia</dt><dd id="clients">—</dd></div></dl><p class="note">Ustawienie domowej sieci Wi-Fi będzie dostępne w kolejnym kroku konfiguracji.</p></section>
-<section class="card" aria-labelledby="audio-title"><p class="eyebrow">Dźwięk</p><h2 id="audio-title">Odtwarzanie</h2><p id="playback" class="playback">Oczekiwanie na status…</p><div class="volume"><span>Głośność</span><strong id="volume">—</strong></div><p class="note">Podczas konfiguracji Wi-Fi odtwarzanie jest wyłączone.</p></section>
+<section class="card"><p class="eyebrow">Połączenie</p><h2>Sieć urządzenia</h2><dl><div><dt>Tryb</dt><dd id="mode">Punkt dostępu</dd></div><div><dt>Nazwa AP</dt><dd id="ssid">—</dd></div><div><dt>Adres urządzenia</dt><dd id="device-ip">192.168.4.1</dd></div><div><dt>Klienci AP</dt><dd id="clients">—</dd></div></dl><p class="note">Liczba klientów AP jest odświeżana co 10 sekund.</p></section>
+<section class="card"><p class="eyebrow">Dźwięk</p><h2>Odtwarzanie</h2><p id="playback" class="playback">Oczekiwanie na status…</p><div class="volume"><span>Głośność</span><strong id="volume">—</strong></div><p class="note">Podczas konfiguracji Wi-Fi odtwarzanie jest wyłączone.</p></section>
 </div>
-<footer>Połączenie lokalne. Ta sieć nie udostępnia Internetu.</footer>
-<noscript><p class="note">Włącz JavaScript, aby zobaczyć aktualny status urządzenia.</p></noscript>
+<section class="card full"><p class="eyebrow">Zatwierdzanie zmian</p><h2>Dostęp do konfiguracji</h2><label for="ap-key">Hasło AP widoczne na wyświetlaczu radia</label><div class="actions"><input id="ap-key" type="password" autocomplete="current-password" maxlength="63" placeholder="Hasło AP"><button id="load-settings" type="button">Odczytaj zapisane ustawienia</button></div><p class="note">Hasło potwierdza prawo do zapisania zmian. Nie jest zapisywane w przeglądarce.</p><p id="auth-result" role="status"></p></section>
+<section class="card full"><p class="eyebrow">Wi-Fi</p><h2>Zapisane sieci</h2><p class="note">Dodaj do 8 sieci. Pierwsza dostępna na liście ma najwyższy priorytet. Nowa lista zostanie zapisana po udanym połączeniu. Po uzyskaniu adresu IP punkt AP wyłączy się.</p><form id="wifi-form"><div id="wifi-rows"></div><div class="actions"><button id="add-network" type="button" class="secondary">+ Dodaj sieć</button><button id="save-wifi" type="submit">Zapisz i połącz</button></div><p id="wifi-result" role="status" aria-live="polite"></p></form></section>
+<section class="card full"><p class="eyebrow">Stacje radiowe</p><h2>Wgraj playlist.csv</h2><p class="note">Wybierz plik z nazwą, adresem i polem ovol rozdzielonymi tabulatorami. Najpierw sprawdzimy plik; zapis wymaga osobnego zatwierdzenia.</p><form id="playlist-form"><label for="playlist-file">Plik playlisty (do 256 KiB)</label><input id="playlist-file" type="file" accept=".csv,text/plain"><div class="actions"><button type="submit">Sprawdź playlistę</button><button id="commit-playlist" type="button" class="secondary" disabled>Zatwierdź import</button></div><p id="playlist-result" role="status" aria-live="polite"></p><p id="catalog-status" class="note">Zapisana playlista: odczytaj ustawienia, aby sprawdzić.</p></form></section>
+<footer>Konfiguracja lokalna StreamOO. Hasła zapisanych sieci nie są zwracane przez API.</footer>
+<noscript><p>Włącz JavaScript, aby skonfigurować urządzenie.</p></noscript>
 </main>
-</body>
-</html>
+<template id="wifi-row"><fieldset class="wifi-row"><legend>Sieć Wi-Fi</legend><div class="network-fields"><label>Nazwa sieci (SSID)<input class="wifi-ssid" required autocomplete="off" maxlength="32"></label><label>Hasło sieci<input class="wifi-password" type="password" autocomplete="new-password" maxlength="63"></label></div><label class="open-label"><input class="wifi-open" type="checkbox"> Sieć otwarta, bez hasła</label><div class="actions compact"><button type="button" class="move-up secondary" aria-label="Przesuń sieć wyżej">↑</button><button type="button" class="move-down secondary" aria-label="Przesuń sieć niżej">↓</button><button type="button" class="remove-network secondary">Usuń</button></div></fieldset></template>
+</body></html>

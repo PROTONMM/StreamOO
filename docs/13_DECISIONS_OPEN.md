@@ -28,9 +28,11 @@
 | D24 | OTWARTE | MicroSD jako przyszłe lokalne źródło MP3; brak implementacji, zweryfikowanych pinów/drivera/filesystemu. |
 | D25 | USTALONE | Docelowo pilot RC5; model odbiornika/GPIO, mapa i zachowanie klawiszy OPEN. ADR0029. |
 | D26 | USTALONE | Docelowo aplikacja telefonu sterująca przez API StreamOO; platformy, forma aplikacji i auth/kontrakt OPEN. ADR0029. |
-| D27 | USTALONE | WWW zapisuje kilka profili Wi-Fi; pierwsza dostępna według kolejności listy, z przejściem po nieudanej próbie. Implementacja/limity OPEN. ADR0030. |
+| D27 | USTALONE | WWW zapisuje kilka profili Wi-Fi; pierwsza dostępna według kolejności listy, z przejściem po nieudanej próbie. Do 8 profili, STA/NVS gotowe do odbioru PCB. ADR0030/0031. |
 | D28 | USTALONE | WWW umożliwi upload playlist.csv; prywatny plik w katalogu głównym wykluczony z Git, bez kopiowania do build/fixture. ADR0030. |
 
 Doprecyzowanie D03/D17: enkoder 5/6/7 i kierunek potwierdzone na sprzęcie
 (ADR0015); stary schemat ma B16. W 06a model i strapping modułu DAC,
 połączenia I2S oraz dźwięk/parametry analogowe nadal wymagają odbioru.
+
+D29 — implementacja lokalnego setupu: potwierdzenie kluczem AP, preview/commit katalogu i custom storage, ADR0031. Docelowy niezależny auth administracji D18 nadal OPEN.

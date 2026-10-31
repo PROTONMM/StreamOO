@@ -1,4 +1,5 @@
 #include "streamoo_ui_ap.h"
+#include <stdio.h>
 #include "streamoo_text.h"
 #include "streamoo_font5x8.h"
 static bool printable(const uint8_t *text,size_t bytes)
@@ -26,4 +27,19 @@ bool streamoo_ui_ap_draw(uint8_t *frame,size_t bytes,const uint8_t *ssid,size_t 
         line(&c,16,ssid,ssid_bytes,15) && line(&c,24,key,sizeof key-1,10) &&
         line(&c,32,password,first,15) && line(&c,40,password+first,password_bytes-first,15) &&
         line(&c,56,url,sizeof url-1,12);
+}
+
+bool streamoo_ui_sta_draw(uint8_t *frame,size_t bytes,const uint8_t *ssid,size_t ssid_bytes,const uint8_t *ip,size_t ip_bytes)
+{
+    if(ssid_bytes>32 || (ssid_bytes&&!ssid) || ip_bytes>15 || (ip_bytes&&!ip))return false;
+    for(size_t i=0;i<ip_bytes;++i)if((ip[i]<'0'||ip[i]>'9')&&ip[i]!='.')return false;
+    streamoo_canvas_t c;
+    if(!streamoo_canvas_init(&c,frame,bytes,256,64,128))return false;
+    streamoo_canvas_fill(&c,(streamoo_rect_t){0,0,256,64},0);
+    static const uint8_t title[]="StreamOO / sieć",connected[]="Połączono z Wi-Fi",waiting[]="Łączenie z Wi-Fi...",retry[]="Ponawianie połączenia...";
+    if(!line(&c,0,title,sizeof title-1,10)||!line(&c,16,ip_bytes?connected:waiting,ip_bytes?sizeof connected-1:sizeof waiting-1,15))return false;
+    if(ssid_bytes&&!line(&c,32,ssid,ssid_bytes,15))return false;
+    if(ip_bytes){char url[32];int length=snprintf(url,sizeof url,"http://%.*s/",(int)ip_bytes,(const char *)ip);
+        return length>0&&(size_t)length<sizeof url&&line(&c,48,(const uint8_t *)url,(size_t)length,15);}
+    return line(&c,48,retry,sizeof retry-1,10);
 }

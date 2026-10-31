@@ -46,3 +46,11 @@ class APDisplayTests(unittest.TestCase):
             frame=(C.c_uint8*8192)(*([77]*8192))
             self.assertFalse(self.draw(frame,8192,b'StreamOO-123ABC',15,password,len(password)))
             self.assertEqual(bytes(frame),bytes([77])*8192)
+    def test_sta_screen_replaces_ap_credentials_and_waits_without_ip(self):
+        draw=self.lib.streamoo_ui_sta_draw;draw.argtypes=self.draw.argtypes;draw.restype=C.c_bool
+        frame=C.create_string_buffer(8192)
+        self.assertTrue(self.draw(frame,8192,b'StreamOO-123ABC',15,b'x'*63,63))
+        self.assertTrue(draw(frame,8192,b'Router',6,b'192.168.1.73',12))
+        self.assertEqual(frame.raw[40*128:48*128],bytes(8*128))
+        self.assertTrue(draw(frame,8192,None,0,None,0))
+        before=frame.raw;self.assertFalse(draw(frame,8192,b'Router',6,b'bad-ip',6));self.assertEqual(before,frame.raw)

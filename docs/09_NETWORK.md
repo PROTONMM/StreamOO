@@ -1,5 +1,7 @@
 # 09 — Wi-Fi provisioning i mDNS
 
+Stan implementacji 2026-10-31: Implementacja 09c: do 8 uporządkowanych profili NVS, worker STA, fallback i AP-off po IPv4. Odbiór sprzętowy OPEN. ADR0031 i NETWORK_BRINGUP.
+
 **USTALONE:** przy pierwszym uruchomieniu bez danych STA urządzenie tworzy SoftAP z unikatową nazwą `StreamOO-XXXXXX` opartą na MAC. **Hasło AP jest stałe, wspólne dla wszystkich urządzeń** (przekazywane poza repo); WPA2-Personal. Portal WWW pod `http://192.168.4.1`; po pomyślnym połączeniu z Wi-Fi STA wyłącz SoftAP. Użytkownik może później zmienić Wi-Fi przez stronę WWW.
 
 ## Kilka zapisanych sieci (USTALONE2026-10-31)
