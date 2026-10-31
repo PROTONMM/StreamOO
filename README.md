@@ -66,3 +66,7 @@ Bieżący06g: AAC-LC dekodowane podczas odtwarzania przez oddzielny interfejs
 wstrzymuje zapis, chwilowy brak danych zachowuje częściowy blok PCM.
 Nadal własny klip testowy, bez sieci; start STOP, VOL/PLAY rzeczywiste.
 Bieżący test i punkt wznowienia: [RESUME](docs/RESUME.md).
+
+06h przenosi testowy czytnik pliku do osobnego zadania. Mutex i token generacji
+chronią pierścień przed współbieżnym dostępem i spóźnionymi danymi po rewind.
+Dekoder nadal ma jednego właściciela; sieć nie jest jeszcze zaimplementowana.

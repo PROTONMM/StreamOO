@@ -1,10 +1,35 @@
 # Punkt wznowienia StreamOO
 
-Aktualizacja: **2026-10-31, AAC źródło/bufor06g odebrane logiem, odsłuchem i sterowaniem**.
+Aktualizacja: **2026-10-31, niezależny reader06h gotowy do odbioru**.
 PCM/rebuffer/tap stress potwierdzone logiem i odsłuchem (`5664a90`).
-Gałąź feature/streamoo-implementation, szczegóły STATUS i ADR0024.
+Gałąź feature/streamoo-implementation, szczegóły STATUS i ADR0025.
 
-## Wznowienie — 2026-10-31, nowy etap06g
+## Bieżący06h — niezależne zadanie czytnika
+
+AAC06g odebrane (kod c451643, log3c3ee3f, odsłuch/sterowanie fa20f2c).
+Nie powtarzać tego odbioru. Nowy fixture_reader priorytet3/stos4096B posiada
+offset pliku i chunk997B. Audio_control nadal właścicielem dekodera i PCM.
+streamoo_buffered_source chroni byte_ring mutexem, token generacji odrzuca
+stare write/finish po rewind. Nie kopiować pod portMUX/wyłączonym IRQ.
+Read lock0→WAIT, rewind/stop/stats timeout5ms w tickach, minimum1tick.
+
+Release: stop + notify + ack do1s, potem destroy/free. Timeout zachowuje
+żywe bufory do restartu; bez wymuszonego usuwania readera. Sieć, anulowanie
+blokującego I/O, reconnect/player/HE-AAC/resampling nadal OPEN. Szczegóły ADR0025.
+
+Lokalny profil końcowy AAC-LC, stress OFF/tap_delay0. Boot independent reader,
+log fixture_reader generation/input/stack_hwm i stream cycles/generation/stale/
+stats_ok. Odbiór06h: kilka cykli i czysty odsłuch L/R/oba, VOL/PLAY/STOP,
+log PCM/buffers/heap. Oczekuj frames193536, stats_ok1 i low0/hard0/invalid0.
+WAIT może rosnąć przy starcie/rewind, compressed0 wtedy dopuszczalne.
+Stale0 nie unieważnia testu; race wymuszone tylko na hoście.
+168 testów hostowych PASS, ASan/UBSan adaptera PASS; bez TSan/LeakSanitizer.
+Build AAC0x81230B, MP3 i sinus PASS; końcowy lokalny obraz AAC-LC.
+Runtime06h, fault injection stop/join oraz długotrwała praca na S3 OPEN.
+Po odbiorze: reader sieciowy wymaga najpierw konfiguracji Wi-Fi zgodnie z09;
+nie dodawać haseł do repo. Nie ogłaszać gotowego radia.
+
+## Odebrane06g — źródło skompresowane
 
 Checkpoint8df80f5 odczytany. AAC06f pozostaje odebrane (kod3b18324,
 odbiór cfd4917); nie powtarzać tych zaliczonych testów bez nowego powodu.
@@ -29,8 +54,8 @@ Odbiór06g zaliczony; nie powtarzać. WAIT na S3 niewymuszony (waits0),
 ciągłość po WAIT sprawdzona dotąd na hoście. Nie deklarować testu sieci.
 161 testów hostowych, ASan/UBSan i build AAC-LC/MP3/sinus PASS.
 Końcowy obraz AAC0x80d00B; kod bez zmian po logu.
-Następny krok: adapter dla niezależnego readera/komunikacji
-z zadaniem dekodera, potem integracja sieci zgodnie z etapem09.
+Adapter niezależnego readera implementuje06h powyżej; następnie integracja
+sieci zgodnie z etapem09.
 Nie mylić testowego4KiB z produkcyjnym punktem wyjścia256KiB.
 
 ## Odebrane na płytce

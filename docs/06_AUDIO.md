@@ -106,3 +106,12 @@ feeder997B; to eksperyment zawijania, nie produkcyjny bufor256KiB.
 Wszystkie operacje źródła w jednym zadaniu; wielozadaniowy reader wymaga
 adaptera synchronizacji. [ADR0024](adr/0024-compressed-source-buffer.md).
 ISR/gain/tap bez zmian. Odbiór06g na S3 OPEN, sieć nadal niezaimplementowana.
+
+## Część06h — niezależny czytnik
+
+Reader pliku pracuje w osobnym zadaniu; mutexowy buffered_source serializuje
+byte_ring, generacja odrzuca stare write/finish po rewind. WAIT jest normalny
+na starcie/EOF/contention i zachowuje częściowy blok PCM. Zamykanie czeka na
+ack readera przed zwolnieniem pamięci; przy timeout zachowuje żywe bufory.
+[ADR0025](adr/0025-independent-compressed-reader.md). Bufor nadal4KiB PSRAM,
+bez sieci; ISR/gain/tap i start STOP bez zmian. Runtime06h na S3 OPEN.

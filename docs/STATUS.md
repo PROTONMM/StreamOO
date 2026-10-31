@@ -9,7 +9,7 @@ Bieżący punkt wznowienia: [RESUME.md](RESUME.md).
 | 03 szkielet | baza zaimplementowana; odbiór sprzętowy i integracyjny OPEN | ESP-IDF v6.1 build PASS; ADR 0002 |
 | 04 UI/SSD1322 | HOME i lista odebrane na OLED; końcowe strojenie fontu OPEN | ADR 0012; odbiór użytkownika |
 | 05 encoder | dekoder/IRQ i gesty odebrane; interaktywny adapter odebrany w trybie A; preferencje NVS odebrane; shutdown/flush OPEN | ADR 0013–0017; 99 testów PASS |
-| 06 audio | I2S/gain/PCM stress odebrane; MP3 decode/PCM potwierdzone logiem; AAC-LC PoC odebrane; AAC incremental file decode06f odebrane logiem i odsłuchem; źródło/bufor AAC06g odebrane logiem, odsłuchem i sterowaniem; sieć/player OPEN | ADR 0018–0024; 161 testów hostowych PASS; build trzech źródeł PASS |
+| 06 audio | I2S/gain/PCM stress odebrane; MP3 decode/PCM potwierdzone logiem; AAC-LC PoC odebrane; AAC incremental file decode06f odebrane logiem i odsłuchem; źródło/bufor AAC06g odebrane logiem, odsłuchem i sterowaniem; niezależny reader06h gotowy, odbiór S3 OPEN; sieć/player OPEN | ADR 0018–0025; 168 testów hostowych PASS; build źródeł PASS |
 | 07 DSP | NIEZAIMPLEMENTOWANE | — |
 | 08 stacje | NIEZAIMPLEMENTOWANE | — |
 | 09 sieć | NIEZAIMPLEMENTOWANE | — |
@@ -956,3 +956,33 @@ to odbiór testowego źródła/bufora AAC. WAIT na S3, niezależny reader,
 sieć, MP3 przez nowy bufor oraz test długotrwały nadal osobno OPEN.
 Następny krok: adapter komunikacji/synchronizacji dla niezależnego readera
 przy zachowaniu jednego właściciela dekodera. Zmiana tylko dokumentacyjna.
+
+## Etap06h — niezależny reader i generacje (2026-10-31)
+
+- Nowy task-only buffered_source serializuje byte_ring mutexem FreeRTOS,
+  nie portMUX. Read nie blokuje (contention→WAIT), write/finish z tokenem,
+  rewind zmienia generację i czyści pod mutexem; stare dane/EOF odrzucone.
+  Snapshot/rewind/stop mają timeout5ms w tickach, minimum1tick.
+- fixture_reader priorytet3/stos4096B posiada offset i chunk997B. Audio_control
+  nie zasila źródła, zachowuje jedyną własność dekodera/pump/PCM. Mutex nie
+  obejmuje przygotowania chunk ani I/O źródła; nadal oryginalny plik we flash.
+- Release najpierw stop/notify i ack readera do1s, dopiero potem free/destroy.
+  Przy timeout zachowuje żywe bufory. Nie wymusza usuwania taska używającego
+  pamięci. Ścieżki timeout/join i długotrwała praca na S3 nadal OPEN.
+- API i licencję mutex/semafor/notifications sprawdzono w ESP-IDF6.1:
+  FreeRTOS-Kernel MIT, już część SDK. Zależności/lock/notices bez zmian;
+  brak kopiowania kodu stron trzecich. ISR/gain/tap/piny/NVS bez zmian.
+- 168 testów hostowych PASS;7 nowych przypadków rzeczywistego adaptera
+  z pthread shim, m.in. równoległy transfer200003B przez31B ring oraz
+  rewind pomiędzy pobraniem tokena a publikacją. ASan/UBSan tych7 PASS;
+  LeakSanitizer/ThreadSanitizer nie uruchamiano. Nie jest to hostowy test
+  FreeRTOS scheduler ani firmware reader_task/lifecycle ack.
+- ADR0025. Odbiór06h na S3 OPEN: cycles/generation/stats_ok, PCM/heap/stosy,
+  czysty odsłuch i VOL/PLAY/STOP. WAIT przy starcie/EOF dopuszczalny,
+  low0/hard0/invalid0 oczekiwane. Brak sieci/reconnect/HE-AAC/resamplingu.
+  Nie wykonywano flash/erase.
+
+Build06h ESP-IDF6.1/esp32s3: AAC0x81230B, MP3 0x87d70B, sinus0x4acd0B
+PASS. Końcowy obraz AAC-LC, stress OFF/tap_delay0, partycja1MiB około50%
+wolnej. Walidator GPIO/platform oraz git diff --check PASS. Callback render
+oraz pcm_fill pozostają w IRAM, adapter źródła poza ścieżką IRQ.

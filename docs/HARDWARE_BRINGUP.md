@@ -478,3 +478,19 @@ stabilnego heap i dźwięku. Backpressure nie oznacza utraty danych; waits
 może pozostać0, bo deterministyczny feeder uzupełnia źródło szybko. Bufor4KiB
 celowo jest mały do tego testu; to nie próba sieci ani wielowątkowości źródła.
 Przy błędzie prześlij poprzedzające linie; brak zastępczego tonu.
+
+## Audio06h — niezależny reader (bieżący obraz)
+
+AAC-LC, stress OFF/tap_delay0. Boot: `independent reader`. Osobne linie
+`fixture_reader: generation=... input=37039 stack_hwm=...`; log stream
+zawiera teraz generation/stale/stats_ok. Oczekuj cycles rosnących o1,
+frames193536, rosnących generation i stats_ok1. compressed może wynosić0
+zaraz po rewind; waits może rosnąć na starcie/EOF. Sam WAIT nie jest błędem.
+
+PLAY, VOL80–100, kilka cykli L/R/oba z celową ciszą. Sprawdź głośność,
+STOP/PLAY i UI/NVS. Podeślij stream/fixture_reader/PCM/buffers/platform heap
+oraz wynik odsłuchu. Oczekuj low0/hard0/invalid0 i stabilnej pamięci/stosu;
+stale0 jest dopuszczalne, większe stale oznacza odrzucenie starego tokena,
+nie publikację tych danych. To nie jest test HTTP ani opóźnień sieci.
+Test start/EOF dwóch zadań jest nowy, nie zastępuje go odbiór06g.
+Fault injection stop/join i długotrwałe obciążenie pozostają OPEN.

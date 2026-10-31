@@ -66,3 +66,9 @@ oraz pierścień pożyczonej pamięci z częściowym zapisem i terminalnym finis
 Wymaga jednego właściciela lub zewnętrznej serializacji, nie jest kolejką
 SPSC dla różnych zadań. Pump zachowuje częściowy blok PCM na WAIT.
 Test: feeder997B → ring4096B w PSRAM → decoder → SRAM FIFO. Brak sieci.
+
+06h: streamoo_buffered_source serializuje byte_ring mutexem FreeRTOS;
+write/finish wymagają tokena generacji, rewind czyści bufor i zmienia token.
+Read jest nieblokujący, contention→WAIT. Decoder/pump nadal jeden właściciel;
+fixture_reader osobno kopiuje dane z flash i publikuje z tokenem. Mutex nigdy
+nie obejmuje I/O źródła ani ścieżki I2S. Destroy po zatrzymaniu producenta.
