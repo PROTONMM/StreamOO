@@ -12,7 +12,8 @@ async function update() {
     text('connection', state.network.ready ? 'Połączono z urządzeniem.' : 'Punkt dostępu nie jest gotowy.');
     text('ssid', state.network.ssid || '—');
     text('clients', state.network.clients);
-    text('playback', !state.audio.available ? 'Dźwięk niedostępny' :
+    text('playback', state.network.ready && state.network.mode === 'ap' && !state.audio.available ?
+      'Audio wyłączone w trybie AP' : !state.audio.available ? 'Dźwięk niedostępny' :
       !state.audio.running ? 'Zatrzymane' : state.audio.buffering ? 'Buforowanie…' : 'Odtwarzanie');
     text('volume', state.audio.available ? `${state.audio.volume} / 100` : '—');
   } catch (_) {

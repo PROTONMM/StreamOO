@@ -24,6 +24,8 @@
 | D20 | OTWARTE | Format czasu/strefa i polityka bez SNTP nadal otwarte. W HOME 04i do testu użyto YYYY-MM-DD i HH:MM:SS z jawnego czasu cywilnego; renderer nie wybiera strefy ani nie synchronizuje czasu. |
 | D21 | USTALONE | Scroll ma poruszać tekst wyłącznie od prawej do lewej; nowsza decyzja użytkownika, ADR 0009. |
 | D22 | OTWARTE | Obecny font tymczasowo zaakceptowany, polskie znaki poprawne według użytkownika; docelowy wygląd czcionki wymaga dopracowania. |
+| D23 | USTALONE | Tryb konfiguracji AP bez odtwarzania; dotychczasowe AAC/AP służyło testowi współpracy. ADR0028. |
+| D24 | OTWARTE | MicroSD jako przyszłe lokalne źródło MP3; brak implementacji, zweryfikowanych pinów/drivera/filesystemu. |
 
 Doprecyzowanie D03/D17: enkoder 5/6/7 i kierunek potwierdzone na sprzęcie
 (ADR0015); stary schemat ma B16. W 06a model i strapping modułu DAC,

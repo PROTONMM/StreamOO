@@ -42,6 +42,10 @@ void app_main(void)
         ESP_LOGE(TAG, "Input probe could not start");
     }
 #endif
+#if defined(CONFIG_STREAMOO_AUDIO_CONTROL_TEST) || defined(CONFIG_STREAMOO_I2S_SMOKE_TEST)
+    if (streamoo_network_boot_ap_enabled()) {
+        ESP_LOGI(TAG,"Audio disabled: AP configuration mode");
+    } else {
 #if defined(CONFIG_STREAMOO_AUDIO_CONTROL_TEST)
     streamoo_preferences_value_t restored = {50,0};
     streamoo_preferences_initial(&restored);
@@ -50,6 +54,8 @@ void app_main(void)
 #elif defined(CONFIG_STREAMOO_I2S_SMOKE_TEST)
     if (streamoo_audio_probe_start() != ESP_OK)
         ESP_LOGE(TAG, "Audio probe could not start");
+#endif
+    }
 #endif
 #if defined(CONFIG_STREAMOO_LCD_SMOKE_TEST)
     if (streamoo_display_smoke_start() != ESP_OK) {

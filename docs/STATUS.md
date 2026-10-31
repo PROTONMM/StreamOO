@@ -12,7 +12,7 @@ Bieżący punkt wznowienia: [RESUME.md](RESUME.md).
 | 06 audio | I2S/gain/PCM stress odebrane; MP3 decode/PCM potwierdzone logiem; AAC-LC PoC odebrane; AAC incremental file decode06f odebrane logiem i odsłuchem; źródło/bufor AAC06g odebrane logiem, odsłuchem i sterowaniem; niezależny reader AAC06h odebrany logiem i odsłuchem; sieć/player OPEN | ADR 0018–0025; 168 testów hostowych PASS; build źródeł PASS |
 | 07 DSP | NIEZAIMPLEMENTOWANE | — |
 | 08 stacje | NIEZAIMPLEMENTOWANE | — |
-| 09 sieć | SoftAP/DHCP potwierdzone; portal odczytu i OLED AP09b gotowe do odbioru; STA/mDNS OPEN | ADR0026–0027; 197 testów hostowych PASS |
+| 09 sieć | SoftAP/DHCP potwierdzone; portal odczytu i OLED AP09b gotowe do odbioru; STA/mDNS OPEN | ADR0026–0027; 202 testy hostowe PASS |
 | 10 WWW | portal odczytu i GET/api/v1/status09b; zapis/auth administracji OPEN | ADR0027; testy handlerów/DOM PASS |
 | 11 storage/OTA | NVS volume/widżet odebrane; flush i pozostały zakres OPEN | ADR 0017; odbiór użytkownika |
 | 12 testy końcowe | NIEURUCHOMIONE | — |
@@ -1109,3 +1109,29 @@ AP off0x814c0B PASS. Końcowy profil AAC+AP z istniejącą prywatną konfiguracj
 stress OFF/tap_delay0; factory1500KiB ma24% wolnej. Nie zmieniano klucza ani
 zewnętrznego pliku. Walidator GPIO/platform i diff --check PASS; controlled_fill/
 pcm_fill pozostają w IRAM. Nie uruchamiano buildu z ujawnianiem sekretów.
+
+## Odbiór dźwięku09b i zmiana polityki AP (2026-10-31)
+
+Użytkownik potwierdził „Dźwięk działa, ładnie”. Log a5ff0d9: cycles do29 po
+193536 ramek, stats_ok1/stale0, low0/hard0/starts1, invalid0, max_fill133us,
+max_read45026us (wall pull). Reader min stos1936B, audio_control22668B,
+network3920B. Klient DHCP192.168.4.2 od57.433s; po wejściu klienta/strony
+internal77463B (min39968), stabilne w próbkach80–110s, PSRAM8337004B.
+Tap_drop/gaps wzrosły do7: dotyczy pomiarowego odgałęzienia, nie FIFO wyjścia,
+zgodnie z izolacją tap. /favicon.ico404 jest brakującym opcjonalnym zasobem
+przeglądarki, nie błędem audio. Odsłuch współpracy audio/AP/HTTP zaliczony;
+wygląd OLED/strony nie został osobno opisany. Końcowy banner ROM nie zawiera
+przyczyny resetu, nie przypisujemy go firmware bez dodatkowych danych.
+
+Użytkownik ustalił, że w AP nie ma odtwarzania; przyszły wyjątek MicroSD jest
+poza obecnym zakresem. Aplikacja nie uruchamia więc obu rodzajów testu audio
+podczas bootu konfiguracji AP: bez dekodera/reader/tap/I2S, zamiast samego mute.
+Enkoder w ekranie AP ignorowany, portal mówi Audio wyłączone w trybie AP.
+NVS i klucz bez zmian. Bez AP dotychczasowe testy audio nadal dostępne.
+202 testy hostowe PASS,5 nowych przypadków rzeczywistego startup main.c ze
+stubami peryferiów. ADR0028. Odbiór nowej polityki AP na S3 OPEN.
+
+Build polityki AP: ESP-IDF6.1 AAC+AP/portal0x11b370B i AP off0x81500B PASS,
+factory1500KiB. Końcowy lokalny profil AP on, AAC wybrane jako test poza AP,
+stress OFF/0, prywatny klucz i NVS bez zmian. Walidator GPIO/platform i
+diff --check PASS.

@@ -115,3 +115,10 @@ na starcie/EOF/contention i zachowuje częściowy blok PCM. Zamykanie czeka na
 ack readera przed zwolnieniem pamięci; przy timeout zachowuje żywe bufory.
 [ADR0025](adr/0025-independent-compressed-reader.md). Bufor nadal4KiB PSRAM,
 bez sieci; ISR/gain/tap i start STOP bez zmian. Runtime06h na S3 OPEN.
+
+## Polityka konfiguracji AP
+
+Po odbiorze testu współpracy AAC/AP użytkownik ustalił: AP służy konfiguracji,
+bez odtwarzania. Boot AP nie uruchamia dekodera/reader/tap ani I2S/tonu.
+Bez AP testy audio pozostają dostępne. MicroSD jest przyszłym źródłem,
+nie bieżącą funkcją. ADR0028; dynamiczny STOP podczas STA→AP nadal OPEN.

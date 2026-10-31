@@ -1,10 +1,30 @@
 # Punkt wznowienia StreamOO
 
-Aktualizacja: **2026-10-31, portal odczytu i OLED AP09b gotowe do odbioru**.
+Aktualizacja: **2026-10-31, AP bez odtwarzania przygotowane; odsłuch poprzedniego testu zaliczony**.
 PCM/rebuffer/tap stress potwierdzone logiem i odsłuchem (`5664a90`).
-Gałąź feature/streamoo-implementation, szczegóły STATUS i ADR0027.
+Gałąź feature/streamoo-implementation, szczegóły STATUS i ADR0028.
 
-## Bieżące09b — portal i OLED konfiguracji AP
+## Najnowsze — AP bez audio
+
+Log a5ff0d9 i użytkownik potwierdzają czyste audio podczas AP/HTTP: do29
+cykli, low0/hard0/invalid0, max_fill133us. Tap_drop/gaps7 tylko w pomiarach.
+Nie powtarzać tego odsłuchu. OLED/wygląd portalu nieopisane osobno.
+
+Nowa decyzja: AP jest do konfiguracji, bez odtwarzania. MicroSD ewentualnie
+później. Boot_ap_enabled z network pozwala aplikacji pominąć audio_control,
+fixture_reader/dekoder/tap i finite tone/I2S. Nie jest to mute. Enkoder w AP
+pomijany; portal audio.available=false z komunikatem „Audio wyłączone w trybie AP”.
+Dane AP na OLED, prywatny stały klucz i NVS bez zmian. AP off/brak klucza
+zachowuje dotychczasowe testy audio. Dynamiczne STA→AP/teardown jeszcze OPEN.
+
+202 testy hostowe PASS;5 nowych integruje main.c ze stubami urządzeń.
+Build AP on0x11b370B/AP off0x81500B PASS, końcowy profil AP on, stress OFF/0.
+Nowy odbiór S3: Audio disabled w logu, brak fixture_reader/codec/I2S i cisza,
+OLED oraz portal nadal dostępne. ADR0028. Nie implementować MicroSD/pinów
+bez odrębnej weryfikacji. Dalej: konfiguracja STA i AP off po udanym IP,
+z autoryzacją zapisu przed wystawieniem endpointów zmieniających ustawienia.
+
+## Portal i OLED09b — wcześniejszy test współpracy z audio
 
 Portal read-only pod http://192.168.4.1/ i GET/api/v1/status. Nowy komponent
 portal otrzymuje snapshot przez callback aplikacji; publiczne DTO sieci/audio

@@ -86,8 +86,7 @@ static void display_task(void *context)
 #else
                 const streamoo_control_mode_t mode = STREAMOO_CONTROL_MODE_A;
 #endif
-                if (ap_active && (event.kind==STREAMOO_INPUT_PRESSED_ROTATE ||
-                    event.kind==(mode==STREAMOO_CONTROL_MODE_A ? STREAMOO_INPUT_SHORT : STREAMOO_INPUT_LONG))) continue;
+                if (ap_active) continue;
                 if (!streamoo_encoder_demo_input(&demo,event,mode,now))
                     ESP_LOGW("display_smoke", "TEST gesture rejected; state preserved");
                 const streamoo_preferences_value_t preferences = {(uint8_t)demo.volume, (uint8_t)demo.ui.visualization};

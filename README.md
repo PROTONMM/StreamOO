@@ -81,3 +81,7 @@ objąć tablicę partycji. Pełna procedura: [NETWORK_BRINGUP](docs/NETWORK_BRIN
 sieci i audio. OLED podczas AP pokazuje SSID oraz stałe hasło wbudowane
 z prywatnego buildu. Brak hasła w HTTP/UART. Konfiguracja STA i wyłączenie
 AP po udanym połączeniu są następnym krokiem, nie funkcją bieżącego portalu.
+
+Aktualna polityka: konfiguracja AP bez odtwarzania. Dekoder, czytnik i I2S
+nie startują; OLED i portal pokazują konfigurację sieci. MicroSD pozostaje
+przyszłym źródłem. Wcześniejsze AAC w AP służyło testowi współpracy.

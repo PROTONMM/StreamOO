@@ -13,6 +13,10 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include <string.h>
+bool streamoo_network_boot_ap_enabled(void)
+{
+    return streamoo_network_password_valid(streamoo_ap_password,sizeof streamoo_ap_password-1);
+}
 static bool started;
 static streamoo_network_hooks_t hooks;
 static streamoo_network_state_t state;
@@ -101,6 +105,7 @@ esp_err_t streamoo_network_start(const streamoo_network_hooks_t *observer)
     started=true; return ESP_OK;
 }
 #else
+bool streamoo_network_boot_ap_enabled(void) { return false; }
 bool streamoo_network_ap_display(streamoo_network_ap_display_t *out)
 {
     if (out) *out=(streamoo_network_ap_display_t){0};

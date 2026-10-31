@@ -10,6 +10,8 @@ typedef struct {
 typedef struct { char ap_ssid[16]; uint8_t clients; bool ap_ready; } streamoo_network_state_t;
 /* Task-only owner starts once; hooks run in its task, outside state lock.
  * Hook/context lifetime extends to shutdown. Missing key keeps radio off. */
+/* Bootstrap policy; true reserves this boot for AP configuration (no player). */
+bool streamoo_network_boot_ap_enabled(void);
 esp_err_t streamoo_network_start(const streamoo_network_hooks_t *);
 bool streamoo_network_state(streamoo_network_state_t *);
 /* Trusted local OLED projection only; never serialize to HTTP or logs.

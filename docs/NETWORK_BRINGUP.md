@@ -117,3 +117,14 @@ Hasło AP nie trafia do HTTP ani UART; jego wyświetlanie na OLED jest
 zamierzone i autoryzowane. Wyłączenie AP po połączeniu STA/IP jest wymaganiem
 następnego zakresu, obecny firmware nie konfiguruje jeszcze STA. Nie wyłączamy
 AP po samym połączeniu telefonu/komputera z punktem dostępu urządzenia.
+
+## Aktualizacja: AP bez odtwarzania
+
+Po zaliczeniu odsłuchu testowego użytkownik wyłączył odtwarzanie w trybie
+konfiguracji AP. Zwykły build/flash z dotychczasowym kluczem. Oczekuj
+`Audio disabled: AP configuration mode`, braku logów fixture_reader/codec/
+audio_control i braku tonu. Enkoder nie powinien uruchomić dźwięku ani
+zmienić preferencji na ekranie AP. OLED z SSID/hasłem/URL i portal działają;
+strona mówi „Audio wyłączone w trybie AP”, głośność jest niedostępna.
+To nowa procedura zamiast wcześniejszego polecenia PLAY podczas AP.
+Do testów samego audio wyłącz NETWORK_AP_TEST; MicroSD nadal przyszłościowe.

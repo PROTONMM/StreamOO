@@ -129,3 +129,8 @@ programowo; pełne fizyczne sterowanie wymaga etapu 05 i źródła danych dalszy
 Pełny klucz do63 znaków w dwóch wierszach42+21, bez ucinania. VOL/PLAY/STOP
 z enkodera nadal działają, lista/widżet nie otwierają się w tle. Po AP off
 powrót do HOME. Hasło nie jest częścią snapshotów HTTP. ADR0027.
+
+Nowsza polityka ADR0028: AP jest wyłącznie konfiguracją, bez odtwarzania.
+Enkoder na ekranie AP ignorowany także dla VOL/PLAY/STOP; dane AP pozostają
+widoczne. Poza AP zachowanie HOME/enkodera bez zmian. Zastępuje poprzednią
+obsługę audio na ekranie AP z eksperymentu09b.

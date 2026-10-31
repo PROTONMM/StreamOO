@@ -34,3 +34,9 @@ Stałe hasło nadal wbudowane z prywatnego buildu, niewysyłane przez HTTP/logi.
 Użytkownik potwierdził AP off po udanym STA z IP; przejście to będzie wdrożone
 wraz z zapisem/testem STA, nie po samym dołączeniu klienta AP.
 [ADR0027](adr/0027-readonly-portal-and-ap-oled.md). Odbiór09b OPEN.
+
+Nowsza decyzja: konfiguracja AP bez odtwarzania. Boot pomija cały testowy
+pipeline audio, enkoder w AP nie steruje playerem, portal pokazuje audio off.
+To zastępuje eksperymentalną współpracę lokalnego AAC z AP. MicroSD później,
+niezaimplementowane; przyszłe dynamiczne STA→AP wymaga kontrolowanego STOP.
+[ADR0028](adr/0028-ap-setup-without-audio.md).

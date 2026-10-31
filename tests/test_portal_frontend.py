@@ -5,7 +5,7 @@ ROOT=Path(__file__).resolve().parents[1]
 HARNESS=r'''
 const fs=require('fs'),vm=require('vm'),assert=require('assert');
 const mode=process.argv[1],elements=new Map(),classes=new Set();let scheduled=0;
-const state={schema_version:1,network:{ready:true,ssid:'StreamOO-123ABC',clients:1},
+const state={schema_version:1,network:{mode:'ap',ready:true,ssid:'StreamOO-123ABC',clients:1},
  audio:{available:true,running:true,buffering:false,volume:87}};
 if(mode==='stopped')state.audio.running=false;
 if(mode==='unavailable')state.audio.available=false;
@@ -20,7 +20,7 @@ setImmediate(()=>{
  if(mode==='offline'){assert(classes.has('offline'));assert(elements.get('connection').textContent.includes('Brak'));}
  else {assert.equal(elements.get('ssid').textContent,state.network.ssid);assert(!classes.has('offline'));
  if(mode==='stopped')assert.equal(elements.get('playback').textContent,'Zatrzymane');
- else if(mode==='unavailable')assert.equal(elements.get('volume').textContent,'—');
+ else if(mode==='unavailable'){assert.equal(elements.get('volume').textContent,'—');assert.equal(elements.get('playback').textContent,'Audio wyłączone w trybie AP');}
  else {assert.equal(elements.get('volume').textContent,'87 / 100');assert.equal(elements.get('playback').textContent,'Odtwarzanie');}}
 });
 '''
