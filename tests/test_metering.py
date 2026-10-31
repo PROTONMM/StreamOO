@@ -30,7 +30,7 @@ typedef pthread_mutex_t portMUX_TYPE;
             for n in ('metering', 'spectrum', 'levels', 'pcm', 'audio_gain')]
         subprocess.run(['cc', '-std=c11', '-Wall', '-Wextra', '-Werror', '-pthread',
             *os.environ.get('STREAMOO_METERING_SANITIZE', '').split(), *includes,
-            'components/metering/streamoo_metering.c', 'components/spectrum/streamoo_spectrum.c', 'components/spectrum/streamoo_spectrum_stream.c', 'components/levels/streamoo_ballistics.c', 'components/levels/streamoo_levels.c',
+            'components/metering/streamoo_metering.c', 'components/spectrum/streamoo_spectrum.c', 'components/spectrum/streamoo_spectrum_stream.c', 'components/spectrum/streamoo_spectrum_envelope.c', 'components/levels/streamoo_ballistics.c', 'components/levels/streamoo_levels.c',
             'components/pcm/streamoo_pcm.c', 'components/audio_gain/streamoo_audio_gain.c',
             'tests/metering_test.c', '-lm', '-o', cls.binary], cwd=ROOT, check=True)
     def case(self, n): subprocess.run([self.binary, str(n)], check=True, timeout=10)

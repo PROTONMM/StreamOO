@@ -54,11 +54,13 @@ bool streamoo_spectrum_analyze(streamoo_spectrum_t *s, const int32_t *lr, size_t
     unsigned n=s->size;
     for(unsigned k=0;k<=n/2;++k)s->amplitude[k]=0;
     for(unsigned ch=0;ch<2;++ch) {
-        int64_t sum=0;
-        for(unsigned i=0;i<n;++i)sum+=lr[2*i+ch];
-        float mean=(float)((double)sum/((double)n*2147483648.0));
+        float base=(float)lr[ch]*(1.0f/2147483648.0f);
+        float weighted_sum=0;
+        for(unsigned i=0;i<n;++i)
+            weighted_sum+=(((float)lr[2*i+ch]*(1.0f/2147483648.0f))-base)*s->window[i];
+        float mean=weighted_sum/s->window_sum;
         for(unsigned i=0;i<n;++i) {
-            s->work[2*i]=(((float)lr[2*i+ch]*(1.0f/2147483648.0f))-mean)*s->window[i];
+            s->work[2*i]=(((float)lr[2*i+ch]*(1.0f/2147483648.0f))-base-mean)*s->window[i];
             s->work[2*i+1]=0;
         }
         fft(s);

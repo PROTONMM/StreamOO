@@ -1,3 +1,9 @@
+Aktualizacja07f (ADR0043): poprawione DC ważone Hann, FFT z natychmiastowym
+atakiem i opadaniem pełnej skali320ms. Sprawdź mowę/muzykę: krótka cicha
+klatka nie powinna zerować wysokich słupków natychmiast. Pełna cisza daje
+pusty wykres z linią; brak świeżych pomiarów daje „Brak danych”.
+STOP/zmiana stacji nadal czyści od razu. RMS/peak bez zmian.
+
 # Aktualny odbiór07e — widmo FFT z audio
 
 1. Zwykły flash, bez erase/NVS/obrazu FS. Wybierz działającą stację,

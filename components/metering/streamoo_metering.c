@@ -1,6 +1,7 @@
 #include "streamoo_metering.h"
 #include "streamoo_ballistics.h"
 #include "streamoo_spectrum_stream.h"
+#include "streamoo_spectrum_envelope.h"
 #include <string.h>
 #include "esp_heap_caps.h"
 #include "esp_timer.h"
@@ -25,6 +26,8 @@ static void analyze(void *context) {
     streamoo_spectrum_stream_t *spectrum = NULL;
     uint32_t request_seen = UINT32_MAX;
     int64_t fft_at = 0;
+    streamoo_spectrum_envelope_t spectrum_envelope;
+    streamoo_spectrum_envelope_init(&spectrum_envelope,esp_timer_get_time());
     for (;;) {
         if (atomic_load_explicit(&m->stop, memory_order_acquire)) break;
         int64_t start = esp_timer_get_time();
@@ -35,6 +38,7 @@ static void analyze(void *context) {
             memset(current.bands,0,sizeof current.bands);
             current.spectrum_request = request;
             fft_at = 0;
+            streamoo_spectrum_envelope_init(&spectrum_envelope,start);
             if((request&1u) && !spectrum) {
                 spectrum = heap_caps_calloc(1,sizeof *spectrum,MALLOC_CAP_SPIRAM|MALLOC_CAP_8BIT);
                 if(spectrum)streamoo_spectrum_stream_init(spectrum);
@@ -52,8 +56,11 @@ static void analyze(void *context) {
                     uint32_t elapsed_fft = (uint32_t)(current.spectrum_completed_us-fft_start);
                     if(elapsed_fft>current.max_fft_us)current.max_fft_us=elapsed_fft;
                     fft_at=current.spectrum_completed_us+100000;
+                    uint16_t target[24];
                     for(unsigned b=0;b<24;++b)
-                        current.bands[b]=streamoo_spectrum_display_level(spectrum->fft.bands[b]);
+                        target[b]=streamoo_spectrum_display_level(spectrum->fft.bands[b]);
+                    streamoo_spectrum_envelope_feed(&spectrum_envelope,target,current.spectrum_completed_us);
+                    memcpy(current.bands,spectrum_envelope.bands,sizeof current.bands);
                     current.spectrum_valid=true;
                 }
                 current.fft_windows=spectrum->windows;

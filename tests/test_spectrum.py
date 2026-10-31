@@ -102,11 +102,25 @@ class SpectrumTests(unittest.TestCase):
             'components/spectrum/streamoo_spectrum.c','components/pcm/streamoo_pcm.c',
             'components/audio_gain/streamoo_audio_gain.c','tests/spectrum_test.c','-lm','-o',binary],cwd=ROOT,check=True)
         subprocess.run([binary],check=True)
+    @unittest.skipIf(np is None,'Optional NumPy rectangular-window comparison')
+    def test_hann_reduces_far_leakage_for_off_bin_tone(self):
+        for n in (1024,2048):
+            s=self.context(n);frequency=20.37*48000/n
+            lr=self.signal(s,frequency,phase=1)
+            self.assertTrue(self.analyze(C.byref(s),lr,n))
+            values=np.ctypeslib.as_array(lr)[::2].astype(np.float64)/2147483648
+            values-=values.mean()
+            rectangle=np.abs(np.fft.rfft(values))*2/n
+            hann=np.array(s.amplitude[:n//2+1])
+            far=np.abs(np.arange(n//2+1)-20.37)>=8
+            far[0]=False
+            self.assertLess(max(hann[far]),max(rectangle[far])/50)
     def compare_numpy(self,s,lr):
         self.assertTrue(self.analyze(C.byref(s),lr,s.size))
         values=np.ctypeslib.as_array(lr).reshape(-1,2).astype(np.float64)/2147483648
-        values-=values.mean(axis=0)
-        w=np.hanning(s.size);z=np.fft.rfft(values*w[:,None],axis=0)
+        w=np.hanning(s.size)
+        values-=(values*w[:,None]).sum(axis=0)/w.sum()
+        z=np.fft.rfft(values*w[:,None],axis=0)
         scale=np.full(s.size//2+1,2/w.sum());scale[-1]=1/w.sum()
         expected=np.sqrt(np.mean(np.abs(z*scale[:,None])**2,axis=1));expected[0]=0
         actual=np.array(s.amplitude[:s.size//2+1])

@@ -1,6 +1,6 @@
 # Punkt wznowienia StreamOO
 
-Aktualizacja: **2026-10-31, 07e — FFT live gotowe do odbioru na płytce**.
+Aktualizacja: **2026-10-31, 07f — poprawione DC i opadanie słupków FFT do odbioru**.
 Gałąź feature/streamoo-implementation. ADR0034–0035, STATUS i HTTP_PLAYER_BRINGUP.
 
 ## Potwierdzone przez użytkownika
@@ -159,3 +159,14 @@ Referencyjny backend float, bez deklaracji SIMD; ESP-DSP/sc16 po pomiarach.
 Teraz zwykły flash bez erase/NVS i DSP_BRINGUP: słupki, VOL0, STOP/zmiany,
 czystość dźwięku; logi FFT max_fft/frames/skipped/gaps i meters/heap/max_fill.
 Agent nie wykonywał flash/erase/eFuse.
+
+Najnowszy07f / ADR0043: użytkownik zgłosił szerokie i migające FFT przy
+mowie; pusty wykres bez „Brak danych”. Test Hann/off-bin ujawnił artefakt
+dolnych binów zwykłej średniej. DC teraz ważone Hann (różnice względem
+pierwszej próbki dla dokładnego zera DC), NumPy oracle PASS. Sam Hann
+był i pozostaje. FFT envelope: atak natychmiast, opadanie pełnej skali320ms,
+bez zmiany RMS/peak, taktu10Hz i freshness200ms/resetu sesji.
+305 testów, targeted ASan/UBSan i build PASS (0x15f3e0,6% wolne).
+Teraz zwykły flash i ocena słupków na mowie/muzyce oraz log FFT max_fft/
+gaps i meters drop/PCM/heap. Nie uznawać szerokości na log osi za dowód
+przecieku. Czasy S3 nadal OPEN bez nowego logu.

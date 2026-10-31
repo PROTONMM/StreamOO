@@ -85,3 +85,12 @@ nie zatrzymuje RMS/audio. Generation/request revision, niezależny timestamp
 i expiry200ms. Referencyjny float backend do pierwszego pomiaru na S3;
 ESP-DSP/sc16/SIMD i docelowe FPS nadal OPEN. ADR0042, DSP_BRINGUP.
 303 testy/NumPy/native build PASS, odbiór dźwięku/czasów/OLED OPEN.
+
+## 07f — korekta DC i opadanie widma
+
+Hann było aktywne; nowy test off-bin wykazał artefakt dolnych binów przy
+odejmowaniu zwykłej średniej. DC removal teraz ważone Hann, sprawdzone
+z NumPy i testem przecieku względem prostokątnego okna. Dla FFT dodano
+natychmiastowe narastanie i opadanie pełnej skali320ms, po mapowaniu dB,
+bez zmiany RMS/peak. Cisza daje zero, expiry200ms i reset sesji zachowane.
+ADR0043. Szerokość na osi log nie oznacza szerokości liniowego pasma Hz.

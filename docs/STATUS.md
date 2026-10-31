@@ -1391,3 +1391,17 @@ check_config --platform/diff --check PASS, pcm_fill w IRAM. Bez nowych
 zależności, zmian partycji, flash/erase/eFuse.
 HARDWARE_TEST_PENDING: DSP_BRINGUP — słupki FFT, czysty dźwięk, VOL0,
 zmiana widżetu/STOP/stacji, max_fft/max_fill/drop/heap/stack.
+
+## 07f — widmo: DC ważone Hann i łagodne opadanie (2026-10-31)
+
+Użytkownik: przy mowie słupki migają/znikają, zostaje pusta linia bez
+„Brak danych”. Hann stosowane; test off-bin ujawnił artefakt dolnego pasma
+ze zwykłej średniej przed oknem. DC removal zmienione na ważone Hann,
+NumPy oracle zaktualizowane i test przecieku względem prostokąta PASS.
+FFT envelope: natychmiastowy atak, opadanie pełnej skali320ms, bez
+uśredniania FFT/RMS i bez zmiany ich kalibracji. ADR0043.
+
+305 testów PASS; envelope/metering/native FFT ASan/UBSan PASS (LSan off).
+Native ESP-IDF6.1 build PASS,0x15f3e0 (6% wolne); check_config/diff PASS.
+Brak nowych zależności, alokacji, zmian ISR/audio/partycji i flash/erase/eFuse.
+Odbiór OLED/nowych czasów max_fft na urządzeniu OPEN.

@@ -8,7 +8,7 @@
  * Caller-owned workspace (about37KiB), no allocation/global state/I/O.
  * Init precomputes symmetric Hann N-1 and twiddles. N=1024 or2048.
  * Input is signed32 stereo before gain at explicit sample_rate (8..48kHz).
- * Per-channel DC mean removed, then FFT. Stereo combines POWER so channels
+ * Per-channel Hann-weighted DC mean removed, then FFT. Stereo combines POWER so channels
  * in opposite phase cannot cancel. Bins hold peak amplitude relative to FS,
  * coherent-gain corrected; Nyquist is not doubled, DC reported as0.
  * 24 approximately logarithmic bands cover ALL bins1..N/2 exactly once,
