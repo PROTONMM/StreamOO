@@ -37,5 +37,7 @@ uint16_t streamoo_spectrum_display_level(uint16_t value){
     float db=20.0f*log10f((float)value/32767.0f);
     float level=(db+60.0f)/60.0f;
     if(level<=0)return 0;
-    return (uint16_t)lroundf(level*32767.0f);
+    /* Keep the -60..0 dBFS calibration, but suppress the low-level carpet
+     * so genuinely dominant bands are readable on the small OLED. */
+    return (uint16_t)lroundf(level*sqrtf(level)*32767.0f);
 }

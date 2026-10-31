@@ -94,3 +94,13 @@ z NumPy i testem przecieku względem prostokątnego okna. Dla FFT dodano
 natychmiastowe narastanie i opadanie pełnej skali320ms, po mapowaniu dB,
 bez zmiany RMS/peak. Cisza daje zero, expiry200ms i reset sesji zachowane.
 ADR0043. Szerokość na osi log nie oznacza szerokości liniowego pasma Hz.
+
+## 07g — kontrast słupków widma
+
+Pasma częstotliwości pozostają logarytmiczne, a wejście pozostaje skalowane
+od -60 do 0 dBFS. Ekran nie rozciąga już jednak tej skali liniowo: po
+normalizacji stosuje `level * sqrt(level)` (gamma 1,5). Ciche tło zajmuje
+więc mniej wysokości, a głośniejsze częstotliwości odróżniają się wyraźniej.
+Korpus słupka ma jasność 8, a pojedynczy piksel jego bieżącego szczytu 15.
+To nie jest peak-hold: pozycja jasnej linii podąża za istniejącym envelope.
+FFT, takt, audio i ścieżka I2S pozostają bez zmian.

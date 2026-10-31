@@ -46,7 +46,8 @@ int main(int argc,char **argv){
    assert(current>=previous&&current<=32767);previous=current;
   }
   assert(!streamoo_spectrum_display_level(0)&&!streamoo_spectrum_display_level(32));
-  assert(abs((int)streamoo_spectrum_display_level(3277)-21845)<=2);
+  assert(abs((int)streamoo_spectrum_display_level(3277)-17836)<=2);
+  assert(streamoo_spectrum_display_level(3277)<21845);
   assert(streamoo_spectrum_display_level(32767)==32767);
  }else if(test==5){
   assert(!streamoo_spectrum_stream_feed(s,samples,240,UINT32_MAX,true));

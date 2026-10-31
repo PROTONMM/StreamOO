@@ -96,7 +96,8 @@ class VisualizationTests(unittest.TestCase):
         self.model.band_count = 24
         self.model.bands[0] = 32767
         self.assertTrue(self.draw(0))
-        self.assertEqual(self.pixel(45, 32), 12)
+        self.assertEqual(self.pixel(45, 32), 15)
+        self.assertEqual(self.pixel(45, 33), 8)
         self.assertEqual(self.pixel(60, 32), 0)
         self.assertEqual(self.pixel(45, 63), 4)
         self.model.band_count = 0

@@ -13,8 +13,11 @@ static void spectrum(streamoo_canvas_t *canvas, streamoo_rect_t b,
         const int32_t next = b.x + (uint32_t)(i + 1) * b.width / model->band_count;
         const int16_t width = next - x > 1 ? next - x - 1 : 1;
         const int16_t height = scale(model->bands[i], b.height - 1);
-        streamoo_canvas_fill(canvas, (streamoo_rect_t){x, b.y + b.height - 1 - height,
-                                                       width, height}, 12);
+        if (height) {
+            const int16_t top = b.y + b.height - 1 - height;
+            streamoo_canvas_fill(canvas, (streamoo_rect_t){x, top, width, height}, 8);
+            streamoo_canvas_fill(canvas, (streamoo_rect_t){x, top, width, 1}, 15);
+        }
     }
     streamoo_canvas_line(canvas, b.x, b.y + b.height - 1,
                          b.x + b.width - 1, b.y + b.height - 1, 4);

@@ -1,5 +1,16 @@
 # Punkt wznowienia StreamOO
 
+## Najnowsze — kontrast widma OLED / ADR0071 / 2026-10-31
+
+Pasmo częstotliwości pozostaje logarytmiczne. Po skali -60..0dBFS ekran
+używa gamma1,5: `level * sqrt(level)`, więc ciche pasma zajmują mniej
+wysokości, a głośne są wyraźniejsze. Korpus słupka ma jasność8, jego
+bieżący szczyt jasność15; nie jest to peak-hold. 381 testów hostowych i
+walidator GPIO PASS. Natywny build ESP-IDF6.1 nie został wykonany, bo
+lokalny export wskazuje brakujący virtualenv. Bez zmian FFT, envelope,
+audio/I2S, NVS lub flash. Po flashu sprawdzić wygląd przy mowie i muzyce
+oraz brak wpływu na dźwięk.
+
 ## Najnowsze — import playlisty dopisujący stacje / ADR0070 / 2026-10-31
 
 Upload playlist.csv przez WWW atomowo dodaje rekordy do katalogu, nie usuwa

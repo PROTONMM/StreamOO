@@ -1,5 +1,21 @@
 # Status implementacji
 
+## Najnowsze — kontrast widma OLED / ADR0071 / 2026-10-31
+
+Pasmo częstotliwości jest już logarytmiczne, a wysokość była mapowana z
+-60..0dBFS liniowo na wysokość OLED. Po zgłoszeniu zbyt masywnego obrazu
+prezentacja stosuje teraz gamma1,5 (`level * sqrt(level)`): ciche tło jest
+niższe, dominujące częstotliwości wyższe. Korpus słupka ma jasność8, a jego
+bieżący szczyt jasność15. Nie dodano peak-hold ani nie zmieniono FFT,
+envelope320ms, tasków, I2S, audio, NVS lub flash.
+
+381 testów hostowych oraz walidator GPIO PASS; testy mapowania, pikseli i
+cztery obejrzane syntetyczne klatki HOME są zaktualizowane. Natywny build
+ESP-IDF6.1 nie został wykonany: lokalny `export.sh` wskazuje brakujący
+virtualenv `idf6.1_py3.12_env`. Odbiór OLED pozostaje OPEN. Oczekiwane:
+mniej jednolitej ściany, lepiej widoczne dominujące pasma; dźwięk musi
+pozostać bez zmian. Agent nie flashował.
+
 ## Najnowsze — import playlisty dopisujący stacje / ADR0070 / 2026-10-31
 
 Na polecenie użytkownika upload playlist.csv przez WWW nie zastępuje już

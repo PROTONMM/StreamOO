@@ -20,3 +20,5 @@ it requires reviewing the intended visual change; tests do not overwrite it.
 Wszystkie obejrzano jako PNG przed zamrożeniem. Dane są jawnie syntetyczne;
 fonty i ich licencje opisuje THIRD_PARTY_NOTICES.md. Zastępują dawną scenę
 tekstu/widżetów usuniętą w 04i; test nie odtwarza sam wzorców.
+Od ADR0071 korpus widma ma jasność 8, a bieżące szczyty jasność 15; klatki
+odświeżono po obejrzeniu tej celowej zmiany kontrastu.

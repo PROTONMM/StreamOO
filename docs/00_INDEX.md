@@ -110,6 +110,8 @@ Widmo z rzeczywistego audio07e: `adr/0042-live-spectrum-bringup.md`.
 
 Korekta DC i opadanie FFT07f: `adr/0043-spectrum-leakage-and-release.md`.
 
+Kontrast widma OLED07g: `adr/0071-spectrum-display-contrast.md`.
+
 Rzeczywisty kodek i Wi-Fi RSSI w HOME: `adr/0044-live-codec-and-wifi-info.md`.
 
 Sprawdzanie playlisty/kodeków na komputerze: `PLAYLIST_PROBE.md`, `adr/0045-host-playlist-stream-probe.md`.
