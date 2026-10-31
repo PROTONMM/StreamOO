@@ -70,3 +70,12 @@ Oczekiwany log: `FLAC live frame: supplied validated STREAMINFO`, potem
 PCM/PLAYING; rzeczywisty odbiór poprawki nadal OPEN. Nie trzeba zmieniać
 playlisty, tablicy partycji ani ustawień. RNŚAAC+ sprawdzamy oddzielnie:
 log FLAC nie potwierdza przyczyny jego problemu.
+
+## RNŚAAC+ TLS — ADR0057
+
+Log użytkownika pokazał brak zaufanego root przed HTTP, bez uruchomienia
+AAC. Origin serwera podaje chain cross-signed, podczas gdy właściwy GTS
+Root R4 już jest w pełnym bundle. Włączono natywne cross-signed verify
+ESP-IDF. Bez nowych CA, wyłączania walidacji lub zmiany URL. Po zwykłym
+flash sprawdź ten sam RNŚAAC+ i log Certificate validated/HTTP/PCM. Nie
+trzeba importować stacji ponownie. Odbiór handshake/dekodera S3 OPEN.

@@ -1644,3 +1644,36 @@ Teraz zwykły flash i ponowny odsłuch TEST FLAC native lossless; oczekiwany
 log FLAC live frame: supplied validated STREAMINFO, potem PCM/PLAYING.
 RNŚAAC+ nadal osobne zgłoszenie OPEN, potrzebny log jego błędu; nie
 przypisujemy mu diagnozy z FLAC. Oba serwery na hoście odpowiadają200.
+
+## RNŚAAC+ — TLS cross-signed (2026-10-31, ADR0057)
+
+Log użytkownika: No matching trusted root, handshake-0x3000/HTTP0,
+ESP_ERR_HTTP_CONNECT; dekoder nie wystartował. Odczytany origin chain
+leaf→GoogleWE1→GTSRootR4 cross-signed GlobalSignRootCA. Pełny przypięty
+bundle zawiera GTSRootR4, nie dokładny dawny GlobalSignRootCA. Host
+OpenSSL z tym samym CAfile buduje poprawną ścieżkę przez GTSRootR4.
+
+Włączone CONFIG_MBEDTLS_CERTIFICATE_BUNDLE_CROSS_SIGNED_VERIFY w defaults
+oraz bieżącym sdkconfig. Wybrane TRUSTED_CERT_CALLBACK; FULLbundle nadaly.
+Bez nowych CA/leaf trust/deprecated roots/wyłączenia TLS checks/HTTP
+fallback. Podpisy/hostname pozostają; audyt wykazał HAVE_TIME_DATE=n (SDK default),
+więc teraz jawnie włączono y, korzystając z istniejącego SNTP. Po starcie
+HTTPS może ponowić próbę przed synchronizacją. Wcześniejsze opisy dat
+nie potwierdzały faktycznej konfiguracji firmware.
+
+Weryfikacja:17 regresji readera PASS; host OpenSSL z CAfile przypiętego
+SDK — prawidłowy hostname PASS, błędny hostname i wygasły leaf FAIL.
+Łańcuchy kolejnych2hostów Revma też PASS. Native IDF6.1 build PASS:
+0x176800, wolne0xd79800/90%. GPIO validator i diff --check PASS.
+Logi /tmp/streamoo-cross-signed-*.log, /tmp/streamoo-tls-chains.log.
+Bez nowych bibliotek/kopii kodu i bez flash/erase/eFuse przez agenta.
+
+To testy hosta i build, nie handshake S3. Teraz zwykły flash i ten sam
+RNŚAAC+; oczekiwane Certificate validated, HTTP200 i PCM. Jeśli dekoder
+następnie zgłosi błąd, diagnozować osobno. Odbiór FLACfix ADR0056 nadal
+OPEN; poprawka jest już w tym buildzie. Playlista/NVS/partycje bez zmian.
+
+Końcowy build ADR0057 obejmuje HAVE_TIME_DATE=y; generated sdkconfig.h
+potwierdza oba nowe flagi i TRUSTED_CERT_CALLBACK. Object bundle zawiera
+CAcallback, object X509 odwołuje się do time()/porównania dat. To kontrola
+kompilacji, nie wynik handshake radia.

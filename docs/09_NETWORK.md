@@ -89,3 +89,8 @@ Procedura sprzętowa: [MDNS_BRINGUP](MDNS_BRINGUP.md).
 ADR0054: reader rozwiązuje URL M3U/PLS przed uruchomieniem dekodera,
 z limitami dokumentu/zagnieżdżeń, względnymi URL i zachowanym zakazem
 HTTPS→HTTP. Katalog i ID przechowują oryginalny adres. HLS osobno OPEN.
+
+ADR0057: natywna weryfikacja cross-signed CA bundle włączona dla
+alternatywnych ścieżek do już zaufanych rootów (RNŚAAC+). Pełny bundle,
+sprawdzanie podpisów/hostname pozostają; HAVE_TIME_DATE teraz jawnie y
+(wcześniej SDK default n), z istniejącym SNTP. Odbiór na S3 OPEN.

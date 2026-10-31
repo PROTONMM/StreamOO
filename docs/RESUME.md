@@ -346,3 +346,20 @@ pozostaje osobnoOPEN: użytkownik nie podał jeszcze logu tej stacji.
 Nie zakładać, że ma ten sam błąd. Stream failed dodaje codec enum
 0MP3/1AAC/2FLAC/3Vorbis/4Opus, by logi były jednoznaczne.
 Agent nie flashował/erase/eFuse. OTA nadal wyłączone decyzją użytkownika.
+
+Najnowsze ADR0057: log RNŚAAC+ wskazał TLSrootnotfound przedHTTP/decode.
+Origin podaje GTSRootR4 cross-signed przez nieobecny staryGlobalSignRootCA,
+ale zaufanysamopodpisanyGTSRootR4 już w pinnedFULLbundle. Włączono natywne
+CROSS_SIGNED_VERIFY + TRUSTED_CERT_CALLBACK (defaults/bieżącysdkconfig).
+Bez dokładaniaCA/deprecatedroots/leaftrust/wyłączania hostname/podpisów
+lub HTTPfallback. Audyt wykazał HAVE_TIME_DATE=n (SDKdefault); teraz y,
+UTCzSNTP. Przed sync HTTPS może chwilowo retry. Wcześniejsza deklaracja
+sprawdzania dat była nieprecyzyjna. SDKniezmieniony; CA source/license bez zmian.
+
+Hostopenssl naDOKŁADNYM SDKCAfile potwierdza chain/hostname, odrzuca
+wronghostname/expiredleaf. KolejnehostyRevma teżchainOK.17testHTTPPASS,
+nativebuildPASS0x176800,90%wolne,GPIO/diffPASS. Brak nowych unitów
+udających test callbackaSDK; handshakeS3 nadalOPEN. Teraz user zwykłyflash
+bez erase/reimportu, sprawdzić RNŚAAC+ i poprzedniąFLACfixADR0056.
+WeryfikacjaFLACS3 też nadalOPEN. Nie twierdzić żeAACdekoderodebrany:
+tenlogdotyczyłwyłącznieTLS. Bez flash/erase/eFuse przez agenta.

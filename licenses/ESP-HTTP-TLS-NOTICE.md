@@ -38,3 +38,10 @@ Upstream source and terms:
 - https://www.mozilla.org/en-US/MPL/2.0/
 
 No private station playlist is part of this notice, certificate source or build.
+
+ADR0057 (2026-10-31): enabled the pinned SDK cross-signed CA callback.
+CA dataset and its MPL source above are unchanged. GTS Root R4 already
+exists in that bundle; no server leaf, extra CA, deprecated root or new
+third-party implementation was imported. Standard signature, hostname
+verification remain enabled; CONFIG_MBEDTLS_HAVE_TIME_DATE is now explicitly
+enabled using the existing SNTP clock (the SDK default had been disabled).
