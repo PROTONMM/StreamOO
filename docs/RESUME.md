@@ -1,8 +1,24 @@
 # Punkt wznowienia StreamOO
 
-Aktualizacja: **2026-10-31, SoftAP09a przygotowany do prywatnego buildu i odbioru**.
+Aktualizacja: **2026-10-31, SoftAP/DHCP09a potwierdzone logiem; obserwacja zakłócenia UART**.
 PCM/rebuffer/tap stress potwierdzone logiem i odsłuchem (`5664a90`).
 Gałąź feature/streamoo-implementation, szczegóły STATUS i ADR0026.
+
+## Najnowszy log09a i konsola UART
+
+Użytkownik wykonał prywatny build e369d49: AP i DHCP192.168.4.2 potwierdzone,
+clients1; lokalne PCM/cykle bez niedoborów/błędów do~101s. max_fill133us,
+max_read39437us od startu RF, internal87319B po kliencie, PSRAM8337172B.
+Odsłuch przy AP, zły klucz i rozłączenie jeszcze niepotwierdzone.
+
+Nieczytelny pojedynczy wpis fixture_reader80.776s; pozostałe24 poprawne.
+Użytkownik potwierdził dotykanie przewodów UART. Prawdopodobny przejściowy
+problem styku/transmisji; nie traktować tego jako dowodu błędu formatowania.
+Źródło ASCII i typy sprawdzone; UART115200, log tekstowy, DFS off. Bez zmian
+firmware. Najpierw krótka próba przy nieruchomych, stabilnie podłączonych
+TX/GND. Powrót bez dotykania→raw capture/ewentualnie porównanie z natywnym
+USB Serial/JTAG (secondary output włączony), zamiast zgadywania przyczyny.
+Nie zmieniać klucza AP ani nie ujawniać prywatnej konfiguracji w diagnostyce.
 
 ## Bieżący09a — zabezpieczony SoftAP
 

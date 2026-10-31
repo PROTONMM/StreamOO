@@ -71,3 +71,16 @@ niska pamięć i długotrwały test pozostają OPEN do pomiarów.
 Następny krok po odbiorze: portal konfiguracji i test STA z rollback, dopiero
 potem reader HTTP/HTTPS. Hasło wspólnego AP nie rozstrzyga uwierzytelniania
 administracyjnego przyszłego WWW (D18 nadal osobno OPEN).
+
+## Pojedyncze nieczytelne znaki konsoli
+
+W logu e369d49 odnotowano pojedynczy uszkodzony fragment fixture_reader
+przy potwierdzonym dotykaniu przewodów UART. Format tego wpisu to ASCII:
+`fixture_reader: generation=<liczba> input=37039 stack_hwm=<liczba>`.
+Po nim cykle/PCM pracowały dalej bez błędów. Zabezpiecz połączenie TX/GND
+na próbę bez dotykania; monitor UART115200. Przy powtórzeniu bez ruchu
+potrzebne oryginalne bajty z odbiornika, ponieważ kopiowanie tekstu z Unicode
+replacement traci dane. Jeśli płytka udostępnia natywne USB Serial/JTAG,
+secondary output jest włączony: porównanie obu wyjść pomoże oddzielić tor
+UART/adapter od wspólnej ścieżki logowania. Przyczyny nie uznajemy za dowiedzioną
+ani nie zmieniamy firmware wyłącznie na podstawie takiego fragmentu.

@@ -12,7 +12,7 @@ Bieżący punkt wznowienia: [RESUME.md](RESUME.md).
 | 06 audio | I2S/gain/PCM stress odebrane; MP3 decode/PCM potwierdzone logiem; AAC-LC PoC odebrane; AAC incremental file decode06f odebrane logiem i odsłuchem; źródło/bufor AAC06g odebrane logiem, odsłuchem i sterowaniem; niezależny reader AAC06h odebrany logiem i odsłuchem; sieć/player OPEN | ADR 0018–0025; 168 testów hostowych PASS; build źródeł PASS |
 | 07 DSP | NIEZAIMPLEMENTOWANE | — |
 | 08 stacje | NIEZAIMPLEMENTOWANE | — |
-| 09 sieć | SoftAP09a zaimplementowany; RF/DHCP/audio OPEN; portal/STA/mDNS OPEN | ADR0026; 179 testów hostowych PASS; native AP build PASS |
+| 09 sieć | SoftAP/DHCP potwierdzone logiem; odsłuch przy RF i pozostałe próby OPEN; portal/STA/mDNS OPEN | ADR0026; 179 testów hostowych PASS; native AP build PASS |
 | 10 WWW | NIEZAIMPLEMENTOWANE | — |
 | 11 storage/OTA | NVS volume/widżet odebrane; flush i pozostały zakres OPEN | ADR 0017; odbiór użytkownika |
 | 12 testy końcowe | NIEURUCHOMIONE | — |
@@ -1039,3 +1039,29 @@ konfiguracja: sekret testowy usunięty, cache ścieżki pusty, header AVAILABLE0
 Wi-Fi nie uruchomi się przed lokalną konfiguracją użytkownika. Sprawdzono
 brak testowego hasła w logach i końcowym obrazie. Walidator GPIO/platform,
 diff --check PASS; callback render/pcm_fill nadal w IRAM.
+
+## Log09a i nieczytelny fragment UART (2026-10-31)
+
+Log użytkownika dla e369d49 potwierdza factory1500KiB, AP WPA2 i DHCP.
+Klient dołączył w64.306s i otrzymał192.168.4.2 w64.396s; clients1 od71.266s.
+Cycles1..25 po193536 ramek, stats_ok1/stale0, queued27..30/ACTIVE,
+low0/hard0/starts1, invalid0, tap_drop/gaps0. max_fill133us, max_read39437us
+od pierwszego cyklu (wall time pull w zadaniu, nie czas callbacku I2S).
+Reader min stos1968B, audio_control22636B, network4096B.
+Przed klientem internal90075B, po87319B (min49688, largest31744), stabilne
+w próbkach70–100s; PSRAM8337172B stabilne. Nowa kalibracja RF przy pierwszym
+starcie zapisana przez SDK; brak restartu/underrun w dostarczonym fragmencie.
+Odsłuch przy RF, odrzucenie złego klucza i rozłączenie klienta nadal OPEN.
+
+W80.776s pojedynczy wpis fixture_reader i następujące bajty są nieczytelne;
+24 inne wpisy czytnika poprawne, przed i po tym ciągłość cykli zachowana.
+Format źródłowy zawiera tylko stały ASCII i liczby (%PRIu32/%u z właściwymi
+typami), konfiguracja UART0=115200, text log v1, PM/DFS wyłączone, stack canary
+włączony. Brak dowodu błędu formatowania lub przepełnienia stosu. Wklejony
+tekst zawiera znaki zastępcze Unicode, nie oryginalne bajty UART.
+Użytkownik potwierdził „Dotykałem też przewodów”. Najbardziej prawdopodobne
+przejściowe zakłócenie styku/transmisji UART; związek nieudowodniony samym
+logiem. Nie wprowadzano pozornej poprawki firmware. Następna krótka próba:
+stabilne TX/GND, bez dotykania przewodów. Jeśli objaw wróci, surowy zapis
+bajtów i porównanie z natywną konsolą USB Serial/JTAG, jeśli jest dostępna;
+secondary USB output już włączony. Zmiana wyłącznie dokumentacyjna.
