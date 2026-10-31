@@ -9,7 +9,7 @@ Bieżący punkt wznowienia: [RESUME.md](RESUME.md).
 | 03 szkielet | baza zaimplementowana; odbiór sprzętowy i integracyjny OPEN | ESP-IDF v6.1 build PASS; ADR 0002 |
 | 04 UI/SSD1322 | HOME i lista odebrane na OLED; końcowe strojenie fontu OPEN | ADR 0012; odbiór użytkownika |
 | 05 encoder | dekoder/IRQ i gesty odebrane; interaktywny adapter odebrany w trybie A; preferencje NVS odebrane; shutdown/flush OPEN | ADR 0013–0017; 99 testów PASS |
-| 06 audio | I2S/gain/PCM stress odebrane; MP3 decode/PCM potwierdzone logiem; AAC-LC PoC odebrane; AAC incremental file decode06f odebrane logiem i odsłuchem; źródło/bufor06g gotowe do odbioru; sieć/player OPEN | ADR 0018–0024; 161 testów hostowych PASS; build trzech źródeł PASS |
+| 06 audio | I2S/gain/PCM stress odebrane; MP3 decode/PCM potwierdzone logiem; AAC-LC PoC odebrane; AAC incremental file decode06f odebrane logiem i odsłuchem; źródło/bufor AAC06g potwierdzone logiem, odsłuch OPEN; sieć/player OPEN | ADR 0018–0024; 161 testów hostowych PASS; build trzech źródeł PASS |
 | 07 DSP | NIEZAIMPLEMENTOWANE | — |
 | 08 stacje | NIEZAIMPLEMENTOWANE | — |
 | 09 sieć | NIEZAIMPLEMENTOWANE | — |
@@ -930,3 +930,20 @@ Weryfikacja build06g: ESP-IDF6.1/esp32s3 build/link AAC-LC0x80d00B,
 MP3 0x87840B, sinus0x4acd0B PASS. Końcowy obraz AAC-LC, stress OFF/0,
 partycja aplikacji1MiB (AAC około50% wolnej). Walidator GPIO/platform
 oraz git diff --check PASS. Brak nowej alokacji/dekodera/I/O w callbacku I2S.
+
+## Odbiór logu06g — AAC przez bufor skompresowany (2026-10-31)
+
+Log użytkownika dla c451643: cycles1..10/ok1,193536 ramek w każdym cyklu,
+compressed3839B w próbkach po przewinięciu, backpressure160→1662, waits0.
+Kontrola przepływu działa bez utraty ramek; waits0 jest oczekiwane dla tego
+feederu i nie stanowi sprzętowego testu przerwy w dostarczaniu danych.
+max_read3829us, stack_hwm min22728B; max_fill133us, invalid0.
+PCM queued28/ACTIVE, low0/hard0/starts1, tap_drop0/tap_gaps0 do41.006s.
+Heap internal209143B (min173488, largest131072), PSRAM8337620B
+(min8337620, largest8257536) stabilne w próbkach10–40s.
+LONG13.766/24.346s, obroty enkodera oraz zapis NVS volume78/widget1
+w26.176s nie przerwały postępu buforów. Sam log nie potwierdza słyszalnej
+zmiany głośności/STOP ani czystego odsłuchu. Odsłuch06g OPEN.
+Brak błędów w przekazanym fragmencie; to krótki test, nie test jitter/deadline
+ani wielozadaniowego readera/sieci. Zapis tylko dokumentacji, bez ponownego
+buildu/testów kodu i bez flashowania.

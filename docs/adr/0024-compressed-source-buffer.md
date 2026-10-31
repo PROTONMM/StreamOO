@@ -1,6 +1,6 @@
 # ADR0024 — źródło skompresowane i ograniczony bufor
 
-Data:2026-10-31. Status: wdrożone; odbiór sprzętowy06g OPEN.
+Data:2026-10-31. Status: AAC źródło/bufor potwierdzone logiem; odsłuch06g OPEN.
 
 ## Kontekst
 
@@ -71,3 +71,13 @@ kilku cykli L/R/oba. Sprawdzić także VOL/PLAY/STOP. Dane heap/stos i czas read
 nie są pomiarem jitter ani dowodem deadline w innym obciążeniu.
 EOF podzielone na mniejsze wejścia i praca vendora z pierścieniem wymagają
 nowego odbioru; wcześniejszy06f tego nie zastępuje.
+
+## Wynik runtime AAC06g
+
+Log c451643:10 cykli po193536 ramek, ok1, backpressure160→1662,
+compressed3839B, waits0, max_read3829us, min stack_hwm22728B.
+Do41s queued28/ACTIVE, low0/hard0/starts1, invalid0, tap_drop/gaps0,
+max_fill133us. Heap internal209143B i PSRAM8337620B stabilne10–40s.
+Gesty oraz zapis preferencji nie przerwały postępu audio. Odsłuch i skutki
+VOL/PLAY/STOP nieopisane przez użytkownika, pozostają OPEN. waits0 nie
+testuje niedoboru źródła na S3; test WAIT dotychczas tylko hostowy.
