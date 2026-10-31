@@ -1,3 +1,7 @@
+Nowszy ADR0051 / WEB_LIBRARY_BRINGUP: w AP wyłącznie konfiguracja,
+po STA/AP-off domyślnie Odtwarzacz z listą stacji. Wybór przez WWW już
+działa; poniższe wymaganie wyboru enkoderem dotyczy poprzedniego zakresu.
+
 # Sterowanie WWW — pierwszy odbiór
 
 1. Zwykły flash bez erase/NVS/obrazu FS. WWW odśwież Ctrl+F5, otwórz Status.

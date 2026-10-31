@@ -1,6 +1,7 @@
 #include "streamoo_portal_config.h"
 #include "cJSON.h"
 #include "streamoo_clock.h"
+#include "streamoo_config_store.h"
 #include "esp_heap_caps.h"
 #include "esp_http_server.h"
 #include <inttypes.h>
@@ -12,7 +13,7 @@ esp_err_t streamoo_portal_configure(const streamoo_portal_actions_t *a) {
   if (serving)
     return ESP_ERR_INVALID_STATE;
   if (!a || !a->wifi_load || !a->wifi_submit || !a->playlist ||
-      !a->playlist_info || !a->timezone_get || !a->timezone_set || !a->player_command)
+      !a->playlist_info || !a->timezone_get || !a->timezone_set || !a->player_command || !a->player_mode || !a->station_select || !a->catalog_replace)
     return ESP_ERR_INVALID_ARG;
   actions = *a;
   configured = true;
@@ -233,6 +234,99 @@ static esp_err_t player_post(httpd_req_t *r) {
   return error==ESP_OK ? reply(r,"202 Accepted","{\"accepted\":true}"):
       reply(r,"503 Service Unavailable","{\"error\":\"player_busy\"}");
 }
+static bool catalog_access(httpd_req_t *r){
+  if(actions.player_mode && actions.player_mode())return true;
+  reply(r,"409 Conflict","{\"error\":\"player_mode_required\"}");return false;
+}
+static bool generation(httpd_req_t *r,uint64_t *out){
+  char value[24];
+  if(httpd_req_get_hdr_value_str(r,"X-StreamOO-Catalog-Generation",value,sizeof value)!=ESP_OK||!value[0])return false;
+  uint64_t number=0;
+  for(const unsigned char *p=(const unsigned char *)value;*p;++p){
+    if(*p<'0'||*p>'9'||number>(UINT64_MAX-(*p-'0'))/10)return false;
+    number=number*10+(*p-'0');
+  }
+  *out=number;return true;
+}
+static esp_err_t catalog_get(httpd_req_t *r){
+  if(!catalog_access(r))return ESP_FAIL;
+  streamoo_catalog_snapshot_t *held=streamoo_config_catalog_acquire();
+  if(!held)return reply(r,"503 Service Unavailable","{\"error\":\"catalog_unavailable\"}");
+  streamoo_catalog_view_t view=streamoo_config_catalog_view(held);
+  char *json=heap_caps_malloc(16384,MALLOC_CAP_SPIRAM|MALLOC_CAP_8BIT);
+  if(!json){streamoo_config_catalog_release(held);return reply(r,"503 Service Unavailable","{\"error\":\"memory\"}");}
+  httpd_resp_set_type(r,"application/json; charset=utf-8");httpd_resp_set_hdr(r,"Cache-Control","no-store");httpd_resp_set_hdr(r,"X-Content-Type-Options","nosniff");
+  httpd_resp_set_hdr(r,"Connection","close");
+  snprintf(json,16384,"{\"generation\":\"%" PRIu64 "\",\"stations\":[",view.generation);
+  esp_err_t error=httpd_resp_send_chunk(r,json,strlen(json));
+  for(uint32_t i=0;i<view.count&&error==ESP_OK;++i){
+    const streamoo_station_t *station=&view.stations[i];char id[17];snprintf(id,sizeof id,"%016" PRIx64,station->stable_id);
+    cJSON *item=cJSON_CreateObject();
+    bool ok=item && cJSON_AddStringToObject(item,"id",id) && cJSON_AddStringToObject(item,"name",(const char *)station->name) &&
+        cJSON_AddStringToObject(item,"url",(const char *)station->url) && cJSON_AddNumberToObject(item,"ovol",station->ovol) &&
+        cJSON_PrintPreallocated(item,json,16384,false);
+    cJSON_Delete(item);
+    if(!ok){error=ESP_ERR_NO_MEM;break;}
+    if(i)error=httpd_resp_send_chunk(r,",",1);
+    if(error==ESP_OK)error=httpd_resp_send_chunk(r,json,strlen(json));
+  }
+  if(error==ESP_OK)error=httpd_resp_send_chunk(r,"]}",2);
+  if(error==ESP_OK)error=httpd_resp_send_chunk(r,NULL,0);
+  heap_caps_free(json);streamoo_config_catalog_release(held);return error;
+}
+static esp_err_t catalog_export(httpd_req_t *r){
+  if(!catalog_access(r))return ESP_FAIL;
+  streamoo_catalog_snapshot_t *held=streamoo_config_catalog_acquire();
+  if(!held)return reply(r,"503 Service Unavailable","{\"error\":\"catalog_unavailable\"}");
+  streamoo_catalog_view_t view=streamoo_config_catalog_view(held);
+  httpd_resp_set_type(r,"text/plain; charset=utf-8");httpd_resp_set_hdr(r,"Cache-Control","no-store");
+  httpd_resp_set_hdr(r,"Content-Disposition","attachment; filename=playlist.csv");httpd_resp_set_hdr(r,"Connection","close");
+  esp_err_t error=ESP_OK;
+  for(uint32_t i=0;i<view.count&&error==ESP_OK;++i){
+    const streamoo_station_t *s=&view.stations[i];char end[32];int n=snprintf(end,sizeof end,"\t%" PRId32 "\n",s->ovol);
+    error=httpd_resp_send_chunk(r,(const char *)s->name,s->name_bytes);
+    if(error==ESP_OK)error=httpd_resp_send_chunk(r,"\t",1);
+    if(error==ESP_OK)error=httpd_resp_send_chunk(r,(const char *)s->url,s->url_bytes);
+    if(error==ESP_OK)error=httpd_resp_send_chunk(r,end,n);
+  }
+  if(error==ESP_OK)error=httpd_resp_send_chunk(r,NULL,0);
+  streamoo_config_catalog_release(held);return error;
+}
+static esp_err_t catalog_replace(httpd_req_t *r){
+  if(!request_allowed(r)||!catalog_access(r))return ESP_FAIL;
+  uint64_t expected;
+  if(!generation(r,&expected))return reply(r,"400 Bad Request","{\"error\":\"catalog_generation_required\"}");
+  if(!content_type(r,"text/plain"))return reply(r,"415 Unsupported Media Type","{\"error\":\"text_required\"}");
+  uint8_t *data=r->content_len ? body(r,STREAMOO_PLAYLIST_MAX_BYTES):NULL;
+  if(r->content_len&&!data)return ESP_FAIL;
+  streamoo_playlist_report_t parsed={0};
+  esp_err_t error=actions.catalog_replace(data,r->content_len,expected,&parsed);heap_caps_free(data);
+  if(error==ESP_ERR_INVALID_STATE)return reply(r,"409 Conflict","{\"error\":\"catalog_changed\"}");
+  if(error==ESP_ERR_INVALID_ARG)return report(r,"400 Bad Request",&parsed,false);
+  return error==ESP_OK ? report(r,"200 OK",&parsed,true):reply(r,"503 Service Unavailable","{\"error\":\"playlist_storage_unavailable\"}");
+}
+static esp_err_t station_select(httpd_req_t *r){
+  if(!request_allowed(r)||!catalog_access(r))return ESP_FAIL;
+  uint64_t expected;
+  if(!generation(r,&expected))return reply(r,"400 Bad Request","{\"error\":\"catalog_generation_required\"}");
+  if(!content_type(r,"application/json"))return reply(r,"415 Unsupported Media Type","{\"error\":\"json_required\"}");
+  uint8_t *data=body(r,64);if(!data)return ESP_FAIL;
+  cJSON *root=memchr(data,0,r->content_len)?NULL:cJSON_ParseWithLengthOpts((char *)data,r->content_len+1,NULL,true);
+  cJSON *value=root ? cJSON_GetObjectItemCaseSensitive(root,"station_id"):NULL;
+  bool valid=cJSON_IsObject(root)&&cJSON_GetArraySize(root)==1&&cJSON_IsString(value)&&strlen(value->valuestring)==16;
+  uint64_t id=0;
+  if(valid)for(unsigned i=0;i<16;++i){
+    unsigned char c=(unsigned char)value->valuestring[i];unsigned digit;
+    if(c>='0'&&c<='9')digit=c-'0';else if(c>='a'&&c<='f')digit=c-'a'+10;else{valid=false;break;}
+    id=(id<<4)|digit;
+  }
+  cJSON_Delete(root);heap_caps_free(data);
+  if(!valid||!id)return reply(r,"400 Bad Request","{\"error\":\"invalid_station\"}");
+  esp_err_t error=actions.station_select(id,expected);
+  return error==ESP_OK ? reply(r,"202 Accepted","{\"accepted\":true}"):
+      reply(r,"409 Conflict","{\"error\":\"catalog_changed\"}");
+}
+
 esp_err_t streamoo_portal_register_configuration(httpd_handle_t server) {
   if (!configured)
     return ESP_OK;
@@ -265,6 +359,12 @@ esp_err_t streamoo_portal_register_configuration(httpd_handle_t server) {
   const httpd_uri_t player_route={.uri="/api/v1/player/control",.method=HTTP_POST,.handler=player_post};
   esp_err_t player_error=httpd_register_uri_handler(server,&player_route);
   if(player_error!=ESP_OK)return player_error;
+  const httpd_uri_t catalog_routes[]={
+    {.uri="/api/v1/stations",.method=HTTP_GET,.handler=catalog_get},
+    {.uri="/api/v1/stations/export",.method=HTTP_GET,.handler=catalog_export},
+    {.uri="/api/v1/stations/replace",.method=HTTP_POST,.handler=catalog_replace},
+    {.uri="/api/v1/stations/select",.method=HTTP_POST,.handler=station_select}};
+  for(unsigned i=0;i<4;++i){esp_err_t e=httpd_register_uri_handler(server,&catalog_routes[i]);if(e!=ESP_OK)return e;}
   serving = true;
   return ESP_OK;
 }

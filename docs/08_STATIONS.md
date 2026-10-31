@@ -48,3 +48,10 @@ player HTTP i zapamiętanie ostatniego wyboru nadal OPEN. Granice ID w ADR0033.
 Odsłuch nie jest częścią odbioru katalogu: wybór na HOME nie uruchamia streamu.
 
 06i: wybór OLED wysyła ID/generację do playera HTTP/ICY, brak optymistycznego PLAY. Reorder utrzymuje sesję tej samej stacji, usunięcie zatrzymuje bez fallback. Testy hostowe PASS, odsłuch sprzętowy OPEN. ADR0034.
+
+ADR0051: edytor WWW i eksport3pól TAB, ręczne dodawanie/usuwanie, celowe
+czyszczenie do trwałego pustego katalogu. CAS generation przed zapisem;
+normalny atomic pipeline walidacja/temp/fsync/rename/snapshot. Eksport
+strumieniowany z utrzymanego snapshotu, bez odczytu flash. Import pustego
+pliku nadal odrzucony, clear osobnym przyciskiem. ID v1 przy rename/URL
+nadal się zmienia; UI uprzedza o możliwym zatrzymaniu aktywnej pozycji.

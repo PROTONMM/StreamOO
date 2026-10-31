@@ -7,7 +7,7 @@ import unittest
 ROOT=Path(__file__).resolve().parents[1]
 class Status(C.Structure):
     _fields_=[('ssid',C.c_char*16),('clients',C.c_uint8),('volume',C.c_uint8),
-              ('ready',C.c_bool),('available',C.c_bool),('running',C.c_bool),('buffering',C.c_bool),('uptime',C.c_uint64),('ip',C.c_char*16),('connected',C.c_bool),('configuring',C.c_bool),('profiles',C.c_uint8),('error',C.c_uint32),('network_source',C.c_bool)]
+              ('ready',C.c_bool),('available',C.c_bool),('running',C.c_bool),('buffering',C.c_bool),('uptime',C.c_uint64),('ip',C.c_char*16),('connected',C.c_bool),('configuring',C.c_bool),('profiles',C.c_uint8),('error',C.c_uint32),('network_source',C.c_bool),('station_id',C.c_uint64)]
 class PortalStatusTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -23,7 +23,7 @@ class PortalStatusTests(unittest.TestCase):
         value=json.loads(out.value)
         self.assertEqual(value['schema_version'],1)
         self.assertEqual(value['network'],{'mode':'ap','ready':True,'ssid':'StreamOO-123ABC','clients':1,'ap_ready':True,'connected':False,'configuring':False,'ip':'192.168.4.1','profiles':0,'error':0})
-        self.assertEqual(value['audio'],{'available':True,'source':'test_fixture','running':True,'buffering':False,'volume':87})
+        self.assertEqual(value['audio'],{'available':True,'source':'test_fixture','running':True,'buffering':False,'volume':87,'station_id':'0000000000000000'})
         self.assertEqual(value['uptime_ms'],12345)
     def test_nonterminated_and_injectable_ssid_rejected(self):
         for ssid in (b'StreamOO-123ABCX',b'StreamOO-123abC',b'\"/><script>',b'OtherSSID'):

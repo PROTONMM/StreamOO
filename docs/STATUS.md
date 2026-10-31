@@ -1498,3 +1498,20 @@ DSP/ISR/audio ramp i zapisów preferencji.
 Native ESP-IDF6.1 build PASS,0x161f00 (6% wolne), config/diff PASS.
 Bez nowych zależności, partycji, flash/erase/eFuse. Odbiór sprzętowy
 WEB_PLAYER_BRINGUP OPEN; wybór stacji WWW nadal następny zakres.
+
+## WWW AP/LAN i edytor playlisty (2026-10-31)
+
+Polecenie użytkownika: AP tylko Wi-Fi/import/zegar, LAN player i lista
+klikanych stacji oraz edycja/add/delete/export/import/clear. Wdrożono
+ADR0051, serwerowe gate STA/AP-off dla nowych czterech endpointów,
+snapshoty, CAS edycji, JSON IDs/generation jako stringi i trwały pusty CSV.
+Player/OLED wspólne źródło i właściciel. ovol/order/duplikaty zachowane.
+334 testy PASS (rozszerzone istniejące scenariusze), store/actor ASan/UBSan
+PASS (LSan off), pełny Chromium390px AP/LAN/editor/conflict PASS. Node,
+validator i diff PASS. Native ESP-IDF6.1 build PASS,0x165fa0 (5% wolne).
+Bez zmiany partycji/audio/DSP/ISR, flash/erase/eFuse i danych prywatnych.
+Odbiór urządzenia OPEN: WEB_LIBRARY_BRINGUP. ID niezależne od edycji nazwy/
+URL i fizyczny test trwałości strefy pozostają OPEN.
+
+Dodatkowo rzeczywiste nowe handlery portal configuration przeszły ASan/UBSan
+(LSan off), obejmując listę/eksport/select/replace i blokady AP.

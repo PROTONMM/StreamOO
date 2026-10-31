@@ -1,6 +1,7 @@
 'use strict';
 const text = (id, value) => { document.getElementById(id).textContent = value; };
 let connectedIP = '', pendingConnection = false, configGeneration = 0;
+let webPlayerMode=false,applyWebMode=()=>{},libraryModeChanged=()=>{},stationStateChanged=()=>{},catalogUpdated=()=>{},beforeCatalogImport=()=>true;
 let playerPending=false, volumeEditing=false, playerAvailable=false;
 function refreshPlayerControls() {
   for(const id of ['player-play','player-stop','player-volume'])
@@ -17,17 +18,20 @@ async function update() {
     if (state.schema_version !== 1 || !state.network || !state.audio) throw new Error('schema');
     if (generation !== configGeneration) return;
     const network = state.network;
+    applyWebMode(Boolean(network.connected&&!network.ap_ready));
+    stationStateChanged(state.audio.station_id||'0000000000000000');
     document.body.classList.remove('offline');
     text('connection', network.ready ? 'Połączono z urządzeniem.' : 'Trwa uruchamianie sieci.');
     text('ssid', network.ssid || '—'); text('clients', network.clients);
     text('mode', network.connected ? (network.ap_ready ? 'Wi-Fi + AP (kończenie konfiguracji)' : 'Wi-Fi') : 'Punkt dostępu');
     text('device-ip', network.ip || '192.168.4.1');
-    if (network.connected && network.ip) {
+    if (network.connected && network.ip && network.ap_ready) {
       connectedIP = network.ip;
       text('sta-result', `Połączono z Wi-Fi. Adres radia: ${connectedIP}. Punkt AP wyłączy się. Połącz telefon z domową siecią.`);
       const link = document.getElementById('sta-link'); link.hidden = false; link.href = `http://${connectedIP}/`;
       link.textContent = `Otwórz http://${connectedIP}/`;
     }
+    if(!network.ap_ready){text('sta-result','');document.getElementById('sta-link').hidden=true;}
     if (network.configuring) { pendingConnection = true; text('wifi-result', 'Sprawdzanie sieci w kolejności listy… Pozostaw urządzenie włączone.'); }
     else if (pendingConnection) {
       pendingConnection = false;
@@ -57,6 +61,9 @@ const messages = {
   connection_test_in_progress: 'Trwa poprzednia próba połączenia. Poczekaj na wynik.',
   playlist_storage_unavailable: 'Pamięć playlisty niedostępna. Sprawdź log urządzenia i tablicę partycji.',
   profiles_unavailable: 'Nie można odczytać zapisanych sieci.',
+  catalog_changed: 'Lista została zmieniona. Odczytaj ją ponownie przed zapisem lub wyborem stacji.',
+  player_mode_required: 'Ta funkcja jest dostępna po połączeniu radia z Wi-Fi i wyłączeniu AP.',
+  invalid_station: 'Niepoprawna stacja.',
   invalid_player_command: 'Niepoprawne polecenie odtwarzacza.',
   player_unavailable: 'Odtwarzacz niedostępny. Połącz Wi-Fi i wybierz stację na radiu.',
   player_busy: 'Kolejka poleceń jest zajęta. Spróbuj ponownie.',
@@ -146,10 +153,10 @@ function setupForms() {
   };
   commit.onclick = async () => {
     try {
-      const selected = file(); if (selected !== previewFile) throw new Error('Najpierw sprawdź wybrany plik.'); commit.disabled = true;
+      const selected = file(); if (selected !== previewFile) throw new Error('Najpierw sprawdź wybrany plik.'); if(!beforeCatalogImport())return; commit.disabled = true;
       const report = await api('/api/v1/stations/import', {method: 'POST', headers: {'Content-Type': 'text/plain; charset=utf-8'}, body: selected});
       text('playlist-result', `Zapisano ${report.rows} stacji. Lista pozostanie po ponownym uruchomieniu radia.`);
-      text('catalog-status', `Zapisana playlista: ${report.rows} stacji.`); previewFile = null;
+      text('catalog-status', `Zapisana playlista: ${report.rows} stacji.`); previewFile = null;catalogUpdated();
     } catch (error) { text('playlist-result', error.message); commit.disabled = !previewFile; }
   };
   document.getElementById('load-settings').onclick = loadSettings;
@@ -157,18 +164,26 @@ function setupForms() {
   loadSettings();
 }
 function setupTabs() {
-  const status = document.getElementById('show-status'), config = document.getElementById('show-config');
-  if (!status?.addEventListener) return;
-  const show = configuration => {
-    document.getElementById('status-panel').hidden = configuration;
-    document.getElementById('config-panel').hidden = !configuration;
-    status.setAttribute('aria-pressed', String(!configuration));
-    config.setAttribute('aria-pressed', String(configuration));
-    status.classList.toggle('secondary', configuration);
-    config.classList.toggle('secondary', !configuration);
+  const status=document.getElementById('show-status'),editor=document.getElementById('show-editor'),config=document.getElementById('show-config');
+  if(!status?.addEventListener)return;
+  function show(panel){
+    if(!webPlayerMode)panel='config';
+    for(const [name,button] of [['status',status],['editor',editor],['config',config]]){
+      document.getElementById(name+'-panel').hidden=name!==panel;
+      button.setAttribute('aria-pressed',String(name===panel));button.classList.toggle('secondary',name!==panel);
+    }
+  }
+  status.onclick=()=>show('status');editor.onclick=()=>show('editor');config.onclick=()=>show('config');
+  let initialized=false;
+  applyWebMode=enabled=>{
+    if(initialized&&enabled===webPlayerMode)return;
+    initialized=true;webPlayerMode=enabled;
+    document.getElementById('panel-navigation').hidden=!enabled;
+    document.getElementById(enabled?'editor-panel':'config-panel').appendChild(document.getElementById('import-panel'));
+    text('page-title',enabled?'Twoje radio.':'Ustaw swoje radio.');
+    show(enabled?'status':'config');libraryModeChanged(enabled);
   };
-  status.onclick = () => show(false); config.onclick = () => show(true);
-  show(true);
+  applyWebMode(false);
 }
 async function setupClock() {
   const form = document.getElementById('clock-form');
@@ -214,8 +229,134 @@ function setupPlayer() {
   slider.oninput=()=>{volumeEditing=true;text('player-volume-value',slider.value);};
   slider.onchange=()=>send({action:'volume',value:Number(slider.value)});
 }
+function setupLibrary() {
+  if(!document.getElementById('station-add-form')?.addEventListener)return;
+  let catalog=[],draft=[],generation='',loaded=false,dirty=false,writing=false,loadSerial=0,editRevision=0;
+  let stationPage=0,editorPage=0,selected='0000000000000000';
+  const copy=rows=>rows.map(row=>({...row}));
+  const button=(label,click)=>{const b=document.createElement('button');b.type='button';b.className='secondary';b.textContent=label;b.onclick=click;return b;};
+  const message=(id,error)=>text(id,error.message||String(error));
+  function editState(){
+    document.getElementById('editor-save').disabled=!loaded||!dirty||writing;
+    for(const id of ['editor-clear','editor-export','editor-reload','stations-refresh'])document.getElementById(id).disabled=!loaded||writing;
+    for(const field of document.querySelectorAll('#editor-rows input,#editor-rows button,#station-add-form input,#station-add-form button'))field.disabled=!loaded||writing;
+  }
+  function renderStations(){
+    const filter=document.getElementById('station-search').value.toLocaleLowerCase();
+    const rows=catalog.filter(row=>row.name.toLocaleLowerCase().includes(filter));
+    const pages=Math.max(1,Math.ceil(rows.length/50));stationPage=Math.min(stationPage,pages-1);
+    const container=document.getElementById('station-list');container.replaceChildren();
+    for(const row of rows.slice(stationPage*50,(stationPage+1)*50)){
+      const b=button(row.name,async()=>{
+        if(!webPlayerMode||!playerAvailable){text('station-result','Brak połączenia z odtwarzaczem.');return;}
+        b.disabled=true;
+        try{
+          await api('/api/v1/stations/select',{method:'POST',headers:{'Content-Type':'application/json','X-StreamOO-Catalog-Generation':generation},body:JSON.stringify({station_id:row.id})});
+          text('station-result','Wybrano stację. Trwa łączenie…');
+        }catch(error){message('station-result',error);}
+        finally{b.disabled=false;}
+      });
+      b.setAttribute('aria-pressed',String(row.id===selected));container.appendChild(b);
+    }
+    text('station-page',`${rows.length ? stationPage+1:0} / ${rows.length ? pages:0} · ${rows.length} stacji`);
+    document.getElementById('station-prev').disabled=!stationPage;
+    document.getElementById('station-next').disabled=stationPage>=pages-1;
+    text('current-station',catalog.find(row=>row.id===selected)?.name||'Wybierz stację z listy.');
+    const emptyNotice='Lista jest pusta. Dodaj stacje lub wgraj plik w zakładce Playlista.';
+    if(!catalog.length)text('station-result',emptyNotice);
+    else if(document.getElementById('station-result').textContent===emptyNotice)text('station-result','');
+  }
+  function renderEditor(){
+    const pages=Math.max(1,Math.ceil(draft.length/25));editorPage=Math.min(editorPage,pages-1);
+    const container=document.getElementById('editor-rows');container.replaceChildren();
+    draft.slice(editorPage*25,(editorPage+1)*25).forEach((row,position)=>{
+      const index=editorPage*25+position,box=document.createElement('div');box.className='editor-row';
+      for(const [key,label,max] of [['name','Nazwa stacji',128],['url','Adres strumienia',2048]]){
+        const wrap=document.createElement('label'),input=document.createElement('input');wrap.textContent=label;
+        input.value=row[key];input.maxLength=max;input.type=key==='url'?'url':'text';
+        input.oninput=()=>{draft[index][key]=input.value;dirty=true;++editRevision;editState();};wrap.appendChild(input);box.appendChild(wrap);
+      }
+      box.appendChild(button('Usuń stację',()=>{draft.splice(index,1);dirty=true;++editRevision;renderEditor();}));container.appendChild(box);
+    });
+    text('editor-page',`${draft.length ? editorPage+1:0} / ${draft.length ? pages:0} · ${draft.length} stacji`);
+    document.getElementById('editor-prev').disabled=!editorPage;
+    document.getElementById('editor-next').disabled=editorPage>=pages-1;editState();
+  }
+  async function load(){
+    if(!webPlayerMode)return;
+    const serial=++loadSerial,revision=editRevision;
+    try{
+      const result=await api('/api/v1/stations');
+      if(serial!==loadSerial||!webPlayerMode)return;
+      if(revision!==editRevision){text('editor-result','Zachowano nowe, niezapisane zmiany. Odczytaj listę ponownie, aby je odrzucić.');return;}
+      if(!Array.isArray(result.stations)||typeof result.generation!=='string')throw Error('Niepoprawna lista stacji.');
+      catalog=result.stations;generation=result.generation;draft=copy(catalog);loaded=true;dirty=false;
+      renderStations();renderEditor();text('editor-result','Lista odczytana.');
+    }catch(error){if(serial===loadSerial)message('editor-result',error);}
+  }
+  function csv(rows){
+    if(rows.length>2048)throw Error('Lista może mieć najwyżej 2048 stacji.');
+    const data=rows.map((row,index)=>{
+      const name=row.name,url=row.url,bytes=value=>new TextEncoder().encode(value).length;
+      if(!name||bytes(name)>128||/[\p{Cc}\p{Cf}]/u.test(name))throw Error(`Sprawdź nazwę w wierszu ${index+1}.`);
+      let parsed;try{parsed=new URL(url);}catch(_){throw Error(`Sprawdź adres w wierszu ${index+1}.`);}
+      if(!['http:','https:'].includes(parsed.protocol)||parsed.username||parsed.password||parsed.hash||/[\s\p{Cc}\p{Cf}]/u.test(url)||bytes(url)>2048)
+        throw Error(`Sprawdź adres HTTP/HTTPS w wierszu ${index+1}.`);
+      return `${name}\t${url}\t${row.ovol ?? 0}\n`;
+    }).join('');
+    if(new TextEncoder().encode(data).length>262144)throw Error('Lista przekracza 256 KiB.');return data;
+  }
+  async function save(rows,confirmed=false){
+    if(!loaded||writing||!webPlayerMode)return;
+    if(!rows.length&&!confirmed&&!confirm('Usunąć całą zapisaną listę stacji?'))return;
+    writing=true;++loadSerial;editState();
+    try{
+      const data=csv(rows);
+      const result=await api('/api/v1/stations/replace',{method:'POST',headers:{'Content-Type':'text/plain; charset=utf-8','X-StreamOO-Catalog-Generation':generation},body:data});
+      dirty=false;await load();text('editor-result',`Zapisano ${result.rows} stacji.`);
+    }catch(error){message('editor-result',error);}
+    finally{writing=false;editState();}
+  }
+  document.getElementById('station-add-form').onsubmit=event=>{
+    event.preventDefault();if(!loaded||writing)return;
+    const row={name:document.getElementById('new-station-name').value,url:document.getElementById('new-station-url').value,ovol:0};
+    try{csv([row]);if(draft.length>=2048)throw Error('Osiągnięto limit stacji.');draft.push(row);dirty=true;++editRevision;editorPage=Math.floor((draft.length-1)/25);renderEditor();event.target.reset();text('editor-result','Dodano do edycji. Kliknij Zapisz zmiany.');}
+    catch(error){message('editor-result',error);}
+  };
+  document.getElementById('editor-save').onclick=()=>save(draft);
+  document.getElementById('editor-clear').onclick=()=>{if(confirm('Usunąć całą listę z urządzenia? Odtwarzanie zostanie zatrzymane.'))save([],true);};
+  const reload=()=>{if(!dirty||confirm('Odrzucić niezapisane zmiany i odczytać listę?'))load();};
+  document.getElementById('editor-reload').onclick=reload;document.getElementById('stations-refresh').onclick=reload;
+  document.getElementById('station-search').oninput=()=>{stationPage=0;renderStations();};
+  document.getElementById('station-prev').onclick=()=>{--stationPage;renderStations();};
+  document.getElementById('station-next').onclick=()=>{++stationPage;renderStations();};
+  document.getElementById('editor-prev').onclick=()=>{--editorPage;renderEditor();};
+  document.getElementById('editor-next').onclick=()=>{++editorPage;renderEditor();};
+  document.getElementById('editor-export').onclick=async()=>{
+    if(!loaded||!webPlayerMode)return;
+    if(dirty&&!confirm('Eksport obejmie zapisaną listę, bez niezapisanych zmian. Kontynuować?'))return;
+    const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),30000);
+    try{
+      const response=await fetch('/api/v1/stations/export',{cache:'no-store',signal:controller.signal});
+      if(!response.ok)throw Error('Nie udało się wyeksportować listy.');
+      const link=document.createElement('a'),url=URL.createObjectURL(await response.blob());
+      link.href=url;link.download='playlist.csv';document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+    }catch(error){message('editor-result',error);}finally{clearTimeout(timeout);}
+  };
+  stationStateChanged=id=>{if(selected!==id){selected=id;renderStations();}};
+  libraryModeChanged=enabled=>{
+    ++loadSerial;
+    if(enabled){if(!dirty)load();else{renderStations();renderEditor();text('editor-result','Niezapisane zmiany zachowane. Przed zapisem sprawdzimy wersję listy.');}}
+    else{document.getElementById('station-list').replaceChildren();document.getElementById('editor-rows').replaceChildren();}
+  };
+  beforeCatalogImport=()=>!dirty||confirm('Import zastąpi listę i odrzuci niezapisane zmiany. Kontynuować?');
+  catalogUpdated=()=>{dirty=false;if(webPlayerMode)load();};
+  editState();
+}
+
 setupPlayer();
 setupTabs();
 if (document.getElementById('wifi-form')?.addEventListener) setupForms();
 setupClock();
+setupLibrary();
 update();

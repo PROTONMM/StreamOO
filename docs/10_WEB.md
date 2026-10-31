@@ -70,3 +70,12 @@ pod /api/v1, JSON action play/stop/volume,202 przyjęte. Wspólny owner
 z encoderem, idempotentny PLAY/STOP i absolute volume. Tylko STA/AP-off,
 bez dodatkowego loginu; Origin/header/limity. Wybór stacji przez WWW
 i aplikacja telefonu nadal OPEN. Procedura WEB_PLAYER_BRINGUP.
+
+## AP setup-only / LAN player i edytor — ADR0051
+
+AP wyłącznie Wi-Fi/import/zegar; po STA/AP-off domyślnie odtwarzacz
+z klikanymi stacjami. Playlista ma ręczne add/edit/delete, save, export,
+preview/import i clear z potwierdzeniem. Konfiguracja Wi-Fi/zegara w LAN
+nadal osobno. Endpointy stations/list/export/replace/select przez wspólny
+katalog, generacje string i CAS. Nowe operacje player/editor odrzucane w AP.
+Procedura WEB_LIBRARY_BRINGUP, dane prywatne nie trafiają do repo.

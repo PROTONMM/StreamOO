@@ -17,10 +17,10 @@ bool streamoo_portal_status_json(const streamoo_portal_status_t *s,char *out,siz
     const char *ip=s->sta_connected?s->sta_ip:(s->ap_ready?"192.168.4.1":"");
     int count=snprintf(out,capacity,
         "{\"schema_version\":1,\"network\":{\"mode\":\"%s\",\"ready\":%s,\"ssid\":\"%s\",\"clients\":%u,\"ap_ready\":%s,\"connected\":%s,\"configuring\":%s,\"ip\":\"%s\",\"profiles\":%u,\"error\":%u},"
-        "\"audio\":{\"available\":%s,\"source\":\"%s\",\"running\":%s,\"buffering\":%s,\"volume\":%u},"
+        "\"audio\":{\"available\":%s,\"source\":\"%s\",\"running\":%s,\"buffering\":%s,\"volume\":%u,\"station_id\":\"%016" PRIx64 "\"},"
         "\"uptime_ms\":%" PRIu64 "}",mode,(s->ap_ready||s->sta_connected) ? "true":"false",s->ap_ssid,(unsigned)s->clients,
         s->ap_ready?"true":"false",s->sta_connected?"true":"false",s->configuring?"true":"false",ip,(unsigned)s->saved_profiles,(unsigned)s->network_error,
         s->audio_available ? "true":"false",s->network_source?"network_stream":"test_fixture",s->running ? "true":"false",s->buffering ? "true":"false",
-        (unsigned)s->volume,s->uptime_ms);
+        (unsigned)s->volume,s->station_id,s->uptime_ms);
     return count>=0 && (size_t)count<capacity;
 }

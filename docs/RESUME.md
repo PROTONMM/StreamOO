@@ -1,6 +1,6 @@
 # Punkt wznowienia StreamOO
 
-Aktualizacja: **2026-10-31 — PLAY/STOP/volume WWW gotowe do odbioru, test NVS osobno**.
+Aktualizacja: **2026-10-31 — AP setup-only, LAN odtwarzacz i edytor playlisty gotowe do odbioru**.
 Gałąź feature/streamoo-implementation. ADR0034–0035, STATUS i HTTP_PLAYER_BRINGUP.
 
 ## Potwierdzone przez użytkownika
@@ -236,3 +236,14 @@ Najpierw wybór stacji enkoderem; wybór WWW to kolejny mały krok.
 Teraz zwykły flash, Ctrl+F5 i WEB_PLAYER_BRINGUP: UI/audio/enkoder/suwak.
 Nie powtarzać strojenia FFT/RMS. NVS strefy po fizycznym power-cycle
 użytkownik sprawdza osobno; nie ogłaszać tego odbioru jako zaliczonego.
+
+Najnowsze ADR0051: użytkownik wymaga AP tylkoWi-Fi/import/strefa, LAN
+domyślnie player + klikane stacje. Zrobione z serwerowym gate nowych
+endpointów. Playlista: add/edit/delete/save/export/import/clear. CAS
+generation string, snapshoty, pusty katalog trwały; aktywna usunięta
+stacja stop bez fallback. Rename/URL zmienia ID v1 i może zatrzymać
+stację (UI ostrzega). Prywatny playlist.csv i wyniki hostowe nietknięte.
+334 testy, targeted ASan/UBSan, Chromium390px i build PASS
+(0x165fa0,5% app wolne). Teraz zwykły flash/Ctrl+F5 i WEB_LIBRARY_BRINGUP.
+Bez flash/erase/eFuse przez agenta. Nie uznawać fizycznego NVS power-cycle
+strefy za zaliczony — użytkownik sprawdza osobno.

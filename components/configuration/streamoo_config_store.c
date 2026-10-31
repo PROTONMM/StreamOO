@@ -6,6 +6,9 @@
 #include "freertos/semphr.h"
 #include "nvs.h"
 #include "nvs_flash.h"
+#ifdef ESP_PLATFORM
+#include "esp_random.h"
+#endif
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
@@ -145,6 +148,9 @@ esp_err_t streamoo_config_store_init(void) {
   mutex = xSemaphoreCreateMutex();
   if (!mutex)
     return ESP_ERR_NO_MEM;
+#ifdef ESP_PLATFORM
+  if(!catalog_generation)catalog_generation=(uint64_t)esp_random()<<32;
+#endif
   error = mount_storage();
   mounted = error == ESP_OK;
   streamoo_catalog_snapshot_t *initial = snapshot_create(NULL, 0, 0);
@@ -224,16 +230,17 @@ esp_err_t streamoo_config_wifi_save(const streamoo_wifi_profiles_t *profiles) {
   xSemaphoreGive(mutex);
   return error;
 }
-esp_err_t streamoo_config_playlist(uint8_t *data, size_t bytes, bool commit,
-                                   streamoo_playlist_report_t *report) {
+static esp_err_t playlist_change(uint8_t *data,size_t bytes,bool commit,bool guarded,
+                                 uint64_t expected,streamoo_playlist_report_t *report) {
   if (!report)
     return ESP_ERR_INVALID_ARG;
-  streamoo_playlist_workspace_t *ws =
-      heap_caps_calloc(1, sizeof(*ws), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
-  if (!ws)
-    return ESP_ERR_NO_MEM;
-  bool valid = streamoo_playlist_validate(data, &bytes, report, ws);
-  heap_caps_free(ws);
+  bool valid=guarded && bytes==0;
+  if(valid)*report=(streamoo_playlist_report_t){0};
+  else {
+    streamoo_playlist_workspace_t *ws=heap_caps_calloc(1,sizeof *ws,MALLOC_CAP_SPIRAM|MALLOC_CAP_8BIT);
+    if(!ws)return ESP_ERR_NO_MEM;
+    valid=streamoo_playlist_validate(data,&bytes,report,ws);heap_caps_free(ws);
+  }
   if (!valid)
     return ESP_ERR_INVALID_ARG;
   if (!commit)
@@ -246,11 +253,15 @@ esp_err_t streamoo_config_playlist(uint8_t *data, size_t bytes, bool commit,
     streamoo_config_catalog_release(candidate);
     return ESP_ERR_TIMEOUT;
   }
+  if(guarded){
+    portENTER_CRITICAL(&catalog_lock);uint64_t current=catalog_generation;portEXIT_CRITICAL(&catalog_lock);
+    if(current!=expected){xSemaphoreGive(mutex);streamoo_config_catalog_release(candidate);return ESP_ERR_INVALID_STATE;}
+  }
   esp_err_t error = ESP_FAIL;
   if (mounted) {
     FILE *file = fopen("/stations/playlist.tmp", "wb");
     if (file) {
-      bool written = fwrite(data, 1, bytes, file) == bytes;
+      bool written = !bytes || fwrite(data, 1, bytes, file) == bytes;
       if (fflush(file) != 0 || fsync(fileno(file)) != 0)
         written = false;
       if (fclose(file) != 0)
@@ -268,6 +279,12 @@ esp_err_t streamoo_config_playlist(uint8_t *data, size_t bytes, bool commit,
   xSemaphoreGive(mutex);
   streamoo_config_catalog_release(candidate);
   return error;
+}
+esp_err_t streamoo_config_playlist(uint8_t *data,size_t bytes,bool commit,streamoo_playlist_report_t *report){
+  return playlist_change(data,bytes,commit,false,0,report);
+}
+esp_err_t streamoo_config_catalog_replace(uint8_t *data,size_t bytes,uint64_t expected,streamoo_playlist_report_t *report){
+  return playlist_change(data,bytes,true,true,expected,report);
 }
 bool streamoo_config_playlist_info(streamoo_playlist_report_t *out) {
   if (!out || !take())

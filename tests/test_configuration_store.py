@@ -65,9 +65,16 @@ int main(int argc,char **argv){assert(argc==3);int mode=atoi(argv[1]);directory=
  assert(v.count==1&&!strcmp((const char *)v.stations[0].name,"Old"));
  streamoo_catalog_snapshot_t *fresh=streamoo_config_catalog_acquire();streamoo_catalog_view_t nv=streamoo_config_catalog_view(fresh);
  assert(nv.count==2&&nv.generation>v.generation);uint64_t id=nv.stations[0].stable_id;
+ assert(streamoo_config_catalog_replace(next,sizeof next-1,v.generation,&r)==ESP_ERR_INVALID_STATE);
+ assert(streamoo_config_catalog_replace(next,sizeof next-1,nv.generation,&r)==ESP_OK);
  streamoo_config_catalog_release(held);streamoo_config_catalog_release(fresh);
  mutex=NULL;mounted=false;catalog=(streamoo_playlist_report_t){0};assert(streamoo_config_store_init()==ESP_OK);assert(streamoo_config_playlist_info(&r)&&r.rows==2);
- fresh=streamoo_config_catalog_acquire();nv=streamoo_config_catalog_view(fresh);assert(nv.count==2&&nv.stations[0].stable_id==id);streamoo_config_catalog_release(fresh);return 0;}
+ fresh=streamoo_config_catalog_acquire();nv=streamoo_config_catalog_view(fresh);assert(nv.count==2&&nv.stations[0].stable_id==id);streamoo_config_catalog_release(fresh);
+ assert(streamoo_config_catalog_replace(NULL,0,nv.generation,&r)==ESP_OK&&r.rows==0);
+ fresh=streamoo_config_catalog_acquire();nv=streamoo_config_catalog_view(fresh);assert(!nv.count);
+ streamoo_config_catalog_release(fresh);
+ mutex=NULL;mounted=false;catalog=(streamoo_playlist_report_t){0};assert(streamoo_config_store_init()==ESP_OK);
+ fresh=streamoo_config_catalog_acquire();assert(!streamoo_config_catalog_view(fresh).count);streamoo_config_catalog_release(fresh);return 0;}
 '''
 class ConfigurationStoreTests(unittest.TestCase):
     def test_atomic_replace_preview_restart_and_format_guards(self):

@@ -24,3 +24,6 @@ streamoo_catalog_snapshot_t *streamoo_config_catalog_acquire(void);
 streamoo_catalog_view_t
 streamoo_config_catalog_view(const streamoo_catalog_snapshot_t *);
 void streamoo_config_catalog_release(streamoo_catalog_snapshot_t *);
+
+/* Editor CAS replacement, permits empty catalog, validates nonempty CSV. */
+esp_err_t streamoo_config_catalog_replace(uint8_t *,size_t,uint64_t expected_generation,streamoo_playlist_report_t *);
