@@ -20,3 +20,9 @@ class ClockSettingsTests(unittest.TestCase):
  def test_unknown_saved_zone_defaults_safely(self):self.case(3)
  def test_read_failure_keeps_default_and_disables_write(self):self.case(4)
  def test_mutex_allocation_failure(self):self.case(5)
+
+ def test_saved_zone_survives_fresh_process(self):
+  with tempfile.TemporaryDirectory() as tmp:
+   env={**os.environ,'STREAMOO_CLOCK_TEST_NVS':str(Path(tmp)/'nvs.bin')}
+   subprocess.run([self.binary,'6'],check=True,env=env)
+   subprocess.run([self.binary,'7'],check=True,env=env)

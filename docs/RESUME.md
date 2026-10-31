@@ -1,6 +1,6 @@
 # Punkt wznowienia StreamOO
 
-Aktualizacja: **2026-10-31 — zegar SNTP i strefa przez WWW gotowe do odbioru**.
+Aktualizacja: **2026-10-31 — zegar/strefa odebrane, data DD.MM.YYYY i test trwałości NVS gotowe**.
 Gałąź feature/streamoo-implementation. ADR0034–0035, STATUS i HTTP_PLAYER_BRINGUP.
 
 ## Potwierdzone przez użytkownika
@@ -203,3 +203,15 @@ bez stacji/STOP, nie resetuje marquee. Nie zmieniono FFT/RMS.
 (0x160ff0,6% wolne). Teraz zwykły flash, Ctrl+F5 WWW i CLOCK_BRINGUP.
 Brak flash/erase/eFuse przez agenta. Pozostałe strefy/pełna baza IANA,
 pomiary dryfu i odbiór realnego NTP/reboot nadal OPEN.
+
+Najnowsze ADR0048: użytkownik potwierdził zegar i zmianę strefy. Zażądał
+daty dzień/miesiąc/rok i strefy w NVM. Data teraz DD.MM.YYYY, placeholder
+--.--.----. Zapis NVS streamoo_clock/zone był już w ADR0047; bez zmiany
+produkcji dodano test zapisu i odczytu w świeżym procesie z plikowym NVS.
+Test i ASan/UBSan PASS. Wgrać standardowo bez erase/NVS; sprawdzić
+nową datę i strefę po power-cycle. Zegar SNTP po boocie może potrzebować
+chwili, ale wybór strefy pozostaje nieulotny.
+
+Weryfikacja:329 testów hostowych PASS, clock-settings ASan/UBSan PASS
+(LSan off), native ESP-IDF6.1 build PASS,0x160ff0 (6% wolne),
+check_config --platform i diff --check PASS. Bez flash/erase/eFuse.

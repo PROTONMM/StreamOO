@@ -139,14 +139,13 @@ static void two_digits(uint8_t *out, unsigned value)
 
 static bool clock_panel(streamoo_canvas_t *c, const streamoo_home_snapshot_t *s)
 {
-    uint8_t date[] = "---- -- --", time[] = "--:--:--";
+    uint8_t date[] = "--.--.----", time[] = "--:--:--";
     if (s->clock_valid) {
-        date[0] = '0' + s->clock.year / 1000;
-        date[1] = '0' + s->clock.year / 100 % 10;
-        date[2] = '0' + s->clock.year / 10 % 10;
-        date[3] = '0' + s->clock.year % 10;
-        date[4] = date[7] = '-';
-        two_digits(date + 5, s->clock.month); two_digits(date + 8, s->clock.day);
+        two_digits(date, s->clock.day); two_digits(date + 3, s->clock.month);
+        date[6] = '0' + s->clock.year / 1000;
+        date[7] = '0' + s->clock.year / 100 % 10;
+        date[8] = '0' + s->clock.year / 10 % 10;
+        date[9] = '0' + s->clock.year % 10;
         two_digits(time, s->clock.hour); two_digits(time + 3, s->clock.minute);
         two_digits(time + 6, s->clock.second);
     }

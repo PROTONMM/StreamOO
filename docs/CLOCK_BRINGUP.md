@@ -1,3 +1,9 @@
+Aktualizacja ADR0048: data DD.MM.YYYY (np.31.10.2026), zegar i zmiana
+strefy potwierdzone przez użytkownika. Wybierz strefę i kliknij Zapisz
+strefę; po restarcie/odłączeniu zasilania powinna pozostać w NVS. Czas
+wymaga ponownego SNTP, ale ustawienie strefy jest nieulotne. Hostowy
+test zapisu i odtworzenia w świeżym procesie PASS; hardware power-cycle OPEN.
+
 # Odbiór zegara i strefy WWW
 
 1. Zwykły flash bez erase/NVS/obrazu FS. Po STA i synchronizacji internetowej

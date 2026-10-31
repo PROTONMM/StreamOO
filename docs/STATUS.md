@@ -1458,3 +1458,16 @@ controls ASan/UBSan PASS (LSan off), node --check i Chromium390px PASS
 build PASS,0x160ff0 (6% wolne), config/diff PASS, pcm_fill w IRAM.
 Bez nowych zewnętrznych zależności, zmian audio/DSP/partycji i flash/erase/eFuse.
 HARDWARE_TEST_PENDING: CLOCK_BRINGUP — NTP, godzina, zmiana strefy i reboot.
+
+## Data DMY i zapis strefy (2026-10-31)
+
+Użytkownik potwierdza zegar i zmianę strefy. Data zmieniona na DD.MM.YYYY,
+nieznana --.--.----; geometria i czas bez zmian. NVS zapis już działał,
+dodano test zapisu/odczytu w świeżym procesie z plikową atrapą NVS, PASS.
+Clock-settings ASan/UBSan PASS (LSan off). ADR0048.
+Golden frames po podglądzie, zmiany ograniczone do panelu daty.
+Nowy format i fizyczny power-cycle strefy do odbioru. Brak flash/erase/eFuse.
+
+Weryfikacja:329 testów hostowych PASS, clock-settings ASan/UBSan PASS
+(LSan off), native ESP-IDF6.1 build PASS,0x160ff0 (6% wolne),
+check_config --platform i diff --check PASS. Bez flash/erase/eFuse.
