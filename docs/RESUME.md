@@ -1,7 +1,7 @@
 # Punkt wznowienia StreamOO
 
-Aktualizacja: **2026-10-31, 06i — pierwszy odsłuch kilku stacji zaliczony**.
-Gałąź feature/streamoo-implementation. ADR0034, STATUS i HTTP_PLAYER_BRINGUP.
+Aktualizacja: **2026-10-31, 06j — precyzyjna diagnostyka retry gotowa, odsłuch06i zaliczony**.
+Gałąź feature/streamoo-implementation. ADR0034–0035, STATUS i HTTP_PLAYER_BRINGUP.
 
 ## Potwierdzone przez użytkownika
 
@@ -21,9 +21,9 @@ largest31744 B; PSRAM min8031908 B. Nie wnioskować wielogodzinnej stabilności
 ani konkretnego kodeka/protokołu z samego rate.
 
 Pojedyncza nieudana próba gen7: HTTP200/ESP_FAIL/decoder0/vendor0,
-format22050/2/16; retry gen8 wrócił do PLAYING44100. Przyczyna OPEN, dodać
-precyzyjny fail_reason/format poprzedni-obserwowany przy następnym kroku,
-zamiast zgadywać HE-AAC lub uznać22,05kHz za nieobsługiwane.
+format22050/2/16; retry gen8 wrócił do PLAYING44100. Przyczyna nadal OPEN. 06j dodaje stage/cause, previous/format i osobną linię
+Decode diag z licznikami/in/used/out/needed. Zbierz obie linie dla tej samej
+gen przy następnym retry; nie zgaduj HE-AAC ani braku obsługi22,05kHz.
 Osobne MP3/AAC-LC, HTTPS/ICY, STOP/zaniki/rebuffer i dłuższy soak jeszcze OPEN.
 
 ## Player 06i — architektura
@@ -51,13 +51,24 @@ TLS alokuje w PSRAM. API/licencje przypiętego IDF6.1 przejrzane; Mbed TLS4.1.0
 pod wybraną Apache2, parser2.7.0 MIT, Mozilla CA MPL2 z source PEM dołączonym.
 Źródła i licencje: licenses/ESP-HTTP-TLS-NOTICE.md. Nie kopiowano GPL/yoRadio kodu.
 
-247 testów hostowych PASS, targeted player/HTTP/PCM ASan/UBSan PASS (LSan off,
+248 testów hostowych PASS; nowa diagnostyka live/actor ASan/UBSan PASS (LSan off,
 bez TSan). Transport/RTOS/decoder/I2S w testach są atrapami; nie dowodzą realnego
-TCP/TLS, wydajności kodeka i DMA/SMP. Native ESP-IDF6.1 build PASS, 8% wolnego
+TCP/TLS, wydajności kodeka i DMA/SMP. Native ESP-IDF6.1 build PASS, 7% wolnego
 app. Fill/pcm_fill w IRAM i pipeline/ring w DRAM sprawdzone w ELF.
 Agent nie wykonywał flash/erase/eFuse ani połączeń do prywatnych stacji z hosta.
 
-## Teraz: uzupełnienie odbioru/diagnostyka
+## 06j i następny punkt
+
+Kod diagnostyki gotowy: pierwsza przyczyna pumpa zatrzaskuje się do nowej sesji,
+WAIT nie jest błędem, format22050 jest obsługiwany. Guardy rozdzielone, bez
+naprawy na domysł i bez zmiany formatu/resamplera/ISR. UART po komendzie fade,
+100ms liczone od aktualnego czasu. 15 wektorów błędów i formatowanie logów rzeczywistego kodu actor
+sprawdzone na hoście. ADR0035. Brak nowych zależności i nowych alokacji.
+
+Teraz firmware z diagnostyką do zwykłego odsłuchu; przy następnym zdarzeniu
+przeanalizuj stage/cause i Decode diag z tej samej gen, zanim zmienisz kod.
+
+## Uzupełnienie odbioru
 
 Zwykły idf.py -p PORT flash; zachować NVS/LittleFS, bez erase i obrazu FS.
 Po podstawowym odsłuchu pozostały STOP/PLAY/szybkie zmiany,

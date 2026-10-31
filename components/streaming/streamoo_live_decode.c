@@ -1,5 +1,35 @@
 #include "streamoo_live_decode.h"
 #include <string.h>
+const char *streamoo_live_failure_name(streamoo_live_failure_t reason) {
+  switch (reason) {
+  case STREAMOO_LIVE_FAILURE_NONE:
+    return "none";
+  case STREAMOO_LIVE_SOURCE_EOF:
+    return "source_eof";
+  case STREAMOO_LIVE_SOURCE_ERROR:
+    return "source_error";
+  case STREAMOO_LIVE_SOURCE_CONTRACT:
+    return "source_contract";
+  case STREAMOO_LIVE_DECODER_ERROR:
+    return "decoder_error";
+  case STREAMOO_LIVE_DECODER_BOUNDS:
+    return "decoder_bounds";
+  case STREAMOO_LIVE_DECODER_NO_PROGRESS:
+    return "decoder_no_progress";
+  case STREAMOO_LIVE_PCM_FORMAT:
+    return "pcm_format";
+  case STREAMOO_LIVE_FORMAT_CHANGED:
+    return "format_changed";
+  default:
+    return "unknown";
+  }
+}
+static streamoo_stream_result_t failure(streamoo_live_decode_t *s,
+                                        streamoo_live_failure_t reason) {
+  if (s->failure == STREAMOO_LIVE_FAILURE_NONE)
+    s->failure = reason;
+  return STREAMOO_STREAM_FAILED;
+}
 bool streamoo_live_decode_init(streamoo_live_decode_t *s,
                                streamoo_byte_source_t source, void *context,
                                streamoo_stream_decode_fn decode) {
@@ -13,39 +43,57 @@ static streamoo_stream_result_t packet(streamoo_live_decode_t *s) {
   for (unsigned work = 0; work < 256; ++work) {
     if (!s->pending) {
       if (s->eof)
-        return STREAMOO_STREAM_FAILED;
+        return failure(s, STREAMOO_LIVE_SOURCE_EOF);
       size_t n = 0;
       bool last = false;
+      ++s->source_calls;
       streamoo_source_result_t r = s->source.read(s->source.context, s->input,
                                                   sizeof s->input, &n, &last);
+      if (r != STREAMOO_SOURCE_DATA && (n || last))
+        return failure(s, STREAMOO_LIVE_SOURCE_CONTRACT);
       if (r == STREAMOO_SOURCE_WAIT)
         return STREAMOO_STREAM_WAIT;
+      if (r == STREAMOO_SOURCE_END)
+        return failure(s, STREAMOO_LIVE_SOURCE_EOF);
+      if (r == STREAMOO_SOURCE_ERROR)
+        return failure(s, STREAMOO_LIVE_SOURCE_ERROR);
       if (r != STREAMOO_SOURCE_DATA || !n || n > sizeof s->input)
-        return STREAMOO_STREAM_FAILED;
+        return failure(s, STREAMOO_LIVE_SOURCE_CONTRACT);
+      s->fetched_total += n;
       s->pending = n;
       s->input_cursor = 0;
       s->eof = last;
     }
     streamoo_decode_result_t r = {0};
+    ++s->decode_calls;
+    s->last_input = s->pending;
     esp_err_t error = s->decode(s->context, s->input + s->input_cursor,
                                 s->pending, s->eof, s->pcm, sizeof s->pcm, &r);
     s->decoder_error = error;
     s->codec_status = r.codec_status;
+    s->last_consumed = r.consumed;
+    s->last_produced = r.produced;
+    s->last_needed = r.needed;
     if (r.produced)
       s->observed = r.format;
-    if (error != ESP_OK || r.consumed > s->pending ||
-        r.produced > sizeof s->pcm || (!r.consumed && !r.produced))
-      return STREAMOO_STREAM_FAILED;
+    if (error != ESP_OK)
+      return failure(s, STREAMOO_LIVE_DECODER_ERROR);
+    if (r.consumed > s->pending || r.produced > sizeof s->pcm)
+      return failure(s, STREAMOO_LIVE_DECODER_BOUNDS);
+    if (!r.consumed && !r.produced)
+      return failure(s, STREAMOO_LIVE_DECODER_NO_PROGRESS);
+    s->consumed_total += r.consumed;
+    s->produced_total += r.produced;
     s->pending -= r.consumed;
     s->input_cursor += r.consumed;
     if (r.produced) {
       if (r.format.bits != 16 || !r.format.channels || r.format.channels > 2 ||
           r.format.rate < 8000 || r.format.rate > 48000 ||
           r.produced % (2 * r.format.channels))
-        return STREAMOO_STREAM_FAILED;
+        return failure(s, STREAMOO_LIVE_PCM_FORMAT);
       if (s->format.rate && (s->format.rate != r.format.rate ||
                              s->format.channels != r.format.channels))
-        return STREAMOO_STREAM_FAILED;
+        return failure(s, STREAMOO_LIVE_FORMAT_CHANGED);
       s->format = r.format;
       s->pcm_bytes = r.produced;
       s->pcm_cursor = 0;

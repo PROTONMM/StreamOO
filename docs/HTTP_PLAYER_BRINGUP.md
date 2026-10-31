@@ -52,3 +52,14 @@ HE-AAC/AAC+, FLAC/Ogg/Opus, HLS i adresy będące plikami M3U/PLS nie są jeszcz
 potwierdzone/obsługiwane w tym kroku. Jeśli URL jest kontenerem/playlistą,
 wybierz istniejący bezpośredni MP3/AAC-LC zamiast zmieniać oryginalny CSV.
 Ostatni wybór stacji nie jest jeszcze zapisywany w NVS; po reboocie wybierz ponownie.
+
+## Diagnostyka 06j
+
+Przy kolejnym retry prześlij dwie sąsiednie linie dla tej samej `gen`:
+`Stream failed` oraz `Decode diag` (jeśli decoder został utworzony).
+Pierwsza zawiera stage/cause, previous i format; druga in/used/out/needed,
+calls/reads oraz liczniki sumaryczne. `format` sam nie dowodzi przyczyny.
+`format_changed` różni się od `decoder_no_progress` nawet przy tym samym
+22050 Hz w końcowym wpisie. Tabela wszystkich przyczyn: ADR0035.
+Nowy log służy wyjaśnieniu pojedynczego zdarzenia; podstawowy odsłuch kilku
+stacji jest już zaliczony.

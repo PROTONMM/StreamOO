@@ -89,6 +89,7 @@ static void task(void *context) {
   uint32_t sequence = 0, reader_hwm = 0;
   int64_t retry_at = 0, log_at = 0, fade_until = 0;
   unsigned backoff = 1;
+  const char *failure_stage = "none";
   streamoo_player_state_t current;
   streamoo_player_state(&current);
   for (;;) {
@@ -212,6 +213,9 @@ static void task(void *context) {
               ? streamoo_http_stream_open((const char *)station->url, &session)
               : ESP_ERR_INVALID_STATE;
       if (current.error != ESP_OK) {
+        ESP_LOGW("player",
+                 "Connect failed gen=%" PRIu64 " stage=http_open error=%s",
+                 current.generation, esp_err_to_name(current.error));
         current.phase = STREAMOO_PLAYER_RETRY;
         retry_at = now + (int64_t)backoff * 1000000;
         backoff = backoff < 8 ? backoff * 2 : 15;
@@ -225,8 +229,10 @@ static void task(void *context) {
       size_t queued = streamoo_http_stream_queued(session);
       if (!decoder && info.codec_known &&
           (queued >= 8192 || (info.ended && queued))) {
+        failure_stage = "decoder_open";
         current.error = streamoo_decoder_open(info.codec, &decoder);
         if (current.error == ESP_OK) {
+          failure_stage = "memory";
           pump = heap_caps_calloc(1, sizeof *pump,
                                   MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
           storage = heap_caps_calloc(32, sizeof *storage,
@@ -235,14 +241,18 @@ static void task(void *context) {
                                    MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
           if (!pump || !storage || !block)
             current.error = ESP_ERR_NO_MEM;
-          else if (!streamoo_live_decode_init(
-                       pump, streamoo_http_stream_source(session), decoder,
-                       decode) ||
-                   !streamoo_pcm_ring_init(&ring, storage, 32) ||
-                   !streamoo_pcm_pipeline_init(&pipeline, &ring, NULL))
-            current.error = ESP_FAIL;
+          else {
+            failure_stage = "pipeline_init";
+            if (!streamoo_live_decode_init(pump,
+                                           streamoo_http_stream_source(session),
+                                           decoder, decode) ||
+                !streamoo_pcm_ring_init(&ring, storage, 32) ||
+                !streamoo_pcm_pipeline_init(&pipeline, &ring, NULL))
+              current.error = ESP_FAIL;
+          }
         }
         if (current.error == ESP_OK) {
+          failure_stage = "i2s_open";
           portENTER_CRITICAL(&lock);
           stats = (streamoo_pcm_stats_t){0};
           portEXIT_CRITICAL(&lock);
@@ -257,12 +267,17 @@ static void task(void *context) {
       if (current.error == ESP_OK && output) {
         for (unsigned burst = 0; burst < 8 && streamoo_pcm_count(&ring) < 32;
              ++burst) {
+          failure_stage = "decode";
           streamoo_stream_result_t r =
               streamoo_live_decode_read(pump, block->samples);
           if (r == STREAMOO_STREAM_WAIT)
             break;
-          if (r != STREAMOO_STREAM_READY ||
-              !streamoo_pcm_push(&ring, block->samples, sequence++)) {
+          if (r != STREAMOO_STREAM_READY) {
+            current.error = ESP_FAIL;
+            break;
+          }
+          if (!streamoo_pcm_push(&ring, block->samples, sequence++)) {
+            failure_stage = "pcm_queue";
             current.error = ESP_FAIL;
             break;
           }
@@ -278,26 +293,44 @@ static void task(void *context) {
           backoff = 1;
         memcpy(current.title, info.title, sizeof current.title);
       }
-      if (info.ended && !queued && current.error == ESP_OK)
+      if (info.ended && !queued && current.error == ESP_OK) {
+        failure_stage = "http_end";
         current.error = info.error ? info.error : ESP_FAIL;
+      }
       if (current.error != ESP_OK) {
-        ESP_LOGW("player",
-                 "Stream failed gen=%" PRIu64
-                 " HTTP=%d error=%s decoder=%d vendor=%" PRId32
-                 " format=%" PRIu32 "/%u/%u",
-                 current.generation, info.http_status,
-                 esp_err_to_name(current.error), pump ? pump->decoder_error : 0,
-                 pump ? pump->codec_status : 0, pump ? pump->observed.rate : 0,
-                 pump ? (unsigned)pump->observed.channels : 0,
-                 pump ? (unsigned)pump->observed.bits : 0);
         current.phase = STREAMOO_PLAYER_RETRY;
         current.title[0] = 0;
         retiring = true;
-        fade_until = now + 100000;
         streamoo_http_stream_stop(session);
         portENTER_CRITICAL(&lock);
         target_gain = 0;
         portEXIT_CRITICAL(&lock);
+        /* UART diagnostics must not delay the fade command. */
+        fade_until = esp_timer_get_time() + 100000;
+        ESP_LOGW("player",
+                 "Stream failed gen=%" PRIu64 " stage=%s cause=%s"
+                 " HTTP=%d error=%s decoder=%d vendor=%" PRId32
+                 " previous=%" PRIu32 "/%u/%u format=%" PRIu32 "/%u/%u",
+                 current.generation, failure_stage,
+                 pump ? streamoo_live_failure_name(pump->failure) : "none",
+                 info.http_status, esp_err_to_name(current.error),
+                 pump ? pump->decoder_error : 0, pump ? pump->codec_status : 0,
+                 pump ? pump->format.rate : 0,
+                 pump ? (unsigned)pump->format.channels : 0,
+                 pump ? (unsigned)pump->format.bits : 0,
+                 pump ? pump->observed.rate : 0,
+                 pump ? (unsigned)pump->observed.channels : 0,
+                 pump ? (unsigned)pump->observed.bits : 0);
+        if (pump)
+          ESP_LOGW("player",
+                   "Decode diag gen=%" PRIu64
+                   " in=%zu used=%zu out=%zu needed=%zu calls=%" PRIu64
+                   " reads=%" PRIu64 " fetched=%" PRIu64 " consumed=%" PRIu64 " produced=%" PRIu64
+                   " pending=%zu partial=%zu",
+                   current.generation, pump->last_input, pump->last_consumed,
+                   pump->last_produced, pump->last_needed, pump->decode_calls,
+                   pump->source_calls, pump->fetched_total, pump->consumed_total,
+                   pump->produced_total, pump->pending, pump->assembled);
       }
     }
     if (!session && current.running && online && now < retry_at)
@@ -328,9 +361,12 @@ static void task(void *context) {
                output ? (unsigned)streamoo_pcm_count(&ring) : 0,
                audio.max_fill_us, audio.invalid_buffers, pcm.underflows,
                pcm.hard_underflows, pcm.restarts,
-               (unsigned)uxTaskGetStackHighWaterMark(NULL), (unsigned)reader_hwm);
-      if (output && (audio.invalid_buffers || audio.max_fill_us >= 5000))
+               (unsigned)uxTaskGetStackHighWaterMark(NULL),
+               (unsigned)reader_hwm);
+      if (output && (audio.invalid_buffers || audio.max_fill_us >= 5000)) {
+        failure_stage = "i2s_stats";
         current.error = ESP_FAIL;
+      }
       log_at = now;
     }
     vTaskDelay(pdMS_TO_TICKS(5) ? pdMS_TO_TICKS(5) : 1);

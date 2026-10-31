@@ -52,7 +52,55 @@ static void icy(unsigned chunk){
  assert(streamoo_icy_init(&s,1));uint8_t maximum[4083];maximum[0]='a';maximum[1]=255;memset(maximum+2,'x',4080);maximum[4082]='b';
  uint8_t *large=malloc(sizeof maximum);assert(large);assert(streamoo_icy_feed(&s,maximum,sizeof maximum,large,sizeof maximum,&written));assert(written==2&&large[0]=='a'&&large[1]=='b');free(large);
 }
-int main(int argc,char **argv){assert(argc==2);int mode=atoi(argv[1]);if(mode<3)resample(mode==0?48000:mode==1?44100:22050,mode==2?1:2);else icy(mode-2);return 0;}
+
+typedef struct {unsigned fault,calls;} diagnostic_t;
+static streamoo_source_result_t diagnostic_source(void *ctx,uint8_t *out,size_t cap,size_t *n,bool *last){
+ diagnostic_t *d=ctx;out[0]=1;*n=0;*last=false;
+ if(d->fault==9)return STREAMOO_SOURCE_END;
+ if(d->fault==10)return STREAMOO_SOURCE_ERROR;
+ if(d->fault==11)return STREAMOO_SOURCE_DATA;
+ if(d->fault==12){*n=1;return STREAMOO_SOURCE_WAIT;}
+ if(d->fault==13){*n=cap+1;return STREAMOO_SOURCE_DATA;}
+ *n=1;*last=d->fault==14;return STREAMOO_SOURCE_DATA;
+}
+static esp_err_t diagnostic_decode(void *ctx,uint8_t *in,size_t bytes,bool eos,uint8_t *pcm,size_t cap,streamoo_decode_result_t *r){
+ diagnostic_t *d=ctx;(void)in;(void)eos;assert(bytes&&cap>=4);++d->calls;memset(pcm,0,4);
+ *r=(streamoo_decode_result_t){.consumed=1,.produced=4,.format={44100,2,16}};
+ switch(d->fault){
+ case 0: if(d->calls==1)r->format.rate=22050;else *r=(streamoo_decode_result_t){0};break;
+ case 1:r->needed=12288;r->codec_status=-6;return 42;
+ case 2:r->produced=cap+1;break;
+ case 3:r->consumed=bytes+1;break;
+ case 4:r->format.bits=24;break;
+ case 5:r->format.channels=3;break;
+ case 6:r->format.rate=96000;break;
+ case 7:r->produced=3;break;
+ case 8:if(d->calls>1)r->format.rate=22050;break;
+ }
+ return ESP_OK;
+}
+static void diagnostic(unsigned fault){
+ diagnostic_t d={.fault=fault};streamoo_live_decode_t s;
+ assert(streamoo_live_decode_init(&s,(streamoo_byte_source_t){&d,diagnostic_source,NULL},&d,diagnostic_decode));
+ int32_t output[480],before[480];memset(output,0x5a,sizeof output);memcpy(before,output,sizeof output);
+ assert(streamoo_live_decode_read(&s,output)==STREAMOO_STREAM_FAILED);assert(!memcmp(output,before,sizeof output));assert(s.failed);
+ streamoo_live_failure_t expected=fault==0?STREAMOO_LIVE_DECODER_NO_PROGRESS:fault==1?STREAMOO_LIVE_DECODER_ERROR:
+ (fault==2||fault==3)?STREAMOO_LIVE_DECODER_BOUNDS:(fault>=4&&fault<=7)?STREAMOO_LIVE_PCM_FORMAT:
+ fault==8?STREAMOO_LIVE_FORMAT_CHANGED:(fault==9||fault==14)?STREAMOO_LIVE_SOURCE_EOF:
+ fault==10?STREAMOO_LIVE_SOURCE_ERROR:STREAMOO_LIVE_SOURCE_CONTRACT;
+ assert(s.failure==expected&&strcmp(streamoo_live_failure_name(s.failure),"none"));
+ if(fault==0){assert(s.format.rate==22050&&s.observed.rate==22050&&s.decode_calls==2&&s.last_input==1&&!s.last_consumed&&!s.last_produced);assert(s.fetched_total==2&&s.consumed_total==1&&s.produced_total==4);}
+ if(fault==1)assert(s.decoder_error==42&&s.codec_status==-6&&s.last_needed==12288);
+ if(fault==8)assert(s.format.rate==44100&&s.observed.rate==22050&&s.decode_calls==2&&s.last_consumed==1&&s.last_produced==4);
+ if(fault==14)assert(s.source_calls==1&&s.decode_calls==1&&s.eof);
+ uint64_t calls=s.decode_calls;assert(streamoo_live_decode_read(&s,output)==STREAMOO_STREAM_FAILED&&s.decode_calls==calls&&s.failure==expected);
+ assert(!strcmp(streamoo_live_failure_name(STREAMOO_LIVE_DECODER_NO_PROGRESS),"decoder_no_progress"));
+ assert(!strcmp(streamoo_live_failure_name(STREAMOO_LIVE_FORMAT_CHANGED),"format_changed"));
+ assert(!strcmp(streamoo_live_failure_name((streamoo_live_failure_t)99),"unknown"));
+ assert(streamoo_live_decode_init(&s,(streamoo_byte_source_t){&d,diagnostic_source,NULL},&d,diagnostic_decode));
+ assert(!s.failed&&s.failure==STREAMOO_LIVE_FAILURE_NONE&&!s.decode_calls&&!s.source_calls&&!s.fetched_total&&!s.last_input);
+}
+int main(int argc,char **argv){assert(argc==2);int mode=atoi(argv[1]);if(mode>=100)diagnostic(mode-100);else if(mode<3)resample(mode==0?48000:mode==1?44100:22050,mode==2?1:2);else icy(mode-2);return 0;}
 '''
 class LiveStreamTests(unittest.TestCase):
  @classmethod
@@ -66,3 +114,7 @@ class LiveStreamTests(unittest.TestCase):
  def test_mono_22050_and_eof(self):subprocess.run([str(self.binary),'2'],check=True)
  def test_icy_arbitrary_fragmentation(self):
   for i in range(3,40):subprocess.run([str(self.binary),str(i)],check=True)
+
+ def test_failure_reasons_snapshots_and_reset(self):
+  for fault in range(15):
+   with self.subTest(fault=fault):subprocess.run([str(self.binary),str(100+fault)],check=True)

@@ -23,6 +23,9 @@ HARNESS=r'''
 #include <setjmp.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
+#include <stdio.h>
+static char failure_log[1024],diagnostic_log[1024];
 static void (*actor)(void *);static jmp_buf completed;
 static unsigned tick,opens,closes,head,tail,count,allocations;static size_t command_bytes;
 static uint8_t messages[16][128];static int64_t now;
@@ -34,7 +37,11 @@ struct streamoo_catalog_snapshot{unsigned refs;streamoo_catalog_view_t view;};
 static const streamoo_station_t entries[]={{.stable_id=11,.url=(const uint8_t *)"http://a.invalid"},{.stable_id=22,.url=(const uint8_t *)"http://b.invalid"}};
 static const streamoo_station_t reversed[]={{.stable_id=22,.url=(const uint8_t *)"http://b.invalid"},{.stable_id=11,.url=(const uint8_t *)"http://a.invalid"}};
 static streamoo_catalog_snapshot_t first={.view={entries,2,1}},second={.view={NULL,0,3}},reordered={.view={reversed,2,2}},*catalog=&first;
-void fake_log(const char *tag,const char *fmt,...){(void)tag;(void)fmt;}
+void fake_log(const char *tag,const char *fmt,...){(void)tag;va_list args;va_start(args,fmt);
+ if(strstr(fmt,"Stream failed"))vsnprintf(failure_log,sizeof failure_log,fmt,args);
+ else if(strstr(fmt,"Decode diag"))vsnprintf(diagnostic_log,sizeof diagnostic_log,fmt,args);
+ va_end(args);}
+const char *streamoo_live_failure_name(streamoo_live_failure_t f){return f==STREAMOO_LIVE_DECODER_NO_PROGRESS?"decoder_no_progress":"none";}
 int64_t esp_timer_get_time(void){return now;}
 void *heap_caps_calloc(size_t n,size_t size,unsigned caps){(void)caps;void *p=calloc(n,size);if(p)++allocations;return p;}
 void heap_caps_free(void *p){if(p){assert(allocations);--allocations;free(p);}}
@@ -58,7 +65,7 @@ esp_err_t streamoo_decoder_open(streamoo_codec_t codec,streamoo_decoder_t **d){a
 void streamoo_decoder_close(streamoo_decoder_t *d){heap_caps_free(d);}
 esp_err_t streamoo_decoder_process(streamoo_decoder_t *d,uint8_t *in,size_t n,bool eos,uint8_t *pcm,size_t cap,streamoo_decode_result_t *r){(void)d;(void)in;(void)n;(void)eos;(void)pcm;(void)cap;(void)r;return ESP_OK;}
 bool streamoo_live_decode_init(streamoo_live_decode_t *p,streamoo_byte_source_t s,void *d,streamoo_stream_decode_fn f){(void)s;(void)d;(void)f;p->format=(streamoo_pcm_format_t){44100,2,16};return true;}
-streamoo_stream_result_t streamoo_live_decode_read(streamoo_live_decode_t *p,int32_t *out){(void)p;if(force_fail)return STREAMOO_STREAM_FAILED;for(unsigned i=0;i<480;++i)out[i]=65536;return STREAMOO_STREAM_READY;}
+streamoo_stream_result_t streamoo_live_decode_read(streamoo_live_decode_t *p,int32_t *out){(void)p;if(force_fail){p->failure=STREAMOO_LIVE_DECODER_NO_PROGRESS;p->last_input=19;return STREAMOO_STREAM_FAILED;}for(unsigned i=0;i<480;++i)out[i]=65536;return STREAMOO_STREAM_READY;}
 esp_err_t streamoo_audio_output_open(streamoo_audio_pins_t p,streamoo_audio_fill_fn fn,void *ctx,streamoo_audio_output_t **out){(void)p;assert(!output_live&&online&&!ap);output_live=true;output_fill=fn;output_context=ctx;*out=(void *)1;return ESP_OK;}
 esp_err_t streamoo_audio_output_close(streamoo_audio_output_t *out){assert(out&&output_live);output_live=false;++closes;return ESP_OK;}
 bool streamoo_audio_output_stats(streamoo_audio_output_t *s,streamoo_audio_stats_t *out){(void)s;*out=(streamoo_audio_stats_t){tick,10,0};return true;}
@@ -74,7 +81,7 @@ void vTaskDelay(unsigned ms){now+=(int64_t)ms*1000;++tick;
  if(tick==49)assert(opens==1&&!output_live);
  if(tick==65)assert(opens==2&&s.phase==STREAMOO_PLAYER_PLAYING);
  if(tick==70)force_fail=true;
- if(tick==120){online=false;ap=true;}
+ if(tick==120){assert(strstr(failure_log,"stage=decode cause=decoder_no_progress"));assert(strstr(diagnostic_log,"in=19 used=0 out=0 needed=0"));online=false;ap=true;}
  if(tick==130){online=true;assert(!output_live);}
  if(tick==139)assert(s.phase==STREAMOO_PLAYER_WAIT_NETWORK);
  if(tick==140)ap=false;

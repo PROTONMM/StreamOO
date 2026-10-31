@@ -9,7 +9,7 @@ Bieżący punkt wznowienia: [RESUME.md](RESUME.md).
 | 03 szkielet | baza zaimplementowana; odbiór sprzętowy i integracyjny OPEN | ESP-IDF v6.1 build PASS; ADR 0002 |
 | 04 UI/SSD1322 | HOME i lista odebrane na OLED; końcowe strojenie fontu OPEN | ADR 0012; odbiór użytkownika |
 | 05 encoder | dekoder/IRQ i gesty odebrane; interaktywny adapter odebrany w trybie A; preferencje NVS odebrane; shutdown/flush OPEN | ADR 0013–0017; 99 testów PASS |
-| 06 audio | I2S/gain/PCM stress odebrane; MP3 decode/PCM potwierdzone logiem; AAC-LC PoC odebrane; AAC incremental file decode06f odebrane logiem i odsłuchem; źródło/bufor AAC06g odebrane logiem, odsłuchem i sterowaniem; niezależny reader AAC06h odebrany; player06i: kilka stacji i 44,1/48kHz odebrane; rozszerzone testy OPEN | ADR0018–0025/0034; 247 testów hostowych PASS; build PASS |
+| 06 audio | I2S/gain/PCM stress odebrane; MP3 decode/PCM potwierdzone logiem; AAC-LC PoC odebrane; AAC incremental file decode06f odebrane logiem i odsłuchem; źródło/bufor AAC06g odebrane logiem, odsłuchem i sterowaniem; niezależny reader AAC06h odebrany; player06i: kilka stacji i 44,1/48kHz odebrane; rozszerzone testy OPEN | ADR0018–0025/0034–0035; 248 testów hostowych PASS; build PASS |
 | 07 DSP | NIEZAIMPLEMENTOWANE | — |
 | 08 stacje | lista z katalogu i wybór odebrane; import live/reboot i edycja ID OPEN | ADR0033 |
 | 09 sieć | AP/STA/IP/AP-off potwierdzone logiem; mDNS OPEN | ADR0031; build PASS |
@@ -1259,3 +1259,18 @@ zaniki/rebuffer, szybkie zmiany i dłuższy soak pozostają OPEN. Kolejny punkt:
 precyzyjna diagnostyka pojedynczego retry/pozostały odbiór, potem DSP/kolejne
 funkcje. Zmieniono tylko dokumentację; bez powtarzania build/testów kodu
 (ostatnie247 testów i build PASS). diff --check PASS; brak flash/erase/eFuse.
+
+## Etap 06j — diagnostyka retry live decoder (2026-10-31)
+
+Nowy `stage`/`cause` oraz poprzedni i obserwowany format, ostatnie in/used/out/
+needed i liczniki per sesja. Pierwsza przyczyna zatrzaskuje się do init; WAIT
+nie oznacza awarii. Rozróżnione EOF, źródło/kontrakt, decoder/status/bounds/
+no-progress, PCM format i zmiana formatu. Bez zgadywania przyczyny gen7.
+Gain=0 przed UART, okno fade od aktualnego czasu; callback I2S i resampler
+bez zmian. ADR0035.
+
+248 testów hostowych PASS, w tym15 wektorów przyczyn i formatowanie obu logów
+przez actor; live/actor ASan/UBSan PASS (LSan off, bez TSan). Native ESP-IDF6.1
+build PASS, obraz0x15b0f0 B, 7% wolnego app. check_config --platform oraz
+diff --check PASS. Bez flash/erase/eFuse. Przyczyna sprzętowego retry nadal
+OPEN: potrzebne nowe `Stream failed` + `Decode diag` dla jednej gen.
