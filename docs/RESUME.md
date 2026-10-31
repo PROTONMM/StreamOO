@@ -279,3 +279,29 @@ krzywej głośności ADR0053 pozostaje OPEN; wiadomość dotyczyła adresu WWW.
 Odbiór ADR0053 (2026-10-31): użytkownik potwierdził, że nowa
 charakterystyka głośności jest dobra. Odsłuch krzywej zakończony
 pozytywnie; pozostawiamy `(VOL/100)^2` i rampę50ms.
+
+Najnowsze ADR0054/06k: użytkownik zlecił pozostałe kodeki i M3U/PLS,
+ewentualnie HLS. Podłączono HE-AAC/v2 w ADTS, native FLAC, Ogg Vorbis i
+Ogg Opus z istniejącego esp_audio_codec2.6.2. API/licencje przejrzane,
+retained XiphBSD i notice. LivePCM16/24/32-bit mono/stereo8..48kHz,
+scratch64KiB/pump PSRAM, player stack24KiB (vendor zaleca20KiB+caller).
+M3U/PLS rozwiązuje reader:16KiB/3 dokumenty/5 redirect, względne URL,
+bez HTTPS→HTTP; HLS #EXT-X- jawnie NOT_SUPPORTED, osobny etap OPEN.
+Katalog/importCSV/stableID nie zmienione, URL playlisty zachowany.
+
+Build -Os + silent assertions (kontrole pozostają; ELF do backtrace).
+Factory powiększona WYŁĄCZNIE do pustej luki:0x10000/0x180000. Storage
+nadal0x190000/0x100000, NVS/PHY bez zmian. Standardowy pełny flash z
+nową tablicą, bez erase/obrazuFS. Obraz0x176230,40400B/3% wolne.
+346 host tests, targeted ASan/UBSan i native build PASS; PCM/gain IRAM.
+Generator tools/generate_extended_fixtures.py sprawdzony:7 oryginalnych
+plików i M3U/PLS plus playlisttest. Nie importować automatycznie do radia.
+
+Teraz EXTENDED_FORMATS_BRINGUP: najpierw publiczne KissFM HE-AAC/RNŚAAC+,
+potem FLAC16/24/Vorbis/Opus i M3U/PLS z serwera na komputerze. Każdy
+binarny dekoder wymaga odsłuchu S3 i heap/CPU/HWM; nie ogłaszać odbioru
+na podstawie hostfakes. HE-AACv2 osobno niepotwierdzone. Ogg-FLAC/chained,
+rawOpus/RTP,>48kHz/multichannel/ramki>64KiB nie deklarowane. FFT/RMS i
+wyglądWWW odłożone, krzywaVOL oraz podstawowe mDNS wcześniej odebrane.
+Bez flash/erase/eFuse przez agenta. HLS opcjonalny, wymaga osobnego readera
+segmentów oraz planu miejsca; jeszcze niezaimplementowany.

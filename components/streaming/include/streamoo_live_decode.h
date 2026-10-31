@@ -1,6 +1,6 @@
 #pragma once
 #include "streamoo_decode_stream.h"
-/* Decoder task only. 16-bit mono/stereo 8..48kHz -> 48kHz stereo32.
+/* Decoder task only. 16/24/32-bit little-endian mono/stereo 8..48kHz -> 48kHz stereo32.
  * Linear interpolation, rational phase retained across packets and WAIT.
  * Live EOF fails to owner; never rewind/replay a network source. */
 typedef enum {
@@ -19,7 +19,7 @@ typedef struct {
   void *context;
   streamoo_stream_decode_fn decode;
   uint8_t input[257];
-  _Alignas(int32_t) uint8_t pcm[8192];
+  _Alignas(int32_t) uint8_t pcm[65536];
   size_t pending, input_cursor, pcm_bytes, pcm_cursor, assembled;
   streamoo_pcm_format_t format, observed;
   int32_t codec_status;

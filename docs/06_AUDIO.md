@@ -131,3 +131,13 @@ nie bieżącą funkcją. ADR0028; dynamiczny STOP podczas STA→AP nadal OPEN.
 ADR0053: regulacja głośności ma amplitudę `(VOL/100)^2`, tablica Q16;
 0 mute,100 unity. Zastępuje historyczną krzywą-60..0dB z ADR0019.
 Rampa50ms pozostaje. Przy tym samym zapisanym VOL radio jest głośniejsze.
+
+## 06k — rozszerzone formaty (ADR0054)
+
+Podłączone AAC-Plus (LC/HE/HEv2 w ADTS), native FLAC, Ogg Vorbis i Opus.
+Live PCM mono/stereo8..48kHz,16/24/32-bit, scratch64KiB PSRAM. Pierwszy
+odsłuch każdego backendu na S3 nadal OPEN. Historyczny enum AAC_LC
+obejmuje teraz całą rodzinę ADTS; UI AAC nie zgaduje konkretnego profilu.
+HTTP rozwiązuje M3U/PLS, do3 dokumentów/16KiB i5 redirect, bez downgrade
+TLS. HLS wykrywany i jawnie odrzucany; implementacja segmentów osobno.
+Instrukcja: [EXTENDED_FORMATS_BRINGUP](EXTENDED_FORMATS_BRINGUP.md).

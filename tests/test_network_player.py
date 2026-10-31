@@ -49,7 +49,7 @@ void *xQueueCreate(unsigned n,size_t size){assert(n==16&&size<=128);command_byte
 void vQueueDelete(void *q){(void)q;}
 int xQueueSend(void *q,const void *data,unsigned wait){(void)q;(void)wait;if(count==16)return 0;memcpy(messages[tail++%16],data,command_bytes);++count;return 1;}
 int xQueueReceive(void *q,void *out,unsigned wait){(void)q;(void)wait;if(!count)return 0;memcpy(out,messages[head++%16],command_bytes);--count;return 1;}
-int xTaskCreate(void (*fn)(void *),const char *name,unsigned stack,void *ctx,unsigned priority,void *handle){(void)name;(void)ctx;(void)handle;assert(priority==4&&stack>=8192);actor=fn;return 1;}
+int xTaskCreate(void (*fn)(void *),const char *name,unsigned stack,void *ctx,unsigned priority,void *handle){(void)name;(void)ctx;(void)handle;assert(priority==4&&stack>=24576);actor=fn;return 1;}
 unsigned uxTaskGetStackHighWaterMark(void *task){(void)task;return 8000;}
 streamoo_catalog_snapshot_t *streamoo_config_catalog_acquire(void){++catalog->refs;return catalog;}
 streamoo_catalog_view_t streamoo_config_catalog_view(const streamoo_catalog_snapshot_t *s){return s?s->view:(streamoo_catalog_view_t){0};}

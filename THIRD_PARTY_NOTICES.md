@@ -103,3 +103,11 @@ espressif/mdns **1.14.0**, Apache-2.0, exact registry hash pinned in
 `dependencies.lock`; native ESP-IDF6.1 build checked. Public API and
 upstream LICENSE reviewed before integration. Retain
 [license and source notice](licenses/ESP-mDNS-NOTICE.md) and Apache-2.0.txt.
+
+## Extended audio codecs (06k)
+
+Existing pinned espressif/esp_audio_codec2.6.2 now used for AAC-Plus,
+FLAC, Ogg Vorbis and Ogg Opus. Espressif Modified MIT (Espressif products
+only), with vendor-attributed Xiph BSD backends. See expanded
+[codec notice](licenses/ESP-Audio-Codec-NOTICE.md) and retained Opus/FLAC/
+Vorbis license texts. No external codec implementation copied.

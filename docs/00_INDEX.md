@@ -129,3 +129,5 @@ Tryby AP/LAN i edytor playlisty: `adr/0051-ap-setup-lan-player-and-playlist-edit
 Nazwa odtwarzacza w LAN: `adr/0052-lan-mdns-advertisement.md`, `MDNS_BRINGUP.md`.
 
 Krzywa głośności: `adr/0053-more-usable-volume-curve.md`.
+
+Rozszerzone kodeki i M3U/PLS: `adr/0054-extended-codecs-and-playlist-resolution.md`, `EXTENDED_FORMATS_BRINGUP.md`.

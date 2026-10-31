@@ -40,6 +40,26 @@ static void resample(unsigned rate,unsigned channels){
  fake_t ended={.rate=48000,.channels=2,.end=true};assert(streamoo_live_decode_init(&s,(streamoo_byte_source_t){&ended,read_source,NULL},&ended,decode));
  assert(streamoo_live_decode_read(&s,output)==STREAMOO_STREAM_FAILED&&ended.calls==1);
 }
+
+typedef struct{unsigned bits,frame;} wide_t;
+static int64_t pattern(unsigned bits,unsigned i){switch(i%4){case 0:return -(INT64_C(1)<<(bits-1));case 1:return (INT64_C(1)<<(bits-1))-1;case 2:return 1;default:return -1;}}
+static esp_err_t wide_decode(void *ctx,uint8_t *in,size_t bytes,bool eos,uint8_t *pcm,size_t cap,streamoo_decode_result_t *r){
+ wide_t *w=ctx;(void)in;(void)eos;unsigned width=w->bits/8;assert(bytes&&cap>=64*2*width);
+ for(unsigned f=0;f<64;++f)for(unsigned c=0;c<2;++c){uint32_t value=(uint32_t)pattern(w->bits,w->frame+f+c);
+ for(unsigned j=0;j<width;++j)pcm[(f*2+c)*width+j]=(uint8_t)(value>>(8*j));}
+ w->frame+=64;*r=(streamoo_decode_result_t){.consumed=1,.produced=64*2*width,.format={48000,2,w->bits}};return ESP_OK;
+}
+static void wide(unsigned bits){
+ wide_t w={.bits=bits};fake_t source={0};streamoo_live_decode_t s;int32_t out[480];
+ assert(streamoo_live_decode_init(&s,(streamoo_byte_source_t){&source,read_source,NULL},&w,wide_decode));
+ unsigned blocks=0;
+ for(unsigned calls=0;calls<100 && blocks<3;++calls){streamoo_stream_result_t r=streamoo_live_decode_read(&s,out);
+ if(r==STREAMOO_STREAM_WAIT)continue;
+ assert(r==STREAMOO_STREAM_READY);
+ for(unsigned f=0;f<240;++f)for(unsigned c=0;c<2;++c)assert(out[f*2+c]==pattern(bits,blocks*240+f+c)*(INT64_C(1)<<(32-bits)));
+ ++blocks;}
+ assert(blocks==3);
+}
 static void icy(unsigned chunk){
  streamoo_icy_t s;assert(streamoo_icy_init(&s,3));uint8_t wire[128]={0},audio[128],out[128];size_t n=0,total=0;
  memcpy(wire+n,"abc",3);n+=3;wire[n++]=2;memcpy(wire+n,"StreamTitle='Zażółć';",strlen("StreamTitle='Zażółć';"));n+=32;
@@ -71,7 +91,7 @@ static esp_err_t diagnostic_decode(void *ctx,uint8_t *in,size_t bytes,bool eos,u
  case 1:r->needed=12288;r->codec_status=-6;return 42;
  case 2:r->produced=cap+1;break;
  case 3:r->consumed=bytes+1;break;
- case 4:r->format.bits=24;break;
+ case 4:r->format.bits=20;break;
  case 5:r->format.channels=3;break;
  case 6:r->format.rate=96000;break;
  case 7:r->produced=3;break;
@@ -100,7 +120,7 @@ static void diagnostic(unsigned fault){
  assert(streamoo_live_decode_init(&s,(streamoo_byte_source_t){&d,diagnostic_source,NULL},&d,diagnostic_decode));
  assert(!s.failed&&s.failure==STREAMOO_LIVE_FAILURE_NONE&&!s.decode_calls&&!s.source_calls&&!s.fetched_total&&!s.last_input);
 }
-int main(int argc,char **argv){assert(argc==2);int mode=atoi(argv[1]);if(mode>=100)diagnostic(mode-100);else if(mode<3)resample(mode==0?48000:mode==1?44100:22050,mode==2?1:2);else icy(mode-2);return 0;}
+int main(int argc,char **argv){assert(argc==2);int mode=atoi(argv[1]);if(mode>=200)wide((unsigned)(mode-200));else if(mode>=100)diagnostic(mode-100);else if(mode<3)resample(mode==0?48000:mode==1?44100:22050,mode==2?1:2);else icy(mode-2);return 0;}
 '''
 class LiveStreamTests(unittest.TestCase):
  @classmethod
@@ -118,3 +138,7 @@ class LiveStreamTests(unittest.TestCase):
  def test_failure_reasons_snapshots_and_reset(self):
   for fault in range(15):
    with self.subTest(fault=fault):subprocess.run([str(self.binary),str(100+fault)],check=True)
+
+ def test_16_24_32_bit_pcm_extremes_and_continuity(self):
+  for bits in (16,24,32):
+   with self.subTest(bits=bits):subprocess.run([str(self.binary),str(200+bits)],check=True)

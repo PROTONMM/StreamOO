@@ -35,8 +35,8 @@ bool streamoo_live_decode_init(streamoo_live_decode_t *s,
                                streamoo_stream_decode_fn decode) {
   if (!s || !source.read || !decode)
     return false;
-  *s = (streamoo_live_decode_t){
-      .source = source, .context = context, .decode = decode};
+  memset(s,0,sizeof *s);
+  s->source=source;s->context=context;s->decode=decode;
   return true;
 }
 static streamoo_stream_result_t packet(streamoo_live_decode_t *s) {
@@ -87,12 +87,12 @@ static streamoo_stream_result_t packet(streamoo_live_decode_t *s) {
     s->pending -= r.consumed;
     s->input_cursor += r.consumed;
     if (r.produced) {
-      if (r.format.bits != 16 || !r.format.channels || r.format.channels > 2 ||
+      if ((r.format.bits != 16 && r.format.bits != 24 && r.format.bits != 32) || !r.format.channels || r.format.channels > 2 ||
           r.format.rate < 8000 || r.format.rate > 48000 ||
-          r.produced % (2 * r.format.channels))
+          r.produced % ((r.format.bits/8) * r.format.channels))
         return failure(s, STREAMOO_LIVE_PCM_FORMAT);
       if (s->format.rate && (s->format.rate != r.format.rate ||
-                             s->format.channels != r.format.channels))
+                             s->format.channels != r.format.channels || s->format.bits != r.format.bits))
         return failure(s, STREAMOO_LIVE_FORMAT_CHANGED);
       s->format = r.format;
       s->pcm_bytes = r.produced;
@@ -110,11 +110,16 @@ static streamoo_stream_result_t sample(streamoo_live_decode_t *s,
       return r;
   }
   const uint8_t *p = s->pcm + s->pcm_cursor;
-  out[0] = (int16_t)((uint16_t)p[0] | (uint16_t)p[1] << 8);
-  out[1] = s->format.channels == 1
-               ? out[0]
-               : (int16_t)((uint16_t)p[2] | (uint16_t)p[3] << 8);
-  s->pcm_cursor += 2 * s->format.channels;
+  unsigned width=s->format.bits/8;
+  for(unsigned c=0;c<2;++c){
+    const uint8_t *q=p+(s->format.channels==1 ? 0:c*width);
+    uint32_t word=0;
+    for(unsigned j=0;j<width;++j)word|=(uint32_t)q[j]<<(8*j);
+    int64_t value=(int64_t)word;
+    if(word & (UINT32_C(1)<<(s->format.bits-1)))value-=INT64_C(1)<<s->format.bits;
+    out[c]=(int32_t)(value*(INT64_C(1)<<(32-s->format.bits)));
+  }
+  s->pcm_cursor += width * s->format.channels;
   return STREAMOO_STREAM_READY;
 }
 streamoo_stream_result_t streamoo_live_decode_read(streamoo_live_decode_t *s,
@@ -142,8 +147,8 @@ streamoo_stream_result_t streamoo_live_decode_read(streamoo_live_decode_t *s,
     }
     for (unsigned c = 0; c < 2; ++c) {
       int64_t value =
-          (int64_t)s->a[c] * 48000 + (int64_t)(s->b[c] - s->a[c]) * s->phase;
-      s->block[s->assembled * 2 + c] = (int32_t)(value * 65536 / 48000);
+          (int64_t)s->a[c] * 48000 + ((int64_t)s->b[c] - s->a[c]) * s->phase;
+      s->block[s->assembled * 2 + c] = (int32_t)(value / 48000);
     }
     ++s->assembled;
     s->phase += s->format.rate;

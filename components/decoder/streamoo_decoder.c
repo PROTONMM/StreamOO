@@ -1,33 +1,52 @@
 #include "streamoo_decoder.h"
 #include "esp_mp3_dec.h"
 #include "esp_aac_dec.h"
+#include "esp_flac_dec.h"
+#include "esp_vorbis_dec.h"
+#include "esp_opus_dec.h"
+#include "impl/esp_ogg_dec.h"
 #include "esp_log.h"
 #include "esp_audio_simple_dec.h"
 #include <stdlib.h>
 #include <limits.h>
 
 struct streamoo_decoder { esp_audio_simple_dec_handle_t handle; esp_aac_dec_cfg_t aac; };
-static bool registered[2];
+static bool registered[STREAMOO_CODEC_COUNT];
+static bool ogg_registered;
 esp_err_t streamoo_decoder_open(streamoo_codec_t codec, streamoo_decoder_t **out)
 {
     if (!out) return ESP_ERR_INVALID_ARG;
     *out=NULL;
-    if (codec<STREAMOO_CODEC_MP3 || codec>STREAMOO_CODEC_AAC_LC) return ESP_ERR_INVALID_ARG;
+    if (codec<STREAMOO_CODEC_MP3 || codec>=STREAMOO_CODEC_COUNT) return ESP_ERR_INVALID_ARG;
     if (!registered[codec]) {
-        esp_audio_err_t e=codec==STREAMOO_CODEC_MP3 ? esp_mp3_dec_register() : esp_aac_dec_register();
+        esp_audio_err_t e;
+        switch(codec){
+        case STREAMOO_CODEC_MP3:e=esp_mp3_dec_register();break;
+        case STREAMOO_CODEC_AAC_LC:e=esp_aac_dec_register();break;
+        case STREAMOO_CODEC_FLAC:e=esp_flac_dec_register();break;
+        case STREAMOO_CODEC_VORBIS:e=esp_vorbis_dec_register();break;
+        case STREAMOO_CODEC_OPUS:e=esp_opus_dec_register();break;
+        default:return ESP_ERR_INVALID_ARG;
+        }
         if (e!=ESP_AUDIO_ERR_OK && e!=ESP_AUDIO_ERR_ALREADY_EXIST) {
             ESP_LOGE("decoder","Register failed: vendor=%d",(int)e);
             return ESP_FAIL;
         }
         registered[codec]=true;
     }
+    if ((codec==STREAMOO_CODEC_VORBIS || codec==STREAMOO_CODEC_OPUS) && !ogg_registered) {
+        esp_audio_err_t e=esp_ogg_dec_register();
+        if(e!=ESP_AUDIO_ERR_OK && e!=ESP_AUDIO_ERR_ALREADY_EXIST)return ESP_FAIL;
+        ogg_registered=true;
+    }
     streamoo_decoder_t *d=calloc(1,sizeof(*d));
     if (!d) return ESP_ERR_NO_MEM;
     esp_audio_simple_dec_cfg_t config={.dec_type=codec==STREAMOO_CODEC_MP3 ?
-        ESP_AUDIO_SIMPLE_DEC_TYPE_MP3 : ESP_AUDIO_SIMPLE_DEC_TYPE_AAC};
+        ESP_AUDIO_SIMPLE_DEC_TYPE_MP3 : codec==STREAMOO_CODEC_AAC_LC ? ESP_AUDIO_SIMPLE_DEC_TYPE_AAC :
+        codec==STREAMOO_CODEC_FLAC ? ESP_AUDIO_SIMPLE_DEC_TYPE_FLAC : ESP_AUDIO_SIMPLE_DEC_TYPE_OGG};
     if (codec==STREAMOO_CODEC_AAC_LC) {
         d->aac=(esp_aac_dec_cfg_t)ESP_AAC_DEC_CONFIG_DEFAULT();
-        d->aac.channel=2; d->aac.no_adts_header=false; d->aac.aac_plus_enable=false;
+        d->aac.channel=2; d->aac.no_adts_header=false; d->aac.aac_plus_enable=true;
         config.dec_cfg=&d->aac; config.cfg_size=sizeof d->aac;
     }
     esp_audio_err_t error=esp_audio_simple_dec_open(&config,&d->handle);

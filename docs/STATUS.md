@@ -1559,3 +1559,36 @@ krzywej głośności ADR0053 pozostaje OPEN; wiadomość dotyczyła adresu WWW.
 Odbiór ADR0053 (2026-10-31): użytkownik potwierdził, że nowa
 charakterystyka głośności jest dobra. Odsłuch krzywej zakończony
 pozytywnie; pozostawiamy `(VOL/100)^2` i rampę50ms.
+
+## 06k — HE-AAC, FLAC, Vorbis, Opus i URL playlist (2026-10-31)
+
+ADR0054: użyte istniejące binaria esp_audio_codec2.6.2, z audytem publicznych
+API/licencji i retained notices Xiph. AAC-Plus włączone, FLAC native oraz
+Ogg Vorbis/Opus jawnie rejestrowane. Rozpoznanie MIME/sygnatur także przy
+fragmentach1B. Nazwy kodeków w HOME po otrzymaniu PCM. Live16/24/32-bit
+mono/stereo8..48kHz; scratch64KiB/pump PSRAM, player stack24KiB według
+zalecenia producenta20KiB+caller. I2S/ring nadal internal, gain bez zmian.
+
+Reader: M3U/PLS z typów MIME/rozszerzenia, BOM/CRLF/komentarze, relativeURL,
+M3U pierwsza pozycja/PLS najniższe FileN. Limity16KiB/3 dokumenty/5 redirect,
+HTTPS→HTTP niedozwolone także w playlistach. HLS #EXT-X- daje NOT_SUPPORTED,
+implementacja HLS segmentów osobno OPEN. Stan katalogu/CSV/ID bez zmian.
+
+Optymalizacja -Os i silent assertions (kontrole zachowane, brak tekstu
+wyrażenia; ELF do backtrace). Factory0x10000 size0x180000 wykorzystuje
+wyłącznie dawną lukę, storage nadal0x190000/0x100000. NVS/PHY bez zmian,
+bez migracji/erase/formatowania. Standardowy flash z tablicą partycji.
+
+Weryfikacja:346 testów hostowych PASS; reader/live/decoder/resolver
+ASan/UBSan PASS (LSan off). Native IDF6.1 build PASS:0x176230, wolne0x9dd0
+(40400B,3%). GPIO validator i diff --check PASS. pcm_fill0x40376f40 i
+ gain_process0x4037ae38 nadal IRAM. Generator utworzył7 oryginalnych plików
+32s:MP3/AAC-LC/FLAC16/24/Vorbis/Opus20/120ms, ffprobe potwierdził formaty.
+Logi /tmp/streamoo-formats-*.log; dane lokalne /tmp/streamoo-extended-audio.
+Brak nowych wersji zależności, flash/erase/eFuse przez agenta.
+
+Odsłuch nowych binarnych dekoderów i pomiary CPU/heap/HWM/underrun na S3
+OPEN. Host uruchamia wyłącznie nasze adaptery z atrapami vendor binary.
+Instrukcja EXTENDED_FORMATS_BRINGUP.md, generator tools/generate_extended_fixtures.py.
+Nie deklarujemy HLS, Ogg-FLAC/chained, raw Opus/RTP,>48kHz/>2 kanały ani
+ramek wymagających>64KiB PCM. Dalsze miejsce na większy transport/OTA OPEN.

@@ -6,6 +6,7 @@
 #include "freertos/semphr.h"
 #include "freertos/task.h"
 #include "streamoo_icy.h"
+#include "streamoo_playlist_resolver.h"
 #include <stdatomic.h>
 #include <stdlib.h>
 #include <string.h>
@@ -21,8 +22,8 @@ struct streamoo_http_stream {
   streamoo_http_stream_info_t info;
   streamoo_icy_t icy;
   uint32_t interval;
-  bool bad_header, bad_location;
-  uint8_t probe[3];
+  bool bad_header, bad_location, playlist_header;
+  uint8_t probe[512];
   size_t probe_bytes;
   struct {
     uint64_t offset;
@@ -33,16 +34,6 @@ struct streamoo_http_stream {
   uint32_t marked_revision;
   uint64_t consumed;
 };
-static bool url_allowed(const char *url) {
-  if (strncmp(url, "http://", 7) && strncmp(url, "https://", 8))
-    return false;
-  size_t n = 0;
-  for (; url[n] && n <= 2048; ++n)
-    if ((unsigned char)url[n] <= 32 || (unsigned char)url[n] >= 127 ||
-        url[n] == '@' || url[n] == '#')
-      return false;
-  return n > 7 && n <= 2048;
-}
 static bool mime(const char *value, const char *expected) {
   size_t n = strlen(expected);
   return !strncasecmp(value, expected, n) &&
@@ -84,11 +75,19 @@ static esp_err_t header(esp_http_client_event_t *e) {
              mime(e->header_value, "audio/aacp") ||
              mime(e->header_value, "audio/x-aac"))
       codec = STREAMOO_CODEC_AAC_LC;
+    else if (mime(e->header_value,"audio/flac") || mime(e->header_value,"audio/x-flac"))
+      codec = STREAMOO_CODEC_FLAC;
     else {
       known = false;
       codec = STREAMOO_CODEC_MP3;
-      if (!mime(e->header_value, "application/octet-stream"))
-        s->bad_header = true;
+      s->playlist_header=mime(e->header_value,"audio/x-mpegurl") ||
+        mime(e->header_value,"audio/mpegurl") || mime(e->header_value,"application/x-mpegurl") || mime(e->header_value,"application/mpegurl") ||
+        mime(e->header_value,"application/vnd.apple.mpegurl") ||
+        mime(e->header_value,"audio/x-scpls") || mime(e->header_value,"application/x-scpls") || mime(e->header_value,"application/pls") ||
+        mime(e->header_value,"text/plain");
+      if (!s->playlist_header && !mime(e->header_value,"audio/ogg") &&
+          !mime(e->header_value,"application/ogg") && !mime(e->header_value,"audio/opus") &&
+          !mime(e->header_value, "application/octet-stream"))s->bad_header = true;
     }
     portENTER_CRITICAL(&info_lock);
     s->info.codec_known = known;
@@ -127,12 +126,14 @@ static void reader(void *context) {
     esp_http_client_set_header(client, "Icy-MetaData", "1");
     esp_http_client_set_header(client, "Accept-Encoding", "identity");
   }
-  for (unsigned redirects = 0;
-       error == ESP_OK && !atomic_load(&s->stop) && redirects <= 5;
-       ++redirects) {
+  unsigned redirects=0, playlists=0;
+  for (unsigned hop = 0;
+       error == ESP_OK && !atomic_load(&s->stop) && hop <= 8;
+       ++hop) {
     s->interval = 0;
     s->bad_header = false;
     s->bad_location = false;
+    s->playlist_header = false;
     portENTER_CRITICAL(&info_lock);
     s->info.codec_known = false;
     s->info.bitrate_kbps = 0;
@@ -149,12 +150,38 @@ static void reader(void *context) {
     s->info.http_status = code;
     portEXIT_CRITICAL(&info_lock);
     if (code == 200) {
+      if(s->bad_header){error=ESP_ERR_NOT_SUPPORTED;break;}
+      if(esp_http_client_get_url(client,s->redirect_old,sizeof s->redirect_old)!=ESP_OK){error=ESP_FAIL;break;}
+      streamoo_http_stream_info_t snapshot;
+      streamoo_http_stream_info(s,&snapshot);
+      if(s->playlist_header || (!snapshot.codec_known && streamoo_playlist_url(s->redirect_old))){
+        if(++playlists>3 || s->interval){error=ESP_ERR_NOT_SUPPORTED;break;}
+        /* The compressed ring is still empty. Reuse its PSRAM as document staging. */
+        size_t bytes=0;unsigned waits=0, document_reads=0;
+        for(;;){
+          if(atomic_load(&s->stop)){error=ESP_FAIL;break;}
+          int n=esp_http_client_read(client,(char *)s->storage+bytes,STREAMOO_PLAYLIST_LIMIT+1-bytes);
+          if(n==-ESP_ERR_HTTP_EAGAIN && ++waits<=4)continue;
+          if(n<0){error=ESP_FAIL;break;}
+          if(!n)break;
+          waits=0;bytes+=(size_t)n;
+          if((++document_reads&15u)==0)vTaskDelay(1);
+          if(bytes>STREAMOO_PLAYLIST_LIMIT){error=ESP_ERR_INVALID_SIZE;break;}
+        }
+        if(error!=ESP_OK)break;
+        streamoo_playlist_result_t result=streamoo_playlist_resolve((char *)s->storage,bytes,
+            s->redirect_old,s->redirect_next);
+        if(result!=STREAMOO_PLAYLIST_OK){error=result==STREAMOO_PLAYLIST_HLS ? ESP_ERR_NOT_SUPPORTED:ESP_ERR_INVALID_RESPONSE;break;}
+        if(esp_http_client_set_url(client,s->redirect_next)!=ESP_OK){error=ESP_FAIL;break;}
+        esp_http_client_close(client);
+        continue;
+      }
       accepted = true;
       break;
     }
     if (!(code == 301 || code == 302 || code == 303 || code == 307 ||
           code == 308) ||
-        redirects == 5) {
+        redirects++ == 5) {
       error = ESP_ERR_INVALID_RESPONSE;
       break;
     }
@@ -168,14 +195,14 @@ static void reader(void *context) {
         esp_http_client_set_redirection(client) != ESP_OK ||
         esp_http_client_get_url(client, next, sizeof s->redirect_next) !=
             ESP_OK ||
-        !url_allowed(next) ||
+        !streamoo_stream_url_allowed(next) ||
         (!strncmp(old, "https://", 8) && strncmp(next, "https://", 8))) {
       error = ESP_ERR_INVALID_RESPONSE;
       break;
     }
     esp_http_client_close(client);
   }
-  if (!accepted || s->bad_header || !streamoo_icy_init(&s->icy, s->interval))
+  if (error == ESP_OK && (!accepted || s->bad_header || !streamoo_icy_init(&s->icy, s->interval)))
     error = ESP_ERR_INVALID_RESPONSE;
   uint8_t input[1024], audio[1024];
   size_t total = 0;
@@ -207,20 +234,26 @@ static void reader(void *context) {
     if (bytes) {
       portENTER_CRITICAL(&info_lock);
       if (!s->info.codec_known) {
-        size_t take = 3 - s->probe_bytes;
-        if (take > bytes)
-          take = bytes;
+        size_t take = sizeof s->probe - s->probe_bytes;
+        if (take > bytes)take = bytes;
         memcpy(s->probe + s->probe_bytes, audio, take);
         s->probe_bytes += take;
       }
-      if (!s->info.codec_known && s->probe_bytes == 3) {
+      if (!s->info.codec_known && s->probe_bytes >= 3) {
         if (s->probe[0] == 0xff && (s->probe[1] & 0xf6) == 0xf0) {
-          s->info.codec = STREAMOO_CODEC_AAC_LC;
-          s->info.codec_known = true;
+          s->info.codec = STREAMOO_CODEC_AAC_LC;s->info.codec_known = true;
         } else if (!memcmp(s->probe, "ID3", 3) ||
                    (s->probe[0] == 0xff && (s->probe[1] & 0xe0) == 0xe0)) {
-          s->info.codec = STREAMOO_CODEC_MP3;
-          s->info.codec_known = true;
+          s->info.codec = STREAMOO_CODEC_MP3;s->info.codec_known = true;
+        } else if(s->probe_bytes>=4 && !memcmp(s->probe,"fLaC",4)) {
+          s->info.codec=STREAMOO_CODEC_FLAC;s->info.codec_known=true;
+        } else if(s->probe_bytes>=27 && !memcmp(s->probe,"OggS",4) && s->probe[4]==0 && (s->probe[5]&2)) {
+          size_t payload=27u+s->probe[26];
+          if(s->probe_bytes>=payload+8 && !memcmp(s->probe+payload,"OpusHead",8)) {
+            s->info.codec=STREAMOO_CODEC_OPUS;s->info.codec_known=true;
+          }else if(s->probe_bytes>=payload+7 && !memcmp(s->probe+payload,"\1vorbis",7)) {
+            s->info.codec=STREAMOO_CODEC_VORBIS;s->info.codec_known=true;
+          }
         }
       }
       bool known = s->info.codec_known;
@@ -261,7 +294,7 @@ static void reader(void *context) {
 }
 esp_err_t streamoo_http_stream_open(const char *url,
                                     streamoo_http_stream_t **out) {
-  if (!out || !url || !url_allowed(url))
+  if (!out || !url || !streamoo_stream_url_allowed(url))
     return ESP_ERR_INVALID_ARG;
   *out = NULL;
   streamoo_http_stream_t *s =

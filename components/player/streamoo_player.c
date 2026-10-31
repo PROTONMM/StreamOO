@@ -280,7 +280,7 @@ static void task(void *context) {
         if (current.error == ESP_OK) {
           failure_stage = "memory";
           pump = heap_caps_calloc(1, sizeof *pump,
-                                  MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
+                                  MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
           storage = heap_caps_calloc(32, sizeof *storage,
                                      MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
           block = heap_caps_calloc(1, sizeof *block,
@@ -333,7 +333,8 @@ static void task(void *context) {
         }
         current.rate = pump->format.rate;
         if(current.rate){
-          strcpy(current.codec,info.codec==STREAMOO_CODEC_MP3 ? "MP3" : "AAC");
+          const char *names[]={"MP3","AAC","FLAC","Vorbis","Opus"};
+          strcpy(current.codec,info.codec<STREAMOO_CODEC_COUNT ? names[info.codec]:"?");
           current.bitrate_kbps=info.bitrate_kbps;
         }
         portENTER_CRITICAL(&lock);
@@ -465,7 +466,7 @@ esp_err_t streamoo_player_start(uint8_t volume) {
   if (!queue)
     return ESP_ERR_NO_MEM;
   state = (streamoo_player_state_t){.ready = true, .volume = volume};
-  if (xTaskCreate(task, "player", 12288, NULL, 4, NULL) != pdPASS) {
+  if (xTaskCreate(task, "player", 24576, NULL, 4, NULL) != pdPASS) {
     vQueueDelete(queue);
     queue = NULL;
     return ESP_ERR_NO_MEM;

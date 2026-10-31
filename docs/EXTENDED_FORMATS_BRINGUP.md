@@ -1,0 +1,61 @@
+# Odbiór HE-AAC, FLAC, Ogg Vorbis/Opus i M3U/PLS
+
+Wgraj zwykłym `idf.py -p PORT flash` cały bieżący build, łącznie z tablicą
+partycji; bez erase. Factory wykorzystuje dawną pustą lukę, LittleFS i NVS
+pozostają w swoich miejscach. Zachowaj build/streamoo.elf: asercje nadal
+abortują, ale oszczędzają miejsce przez pominięcie rozbudowanych opisów.
+
+## Najpierw publiczny HE-AAC
+
+W edytorze WWW dodaj osobno:
+
+- Kiss FM: `https://streaming.g-news.pl:8090/kissfm` — w sprawdzonej próbce
+  ffprobe HE-AAC. Na S3 profil i odsłuch jeszcze do potwierdzenia.
+- Radio Nowy Świat AAC+: `https://stream.nowyswiat.online/aac` — oficjalny
+  publiczny wariant AAC+. Dostępność/profil może się zmienić; UI wyświetla AAC.
+
+Sprawdź czyste stereo, prawidłowe tempo/wysokość dźwięku, PLAY/STOP,
+głośność i zmianę na znaną MP3/AAC-LC oraz powrót. Przyślij log playera,
+przyczyny retry, heap i stack_hwm po kilku minutach. Profilu HE-AACv2 nie
+uznajemy za odebrany wyłącznie na podstawie działającego HE-AAC.
+
+## Powtarzalne FLAC/Vorbis/Opus i playlisty
+
+Na komputerze z FFmpeg/ffprobe w tej samej sieci, podstaw jego adres LAN:
+
+```sh
+python3 tools/generate_extended_fixtures.py --output-dir /tmp/streamoo-format-test --base-url http://192.168.1.20:8000
+python3 -m http.server 8000 --bind 0.0.0.0 --directory /tmp/streamoo-format-test
+```
+
+Katalog musi być nowy. Generator niczego nie nadpisuje. Zawiera manifest
+kodeków/SHA,7 plików audio i playlist.csv (3 pola TAB zgodne z StreamOO).
+Eksportuj bieżącą playlistę radia przed importem listy testowej albo dodaj
+adresy testów ręcznie przez WWW. Nie trzeba zmieniać prywatnego pliku
+projektu ani wgrywać obrazu filesystemu. Komputer musi być osiągalny
+z radia na porcie8000. Agent nie uruchamia tego serwera na Twoim LAN.
+
+Sygnał32s powtarza sekwencję4s: cisza, lewy1kHz, cisza, prawy2kHz,
+oba1kHz, cisza; łagodne rampy50ms, peak źródła1036/32768. Po32s jest EOF,
+więc ponowna próba playera jest spodziewana. Cisza w sekwencji jest celowa.
+
+Pozycje M3U i PLS mają grać odpowiednio FLAC i Vorbis, nested M3U→PLS
+również Vorbis. W PLS File2 jest wcześniej w pliku, ale wybieramy File1.
+Opcjonalny `/reject-hls.m3u8` ma dać błąd NOT_SUPPORTED, bez odtwarzania
+segmentów. Nie jest dodany do normalnej listy testowej.
+
+## Granice obecnego zakresu
+
+Mono/stereo8..48kHz, PCM16/24/32; scratch64KiB. FLAC natywny, Vorbis/Opus
+w Ogg. Większe ramki,>48kHz, multichannel, Ogg-FLAC/chained Ogg i surowy
+Opus/RTP nie są deklarowane. HLS osobno OPEN. M3U/PLS to URL pojedynczej
+stacji, nie zastępstwo importu katalogu CSV.
+
+Potwierdzenie hostowych testów/build nie zastępuje odsłuchu na ESP32.
+Dla każdego formatu zapisz wynik, sample rate, brak underrun/invalid,
+stack HWM i minimum heap; sprawdź współpracę FFT oraz reconnect/STOP.
+
+Dla istniejącego sdkconfig z innego checkoutu ustaw w menuconfig → Compiler
+options optymalizację Size (-Os) i Assertions → Silent (kontrole włączone).
+Nowy sdkconfig bierze te ustawienia z sdkconfig.defaults; sam build nie
+nadpisuje istniejących wyborów. W bieżącym workspace są już ustawione.

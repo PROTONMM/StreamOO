@@ -85,3 +85,7 @@ Dodano domyślną nazwę MAC `streamoo-xxxxxx.local` i ogłaszanie HTTP80
 wyłącznie STA/AP-off, po błędzie retry30s. Dokładny komponent Espressif
 mDNS1.14.0, Apache2.0. Konfiguracja własnej nazwy przez WWW/NVS nadal OPEN.
 Procedura sprzętowa: [MDNS_BRINGUP](MDNS_BRINGUP.md).
+
+ADR0054: reader rozwiązuje URL M3U/PLS przed uruchomieniem dekodera,
+z limitami dokumentu/zagnieżdżeń, względnymi URL i zachowanym zakazem
+HTTPS→HTTP. Katalog i ID przechowują oryginalny adres. HLS osobno OPEN.

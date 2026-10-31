@@ -53,3 +53,8 @@ ADR0047: strefa zegara jako string NVS streamoo_clock/zone, defaultWarsaw,
 cache odświeżany dopiero po commit. Odczyt raz przy starcie, bez erase
 przy błędzie. Flash wyłącznie poza callbackiem I2S. Ponowny zapis tej
 samej utrwalonej strefy pomijany. Dane Wi-Fi/playlisty bez zmian.
+
+ADR0054/06k: factory powiększona0x177000→0x180000 wyłącznie do istniejącej
+pustej luki; offset0x10000 bez zmian. LittleFS nadal0x190000/0x100000,
+NVS/PHY bez zmian. Pełny flash obejmuje nową tablicę, bez erase/migracji.
+Nie jest to docelowy układ OTA; dodatkowe sloty pozostają OPEN.
