@@ -12,7 +12,7 @@ Bieżący punkt wznowienia: [RESUME.md](RESUME.md).
 | 06 audio | I2S/gain/PCM stress odebrane; MP3 decode/PCM potwierdzone logiem; AAC-LC PoC odebrane; AAC incremental file decode06f odebrane logiem i odsłuchem; źródło/bufor AAC06g odebrane logiem, odsłuchem i sterowaniem; niezależny reader AAC06h odebrany; player06i: kilka stacji i 44,1/48kHz odebrane; rozszerzone testy OPEN | ADR0018–0025/0034–0035; 248 testów hostowych PASS; build PASS |
 | 07 DSP | RMS/peak działa, strojenie odłożone; widmo live07e gotowe do odbioru, ESP-DSP/wydajność OPEN | ADR0037–0042;303 testy i build PASS |
 | 08 stacje | lista z katalogu i wybór odebrane; import live/reboot i edycja ID OPEN | ADR0033 |
-| 09 sieć | AP/STA/IP/AP-off odebrane; mDNS LAN wdrożone, odbiór OPEN | ADR0052 |
+| 09 sieć | AP/STA/IP/AP-off odebrane; mDNS .local/HTTP odebrane; rozszerzone próby OPEN | ADR0052 |
 | 10 WWW | tryby AP/LAN, player i edytor playlisty odebrane; wygląd do dopracowania | ADR0051; potwierdzenie użytkownika |
 | 11 storage/OTA | NVS preferencji odebrane; profile NVS/LittleFS katalog gotowe do odbioru; OTA OPEN | ADR0017/0031 |
 | 12 testy końcowe | NIEURUCHOMIONE | — |
@@ -1550,3 +1550,8 @@ stereo i STOP/PLAY modelu). Native ESP-IDF6.1 build PASS:0x16dd00,
 0x9300 wolne/2%. GPIO validator i diff --check PASS. pcm_fill IRAM
 0x40377a90. Logi /tmp/streamoo-volume-{tests,build}.log.
 Bez nowych zależności, flash/erase/eFuse i zmian partycji.
+
+Potwierdzenie 2026-10-31: użytkownik otworzył stronę pod nazwą mDNS
+swojego radia i zgłosił „działa”. Podstawowy dostęp .local/HTTP odebrany
+na płytce (ADR0052). Reconnect/konflikty/DNS-SD/heap nadal OPEN. Odsłuch
+krzywej głośności ADR0053 pozostaje OPEN; wiadomość dotyczyła adresu WWW.

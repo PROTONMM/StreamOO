@@ -270,3 +270,8 @@ odsłuch od niskiego poziomu.335 testów i native build PASS, rozmiar
 0x16dd00,2% app wolne. Teraz odbiór odsłuchowy zakresu10/20/33/50.
 Odbiór mDNS z ADR0052 nadal OPEN, nie zakładać go z tego zgłoszenia.
 FFT/RMS/wygląd WWW odłożone. Bez flash/erase/eFuse przez agenta.
+
+Potwierdzenie 2026-10-31: użytkownik otworzył stronę pod nazwą mDNS
+swojego radia i zgłosił „działa”. Podstawowy dostęp .local/HTTP odebrany
+na płytce (ADR0052). Reconnect/konflikty/DNS-SD/heap nadal OPEN. Odsłuch
+krzywej głośności ADR0053 pozostaje OPEN; wiadomość dotyczyła adresu WWW.

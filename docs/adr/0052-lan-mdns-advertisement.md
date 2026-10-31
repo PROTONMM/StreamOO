@@ -1,6 +1,6 @@
 # ADR0052 — nazwa mDNS odtwarzacza w LAN
 
-Data: 2026-10-31. Status: wdrożone; odbiór multicast na sprzęcie OPEN.
+Data: 2026-10-31. Status: wdrożone; podstawowy dostęp .local odebrany na sprzęcie.
 
 Użytkownik potwierdził działanie trybów WWW i edytora z ADR0051. Wygląd
 strony pozostaje do późniejszego dopracowania. Kolejny krok etapu09:
@@ -41,3 +41,10 @@ nie dodaje nowego UI. Multicast wymaga wsparcia klienta/routera; izolacja
 klientów/VLAN może uniemożliwić .local, wówczas pozostaje adres IP z OLED.
 Rzeczywisty narzut heap, konflikty, reconnect i audio z multicast do odbioru
 na płytce. Testy hostowe sprawdzają adapter i błędy, nie stos sieciowy SDK.
+
+## Odbiór użytkownika — 2026-10-31
+
+Użytkownik potwierdził działanie strony pod adresem mDNS swojego radia.
+Potwierdza to rozwiązywanie nazwy i dostęp HTTP w jego LAN. Reconnect,
+konflikty nazw, DNS-SD z zewnętrznego klienta i narzut pamięci/audio nadal
+OPEN. To zgłoszenie nie potwierdza odsłuchu nowej krzywej z ADR0053.
