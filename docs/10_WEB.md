@@ -44,3 +44,11 @@ odczyt statusu; akcje sterowania, uprawnienia/auth i kontrakt nadal OPEN.
 Platformy/forma aplikacji i sposób aktualizacji stanu zostaną ustalone później.
 Nie deklarować działającego sterowania telefonem na podstawie portalu09b.
 ADR0029; blokada odtwarzania w AP dotyczy także przyszłego klienta API.
+
+## Uzupełnienie konfiguracji2026-10-31
+
+WWW ma umożliwić zapis/edycję kolejności kilku profili Wi-Fi oraz upload
+playlist.csv. Przyjmujemy kolejność profili jako priorytet pierwszej dostępnej
+sieci. Import stacji z walidacją i podglądem, następnie atomowym zatwierdzeniem;
+plik wejściowy prywatny, nie część repo/build. Weryfikacja formatu ADR0030.
+Obecny portal tylko odczytuje status; formularze i operacje zapisu nadal OPEN.

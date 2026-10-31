@@ -14,7 +14,7 @@
 | D10 | PROPONOWANE | Bufor 256 KiB, start 64 KiB, PCM 32–64 KiB; progi docelowo adaptacyjne. |
 | D11 | PROPONOWANE | FFT 1024, opcja 2048, 24 pasma, ~25 FPS, 50% overlap. |
 | D12 | OTWARTE | Czy zawsze autoplay ostatnia stacja po power-on, czy respektować zapisany STOP. |
-| D13 | OTWARTE | Finalny format importu stacji yoRadio: potrzebny rzeczywisty plik/fixtures i test round-trip. |
+| D13 | OTWARTE | Format prywatnego playlist.csv zweryfikowany (3 pola TAB, UTF-8); normalizacja U+200B/duplikaty, firmware importer i round-trip OPEN. ADR0030. |
 | D14 | OTWARTE | Font glcdfont.c i 18 liter PL zaimportowane na wyraźne polecenie użytkownika (ADR 0006). OPEN / DO SPRAWDZENIA: autor i licencja polskich modyfikacji; użytkownik szuka źródła. |
 | D15 | OTWARTE | ESP-IDF 6.1 USTALONE (v6.1 zweryfikowane, ADR 0002); nadal OTWARTE: component registry, licencje i kompatybilność kodeków. |
 | D16 | OTWARTE | Dokładne zachowanie overflow/underrun, rozmiary partycji, wybór enkodera half/full quadrature po pomiarze. |
@@ -28,6 +28,8 @@
 | D24 | OTWARTE | MicroSD jako przyszłe lokalne źródło MP3; brak implementacji, zweryfikowanych pinów/drivera/filesystemu. |
 | D25 | USTALONE | Docelowo pilot RC5; model odbiornika/GPIO, mapa i zachowanie klawiszy OPEN. ADR0029. |
 | D26 | USTALONE | Docelowo aplikacja telefonu sterująca przez API StreamOO; platformy, forma aplikacji i auth/kontrakt OPEN. ADR0029. |
+| D27 | USTALONE | WWW zapisuje kilka profili Wi-Fi; pierwsza dostępna według kolejności listy, z przejściem po nieudanej próbie. Implementacja/limity OPEN. ADR0030. |
+| D28 | USTALONE | WWW umożliwi upload playlist.csv; prywatny plik w katalogu głównym wykluczony z Git, bez kopiowania do build/fixture. ADR0030. |
 
 Doprecyzowanie D03/D17: enkoder 5/6/7 i kierunek potwierdzone na sprzęcie
 (ADR0015); stary schemat ma B16. W 06a model i strapping modułu DAC,

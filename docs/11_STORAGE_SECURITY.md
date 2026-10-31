@@ -40,3 +40,9 @@ Prywatny build/stałość klucza bez zmian, brak haseł w repo/logach/HTTP DTO.
 Nie traktować tej decyzji jako wyboru osobnego auth administracji. Publiczny
 portal jest wyłącznie do odczytu; brak zapisu Wi-Fi/NVS i nowych endpointów
 sterowania. Wyłączenie AP nastąpi po udanym STA/IP w kolejnym zakresie.
+
+Uzupełnienie: zapamiętywana ma być lista profili Wi-Fi w kolejności priorytetu,
+nie wyłącznie jeden zestaw credentials. Wersjonowany zapis/rollback i limity
+pozostają do implementacji. Katalog stacji z uploadu playlist.csv trafia docelowo
+do LittleFS dopiero po walidacji/zatwierdzeniu; prywatny plik workspace jest
+wykluczony z Git i nie ma być zasobem wbudowanym. ADR0030.

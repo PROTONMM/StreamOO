@@ -6,7 +6,7 @@
 - Odtwarzaj radiowe strumienie HTTP/HTTPS, przełączaj stacje bez blokowania UI.
 - Obsługuj podstawowe MP3/AAC oraz docelowo FLAC, Ogg Vorbis, Opus (stan kodeków potwierdzić testami).
 - Wyświetlaj stację, utwór, dodatkowy tekst, informacje o kodeku/bitrate, RSSI Wi-Fi, datę, czas i wizualizację.
-- Zarządzaj listą stacji i konfiguracją sieci z WWW; import/export format zgodny z yoRadio.
+- Zarządzaj listą stacji i konfiguracją sieci z WWW; upload playlist.csv zgodny z yoRadio. Zapisuj kilka sieci Wi-Fi i wybieraj pierwszą dostępną według kolejności listy.
 - Pozwól na warianty A/B gestów, własne GPIO przez menuconfig, profil YR PCB 0.3.1.
 - Pracuj niezawodnie po chwilowej utracie Wi-Fi/strumienia; auto retry bez natrętnego resetowania sprzętu.
 - Docelowo obsługuj pilot RC5 oraz aplikację telefoniczną sterującą radiem przez API; implementacja w późniejszych etapach (ADR0029).

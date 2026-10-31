@@ -2,6 +2,16 @@
 
 **USTALONE:** przy pierwszym uruchomieniu bez danych STA urządzenie tworzy SoftAP z unikatową nazwą `StreamOO-XXXXXX` opartą na MAC. **Hasło AP jest stałe, wspólne dla wszystkich urządzeń** (przekazywane poza repo); WPA2-Personal. Portal WWW pod `http://192.168.4.1`; po pomyślnym połączeniu z Wi-Fi STA wyłącz SoftAP. Użytkownik może później zmienić Wi-Fi przez stronę WWW.
 
+## Kilka zapisanych sieci (USTALONE2026-10-31)
+
+Konfiguracja WWW zapisuje uporządkowaną listę profili SSID/hasło. Kolejność
+listy jest przyjętym priorytetem: przy wyborze połączenia próbujemy pierwszą
+dostępną sieć, a po nieudanym uwierzytelnieniu/DHCP kolejną. Nie wybieramy
+wyłącznie najmocniejszego RSSI i nie kasujemy pozostałych profili. Sukces
+wymaga STA/IP; dopiero wtedy AP off. Trwałość w NVS, bez ujawniania haseł
+w GET/logach/repo. Limity profili, hidden SSID i polityka aktywnego roamingu
+OPEN. Obecny firmware nadal nie zapisuje profili/nie łączy STA. ADR0030.
+
 ## Przepływ
 - Brak credentiali → SoftAP → skan SSID, wybór, hasło → tymczasowy STA test → dopiero po powodzeniu zapis do NVS → `WIFI_MODE_STA`, AP wyłączony.
 - Zła konfiguracja → portal AP pozostaje aktywny, stary profil pozostaje dostępny; strona komunikuje błąd.

@@ -81,3 +81,5 @@ Etap09b — portal odczytu i OLED AP: `adr/0027-readonly-portal-and-ap-oled.md`.
 Polityka AP bez audio: `adr/0028-ap-setup-without-audio.md`.
 
 Przyszłe źródła sterowania RC5/telefon: `adr/0029-future-control-clients.md`.
+
+Kilka sieci i prywatny import playlist: `adr/0030-multiple-wifi-and-private-playlist.md`, `../tools/check_playlist.py`.

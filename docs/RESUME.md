@@ -4,6 +4,23 @@ Aktualizacja: **2026-10-31, AP bez odtwarzania przygotowane; odsłuch poprzednie
 PCM/rebuffer/tap stress potwierdzone logiem i odsłuchem (`5664a90`).
 Gałąź feature/streamoo-implementation, szczegóły STATUS i ADR0028.
 
+## Nowe wymagania konfiguracji — sieci i playlista
+
+WWW: kilka profili Wi-Fi, pierwsza dostępna według kolejności listy; po
+nieudanym połączeniu kolejna. AP off dopiero po STA/IP. Stały klucz AP
+nie jest hasłem zapisanych sieci STA. Trwały model/provisioning jeszcze OPEN.
+
+Upload playlist.csv przez WWW wymagany. Prywatny plik root ma267 rekordów,
+UTF-8 i3 literalne pola TAB (nazwa/URL/ovol), bez nagłówka. /playlist.csv
+w .gitignore, nieśledzony; nie dodawać kopii, nazw/URL, fixture ani EMBED_FILES.
+Walidator hostowy: python3 tools/check_playlist.py playlist.csv (read-only,
+raport bez treści).256 poprawnych/11 URL z U+200B,3 ostrzeżenia duplikatów.
+Oryginał niezmieniony. Nie usuwać niewidocznych znaków/duplikatów po cichu.
+211 testów hostowych PASS; nowy kod to tylko narzędzie audytu, nie importer
+firmware. ADR0030/D27/D28. Format sprawdzony w źródle yoRadio GPLv3 wyłącznie
+jako referencja, bez kopiowania implementacji/API. Dalej zabezpieczony zapis
+profili i STA, potem upload/preview/atomowa wymiana katalogu LittleFS.
+
 ## Przyszły zakres dodany przez użytkownika
 
 Pilot RC5 i aplikacja telefoniczna przez API: wymagania ustalone, implementacja

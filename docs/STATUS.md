@@ -1145,3 +1145,20 @@ Wspólne komendy/owner playera dla enkodera, RC5, WWW i telefonu; policy AP
 bez odtwarzania obowiązuje wszystkich klientów. Nie dodano kodu ani nie
 zmieniono kolejności bieżącego kroku (AP bez audio, potem STA). Weryfikacja
 wyłącznie git diff --check, bez zbędnego powtarzania buildu/testów firmware.
+
+## Kilka sieci Wi-Fi i prywatna playlista (2026-10-31)
+
+Użytkownik wymaga zapisu wielu profili przez WWW i połączenia z pierwszą
+dostępną siecią. Kolejność listy przyjęta jako priorytet; dalszy profil po
+nieudanej próbie, AP off dopiero po STA/IP. Użytkownik wymaga uploadu stacji
+z playlist.csv, dostarczonego lokalnie. Dodano /playlist.csv do .gitignore,
+sprawdzono brak śledzenia w indeksie. Oryginał niezmieniony, bez kopii danych.
+Zweryfikowano format UTF-8/TAB3/name-url-ovol względem prywatnego pliku i
+referencji yoRadio; GPLv3 sprawdzone, kod/API upstream nieskopiowane.
+Narzędzie read-only check_playlist.py raportuje kody/linie, nie dane stacji.
+Audyt:267 rekordów,256 poprawnych,11 URL z U+200B,3 duplikaty URL jako
+ostrzeżenia. Nie normalizowano pliku ani nie łączono się z URL stacji.
+211 testów hostowych PASS,9 nowych testów syntetycznych. Nie zmieniono
+firmware; bez nowego buildu/flash. ADR0030, D27/D28. WWW zapis profili/STA,
+upload/preview/atomowy commit oraz admin auth nadal OPEN; nie przedstawiać
+narzędzia hostowego jako działającego importera urządzenia.
