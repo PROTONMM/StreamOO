@@ -99,7 +99,7 @@ int main(int argc,char **argv){
     }else if(test==6){
         atomic_store(&now,100000);step();
         assert(streamoo_metering_state(m,&state));
-        assert(state.levels.valid&&state.levels.rms[0]>5000&&state.levels.rms[0]<7000);
+        assert(state.levels.valid&&state.levels.rms[0]>12000&&state.levels.rms[0]<13000);
         assert(state.levels.peak[0]==16000);
         close_meter(m);
     }else if(test==5){

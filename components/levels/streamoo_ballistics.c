@@ -22,16 +22,16 @@ bool streamoo_ballistics_update(streamoo_ballistics_t *b, int64_t now,
     for(unsigned ch=0;ch<2;++ch) {
         uint32_t target=(uint32_t)b->target_rms[ch]*65536u;
         b->rms_q16[ch]=approach(b->rms_q16[ch],target,dt,
-                               target>b->rms_q16[ch]?160:500);
+                               target>b->rms_q16[ch]?30:150);
         uint32_t p=(uint32_t)b->pending_peak[ch]*65536u;
         if(p>=b->peak_q16[ch]) {
             b->peak_q16[ch]=p;
-            b->hold_until_us[ch]=now+400000;
+            b->hold_until_us[ch]=now+150000;
         } else if(now>b->hold_until_us[ch]) {
             int64_t start=b->last_us>b->hold_until_us[ch]?b->last_us:b->hold_until_us[ch];
             uint32_t release=(uint32_t)((now-start)/1000);
             if(release>1000)release=1000;
-            b->peak_q16[ch]=approach(b->peak_q16[ch],p,release,800);
+            b->peak_q16[ch]=approach(b->peak_q16[ch],p,release,300);
         }
         if(b->peak_q16[ch]<b->rms_q16[ch])b->peak_q16[ch]=b->rms_q16[ch];
         rms[ch]=(uint16_t)(b->rms_q16[ch]/65536u);

@@ -60,3 +60,7 @@ i release800ms. Okna RMS nadal40ms, UI/gesty bez spowalniania. Krótkie
 luki tap nie kasują ostatniego kompletnego pomiaru; expiry200ms nadal
 obowiązuje od ostatniego kompletnego okna, a STOP/generation czyści od razu.
 To skala liniowa Q15, nie docelowa kalibracja dB/VU.
+
+Strojenie07c-2 / ADR0040 po uwadze użytkownika o nadmiernym uśrednianiu:
+RMS attack30/release150ms, peak hold150/release300ms. Takt nadal10Hz,
+próbki i okna RMS bez zmian; ochrona przed miganiem zachowana.

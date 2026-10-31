@@ -1346,3 +1346,15 @@ Bez zmian audio/ISR, nowych zależności, flash/erase/eFuse. Odbiór OLED OPEN.
 
 Native ESP-IDF6.1 build PASS, obraz0x15bf20 (7% wolne);
 check_config --platform i diff --check PASS. Bez flash/erase/eFuse.
+
+## 07c-2 — żywsza reakcja mierników (2026-10-31)
+
+Użytkownik: działa, ale za mało ruchu/zbyt uśrednione. Zmniejszono wyłącznie
+wygładzanie: RMS attack30/release150ms, peak hold150/release300ms. Takt10Hz
+i ochrona przed miganiem bez zmian. ADR0040. Test skoku potwierdza ponad75%
+reakcji po pierwszych100ms; po spadku do0 mniej niż40% po200ms.
+Odbiór widocznego ruchu na OLED OPEN. Bez flash/erase/eFuse.
+
+Weryfikacja:286 testów PASS, ballistics/metering ASan/UBSan PASS (LSan off).
+Native ESP-IDF6.1 build PASS,0x15bf20 (7% wolne).
+check_config --platform i diff --check PASS.

@@ -122,3 +122,12 @@ Teraz zwykły flash i ocena spokojniejszego ruchu/braku migania na OLED.
 
 Native ESP-IDF6.1 build PASS, obraz0x15bf20 (7% wolne);
 check_config --platform i diff --check PASS. Bez flash/erase/eFuse.
+
+Najnowsze strojenie07c-2 / ADR0040: użytkownik uznał07c za zbyt mocno
+uśrednione. RMS attack30/release150ms, peak hold150/release300ms;10Hz
+i podtrzymanie przy krótkiej luce bez zmian. Teraz ocena żywszej reakcji
+na OLED po zwykłym flash bez erase/NVS.
+
+Weryfikacja:286 testów PASS, ballistics/metering ASan/UBSan PASS (LSan off).
+Native ESP-IDF6.1 build PASS,0x15bf20 (7% wolne).
+check_config --platform i diff --check PASS.

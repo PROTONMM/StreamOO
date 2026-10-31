@@ -1,7 +1,7 @@
 #pragma once
 #include "streamoo_levels.h"
-/* Presentation only:10Hz, RMS attack160ms/release500ms, peak hold400ms
- * then release800ms. Time-based, Q16 internal precision, no allocation/I/O. */
+/* Presentation only:10Hz, RMS attack30ms/release150ms, peak hold150ms
+ * then release300ms. Time-based, Q16 internal precision, no allocation/I/O. */
 typedef struct {
     uint32_t rms_q16[2], peak_q16[2];
     uint16_t target_rms[2], pending_peak[2];
