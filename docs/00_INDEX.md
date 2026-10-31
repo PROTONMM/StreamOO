@@ -89,3 +89,5 @@ Konfiguracja WWW/STA i trwały import CSV: `adr/0031-web-configuration-wifi-and-
 Otwarty lokalny panel i HOME/IP po STA: `adr/0032-open-local-portal-and-home-ip.md`.
 
 Katalog LittleFS i lista OLED: `adr/0033-stored-catalog-to-oled.md`.
+
+Player HTTP/ICY06i: `adr/0034-http-icy-network-player.md`; pierwszy odsłuch: `HTTP_PLAYER_BRINGUP.md`.

@@ -41,3 +41,5 @@ class ControlsTests(unittest.TestCase):
     def test_home_ip_in_third_row_and_clear(self): self.run_case(8)
 
     def test_live_catalog_selection_reorder_and_removal(self): self.run_case(9)
+
+    def test_network_selection_waits_for_owner_ack(self): self.run_case(10)

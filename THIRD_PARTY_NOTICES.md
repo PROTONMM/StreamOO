@@ -86,3 +86,13 @@ Retained texts: [adapter MIT](licenses/ESP-LittleFS-MIT.txt),
 [littlefs BSD](licenses/LittleFS-BSD-3-Clause.txt), [cJSON MIT](licenses/cJSON-MIT.txt).
 The native SDK mbedtls base64 decoder is used for HTTP Basic setup proof;
 no third-party authentication or frontend code copied.
+
+## Native live HTTP/ICY player 06i
+
+Uses pinned ESP-IDF6.1 `esp_http_client`/`esp_netif` (Apache-2.0), SDK HTTP
+Parser2.7.0 (MIT), and Mbed TLS4.1.0 under its Apache-2.0 option. Full SDK
+Mozilla CA data is MPL-2.0; retained license and corresponding PEM source.
+[Versions, source availability and licenses](licenses/ESP-HTTP-TLS-NOTICE.md).
+Transport, ICY filter, linear PCM conversion and player integration are
+original StreamOO implementations. Existing Espressif codec2.6.2 terms apply
+unchanged. No yoRadio or other GPL implementation copied.

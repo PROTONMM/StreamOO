@@ -1,58 +1,72 @@
 # Punkt wznowienia StreamOO
 
-Aktualizacja: **2026-10-31, 08a: katalog stacji na OLED gotowy do odbioru**.
-Gałąź feature/streamoo-implementation. Szczegóły STATUS i ADR0033.
-Użytkownik potwierdził nowy HOME/IP z 09d.
+Aktualizacja: **2026-10-31, 06i — player HTTP/ICY gotowy do pierwszego odsłuchu**.
+Gałąź feature/streamoo-implementation. ADR0034, STATUS i HTTP_PLAYER_BRINGUP.
 
-## Potwierdzony stan
+## Potwierdzone przez użytkownika
 
-Użytkownik potwierdził działanie 09c. Log: STA/GOT_IP, zapisany profil, AP
-wyłączony po około 5 s; AP clients=0/STA=1. Heap internal 142383 B stabilny,
-minimum 84512 B; network stack HWM 4676 B. Nie ponawiać diagnostyki UART:
-wcześniejsze nieczytelne znaki były potwierdzonym efektem poruszania przewodów.
+OLED/PL font i scroll w lewo, encoder półkrok A5/B6/BTN7/reverse=y, preferencje
+NVS, lokalny PCM/MP3/AAC i stress odsłuchem. Sieć STA/IP/AP-off potwierdzona
+logiem, nowy HOME z IP w trzeciej linii potwierdzony, lista z wgranej playlisty
+i wybór potwierdzone („Działa fajnie”). Nie diagnozować ponownie znaków UART:
+wcześniej potwierdzono poruszanie przewodami. Reboot/live-import katalogu
+pozostają bez osobnego wyniku sprzętowego.
 
-Gotowe: do 8 uporządkowanych sieci, NVS, STA/fallback/rollback, AP-off,
-import CSV preview/zatwierdzenie/atomowa podmiana LittleFS. Prywatny root
-/playlist.csv ignorowany/nieśledzony, nie kopiować do repo/build/testów.
-Parser na RAM-kopii: 267 rekordów/11 normalizacji URL/3 zachowane duplikaty.
-Nie zmieniać oryginału. Odbiór reboot/importu na PCB jeszcze bez osobnego dowodu.
+## Nowy player 06i — kod/testy, jeszcze bez odsłuchu
 
-## Nowa decyzja i kod 09d
+Owner player priority4: komendy ID/generation i volume/toggle, stan snapshot,
+nowa sesja dla wyboru, retry tej samej stacji, bez fallback do innej. Otwiera
+HTTP dopiero po STA/AP-off i wyborze użytkownika, nie po samym boot.
+STOP/brak sieci/AP-active: fade, zamknięcie I2S, async stop i ACK readera,
+dopiero potem zwolnienie/reset; UI nie czeka na blokujący DNS/TCP/TLS.
+Najnowszy wybór wygrywa podczas zamykania starej sesji. Reorder zachowuje ID
+bez restartu źródła; usunięcie pozycji zatrzymuje. Trwałość wyboru w NVS OPEN.
 
-Użytkownik usunął wymóg dodatkowego logowania WWW: lokalny panel AP/LAN
-dostępny bez hasła panelu, Basic/Authorization i sekcji dostępu. To jawnie
-zastępuje stare wymagania auth D18/D29/ADR0031; nie pytać ponownie o zgodę.
-Hasło samej sieci AP nadal stałe/prywatny build i OLED podczas AP.
-Zachowane Origin/custom header, limity, walidacja i brak zwracania haseł STA.
-WWW samo odczytuje zapisane ustawienia.
+Własne streaming: HTTP/HTTPS/ICY, compressed256KiB PSRAM, start8KiB, ICY
+demux i metadane związane z pozycją audio, bounded queue64 markerów.
+Live decoder: MP3/AAC-LC ADTS, mono/stereo16bit8..48kHz →48kHz stereo32,
+liniowy task-only resampler z fazą między fragmentami/WAIT, EOF bez pętli.
+HE-AAC/AAC+, HLS/M3U/PLS, FLAC/Ogg/Opus oraz docelowy SRC/DSP nadal przyszłe.
+Wspólne sprawdzone PCM/gain/I2S (32×240, fade50ms) bez alokacji/I/O/FFT w IRQ.
+Stary nieużywany FIFO testu przeniesiony z BSS do internal heap przy starcie
+testu, aby profil sieciowy nie rezerwował drugiego około60KiB bufora.
 
-Po STA i AP-off OLED wraca do HOME odtwarzacza, IP w trzeciej linii y24..31,
-gesty aktywne. Nie wiązać UI z nieuruchomionym ownerem audio. Boot konfiguracji
-nie startuje samoczynnie testowego tonu/klipu. W profilu sieciowym lista pochodzi już z playlisty w LittleFS (08a). Wybór
-pokazuje nazwę na HOME, bez uruchomienia streamu i bez fikcyjnych pomiarów.
-Katalog odświeża się do 1 s po commit; refcount snapshotów chroni stare nazwy.
-ID name/URL/wystąpienie stabilne po reorder/reboot, granice edycji w ADR0033.
+HTTPS: pełny SDK bundle, hostname/cert verification, brak downgrade/insecure.
+SNTP pool.ntp.org po STA; NTP/certyfikaty wymagają sprawdzenia na urządzeniu.
+TLS alokuje w PSRAM. API/licencje przypiętego IDF6.1 przejrzane; Mbed TLS4.1.0
+pod wybraną Apache2, parser2.7.0 MIT, Mozilla CA MPL2 z source PEM dołączonym.
+Źródła i licencje: licenses/ESP-HTTP-TLS-NOTICE.md. Nie kopiowano GPL/yoRadio kodu.
 
-226 testów hostowych PASS; store/controls również ASan/UBSan PASS, bez TSan.
-Native build PASS. Poprzedni Chromium formularzy bez logowania zaliczony. Flash/erase/eFuse nie wykonano.
-Odbiór: zwykły idf.py -p PORT flash; po STA sprawdź listę zapisanej playlisty,
-wybór i polskie nazwy/IP. Import podczas otwartej listy ma zamknąć ją/odświeżyć
-katalog bez restartu. Reboot zachowuje katalog, nie zapamiętuje jeszcze wyboru.
-Sprawdź heap i stosy. NETWORK_BRINGUP, ADR0033.
-Partycje z 09c bez dalszej zmiany: zachowane NVS/PHY/app i storage 1 MiB.
-Nie kasować flash, nie wgrywać obrazu FS. Użyć istniejącego prywatnego klucza,
-nie pytać ponownie i nie wypisywać go.
+247 testów hostowych PASS, targeted player/HTTP/PCM ASan/UBSan PASS (LSan off,
+bez TSan). Transport/RTOS/decoder/I2S w testach są atrapami; nie dowodzą realnego
+TCP/TLS, wydajności kodeka i DMA/SMP. Native ESP-IDF6.1 build PASS, 8% wolnego
+app. Fill/pcm_fill w IRAM i pipeline/ring w DRAM sprawdzone w ELF.
+Nie wykonano flash/erase/eFuse ani połączeń do prywatnych stacji z hosta.
 
-## Dalszy zakres
+## Teraz: odbiór na PCB
 
-Player HTTP(S)/ICY, spięcie wyboru z playerem i zapis ostatniego ID NVS,
-DSP, mDNS, OTA nadal przyszłe; nie twierdzić, że konfiguracja już odtwarza radio.
-Pilot RC5 i aplikacja telefonu przez API ustalone jako przyszłe (ADR0029),
-brak modelu/GPIO/mapy klawiszy i kontraktu mobilnego. MicroSD przyszłe, bez
-wymyślania pinów. AP bez odtwarzania pozostaje wymaganiem.
+Zwykły idf.py -p PORT flash; zachować NVS/LittleFS, bez erase i obrazu FS.
+Po STA wybierz bezpośredni MP3, słuchaj60s, volume/STOP/PLAY/szybkie zmiany,
+potem AAC-LC/HTTPS/ICY i zaniki. Logi player: phase/rate/compressed/PCM,
+max_fill/invalid/low/hard/starts/stack_hwm/reader_hwm; platform heap internal
+free/min/largest i PSRAM po uruchomieniu dekodera. Nie uznawać za zaliczone
+przed logiem i odsłuchem. Dokładna procedura HTTP_PLAYER_BRINGUP.md.
 
-Odebrane: PL font (estetyka i licencja modyfikacji OPEN, użytkownik zgodził
-się kopiować tymczasowo), scroll tylko w lewo, encoder półkrok A5/B6/BTN7,
-REVERSED=y, preferencje NVS, PCM/I2S/stress oraz lokalny MP3/AAC odsłuchem.
-Dokładna historia w STATUS/ADR0012–0032. Nie dodawać AI-Model/AI-Tokens
-do commitów; metryki tylko ze zweryfikowanego źródła, bez zgadywania.
+## Stałe zasady i dalszy zakres
+
+Lokalny WWW AP/LAN bez dodatkowego logowania — jawna decyzja użytkownika
+zastępuje wcześniejsze auth. Hasło sieci AP nadal stałe/prywatny build,
+SSID/hasło tylko na OLED w AP. Zachować istniejący prywatny plik buildu,
+nie pytać ponownie o sekret i nie wypisywać go. Origin/custom header/limity
+zostają, hasła STA nie są zwracane. AP bez odtwarzania pozostaje wymaganiem.
+
+Prywatny /playlist.csv ignorowany/nieśledzony, nie kopiować do repo/build/fixture
+ani logów. 267 rekordów/11 normalizacji U+200B/3 zachowane duplikaty, oryginał
+niezmieniony; ID name/URL/wystąpienie, ograniczenia rename/edit w ADR0033.
+Nie zmieniać NVS/PHY/app/storage offsetów; obecny krok nie zmienia partycji.
+
+Dalsze: pomiary/odbiór06i, SRC/kodeki, DSP i rzeczywiste widgety, last ID NVS,
+edycja trwałych ID, mDNS, OTA, sterowanie WWW i telefon przez API, RC5 i MicroSD.
+RC5/GPIO/mapy i platforma mobilna OPEN; nie wymyślać pinów. Licencja modyfikacji
+małego fontu PL nadal OPEN na wcześniejszą jawną decyzję użytkownika.
+Nie dodawać AI-Model/AI-Tokens do commitów; metryki wyłącznie ze zweryfikowanych danych.

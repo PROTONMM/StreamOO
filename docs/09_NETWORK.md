@@ -54,3 +54,5 @@ niezaimplementowane; przyszłe dynamiczne STA→AP wymaga kontrolowanego STOP.
 [ADR0028](adr/0028-ap-setup-without-audio.md).
 
 09d: po STA i AP-off OLED wraca do HOME z adresem IP w trzeciej linii; dostęp WWW lokalnie bez dodatkowego hasła. ADR0032.
+
+06i: niezależny reader HTTP/HTTPS/ICY używa stałej sesji przy krótkim underrun; owner player zamyka ją przy STOP/braku STA/AP-active. SNTP po pierwszym IP dla czasu TLS, bez wyłączania weryfikacji certyfikatów. ADR0034.

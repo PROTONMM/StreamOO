@@ -3,6 +3,7 @@
 #include "streamoo_ui_ap.h"
 #include "streamoo_network.h"
 #include "streamoo_config_store.h"
+#include "streamoo_player.h"
 #include "audio_control_probe.h"
 #include "streamoo_preferences.h"
 #include "streamoo_input_probe.h"
@@ -69,8 +70,13 @@ static void display_task(void *context)
         streamoo_preferences_value_t restored = {50,0};
         const bool preferences_ready = streamoo_preferences_initial(&restored);
         demo.volume = restored.volume;
-        if (streamoo_network_boot_ap_enabled() &&
-            !streamoo_encoder_demo_set_catalog(&demo,NULL,0,0)) error=ESP_ERR_INVALID_STATE;
+        if (streamoo_network_boot_ap_enabled()) {
+            if(!streamoo_encoder_demo_set_catalog(&demo,NULL,0,0) ||
+               !streamoo_encoder_demo_bind_audio(&demo,streamoo_player_control,NULL))error=ESP_ERR_INVALID_STATE;
+            streamoo_encoder_demo_bind_station_owner(&demo,streamoo_player_select,NULL);
+        }
+        uint64_t player_generation=0;
+        uint32_t player_volume_revision=0;
         if (!streamoo_ui_set_visualization(&demo.ui, restored.visualization)) error = ESP_ERR_INVALID_STATE;
 #ifdef CONFIG_STREAMOO_AUDIO_CONTROL_TEST
         if (!streamoo_network_boot_ap_enabled() &&
@@ -78,10 +84,10 @@ static void display_task(void *context)
         streamoo_encoder_demo_audio_state(&demo,restored.volume,false);
 #ifdef CONFIG_STREAMOO_MP3_FIXTURE_TEST
         static const uint8_t mp3_title[]="TEST: plik MP3, widżety TEST";
-        demo.audio_title=(streamoo_ui_text_t){mp3_title,sizeof mp3_title-1};
+        if(!streamoo_network_boot_ap_enabled()) demo.audio_title=(streamoo_ui_text_t){mp3_title,sizeof mp3_title-1};
 #elif defined(CONFIG_STREAMOO_AAC_FIXTURE_TEST)
         static const uint8_t aac_title[]="TEST: AAC-LC, widżety TEST";
-        demo.audio_title=(streamoo_ui_text_t){aac_title,sizeof aac_title-1};
+        if(!streamoo_network_boot_ap_enabled()) demo.audio_title=(streamoo_ui_text_t){aac_title,sizeof aac_title-1};
 #endif
         uint32_t volume_revision=0;
 #endif
@@ -90,7 +96,7 @@ static void display_task(void *context)
         while (streamoo_input_probe_receive(&event)) {}
         TickType_t wake = xTaskGetTickCount();
         ESP_LOGI("display_smoke", "%s",streamoo_network_boot_ap_enabled() ?
-            "Encoder UI ready; stored station catalog; no stream player" :
+            "Encoder UI ready; stored station catalog; network player" :
             "Interactive encoder TEST ready; synthetic catalog/widgets; no stream player");
         while (error == ESP_OK) {
             uint64_t now = (uint64_t)esp_timer_get_time() / 1000;
@@ -101,7 +107,7 @@ static void display_task(void *context)
             }
 #ifdef CONFIG_STREAMOO_AUDIO_CONTROL_TEST
             streamoo_audio_control_state_t audio;
-            if (streamoo_audio_control_state(&audio)) {
+            if (!streamoo_network_boot_ap_enabled() && streamoo_audio_control_state(&audio)) {
                 streamoo_encoder_demo_audio_state(&demo,audio.model.volume,audio.model.running);
                 demo.buffering=audio.buffering;
                 if (preferences_ready && volume_revision!=audio.model.volume_revision) {
@@ -110,6 +116,31 @@ static void display_task(void *context)
                 }
             }
 #endif
+            if(streamoo_network_boot_ap_enabled()) {
+                streamoo_player_state_t player;
+                if(streamoo_player_state(&player)) {
+                    if(demo.station_id!=player.station_id||player_generation!=player.generation){
+                        demo.station_id=player.station_id;++demo.generation;
+                        streamoo_ui_set_playing(&demo.ui,demo.station_id);player_generation=player.generation;
+                    }
+                    streamoo_encoder_demo_audio_state(&demo,player.volume,player.running);
+                    demo.buffering=player.phase!=STREAMOO_PLAYER_PLAYING;
+                    const char *message=player.title[0]?player.title:
+                        player.phase==STREAMOO_PLAYER_PLAYING?"Odtwarzanie":
+                        player.phase==STREAMOO_PLAYER_BUFFERING?"Buforowanie...":
+                        player.phase==STREAMOO_PLAYER_CONNECTING?"Łączenie ze stacją...":
+                        player.phase==STREAMOO_PLAYER_RETRY?"Ponawianie połączenia...":
+                        player.phase==STREAMOO_PLAYER_WAIT_NETWORK?"Brak połączenia Wi-Fi":
+                        player.station_id?"Zatrzymano":"Wybierz stację z listy";
+                    size_t length=strlen(message);if(strcmp(demo.player_text,message))++demo.generation;
+                    memcpy(demo.player_text,message,length+1);
+                    demo.audio_title=(streamoo_ui_text_t){(const uint8_t *)demo.player_text,length};
+                    if(preferences_ready&&player_volume_revision!=player.volume_revision){
+                        const streamoo_preferences_value_t changed={player.volume,(uint8_t)demo.ui.visualization};
+                        if(streamoo_preferences_submit_changed(changed))player_volume_revision=player.volume_revision;
+                    }
+                }
+            }
             streamoo_network_ap_display_t ap;
             bool ap_active=streamoo_network_ap_display(&ap);
             streamoo_network_state_t network={0};

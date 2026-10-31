@@ -7,7 +7,7 @@ import unittest
 ROOT=Path(__file__).resolve().parents[1]
 class Status(C.Structure):
     _fields_=[('ssid',C.c_char*16),('clients',C.c_uint8),('volume',C.c_uint8),
-              ('ready',C.c_bool),('available',C.c_bool),('running',C.c_bool),('buffering',C.c_bool),('uptime',C.c_uint64),('ip',C.c_char*16),('connected',C.c_bool),('configuring',C.c_bool),('profiles',C.c_uint8),('error',C.c_uint32)]
+              ('ready',C.c_bool),('available',C.c_bool),('running',C.c_bool),('buffering',C.c_bool),('uptime',C.c_uint64),('ip',C.c_char*16),('connected',C.c_bool),('configuring',C.c_bool),('profiles',C.c_uint8),('error',C.c_uint32),('network_source',C.c_bool)]
 class PortalStatusTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -55,3 +55,8 @@ class PortalStatusTests(unittest.TestCase):
         s.ready=False;self.assertTrue(self.render(C.byref(s),out,512));value=json.loads(out.value)
         self.assertEqual(value['network']['mode'],'sta');self.assertTrue(value['network']['ready'])
         s.ip=b'\"/><script>';self.assertFalse(self.render(C.byref(s),out,512))
+
+    def test_real_network_audio_source(self):
+        s=self.state();s.network_source=True
+        out=C.create_string_buffer(512);self.assertTrue(self.render(C.byref(s),out,512))
+        self.assertEqual(json.loads(out.value)['audio']['source'],'network_stream')

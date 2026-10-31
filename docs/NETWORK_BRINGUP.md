@@ -1,3 +1,10 @@
+# Bieżący odbiór: player HTTP/ICY06i
+
+Konfiguracja i lista OLED działają na sprzęcie. Pierwszy odsłuch playera
+według [HTTP_PLAYER_BRINGUP.md](HTTP_PLAYER_BRINGUP.md), decyzje ADR0034.
+Poniższe procedury09d/08a zachowano jako historię. Opis ciszy po wyborze
+stacji dotyczy poprzedniej wersji — 06i rozpoczyna wybraną stację po STA/AP-off.
+
 # Odbiór 09d — otwarta konfiguracja WWW i HOME z IP
 
 Aktualny firmware zastępuje historyczny portal odczytu opisany niżej.

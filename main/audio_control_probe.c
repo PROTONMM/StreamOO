@@ -6,6 +6,7 @@
 #include "streamoo_audio_output.h"
 #include "sdkconfig.h"
 #include "esp_attr.h"
+#include "esp_heap_caps.h"
 #include "esp_log.h"
 #include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
@@ -17,7 +18,8 @@ static QueueHandle_t commands;
 static portMUX_TYPE lock=portMUX_INITIALIZER_UNLOCKED;
 static streamoo_audio_control_state_t state;
 static uint32_t target_gain;
-static streamoo_pcm_block_t pcm_storage[32], tap_storage[4];
+static streamoo_pcm_block_t *pcm_storage;
+static streamoo_pcm_block_t tap_storage[4];
 static DRAM_ATTR streamoo_pcm_ring_t pcm_ring, tap_ring;
 static DRAM_ATTR streamoo_pcm_pipeline_t render;
 static streamoo_pcm_stats_t pcm_stats;
@@ -183,6 +185,8 @@ esp_err_t streamoo_audio_control_start(uint8_t volume)
     if (volume>100) return ESP_ERR_INVALID_ARG;
     commands=xQueueCreate(16,sizeof(streamoo_control_command_t));
     if (!commands) return ESP_ERR_NO_MEM;
+    pcm_storage=heap_caps_calloc(32,sizeof *pcm_storage,MALLOC_CAP_INTERNAL|MALLOC_CAP_8BIT);
+    if(!pcm_storage){vQueueDelete(commands);commands=NULL;return ESP_ERR_NO_MEM;}
     state=(streamoo_audio_control_state_t){0};
     streamoo_audio_control_model_init(&state.model,volume);
     streamoo_pcm_ring_init(&pcm_ring,pcm_storage,32);
@@ -195,6 +199,7 @@ esp_err_t streamoo_audio_control_start(uint8_t volume)
     const uint32_t stack_bytes=4096;
 #endif
     if (xTaskCreate(control_task,"audio_control",stack_bytes,NULL,4,NULL)!=pdPASS) {
+        heap_caps_free(pcm_storage);pcm_storage=NULL;
         vQueueDelete(commands); commands=NULL; return ESP_ERR_NO_MEM;
     }
     return ESP_OK;

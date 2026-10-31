@@ -1,5 +1,10 @@
 # 06 — Audio, dekodery, I²S, player state
 
+Bieżąca implementacja06i: pierwszy owner player HTTP/HTTPS/ICY, wybór z OLED,
+MP3/AAC-LC i resample do48kHz. Build/testy hostowe PASS, odbiór na S3 OPEN.
+Granice/ownership: ADR0034; protokół: HTTP_PLAYER_BRINGUP. Historyczne opisy
+poniżej przedstawiają kolejne kroki i nie zastępują aktualnego statusu.
+
 **USTALONE:** PCM5102A, ESP-IDF, MP3/AAC jako podstawa oraz docelowa obsługa FLAC, Ogg Vorbis i Ogg Opus, stosowanie optymalizacji ESP32-S3 tam gdzie zweryfikowane. Preferowane biblioteki Espressif, ale wybór konkretnej wersji/dekodera wymaga PoC, benchmarków i przeglądu licencji.
 
 ## Pipeline

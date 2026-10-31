@@ -25,6 +25,7 @@ esp_err_t streamoo_preferences_start(void);
 bool streamoo_preferences_initial(streamoo_preferences_value_t *);
 esp_err_t streamoo_input_probe_start(void);
 esp_err_t streamoo_audio_control_start(uint8_t);
+esp_err_t streamoo_player_start(uint8_t);
 esp_err_t streamoo_audio_probe_start(void);
 esp_err_t streamoo_display_smoke_start(void);
 bool streamoo_network_boot_ap_enabled(void);
@@ -45,7 +46,8 @@ CONFIG=r'''
 HARNESS=r'''
 #include "common.h"
 #include <stdlib.h>
-static int mode,controlled,finite,network,display;
+static int mode,controlled,finite,network,display,player;
+esp_err_t streamoo_player_start(uint8_t v){assert(v==87);++player;return ESP_OK;}
 const streamoo_network_hooks_t streamoo_app_network_hooks={0};
 esp_err_t streamoo_board_validate(void){return ESP_OK;}
 esp_err_t streamoo_platform_start(void){return ESP_OK;}
@@ -60,7 +62,7 @@ esp_err_t streamoo_network_start(const streamoo_network_hooks_t *h){assert(h);++
 void app_main(void);
 int main(int argc,char **argv){
  assert(argc==2);mode=atoi(argv[1]);app_main();
- assert(display==1 && network==1);
+ assert(display==1 && network==1);assert(player==(mode!=0));
  if(mode)assert(!controlled && !finite);
  else {
 #ifdef TEST_FINITE
@@ -79,7 +81,7 @@ class APAudioStartupTests(unittest.TestCase):
         base=Path(cls.temp.name);(base/'common.h').write_text(HEADER);(base/'sdkconfig.h').write_text(CONFIG)
         for name in ('esp_log.h','streamoo_board.h','streamoo_platform.h','streamoo_input_probe.h',
                      'display_smoke.h','audio_probe.h','audio_control_probe.h','streamoo_preferences.h',
-                     'streamoo_network.h','network_portal.h'):
+                     'streamoo_network.h','network_portal.h','streamoo_player.h'):
             (base/name).write_text('#include "common.h"\n')
         shutil.copyfile(ROOT/'main/main.c',base/'app.c');(base/'test.c').write_text(HARNESS)
         cls.binaries=[]

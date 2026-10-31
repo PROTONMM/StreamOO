@@ -9,9 +9,9 @@ Bieżący punkt wznowienia: [RESUME.md](RESUME.md).
 | 03 szkielet | baza zaimplementowana; odbiór sprzętowy i integracyjny OPEN | ESP-IDF v6.1 build PASS; ADR 0002 |
 | 04 UI/SSD1322 | HOME i lista odebrane na OLED; końcowe strojenie fontu OPEN | ADR 0012; odbiór użytkownika |
 | 05 encoder | dekoder/IRQ i gesty odebrane; interaktywny adapter odebrany w trybie A; preferencje NVS odebrane; shutdown/flush OPEN | ADR 0013–0017; 99 testów PASS |
-| 06 audio | I2S/gain/PCM stress odebrane; MP3 decode/PCM potwierdzone logiem; AAC-LC PoC odebrane; AAC incremental file decode06f odebrane logiem i odsłuchem; źródło/bufor AAC06g odebrane logiem, odsłuchem i sterowaniem; niezależny reader AAC06h odebrany logiem i odsłuchem; sieć/player OPEN | ADR 0018–0025; 168 testów hostowych PASS; build źródeł PASS |
+| 06 audio | I2S/gain/PCM stress odebrane; MP3 decode/PCM potwierdzone logiem; AAC-LC PoC odebrane; AAC incremental file decode06f odebrane logiem i odsłuchem; źródło/bufor AAC06g odebrane logiem, odsłuchem i sterowaniem; niezależny reader AAC06h odebrany; player HTTP/ICY06i gotowy do odbioru | ADR0018–0025/0034; 247 testów hostowych PASS; build PASS |
 | 07 DSP | NIEZAIMPLEMENTOWANE | — |
-| 08 stacje | import/preview/trwały katalog i lista OLED gotowe do odbioru; player/edycja ID OPEN | ADR0033 |
+| 08 stacje | lista z katalogu i wybór odebrane; import live/reboot i edycja ID OPEN | ADR0033 |
 | 09 sieć | AP/STA/IP/AP-off potwierdzone logiem; mDNS OPEN | ADR0031; build PASS |
 | 10 WWW | formularze Wi-Fi/upload bez dodatkowego logowania; HOME/IP odebrane; lista z katalogu OPEN | ADR0032; 222 testy PASS; Chromium PASS |
 | 11 storage/OTA | NVS preferencji odebrane; profile NVS/LittleFS katalog gotowe do odbioru; OTA OPEN | ADR0017/0031 |
@@ -1214,3 +1214,26 @@ check_config --platform i diff --check PASS. Nowych zależności zewnętrznych b
 Brak flash/erase/eFuse. Odbiór OLED/listy/wyboru/live-import/heap/stosów OPEN.
 Następnie: źródło HTTP/ICY i połączenie wyboru z ownerem playera. Trwałe ID
 przy edycji nazwy/URL oraz zapamiętywanie ostatniego wyboru nadal OPEN.
+
+## Etap 06i — pierwszy player HTTP/ICY (2026-10-31)
+
+Użytkownik potwierdził listę i wybór z 08a: „Działa fajnie”. Nowy owner player
+łączy wybór OLED z niezależnym readerem HTTP/HTTPS, ICY, dekoderem MP3/AAC-LC
+i dotychczasowym PCM/gain/I2S. Komendy/stan asynchroniczne, STOP/PLAY/volume,
+retry tej samej stacji, AP bez I/O audio. PSRAM256KiB, task-only resample
+mono/stereo8..48kHz →48kHz; kodeki/formaty poza zakresem i jakość SRC OPEN.
+Pełne granice, ownership i zależności: ADR0034.
+
+247 testów hostowych PASS; targeted actor/HTTP/PCM ASan/UBSan PASS (LSan off,
+bez TSan). SDK transport/RTOS/decoder/DMA w testach zastąpione atrapami:
+nie jest to odsłuch ani dowód deadline na S3. Native ESP-IDF6.1 build PASS,
+obraz0x15abe0 B, 8% wolnej partycji; ELF IRQ fill/pcm_fill w IRAM, ring/pipeline
+w DRAM. TLS z pełnym CA bundle i weryfikacją, SNTP po STA; licencje/source CA
+w THIRD_PARTY_NOTICES. Nie wykonano flash/erase/eFuse ani połączeń do stacji
+z prywatnego CSV. Dane prywatne nie są dodawane do obrazu/repo.
+
+HARDWARE_TEST_PENDING: HTTP MP3 jako pierwszy odsłuch, potem AAC-LC/HTTPS/ICY,
+rate44,1k/48k, heap/stack_hwm/reader_hwm/max_fill/low/hard, szybkie zmiany,
+STOP i rebuffer. Procedura HTTP_PLAYER_BRINGUP. Nie uznawać playera/projektu
+za odebrany przed logiem i odsłuchem. DSP, HE-AAC/reszta kodeków, HLS/M3U/PLS,
+sterowanie WWW/mobile/RC5, last ID NVS i docelowy SRC pozostają dalsze.

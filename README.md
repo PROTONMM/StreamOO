@@ -1,6 +1,6 @@
 # StreamOO — ESP32-S3 Internet Radio
 
-**Status:** profil sprzętowy, walidator GPIO, baza diagnostyczna ESP-IDF, test SSD1322 i niezależny canvas 4bpp; **nie jest to gotowe radio**. Wyniki i ograniczenia: `docs/STATUS.md`.
+**Status:** konfiguracja WWW/Wi-Fi i katalog/lista OLED potwierdzone na sprzęcie; pierwszy player HTTP/HTTPS/ICY MP3/AAC-LC przygotowany do odsłuchu. **Projekt nie jest ukończony**. Bieżący punkt: [RESUME](docs/RESUME.md), wyniki: [STATUS](docs/STATUS.md), pierwszy odsłuch: [HTTP_PLAYER_BRINGUP](docs/HTTP_PLAYER_BRINGUP.md). Starsze opisy diagnostyki poniżej dokumentują wcześniejsze etapy.
 
 Celem jest nowa implementacja natywna ESP-IDF, nie port starego programu Arduino. Materiałem odniesienia przy rekonstrukcji zachowania jest yoRadio; implementacja musi być niezależna i spełniać wymagania opisane w `docs/`.
 
@@ -10,7 +10,7 @@ Celem jest nowa implementacja natywna ESP-IDF, nie port starego programu Arduino
 3. Sprawdź `idf.py menuconfig` → `StreamOO Configuration`. Profil domyślny odpowiada schematowi YR PCB 0.3.1.
 4. Realizuj po kolei etapy `docs/01_*` … `docs/12_*`, sprawdzając testy i odnotowując postęp w `docs/STATUS.md`.
 
-**Uwaga:** do projektu nie dołączono bibliotek zewnętrznych, czcionek TTF ani źródeł yoRadio. Build sprawdzono z ESP-IDF v6.1. Komponenty `board_config` i `platform` kontrolują konfigurację i raportują pamięć; opcjonalny `hardware_probe` próbkuje surowe wejścia enkodera. Funkcje radia zostaną dodane etapowo.
+Zależności są przypięte w manifestach/dependencies.lock, a licencje i źródła opisane w THIRD_PARTY_NOTICES.md. Źródeł yoRadio nie kopiujemy do firmware. Build sprawdzono z ESP-IDF v6.1. Komponenty `board_config` i `platform` kontrolują konfigurację i raportują pamięć; opcjonalny `hardware_probe` próbkuje surowe wejścia enkodera. Funkcje radia zostaną dodane etapowo.
 
 ## Decyzje
 - ESP32-S3-WROOM-1-N16R8, ESP-IDF bez Arduino, PCM5102A, SSD1322 256×64 4bpp, jeden enkoder.

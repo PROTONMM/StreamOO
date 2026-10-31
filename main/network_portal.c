@@ -3,6 +3,7 @@
 #include "streamoo_portal_config.h"
 #include "streamoo_config_store.h"
 #include "audio_control_probe.h"
+#include "streamoo_player.h"
 #include "esp_log.h"
 #include "esp_timer.h"
 #include <string.h>
@@ -17,6 +18,16 @@ static bool status(void *context,streamoo_portal_status_t *out)
     memcpy(out->sta_ip,network.sta_ip,sizeof out->sta_ip);
     out->sta_connected=network.sta_connected;out->configuring=network.configuring;
     out->saved_profiles=network.saved_profiles;out->network_error=network.last_error;
+    if(streamoo_network_boot_ap_enabled()) {
+        out->network_source=true;
+        streamoo_player_state_t player;
+        if(streamoo_player_state(&player)){
+            out->audio_available=player.ready&&network.sta_connected&&!network.ap_ready;
+            out->running=player.running;out->buffering=player.phase!=STREAMOO_PLAYER_PLAYING;
+            out->volume=player.volume;
+        }
+        return true;
+    }
     streamoo_audio_control_state_t audio={0};
     if (streamoo_audio_control_state(&audio)) {
         out->audio_available=audio.ready;

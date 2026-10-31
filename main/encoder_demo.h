@@ -13,6 +13,9 @@ typedef struct {
     streamoo_ui_text_t audio_title;
     char network_ip[16];
     bool imported_catalog;
+    streamoo_ui_post_fn station_post;
+    void *station_context;
+    char player_text[257];
 } streamoo_encoder_demo_t;
 bool streamoo_encoder_demo_init(streamoo_encoder_demo_t *demo);
 bool streamoo_encoder_demo_input(streamoo_encoder_demo_t *demo,
@@ -31,3 +34,5 @@ bool streamoo_encoder_demo_set_ip(streamoo_encoder_demo_t *, const char *);
 
 /* Borrowed immutable UI projection; clears stale HOME text before old release. */
 bool streamoo_encoder_demo_set_catalog(streamoo_encoder_demo_t *, const streamoo_ui_station_t *, uint32_t, uint64_t);
+
+void streamoo_encoder_demo_bind_station_owner(streamoo_encoder_demo_t *, streamoo_ui_post_fn, void *);

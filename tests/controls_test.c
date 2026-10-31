@@ -121,6 +121,16 @@ int main(int argc, char **argv)
         assert(streamoo_encoder_demo_set_catalog(&d,next,1,4));
         assert(!d.station_id&&!d.running);
         assert(streamoo_encoder_demo_draw(&d,frame,sizeof frame,6));
+    } else if (scenario==10) {
+        streamoo_encoder_demo_t d;assert(streamoo_encoder_demo_init(&d));
+        const streamoo_ui_station_t list[]={{12,(const uint8_t *)"Network",7}};
+        assert(streamoo_encoder_demo_set_catalog(&d,list,1,8));
+        streamoo_encoder_demo_bind_station_owner(&d,select_station,NULL);
+        assert(streamoo_encoder_demo_input(&d,(streamoo_input_event_t){STREAMOO_INPUT_SHORT,0},0,0));
+        accept=false;assert(!streamoo_encoder_demo_input(&d,(streamoo_input_event_t){STREAMOO_INPUT_SHORT,0},0,1));
+        assert(d.ui.screen==STREAMOO_UI_STATIONS&&!d.station_id);
+        accept=true;assert(streamoo_encoder_demo_input(&d,(streamoo_input_event_t){STREAMOO_INPUT_SHORT,0},0,2));
+        assert(d.ui.screen==STREAMOO_UI_HOME&&!d.station_id); /* wait for owner snapshot */
     } else {
         streamoo_encoder_demo_t d; assert(streamoo_encoder_demo_init(&d));
         uint8_t frame[8194]; memset(frame,0xa5,sizeof frame);

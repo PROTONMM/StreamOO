@@ -11,6 +11,7 @@ typedef struct {
     bool sta_connected,configuring;
     uint8_t saved_profiles;
     uint32_t network_error;
+    bool network_source;
 } streamoo_portal_status_t;
 /* Public read-only DTO. Rejects invalid SSID/values; never send a failed render. */
 bool streamoo_portal_status_json(const streamoo_portal_status_t *,char *,size_t);

@@ -46,3 +46,5 @@ pozycji dla unikalnych par name/URL, duplikaty zachowane. Reorder zachowuje
 wybór, usunięcie czyści go bez losowego fallback. Edycja nazwy/URL/ID oraz
 player HTTP i zapamiętanie ostatniego wyboru nadal OPEN. Granice ID w ADR0033.
 Odsłuch nie jest częścią odbioru katalogu: wybór na HOME nie uruchamia streamu.
+
+06i: wybór OLED wysyła ID/generację do playera HTTP/ICY, brak optymistycznego PLAY. Reorder utrzymuje sesję tej samej stacji, usunięcie zatrzymuje bez fallback. Testy hostowe PASS, odsłuch sprzętowy OPEN. ADR0034.

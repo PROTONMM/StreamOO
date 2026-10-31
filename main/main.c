@@ -9,6 +9,7 @@
 #include "streamoo_preferences.h"
 #include "streamoo_network.h"
 #include "network_portal.h"
+#include "streamoo_player.h"
 
 static const char *TAG = "StreamOO";
 
@@ -55,6 +56,12 @@ void app_main(void)
     if (streamoo_audio_probe_start() != ESP_OK)
         ESP_LOGE(TAG, "Audio probe could not start");
 #endif
+    }
+#endif
+#if defined(CONFIG_STREAMOO_NETWORK_AP_TEST)
+    if(streamoo_network_boot_ap_enabled()) {
+        streamoo_preferences_value_t initial={50,0};streamoo_preferences_initial(&initial);
+        if(streamoo_player_start(initial.volume)!=ESP_OK)ESP_LOGE(TAG,"Network player startup failed");
     }
 #endif
 #if defined(CONFIG_STREAMOO_LCD_SMOKE_TEST)

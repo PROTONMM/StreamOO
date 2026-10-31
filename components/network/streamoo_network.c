@@ -7,6 +7,7 @@
 #include "esp_log.h"
 #include "esp_mac.h"
 #include "esp_netif.h"
+#include "esp_netif_sntp.h"
 #include "esp_timer.h"
 #include "esp_wifi.h"
 #include "esp_wifi_default.h"
@@ -30,6 +31,7 @@ static portMUX_TYPE state_lock = portMUX_INITIALIZER_UNLOCKED;
 static QueueHandle_t changes;
 static EventGroupHandle_t events;
 static streamoo_wifi_profiles_t saved, candidate;
+static bool sntp_started;
 #define GOT_IP 1u
 #define DISCONNECTED 2u
 bool streamoo_network_state(streamoo_network_state_t *out) {
@@ -121,6 +123,13 @@ static bool connect_profiles(const streamoo_wifi_profiles_t *profiles,
       memcpy(state.sta_ip, address, sizeof state.sta_ip);
       memcpy(state.sta_ssid, p->ssid, sizeof state.sta_ssid);
       portEXIT_CRITICAL(&state_lock);
+      if(!sntp_started){
+        esp_sntp_config_t time_config=ESP_NETIF_SNTP_DEFAULT_CONFIG("pool.ntp.org");
+        time_config.wait_for_sync=false;
+        esp_err_t time_error=esp_netif_sntp_init(&time_config);
+        sntp_started=time_error==ESP_OK;
+        if(time_error!=ESP_OK)ESP_LOGW("network","SNTP unavailable: %s",esp_err_to_name(time_error));
+      }
       ESP_LOGI("network", "STA connected: IPv4=%s", address);
       return true;
     }

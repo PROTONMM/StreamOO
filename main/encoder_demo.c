@@ -14,6 +14,7 @@ static const streamoo_ui_station_t stations[] = {
 static bool select_station(void *context, const streamoo_ui_select_command_t *cmd)
 {
     streamoo_encoder_demo_t *d = context;
+    if(d->station_post) return d->station_post(d->station_context,cmd);
     if (d->selection_pending) return false;
     d->selection = *cmd;
     d->selection_pending = true;
@@ -86,6 +87,7 @@ bool streamoo_encoder_demo_draw(streamoo_encoder_demo_t *d, uint8_t *frame,
         s.title=!d->ui.count ? (streamoo_ui_text_t){empty,sizeof empty-1} :
             d->station_id ? (streamoo_ui_text_t){selected,sizeof selected-1} :
             (streamoo_ui_text_t){choose,sizeof choose-1};
+        if(d->audio_post&&d->audio_title.bytes)s.title=d->audio_title;
     }
     for (unsigned i=0; i<24; ++i) {
         unsigned phase=(unsigned)(now%2000+i*61)%2000;
@@ -161,3 +163,6 @@ bool streamoo_encoder_demo_set_catalog(streamoo_encoder_demo_t *d,const streamoo
     streamoo_ui_set_playing(&d->ui,d->station_id);
     return true;
 }
+
+void streamoo_encoder_demo_bind_station_owner(streamoo_encoder_demo_t *d,streamoo_ui_post_fn post,void *context)
+{ if(d){d->station_post=post;d->station_context=context;} }
