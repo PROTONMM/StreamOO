@@ -3,10 +3,10 @@
 ## Najnowsze — krótkie luki widma HLS / ADR0072 / 2026-10-31
 
 TEST HLS64k HE-AACv2 ma ciągłe PCM (`low=0`, `hard=0`), lecz droppable tap
-ma luki, więc FFT wygasał po200ms i HOME migał „Brak danych”. HOME zachowuje
+ma luki, więc FFT wygasał po200ms i HOME migał „Brak danych”. HOME wygasza
 ostatnią poprawną klatkę maksymalnie800ms wyłącznie dla tego samego streamu
-i widżetu. Liczniki meteringu nadal ujawniają luki, a STOP/zmiana stacji lub
-przekroczenie limitu czyści ekran. 382 testy hostowe i walidator GPIO PASS;
+i widżetu, zamiast ją zamrażać. Liczniki meteringu nadal ujawniają luki, a
+STOP/zmiana stacji lub przekroczenie limitu czyści ekran. 382 testy hostowe i walidator GPIO PASS;
 native build ESP-IDF6.1 nadal blokuje brak lokalnego virtualenv. Po flashu
 sprawdzić ten HLS i inne widżety; dźwięk nie może się zmienić.
 

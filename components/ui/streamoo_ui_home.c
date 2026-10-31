@@ -35,6 +35,20 @@ static bool levels_valid(const streamoo_visualization_model_t *model)
     return true;
 }
 
+static void decay_visualization(streamoo_visualization_model_t *model, uint64_t elapsed_ms)
+{
+    if (!model || elapsed_ms > STREAMOO_UI_VISUALIZATION_HOLD_MS) return;
+    const uint32_t fall = (uint32_t)((elapsed_ms * 32767u +
+                                      STREAMOO_UI_VISUALIZATION_HOLD_MS - 1u) /
+                                     STREAMOO_UI_VISUALIZATION_HOLD_MS);
+    for (unsigned channel = 0; channel < 2; ++channel) {
+        model->rms[channel] = model->rms[channel] > fall ? model->rms[channel] - fall : 0;
+        model->peak[channel] = model->peak[channel] > fall ? model->peak[channel] - fall : 0;
+    }
+    for (unsigned band = 0; band < model->band_count; ++band)
+        model->bands[band] = model->bands[band] > fall ? model->bands[band] - fall : 0;
+}
+
 bool streamoo_ui_update_home(streamoo_ui_t *ui, const streamoo_home_snapshot_t *s, uint64_t now)
 {
     if (!ui || !ui->post || !s || (s->station_id && !text_valid(s->station_name)) ||
@@ -79,12 +93,16 @@ bool streamoo_ui_update_home(streamoo_ui_t *ui, const streamoo_home_snapshot_t *
         if (retain_visualization) {
             ui->home.visualization_valid = true;
             ui->home.visualization = previous_visualization;
+            decay_visualization(&ui->home.visualization,
+                                now - ui->visualization_update_at_ms);
+            ui->visualization_update_at_ms = now;
         } else {
             ui->home.visualization_valid = false;
             ui->home.visualization = (streamoo_visualization_model_t){0};
         }
     } else {
         ui->visualization_valid_at_ms = now;
+        ui->visualization_update_at_ms = now;
         ui->visualization_valid_kind = ui->visualization;
     }
     ui->playing_id = s->station_id;

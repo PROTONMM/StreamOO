@@ -40,6 +40,7 @@ void streamoo_ui_set_playing(streamoo_ui_t *ui, uint64_t station_id)
     ui->home.bitrate_kbps = 0;
     ui->home.visualization = (streamoo_visualization_model_t){0};
     ui->visualization_valid_at_ms = 0;
+    ui->visualization_update_at_ms = 0;
     ui->home_scroll_reset_pending = true;
 }
 

@@ -198,7 +198,7 @@ int main(int argc, char **argv)
         assert(d.levels.rms[0]==1000);
         assert(streamoo_encoder_demo_levels(&d,NULL));
         assert(streamoo_encoder_demo_draw(&d,frame,sizeof frame,200));
-        assert(d.ui.home.visualization_valid && d.ui.home.visualization.rms[1]==15000);
+        assert(d.ui.home.visualization_valid && d.ui.home.visualization.rms[1]==12952);
         assert(streamoo_encoder_demo_draw(&d,frame,sizeof frame,951));
         assert(!d.ui.home.visualization_valid && !d.ui.home.visualization.rms[1]);
     } else if (scenario==10) {

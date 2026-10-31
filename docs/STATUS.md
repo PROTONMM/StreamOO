@@ -7,10 +7,11 @@ Log `TEST HLS 64k-heaacv2-stereo` pokazał ciągłe audio (`PCM=32`, `low=0`,
 418–656ms. Po 200ms jego FFT poprawnie staje się nieważne, a HOME chwilowo
 rysował „Brak danych”. Nie jest to underrun audio.
 
-HOME zachowuje teraz ostatnią poprawną klatkę wizualizacji do800ms tylko dla
-tej samej stacji, generation i rodzaju widżetu. Ważność meteringu, liczniki,
-stop i zmiana stacji nie są maskowane; po limicie nadal pojawia się „Brak
-danych”. Testy obejmują lukę700ms, przekroczenie801ms oraz nowy stream.
+HOME wygasza teraz ostatnią poprawną klatkę wizualizacji przez800ms tylko dla
+tej samej stacji, generation i rodzaju widżetu, więc nie tworzy stopklatki.
+Ważność meteringu, liczniki, stop i zmiana stacji nie są maskowane; po
+limicie nadal pojawia się „Brak danych”. Testy obejmują opadanie700/750ms,
+przekroczenie801ms oraz nowy stream.
 382 testy hostowe i walidator GPIO PASS. Natywny build ESP-IDF6.1 nadal
 nie jest dostępny w sesji z powodu brakującego lokalnego virtualenv.
 Odbiór HLS/OLED pozostaje OPEN; agent nie flashował.

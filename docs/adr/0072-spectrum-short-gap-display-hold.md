@@ -16,11 +16,12 @@ okno FFT było gotowe.
 
 ## Decyzja
 
-UI zachowuje ostatni prawidłowy model wizualizacji przez najwyżej800ms, tylko
+UI wygasza ostatni prawidłowy model wizualizacji przez najwyżej800ms, tylko
 gdy otrzyma nieważny model tej samej stacji, generation i aktualnego typu
-widżetu. Nowsza prawidłowa klatka odnawia licznik. Zmiana stacji/generation,
-STOP, zmiana widżetu albo przekroczenie800ms nie zachowują starego modelu i
-pozostawiają dotychczasowy komunikat.
+widżetu. Każdy kanał i słupek spada liniowo w czasie; zapobiega to
+stopklatce. Nowsza prawidłowa klatka odnawia licznik. Zmiana
+stacji/generation, STOP, zmiana widżetu albo przekroczenie800ms nie
+zachowują starego modelu i pozostawiają dotychczasowy komunikat.
 
 To jest wyłącznie stabilizacja renderingu. `spectrum_valid`, RMS/FFT expiry,
 liczniki gaps/drop, diagnostyka i droppable tap nie są zmieniane; nie
@@ -28,8 +29,8 @@ ukrywamy niedoboru PCM ani nie dotykamy I2S, dekodera, buforów czy priorytetów
 
 ## Weryfikacja
 
-382 testy hostowe i walidator GPIO PASS. Testy UI sprawdzają zachowanie
-modelu przez700ms, wygaśnięcie po801ms i brak przeniesienia do nowego
-streamu. Natywny build ESP-IDF6.1 nie jest dostępny w sesji z powodu
-brakującego lokalnego virtualenv. Potrzebny jest odsłuch/widok OLED przy
-TEST HLS64k HE-AACv2; oczekiwany brak krótkiego komunikatu bez zmiany dźwięku.
+Testy UI sprawdzają opadanie przez700/750ms, wygaśnięcie po801ms i brak
+przeniesienia do nowego streamu. Natywny build ESP-IDF6.1 nie jest dostępny
+w sesji z powodu brakującego lokalnego virtualenv. Potrzebny jest
+odsłuch/widok OLED przy TEST HLS64k HE-AACv2; oczekiwany płynny opad bez
+stopklatki i bez zmiany dźwięku.

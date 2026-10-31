@@ -146,14 +146,17 @@ class HomeTests(unittest.TestCase):
 
     def test_visualization_bridges_short_gap_but_not_expired_or_new_stream(self):
         snapshot = self.snapshot()
+        snapshot.visualization.bands[5] = 32767
         self.assertTrue(self.apply(snapshot, 1000))
-        self.assertEqual(self.ui.home.visualization.bands[5], 6000)
+        self.assertEqual(self.ui.home.visualization.bands[5], 32767)
         snapshot.visualization_valid = False
         snapshot.visualization = type(snapshot.visualization)()
         snapshot.text_revision = 2
         self.assertTrue(self.apply(snapshot, 1700))
         self.assertTrue(self.ui.home.visualization_valid)
-        self.assertEqual(self.ui.home.visualization.bands[5], 6000)
+        self.assertEqual(self.ui.home.visualization.bands[5], 4095)
+        self.assertTrue(self.apply(snapshot, 1750))
+        self.assertEqual(self.ui.home.visualization.bands[5], 2047)
         self.assertTrue(self.apply(snapshot, 1801))
         self.assertFalse(self.ui.home.visualization_valid)
         self.assertEqual(self.ui.home.visualization.bands[5], 0)

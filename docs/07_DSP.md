@@ -109,7 +109,7 @@ FFT, takt, audio i ścieżka I2S pozostają bez zmian.
 
 Przy ciężkim dekoderze HLS HE-AACv2 tap pomiarów jest celowo droppable. Gdy
 zadanie meteringu nie przetworzy nowego FFT przez 200 ms, diagnostyka nadal
-unieważnia wynik, ale HOME zachowuje ostatnią poprawną klatkę maksymalnie
+unieważnia wynik, ale HOME wygasza ostatni poprawny model przez maksymalnie
 800 ms. Dotyczy to wyłącznie identycznej stacji, generacji i typu widżetu;
 STOP, zmiana stacji, zmiana widżetu lub dłuższa luka nadal natychmiast albo
 po limicie pokazują „Brak danych”. Nie zmienia to FFT, PCM, I2S ani logów
