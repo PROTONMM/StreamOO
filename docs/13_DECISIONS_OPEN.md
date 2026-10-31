@@ -38,3 +38,8 @@ połączenia I2S oraz dźwięk/parametry analogowe nadal wymagają odbioru.
 D29 — implementacja lokalnego setupu: potwierdzenie kluczem AP, preview/commit katalogu i custom storage, ADR0031. Docelowy niezależny auth administracji D18 nadal OPEN.
 
 D30 — po STA/AP-off normalny HOME i adres IP w trzeciej linii; WWW bez sekcji dostępu i dodatkowego logowania. Jawna decyzja użytkownika zastępuje auth D29/ADR0031. ADR0032.
+
+D20 uzupełnienie2026-10-31: użytkownik wymaga wyboru strefy przez WWW
+w zakładce Konfiguracja i automatycznego DST. ADR0047 wdraża pierwsze8
+stref, zapis NVS i rzeczywisty SNTP na OLED; odbiór sprzętowy OPEN.
+Dotychczasowy format daty/godziny zachowany.

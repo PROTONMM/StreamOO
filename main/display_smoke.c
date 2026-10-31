@@ -4,6 +4,9 @@
 #include "streamoo_network.h"
 #include "streamoo_config_store.h"
 #include "streamoo_player.h"
+#include "streamoo_clock_settings.h"
+#include <time.h>
+_Static_assert(sizeof(time_t)>=8,"Clock requires 64-bit time_t through2099");
 #include "audio_control_probe.h"
 #include "streamoo_preferences.h"
 #include "streamoo_input_probe.h"
@@ -164,6 +167,11 @@ static void display_task(void *context)
             bool ap_active=streamoo_network_ap_display(&ap);
             streamoo_network_state_t network={0};
             streamoo_network_state(&network);
+            streamoo_clock_civil_t civil_time;
+            demo.clock_valid=streamoo_clock_project((int64_t)time(NULL),network.time_synced,
+                streamoo_clock_settings_get(),&civil_time);
+            demo.clock=(streamoo_ui_clock_t){civil_time.year,civil_time.month,civil_time.day,
+                civil_time.hour,civil_time.minute,civil_time.second};
             streamoo_encoder_demo_technical(&demo,network.sta_connected,
                 network.rssi_valid,network.rssi_dbm,live_codec);
             const bool setup=streamoo_network_boot_ap_enabled() && (ap_active || !network.sta_connected);

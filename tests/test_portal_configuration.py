@@ -31,7 +31,7 @@ HARNESS=r'''
 #include <string.h>
 esp_err_t streamoo_portal_register_configuration(httpd_handle_t);
 void streamoo_portal_config_stopped(void);
-static httpd_uri_t routes[5];static unsigned count,submits,previews,commits;
+static httpd_uri_t routes[7];static unsigned count,submits,previews,commits;
 static int proof=1,foreign,timeout,closed;
 static const char *input="",*type="application/json";static size_t received;
 static char status[64],output[4096];static streamoo_wifi_profiles_t saved;
@@ -55,7 +55,7 @@ int httpd_resp_set_type(httpd_req_t *r,const char *s){(void)r;(void)s;return ESP
 int httpd_resp_set_hdr(httpd_req_t *r,const char *key,const char *value){(void)r;
  if(!strcmp(key,"Connection"))closed=!strcmp(value,"close");assert(strcmp(key,"Access-Control-Allow-Origin"));return ESP_OK;}
 int httpd_resp_send(httpd_req_t *r,const char *s,long n){(void)r;(void)n;assert(strlen(s)<sizeof output);strcpy(output,s);return ESP_OK;}
-int httpd_register_uri_handler(httpd_handle_t h,const httpd_uri_t *r){assert(h&&count<5);routes[count++]=*r;return ESP_OK;}
+int httpd_register_uri_handler(httpd_handle_t h,const httpd_uri_t *r){assert(h&&count<7);routes[count++]=*r;return ESP_OK;}
 static bool load(streamoo_wifi_profiles_t *p){*p=saved;return true;}
 static int submit(const streamoo_wifi_profiles_t *p){assert(p->count==1);assert(!strcmp(p->profiles[0].ssid,"New"));++submits;return ESP_OK;}
 static int playlist(uint8_t *p,size_t n,bool commit,streamoo_playlist_report_t *r){
@@ -65,9 +65,18 @@ static int playlist(uint8_t *p,size_t n,bool commit,streamoo_playlist_report_t *
 static bool info(streamoo_playlist_report_t *r){*r=(streamoo_playlist_report_t){.rows=commits?1:0};return true;}
 static void call(unsigned i,const char *body,size_t declared){input=body;received=0;closed=0;httpd_req_t r={declared,routes[i].user_ctx};
  int result=routes[i].handler(&r);assert(result==(status[0]>='4'?ESP_FAIL:ESP_OK));assert(closed);}
+static const char *zone="Europe/Warsaw";
+static const char *get_zone(void){return zone;}
+static esp_err_t set_zone(const char *value){if(!strcmp(value,"UTC")){zone="UTC";return ESP_OK;}return ESP_FAIL;}
 int main(void){
- streamoo_portal_actions_t a={load,submit,playlist,info};assert(streamoo_portal_configure(&a)==ESP_OK);
- assert(streamoo_portal_register_configuration((void *)1)==ESP_OK&&count==5);assert(streamoo_portal_configure(&a)==ESP_ERR_INVALID_STATE);
+ streamoo_portal_actions_t a={load,submit,playlist,info,get_zone,set_zone};assert(streamoo_portal_configure(&a)==ESP_OK);
+ assert(streamoo_portal_register_configuration((void *)1)==ESP_OK&&count==7);assert(streamoo_portal_configure(&a)==ESP_ERR_INVALID_STATE);
+ call(5,"",0);assert(strstr(output,"Europe/Warsaw")&&strstr(output,"Europe/London"));
+ proof=0;call(6,"{}",2);assert(strstr(status,"403"));proof=1;
+ call(6,"{\"timezone\":\"bad\"}",18);assert(strstr(status,"400"));
+ const char *utc="{\"timezone\":\"UTC\"}";call(6,utc,strlen(utc));assert(strstr(status,"200")&&!strcmp(zone,"UTC"));
+ const char *warsaw="{\"timezone\":\"Europe/Warsaw\"}";call(6,warsaw,strlen(warsaw));assert(strstr(status,"503")&&!strcmp(zone,"UTC"));
+ call(6,"x",129);assert(strstr(status,"413"));
  saved.count=1;strcpy(saved.profiles[0].ssid,"Saved");strcpy(saved.profiles[0].password,"never-return-this");
  call(0,"",0);assert(strstr(status,"200"));
  proof=0;call(1,"ignored",7);assert(strstr(status,"403"));proof=1;foreign=1;call(1,"ignored",7);assert(strstr(status,"403"));foreign=0;
@@ -96,7 +105,7 @@ class PortalConfigurationTests(unittest.TestCase):
             (base/'esp_heap_caps.h').write_text('#pragma once\n#include <stddef.h>\n#define MALLOC_CAP_SPIRAM 1\n#define MALLOC_CAP_8BIT 2\nvoid *heap_caps_malloc(size_t,unsigned);\nvoid heap_caps_free(void *);\n')
             (base/'test.c').write_text(HARNESS)
             subprocess.run(['cc','-std=c11','-D_POSIX_C_SOURCE=200809L','-Wall','-Wextra','-Werror','-Wno-misleading-indentation',
-                            '-I'+tmp,'-Icomponents/portal/include','-Icomponents/configuration/include','-Imanaged_components/espressif__cjson/cJSON',
-                            str(base/'test.c'),'components/portal/streamoo_portal_config.c','components/configuration/streamoo_config_model.c',
+                            '-I'+tmp,'-Icomponents/portal/include','-Icomponents/clock/include','-Icomponents/configuration/include','-Imanaged_components/espressif__cjson/cJSON',
+                            str(base/'test.c'),'components/portal/streamoo_portal_config.c','components/clock/streamoo_clock.c','components/configuration/streamoo_config_model.c',
                             'managed_components/espressif__cjson/cJSON/cJSON.c','-lm','-o',str(base/'test')],cwd=ROOT,check=True)
             subprocess.run([str(base/'test')],check=True,timeout=10)

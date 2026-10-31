@@ -115,3 +115,5 @@ Rzeczywisty kodek i Wi-Fi RSSI w HOME: `adr/0044-live-codec-and-wifi-info.md`.
 Sprawdzanie playlisty/kodeków na komputerze: `PLAYLIST_PROBE.md`, `adr/0045-host-playlist-stream-probe.md`.
 
 Odstęp RSSI od wizualizacji: `adr/0046-rssi-visualization-spacing.md`.
+
+Zegar SNTP i strefa przez WWW: `adr/0047-sntp-clock-and-web-timezone.md`, `CLOCK_BRINGUP.md`.

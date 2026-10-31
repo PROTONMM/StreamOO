@@ -5,6 +5,7 @@
 #include "audio_control_probe.h"
 #include "streamoo_player.h"
 #include "esp_log.h"
+#include "streamoo_clock_settings.h"
 #include "esp_timer.h"
 #include <string.h>
 static bool status(void *context,streamoo_portal_status_t *out)
@@ -37,11 +38,12 @@ static bool status(void *context,streamoo_portal_status_t *out)
     }
     return true;
 }
+static const char *clock_zone(void){return streamoo_clock_zone_name(streamoo_clock_settings_get());}
 static void ready(void *context)
 {
     (void)context;
     const streamoo_portal_actions_t actions={streamoo_config_wifi_load,
-        streamoo_network_submit_profiles,streamoo_config_playlist,streamoo_config_playlist_info};
+        streamoo_network_submit_profiles,streamoo_config_playlist,streamoo_config_playlist_info,clock_zone,streamoo_clock_settings_set};
     esp_err_t error=streamoo_portal_configure(&actions);
     if(error==ESP_OK) error=streamoo_portal_start(status,NULL);
     if (error!=ESP_OK) ESP_LOGE("portal","Portal unavailable: %s; AP/audio remain independent",esp_err_to_name(error));

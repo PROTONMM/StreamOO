@@ -74,3 +74,7 @@ ADR0044: RSSI w snapshotach sieci. Worker odczytuje po połączeniu i co1s,
 bez skanowania/zmiany sieci; brak STA lub błąd odczytu unieważnia wynik.
 Dodatnie wartości SDK clamped do0, -128 nieznane. Dane dla ikony HOME,
 bez połączenia renderera z SDK.
+
+ADR0047: sync_cb SNTP ustawia network.time_synced dopiero dla wiarygodnego
+zakresu UTC2020..2099. Flaga nie znika przy utracie STA, zeruje się na reboot
+lub nieważnej korekcie. Strefa dotyczy tylko projekcji UI, nie czasu TLS.

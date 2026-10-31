@@ -3,12 +3,20 @@ from http.server import ThreadingHTTPServer,SimpleHTTPRequestHandler
 from pathlib import Path
 import json,subprocess,threading
 root=Path(__file__).resolve().parents[1]/'components/portal/web'
-requests=[];stored=0
+requests=[];stored=0;zone="Europe/Warsaw"
 script=r'''
 (async()=>{try{
  const $=id=>document.getElementById(id),assert=(v,s)=>{if(!v)throw Error(s);};
  const wait=async f=>{for(let i=0;i<200;i++){if(f())return;await new Promise(r=>setTimeout(r,20));}throw Error('timeout');};
  await wait(()=>$('settings-result').textContent.includes('odczytane'));
+ await wait(()=>!$('save-clock').disabled);
+ assert($('status-panel').hidden&&!$('config-panel').hidden,'configuration tab');
+ $('show-status').click();assert(!$('status-panel').hidden&&$('config-panel').hidden,'status tab');
+ $('show-config').click();assert($('status-panel').hidden&&!$('config-panel').hidden,'return configuration');
+ assert($('timezone').value==='Europe/Warsaw','restored timezone');
+ $('timezone').value='Europe/London';$('clock-form').requestSubmit();
+ await wait(()=>$('clock-result').textContent.includes('Zapisano'));
+ const clock=await (await fetch('/api/v1/clock')).json();assert(clock.timezone==='Europe/London','saved timezone');
  assert(!$('ap-key'),'no configuration login');
  await wait(()=>$('catalog-status').textContent.includes('0 stacji'));
  let rows=$('wifi-rows');assert(rows.children.length===1,'initial row');
@@ -24,6 +32,7 @@ script=r'''
  assert($('catalog-status').textContent.includes('2 stacji'),'saved count');
  assert(!localStorage.length&&!sessionStorage.length,'no persistent browser credentials');
  $('playlist-file').dispatchEvent(new Event('change'));assert($('commit-playlist').disabled,'changed file needs preview');
+ assert(document.documentElement.scrollWidth<=window.innerWidth,'mobile overflow');
  document.body.dataset.test='PASS';
  }catch(e){document.body.dataset.test='FAIL '+e.message;}})();
 '''
@@ -36,28 +45,32 @@ class Handler(SimpleHTTPRequestHandler):
  def do_GET(self):
   if self.path=='/':return self.send((root/'index.html').read_bytes().replace(b'</head>',b'<script src="/test.js" defer></script></head>'),kind='text/html; charset=utf-8')
   if self.path=='/test.js':return self.send(script.encode(),kind='application/javascript')
+  if self.path=='/api/v1/clock':return self.send({'timezone':zone,'zones':['UTC','Europe/Warsaw','Europe/London']})
   if self.path=='/api/v1/status':return self.send({'schema_version':1,'network':{'mode':'ap','ready':True,'ssid':'StreamOO-ABC123','clients':1,'ap_ready':True,'connected':False,'configuring':False,'profiles':0,'error':0,'ip':'192.168.4.1'},'audio':{'available':False}})
   if self.path.startswith('/api/'):
    assert self.headers.get('Authorization') is None
    return self.send({'profiles':[]} if 'wifi' in self.path else {'rows':stored})
   super().do_GET()
  def do_POST(self):
-  global stored
+  global stored,zone
   assert self.headers.get('Authorization') is None
   assert self.headers.get('X-StreamOO-Request')=='1'
   data=self.rfile.read(int(self.headers['Content-Length']));requests.append((self.path,data))
+  if self.path=='/api/v1/clock':
+   zone=json.loads(data)['timezone'];return self.send({'saved':True})
   if 'wifi/config' in self.path:return self.send({'accepted':True},202)
   commit=self.path.endswith('/import')
   if commit:stored=2
   return self.send({'rows':2,'normalized':1,'duplicates':1,'committed':commit})
 if __name__ == '__main__':
  server=ThreadingHTTPServer(('127.0.0.1',0),Handler);threading.Thread(target=server.serve_forever,daemon=True).start()
- result=subprocess.run(['/usr/bin/google-chrome','--headless','--no-sandbox','--disable-gpu','--disable-background-networking','--no-first-run','--disable-sync','--hide-scrollbars','--window-size=390,950','--virtual-time-budget=12000','--screenshot=/tmp/streamoo-config-mobile.png','--dump-dom',f'http://127.0.0.1:{server.server_port}/'],capture_output=True,text=True,timeout=40)
+ result=subprocess.run(['/usr/bin/google-chrome','--headless','--no-sandbox','--disable-gpu','--disable-background-networking','--no-first-run','--disable-sync','--hide-scrollbars','--window-size=390,3000','--virtual-time-budget=12000','--screenshot=/tmp/streamoo-config-mobile.png','--dump-dom',f'http://127.0.0.1:{server.server_port}/'],capture_output=True,text=True,timeout=40)
  Path('/tmp/streamoo-config-browser.log').write_text(result.stderr)
  assert result.returncode==0,'browser failed'
  assert 'data-test="PASS"' in result.stdout, result.stdout[-1800:]
- assert len(requests)==3 and stored==2
+ assert len(requests)==4 and stored==2 and zone=="Europe/London"
+ requests=[r for r in requests if r[0]!="/api/v1/clock"]
  profiles=json.loads(requests[0][1])['profiles'];assert [x['ssid'] for x in profiles]==['First','Second'] and profiles[0]['password']==''
  assert requests[1][1]==requests[2][1]
- print('Chromium 390px: automatic open access, Wi-Fi add/reorder/submit, CSV preview/commit/reset: PASS')
+ print('Chromium 390px: automatic open access, Wi-Fi add/reorder/submit, CSV preview/commit/reset, tabs and timezone save: PASS')
  server.shutdown()

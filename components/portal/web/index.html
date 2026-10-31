@@ -5,12 +5,16 @@
 <body><main>
 <header><span class="brand">StreamOO<span class="dot">●</span></span><span class="label">Twoje radio</span></header>
 <section class="welcome"><p class="eyebrow">Panel urządzenia</p><h1>Ustaw swoje radio.</h1><p id="connection" role="status" aria-live="polite">Łączenie z urządzeniem…</p><p id="sta-result" role="status"></p><a id="sta-link" hidden>Otwórz radio w sieci Wi-Fi</a></section>
-<div class="cards">
+<nav class="panel-tabs" aria-label="Panel radia"><button id="show-status" class="secondary" type="button" aria-pressed="false">Status</button><button id="show-config" type="button" aria-pressed="true">Konfiguracja</button></nav>
+<div id="status-panel" class="cards" hidden>
 <section class="card"><p class="eyebrow">Połączenie</p><h2>Sieć urządzenia</h2><dl><div><dt>Tryb</dt><dd id="mode">Punkt dostępu</dd></div><div><dt>Nazwa AP</dt><dd id="ssid">—</dd></div><div><dt>Adres urządzenia</dt><dd id="device-ip">192.168.4.1</dd></div><div><dt>Klienci AP</dt><dd id="clients">—</dd></div></dl><p class="note">Liczba klientów AP jest odświeżana co 10 sekund.</p></section>
 <section class="card"><p class="eyebrow">Dźwięk</p><h2>Odtwarzanie</h2><p id="playback" class="playback">Oczekiwanie na status…</p><div class="volume"><span>Głośność</span><strong id="volume">—</strong></div><p class="note">Podczas konfiguracji Wi-Fi odtwarzanie jest wyłączone.</p></section>
 </div>
+<div id="config-panel">
 <section class="card full"><p class="eyebrow">Wi-Fi</p><h2>Zapisane sieci</h2><button id="load-settings" type="button" class="secondary">Odśwież zapisane ustawienia</button><p id="settings-result" role="status"></p><p class="note">Dodaj do 8 sieci. Pierwsza dostępna na liście ma najwyższy priorytet. Nowa lista zostanie zapisana po udanym połączeniu. Po uzyskaniu adresu IP punkt AP wyłączy się.</p><form id="wifi-form"><div id="wifi-rows"></div><div class="actions"><button id="add-network" type="button" class="secondary">+ Dodaj sieć</button><button id="save-wifi" type="submit">Zapisz i połącz</button></div><p id="wifi-result" role="status" aria-live="polite"></p></form></section>
 <section class="card full"><p class="eyebrow">Stacje radiowe</p><h2>Wgraj playlist.csv</h2><p class="note">Wybierz plik z nazwą, adresem i polem ovol rozdzielonymi tabulatorami. Najpierw sprawdzimy plik; zapis wymaga osobnego zatwierdzenia.</p><form id="playlist-form"><label for="playlist-file">Plik playlisty (do 256 KiB)</label><input id="playlist-file" type="file" accept=".csv,text/plain"><div class="actions"><button type="submit">Sprawdź playlistę</button><button id="commit-playlist" type="button" class="secondary" disabled>Zatwierdź import</button></div><p id="playlist-result" role="status" aria-live="polite"></p><p id="catalog-status" class="note">Zapisana playlista: odczytaj ustawienia, aby sprawdzić.</p></form></section>
+<section class="card full"><p class="eyebrow">Zegar</p><h2>Data i czas</h2><p class="note">Czas pobierany automatycznie z internetu. Wybrana strefa uwzględnia zmianę czasu letniego i zimowego; UTC pozostaje bez zmian.</p><form id="clock-form"><label for="timezone">Strefa czasowa</label><select id="timezone" disabled><option>Odczytywanie…</option></select><div class="actions"><button id="save-clock" type="submit" disabled>Zapisz strefę</button></div><p id="clock-result" role="status" aria-live="polite"></p></form></section>
+</div>
 <footer>Konfiguracja lokalna StreamOO. Hasła zapisanych sieci nie są zwracane przez API.</footer>
 <noscript><p>Włącz JavaScript, aby skonfigurować urządzenie.</p></noscript>
 </main>

@@ -130,6 +130,17 @@ int main(int argc, char **argv)
         assert(streamoo_encoder_demo_set_catalog(&d,next,1,4));
         assert(!d.station_id&&!d.running);
         assert(streamoo_encoder_demo_draw(&d,frame,sizeof frame,6));
+    } else if (scenario==13) {
+        streamoo_encoder_demo_t d;assert(streamoo_encoder_demo_init(&d));
+        uint8_t frame[8192];d.station_id=0;++d.generation;
+        d.clock_valid=true;d.clock=(streamoo_ui_clock_t){2026,10,31,12,34,56};
+        assert(streamoo_encoder_demo_draw(&d,frame,sizeof frame,100));
+        assert(d.ui.home.clock_valid&&d.ui.home.clock.second==56&&!d.ui.home.metadata_valid);
+        uint64_t text_start=d.ui.home_text_start_ms;
+        d.clock.second=57;assert(streamoo_encoder_demo_draw(&d,frame,sizeof frame,1100));
+        assert(d.ui.home.clock.second==57&&d.ui.home_text_start_ms==text_start);
+        d.clock_valid=false;assert(streamoo_encoder_demo_draw(&d,frame,sizeof frame,1140));
+        assert(!d.ui.home.clock_valid);
     } else if (scenario==12) {
         streamoo_encoder_demo_t d;assert(streamoo_encoder_demo_init(&d));
         uint8_t frame[8192];char codec[]="MP3";

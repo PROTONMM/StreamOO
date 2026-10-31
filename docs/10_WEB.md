@@ -54,3 +54,11 @@ playlist.csv. Przyjmujemy kolejność profili jako priorytet pierwszej dostępne
 sieci. Import stacji z walidacją i podglądem, następnie atomowym zatwierdzeniem;
 plik wejściowy prywatny, nie część repo/build. Weryfikacja formatu ADR0030.
 Obecny portal tylko odczytuje status; formularze i operacje zapisu nadal OPEN.
+
+## Zegar / zakładka Konfiguracja — ADR0047
+
+Nowe zakładki Status i Konfiguracja. Konfiguracja zawiera Wi-Fi, import
+i Data i czas z selectem strefy i zapisem NVS. GET/POST /api/v1/clock,
+POST JSON {"timezone":"Europe/Warsaw"}, limit128B i whitelist. Origin/
+custom header bez zmian, bez dodatkowego loginu. Błąd commit503 zachowuje
+poprzednią aktywną strefę. Pierwszy katalog8 stref europejskich/UTC.

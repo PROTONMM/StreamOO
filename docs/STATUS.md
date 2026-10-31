@@ -1442,3 +1442,19 @@ sprawdzeniu podglądu; różnice tylko w lewym dolnym panelu. Native build
 PASS (0x15f690,6% wolne), bez flash/erase/eFuse. Odbiór OLED OPEN.
 
 Pełne314 testów hostowych PASS, diff --check PASS.
+
+## Zegar SNTP i strefa WWW (2026-10-31)
+
+Użytkownik wymaga wyboru strefy w Konfiguracja WWW, z automatycznym DST.
+ADR0047: rzeczywista data/czas na OLED po SNTP, przedtem kreski; UTC
+systemowe/TLS bez zmiany.8 stref UTC/europejskich, defaultWarsaw, NVS
+string/cached getter/zapis dopiero po udanym commit. Nowe zakładki WWW
+Status/Konfiguracja, formularz Data i czas, GET/POST /api/v1/clock.
+
+328 testów PASS, porównanie zoneinfo2020..2099 i granic DST dla8 stref,
+NVS failures/noop/restore, SNTP callback, HTTP i UI. Clock-settings/network/
+controls ASan/UBSan PASS (LSan off), node --check i Chromium390px PASS
+(tabs/save/bez overflow oraz poprzednie formularze). Native ESP-IDF6.1
+build PASS,0x160ff0 (6% wolne), config/diff PASS, pcm_fill w IRAM.
+Bez nowych zewnętrznych zależności, zmian audio/DSP/partycji i flash/erase/eFuse.
+HARDWARE_TEST_PENDING: CLOCK_BRINGUP — NTP, godzina, zmiana strefy i reboot.

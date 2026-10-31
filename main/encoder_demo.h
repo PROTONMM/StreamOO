@@ -11,6 +11,8 @@ typedef struct {
     streamoo_control_post_fn audio_post;
     void *audio_context;
     streamoo_ui_text_t audio_title;
+    streamoo_ui_clock_t clock;
+    bool clock_valid;
     char network_ip[16], codec[8];
     bool wifi_connected, rssi_valid;
     int rssi_dbm;

@@ -90,6 +90,8 @@ bool streamoo_encoder_demo_draw(streamoo_encoder_demo_t *d, uint8_t *frame,
             (streamoo_ui_text_t){choose,sizeof choose-1};
         if(d->audio_post&&d->audio_title.bytes)s.title=d->audio_title;
     }
+    s.clock_valid=d->clock_valid;
+    s.clock=d->clock;
     s.wifi_connected=d->wifi_connected;
     s.rssi_valid=d->rssi_valid;
     s.rssi_dbm=d->rssi_dbm;

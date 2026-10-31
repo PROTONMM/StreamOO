@@ -85,6 +85,10 @@ static void event(void *context, esp_event_base_t base, int32_t id,
   if (base == WIFI_EVENT && id == WIFI_EVENT_STA_DISCONNECTED)
     xEventGroupSetBits(events, DISCONNECTED);
 }
+static void time_synchronized(struct timeval *tv) {
+  bool valid=tv && (int64_t)tv->tv_sec>=1577836800 && (int64_t)tv->tv_sec<4102444800LL;
+  portENTER_CRITICAL(&state_lock);state.time_synced=valid;portEXIT_CRITICAL(&state_lock);
+}
 static void disconnect_station(void) {
   xEventGroupClearBits(events, GOT_IP | DISCONNECTED);
   if (sta_inflight) {
@@ -145,6 +149,7 @@ static bool connect_profiles(const streamoo_wifi_profiles_t *profiles,
         esp_sntp_config_t time_config =
             ESP_NETIF_SNTP_DEFAULT_CONFIG("pool.ntp.org");
         time_config.wait_for_sync = false;
+        time_config.sync_cb = time_synchronized;
         esp_err_t time_error = esp_netif_sntp_init(&time_config);
         sntp_started = time_error == ESP_OK;
         if (time_error != ESP_OK)

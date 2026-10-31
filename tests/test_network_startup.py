@@ -64,7 +64,8 @@ int esp_wifi_connect(void);
 int esp_wifi_sta_get_ap_info(wifi_ap_record_t *);
 int esp_wifi_ap_get_sta_list(wifi_sta_list_t *);
 int esp_read_mac(uint8_t *,int);
-typedef struct {bool wait_for_sync;const char *server;} esp_sntp_config_t;
+#include <sys/time.h>
+typedef struct {bool wait_for_sync;const char *server;void (*sync_cb)(struct timeval *);} esp_sntp_config_t;
 #define ESP_NETIF_SNTP_DEFAULT_CONFIG(s) {.wait_for_sync=true,.server=(s)}
 int esp_netif_sntp_init(const esp_sntp_config_t *);
 '''
@@ -84,6 +85,7 @@ static bool radio_started,ap_configured,connected;
 static uint32_t bits;static int64_t now;
 static char target[33],order[64];static void (*worker)(void *);static jmp_buf completed;
 static void (*wifi_event)(void *,esp_event_base_t,int32_t,void *),(*ip_event)(void *,esp_event_base_t,int32_t,void *);
+static void (*time_callback)(struct timeval *);
 static streamoo_wifi_profiles_t persisted,queued;static bool has_queued;
 void fake_log(const char *tag,const char *fmt,...){(void)tag;(void)fmt;}
 int64_t esp_timer_get_time(void){return now;}
@@ -93,6 +95,12 @@ void vQueueDelete(void *p){(void)p;}
 int xQueueSend(void *q,const void *data,unsigned wait){(void)q;(void)wait;if(has_queued)return 0;queued=*(const streamoo_wifi_profiles_t *)data;has_queued=true;return 1;}
 int xQueueReceive(void *q,void *out,unsigned wait){(void)q;now+=(int64_t)wait*1000;++polls;
  if(polls==1&&scenario>=5&&scenario<12&&scenario!=8){streamoo_wifi_profiles_t p={0};if(scenario!=9){p.count=1;strcpy(p.profiles[0].ssid,"C");strcpy(p.profiles[0].password,"test-pass");}assert(streamoo_network_submit_profiles(&p)==ESP_OK);}
+ if(scenario==13){
+  streamoo_network_state_t s;assert(streamoo_network_state(&s));
+  if(polls==1)assert(!s.time_synced);
+  if(polls==2){struct timeval tv={.tv_sec=1793448000};time_callback(&tv);}
+  if(polls==3){assert(s.time_synced);longjmp(completed,1);}
+ }
  if(scenario==12){
   streamoo_network_state_t s;assert(streamoo_network_state(&s)&&s.sta_connected);
   if(polls==1)assert(s.rssi_valid&&s.rssi_dbm==-65);
@@ -143,13 +151,13 @@ int esp_wifi_start(void){assert(ap_configured&&mode==WIFI_MODE_STA);radio_starte
 int esp_wifi_stop(void){radio_started=false;return ESP_OK;}
 int esp_wifi_disconnect(void){if(!connected){++idle_disconnects;return ESP_OK;}connected=false;wifi_event(NULL,WIFI_EVENT,WIFI_EVENT_STA_DISCONNECTED,NULL);return ESP_OK;}
 int esp_wifi_connect(void){assert(attempts<63);order[attempts++]=target[0];
- bool ok=scenario==0||scenario==12||((scenario>=5&&scenario<=9)&&scenario!=8)||scenario==4&&attempts==1||scenario==1&&target[0]=='B'||scenario==10&&target[0]=='C'||scenario==11&&target[0]=='C';
+ bool ok=scenario==0||scenario==12||scenario==13||((scenario>=5&&scenario<=9)&&scenario!=8)||scenario==4&&attempts==1||scenario==1&&target[0]=='B'||scenario==10&&target[0]=='C'||scenario==11&&target[0]=='C';
  if(scenario==6&&target[0]=='C')ok=false;
  connected=ok;if(ok)ip_event(NULL,IP_EVENT,IP_EVENT_STA_GOT_IP,NULL);else wifi_event(NULL,WIFI_EVENT,WIFI_EVENT_STA_DISCONNECTED,NULL);return ESP_OK;}
 int esp_wifi_sta_get_ap_info(wifi_ap_record_t *p){if(!connected||(scenario==12&&polls>=20))return ESP_FAIL;memcpy(p->ssid,target,33);p->rssi=scenario==12?(polls>=10?3:polls>=1?-80:-65):-65;return ESP_OK;}
 int esp_wifi_ap_get_sta_list(wifi_sta_list_t *p){p->num=0;return ESP_OK;}
 int esp_read_mac(uint8_t *mac,int type){assert(type==ESP_MAC_WIFI_SOFTAP);memset(mac,0,6);mac[3]=0x12;mac[4]=0x34;mac[5]=0x56;return ESP_OK;}
-int esp_netif_sntp_init(const esp_sntp_config_t *c){assert(!c->wait_for_sync&&!strcmp(c->server,"pool.ntp.org"));return ESP_OK;}
+int esp_netif_sntp_init(const esp_sntp_config_t *c){assert(!c->wait_for_sync&&!strcmp(c->server,"pool.ntp.org")&&c->sync_cb);time_callback=c->sync_cb;struct timeval tv={.tv_sec=scenario==13?100:1793448000};c->sync_cb(&tv);return ESP_OK;}
 static void ready(void *ctx){(void)ctx;++ready_calls;streamoo_network_state_t s;assert(streamoo_network_state(&s));assert(s.sta_connected||s.ap_ready);}
 static void stopped(void *ctx){(void)ctx;++stop_calls;}
 int main(int argc,char **argv){assert(argc==2);scenario=atoi(argv[1]);
@@ -161,6 +169,7 @@ int main(int argc,char **argv){assert(argc==2);scenario=atoi(argv[1]);
  if(scenario==8){assert(!s.ap_ready&&!radio_started&&stop_calls==1&&!ready_calls);return 0;}
  assert(ready_calls==1&&!stop_calls&&!idle_disconnects);
  if(!s.sta_connected)assert(!s.rssi_valid);
+ if(scenario==0)assert(s.time_synced);
  if(scenario==0)assert(!strcmp(order,"A")&&s.sta_connected&&!s.ap_ready&&!ap_starts);
  if(scenario==1)assert(!strcmp(order,"AB")&&s.sta_connected&&!s.ap_ready&&!ap_starts);
  if(scenario==2)assert(!strcmp(order,"AB")&&!s.sta_connected&&s.ap_ready&&ap_starts==1);
@@ -206,3 +215,5 @@ class NetworkStartupTests(unittest.TestCase):
  def test_first_provisioning_commit_failure_disconnects_unsaved_station(self):self.run_case(11)
 
  def test_rssi_updates_positive_clamp_and_query_failure(self):self.run_case(12)
+
+ def test_clock_valid_only_after_plausible_sntp_callback(self):self.run_case(13)

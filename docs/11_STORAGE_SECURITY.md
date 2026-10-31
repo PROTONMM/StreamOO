@@ -48,3 +48,8 @@ nie wyłącznie jeden zestaw credentials. Wersjonowany zapis/rollback i limity
 pozostają do implementacji. Katalog stacji z uploadu playlist.csv trafia docelowo
 do LittleFS dopiero po walidacji/zatwierdzeniu; prywatny plik workspace jest
 wykluczony z Git i nie ma być zasobem wbudowanym. ADR0030.
+
+ADR0047: strefa zegara jako string NVS streamoo_clock/zone, defaultWarsaw,
+cache odświeżany dopiero po commit. Odczyt raz przy starcie, bez erase
+przy błędzie. Flash wyłącznie poza callbackiem I2S. Ponowny zapis tej
+samej utrwalonej strefy pomijany. Dane Wi-Fi/playlisty bez zmian.

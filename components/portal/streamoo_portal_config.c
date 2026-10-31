@@ -1,5 +1,6 @@
 #include "streamoo_portal_config.h"
 #include "cJSON.h"
+#include "streamoo_clock.h"
 #include "esp_heap_caps.h"
 #include "esp_http_server.h"
 #include <inttypes.h>
@@ -11,7 +12,7 @@ esp_err_t streamoo_portal_configure(const streamoo_portal_actions_t *a) {
   if (serving)
     return ESP_ERR_INVALID_STATE;
   if (!a || !a->wifi_load || !a->wifi_submit || !a->playlist ||
-      !a->playlist_info)
+      !a->playlist_info || !a->timezone_get || !a->timezone_set)
     return ESP_ERR_INVALID_ARG;
   actions = *a;
   configured = true;
@@ -179,6 +180,34 @@ static esp_err_t playlist_get(httpd_req_t *r) {
              : reply(r, "503 Service Unavailable",
                      "{\"error\":\"playlist_storage_unavailable\"}");
 }
+static esp_err_t clock_get(httpd_req_t *r) {
+  if(!actions.timezone_get)return reply(r,"503 Service Unavailable","{\"error\":\"clock_unavailable\"}");
+  cJSON *root=cJSON_CreateObject();
+  cJSON *zones=root ? cJSON_AddArrayToObject(root,"zones"):NULL;
+  const char *current=actions.timezone_get();
+  bool ok=zones && current && cJSON_AddStringToObject(root,"timezone",current);
+  for(unsigned i=0;i<STREAMOO_CLOCK_ZONE_COUNT && ok;++i){
+    cJSON *item=cJSON_CreateString(streamoo_clock_zone_name((streamoo_clock_zone_t)i));
+    if(!item)ok=false;else cJSON_AddItemToArray(zones,item);
+  }
+  char json[1024];ok=ok && cJSON_PrintPreallocated(root,json,sizeof json,false);cJSON_Delete(root);
+  return ok ? reply(r,"200 OK",json):reply(r,"503 Service Unavailable","{\"error\":\"clock_unavailable\"}");
+}
+static esp_err_t clock_post(httpd_req_t *r) {
+  if(!request_allowed(r))return ESP_FAIL;
+  if(!content_type(r,"application/json"))return reply(r,"415 Unsupported Media Type","{\"error\":\"json_required\"}");
+  uint8_t *data=body(r,128);if(!data)return ESP_FAIL;
+  cJSON *root=memchr(data,0,r->content_len) ? NULL:cJSON_ParseWithLengthOpts((char *)data,r->content_len+1,NULL,true);
+  cJSON *field=root ? cJSON_GetObjectItemCaseSensitive(root,"timezone"):NULL;
+  streamoo_clock_zone_t zone;
+  bool valid=cJSON_IsObject(root) && cJSON_GetArraySize(root)==1 && cJSON_IsString(field) &&
+      streamoo_clock_zone_parse(field->valuestring,&zone);
+  esp_err_t error=valid && actions.timezone_set ? actions.timezone_set(field->valuestring):ESP_ERR_INVALID_ARG;
+  cJSON_Delete(root);heap_caps_free(data);
+  if(!valid)return reply(r,"400 Bad Request","{\"error\":\"invalid_timezone\"}");
+  return error==ESP_OK ? reply(r,"200 OK","{\"saved\":true}"):
+      reply(r,"503 Service Unavailable","{\"error\":\"clock_save_failed\"}");
+}
 esp_err_t streamoo_portal_register_configuration(httpd_handle_t server) {
   if (!configured)
     return ESP_OK;
@@ -200,6 +229,13 @@ esp_err_t streamoo_portal_register_configuration(httpd_handle_t server) {
     esp_err_t error = httpd_register_uri_handler(server, &routes[i]);
     if (error != ESP_OK)
       return error;
+  }
+  const httpd_uri_t clock_routes[]={
+      {.uri="/api/v1/clock",.method=HTTP_GET,.handler=clock_get},
+      {.uri="/api/v1/clock",.method=HTTP_POST,.handler=clock_post}};
+  for(unsigned i=0;i<2;++i){
+    esp_err_t error=httpd_register_uri_handler(server,&clock_routes[i]);
+    if(error!=ESP_OK)return error;
   }
   serving = true;
   return ESP_OK;

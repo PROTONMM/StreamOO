@@ -1,6 +1,6 @@
 # Punkt wznowienia StreamOO
 
-Aktualizacja: **2026-10-31 — rzeczywisty kodek/RSSI w HOME gotowe do odbioru; widmo zaakceptowane do strojenia później**.
+Aktualizacja: **2026-10-31 — zegar SNTP i strefa przez WWW gotowe do odbioru**.
 Gałąź feature/streamoo-implementation. ADR0034–0035, STATUS i HTTP_PLAYER_BRINGUP.
 
 ## Potwierdzone przez użytkownika
@@ -191,3 +191,15 @@ realne lokalne HTTP MP3/AAC/404 PASS. Prywatnych267 stacji nie odpytano.
 Instrukcja PLAYLIST_PROBE.md. Firmware nie zmieniony, nie trzeba flashować.
 
 Najnowsza drobna poprawka ADR0046: RSSI o6px w lewo i węższa ikona Wi-Fi, odstęp od wizualizacji. Native build PASS, nowy widok do odbioru OLED. Audio/FFT bez zmian.
+
+Najnowsze ADR0047: użytkownik wybrał konfigurację strefy przez WWW
+(Konfiguracja), DST automatyczne.8 opcji UTC/europejskich, defaultWarsaw,
+NVS string streamoo_clock/zone; zmiana live i po reboot. GET/POST clock
+z dotychczasowym Origin/header, bez loginu. Panel ma tabs Status/
+Konfiguracja i formularz Data i czas. OLED prawdziwe SNTP → data/godzina,
+przed callbackiem kreski, czas systemowy UTC/TLS nietknięty. Zegar działa
+bez stacji/STOP, nie resetuje marquee. Nie zmieniono FFT/RMS.
+328 testów, targeted ASan/UBSan, Chromium390px i native build PASS
+(0x160ff0,6% wolne). Teraz zwykły flash, Ctrl+F5 WWW i CLOCK_BRINGUP.
+Brak flash/erase/eFuse przez agenta. Pozostałe strefy/pełna baza IANA,
+pomiary dryfu i odbiór realnego NTP/reboot nadal OPEN.

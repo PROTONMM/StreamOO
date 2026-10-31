@@ -22,6 +22,7 @@ extern const streamoo_network_hooks_t streamoo_app_network_hooks;
 esp_err_t streamoo_board_validate(void);
 esp_err_t streamoo_platform_start(void);
 esp_err_t streamoo_preferences_start(void);
+esp_err_t streamoo_clock_settings_start(void);
 bool streamoo_preferences_initial(streamoo_preferences_value_t *);
 esp_err_t streamoo_input_probe_start(void);
 esp_err_t streamoo_audio_control_start(uint8_t);
@@ -46,7 +47,8 @@ CONFIG=r'''
 HARNESS=r'''
 #include "common.h"
 #include <stdlib.h>
-static int mode,controlled,finite,network,display,player;
+static int mode,controlled,finite,network,display,player,clock_started;
+esp_err_t streamoo_clock_settings_start(void){++clock_started;return mode==3?ESP_FAIL:ESP_OK;}
 esp_err_t streamoo_player_start(uint8_t v){assert(v==87);++player;return ESP_OK;}
 const streamoo_network_hooks_t streamoo_app_network_hooks={0};
 esp_err_t streamoo_board_validate(void){return ESP_OK;}
@@ -56,7 +58,7 @@ bool streamoo_preferences_initial(streamoo_preferences_value_t *v){v->volume=87;
 esp_err_t streamoo_input_probe_start(void){return ESP_OK;}
 esp_err_t streamoo_audio_control_start(uint8_t volume){assert(volume==87);++controlled;return ESP_OK;}
 esp_err_t streamoo_audio_probe_start(void){++finite;return ESP_OK;}
-esp_err_t streamoo_display_smoke_start(void){++display;return ESP_OK;}
+esp_err_t streamoo_display_smoke_start(void){assert(clock_started==1);++display;return ESP_OK;}
 bool streamoo_network_boot_ap_enabled(void){return mode!=0;}
 esp_err_t streamoo_network_start(const streamoo_network_hooks_t *h){assert(h);++network;return mode==2 ? ESP_FAIL:ESP_OK;}
 void app_main(void);
@@ -81,7 +83,7 @@ class APAudioStartupTests(unittest.TestCase):
         base=Path(cls.temp.name);(base/'common.h').write_text(HEADER);(base/'sdkconfig.h').write_text(CONFIG)
         for name in ('esp_log.h','streamoo_board.h','streamoo_platform.h','streamoo_input_probe.h',
                      'display_smoke.h','audio_probe.h','audio_control_probe.h','streamoo_preferences.h',
-                     'streamoo_network.h','network_portal.h','streamoo_player.h'):
+                     'streamoo_network.h','network_portal.h','streamoo_player.h','streamoo_clock_settings.h'):
             (base/name).write_text('#include "common.h"\n')
         shutil.copyfile(ROOT/'main/main.c',base/'app.c');(base/'test.c').write_text(HARNESS)
         cls.binaries=[]
@@ -96,3 +98,5 @@ class APAudioStartupTests(unittest.TestCase):
     def test_ap_failure_does_not_start_tone(self):self.run_case(0,2)
     def test_ap_disabled_preserves_controlled_audio(self):self.run_case(0,0)
     def test_ap_disabled_preserves_finite_test(self):self.run_case(1,0)
+
+    def test_clock_storage_failure_preserves_startup(self):self.run_case(0,3)

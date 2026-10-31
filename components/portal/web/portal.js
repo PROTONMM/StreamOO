@@ -45,6 +45,8 @@ const messages = {
   connection_test_in_progress: 'Trwa poprzednia próba połączenia. Poczekaj na wynik.',
   playlist_storage_unavailable: 'Pamięć playlisty niedostępna. Sprawdź log urządzenia i tablicę partycji.',
   profiles_unavailable: 'Nie można odczytać zapisanych sieci.',
+  invalid_timezone: 'Wybierz jedną z dostępnych stref czasowych.',
+  clock_save_failed: 'Nie udało się zapisać strefy. Poprzednie ustawienie pozostaje aktywne.',
 };
 async function api(url, options = {}) {
   const controller = new AbortController(), timeout = setTimeout(() => controller.abort(), 30000);
@@ -139,5 +141,47 @@ function setupForms() {
   add(null);
   loadSettings();
 }
+function setupTabs() {
+  const status = document.getElementById('show-status'), config = document.getElementById('show-config');
+  if (!status?.addEventListener) return;
+  const show = configuration => {
+    document.getElementById('status-panel').hidden = configuration;
+    document.getElementById('config-panel').hidden = !configuration;
+    status.setAttribute('aria-pressed', String(!configuration));
+    config.setAttribute('aria-pressed', String(configuration));
+    status.classList.toggle('secondary', configuration);
+    config.classList.toggle('secondary', !configuration);
+  };
+  status.onclick = () => show(false); config.onclick = () => show(true);
+  show(true);
+}
+async function setupClock() {
+  const form = document.getElementById('clock-form');
+  if (!form?.addEventListener) return;
+  const select = document.getElementById('timezone'), save = document.getElementById('save-clock');
+  const labels = {'UTC':'UTC', 'Europe/Warsaw':'Polska — Warszawa', 'Europe/London':'Wielka Brytania — Londyn',
+    'Europe/Berlin':'Niemcy — Berlin', 'Europe/Paris':'Francja — Paryż', 'Europe/Helsinki':'Finlandia — Helsinki',
+    'Europe/Madrid':'Hiszpania — Madryt', 'Europe/Rome':'Włochy — Rzym'};
+  try {
+    const state = await api('/api/v1/clock');
+    select.replaceChildren(...state.zones.map(zone => {
+      const option = document.createElement('option'); option.value = zone;
+      option.textContent = labels[zone] || zone; return option;
+    }));
+    select.value = state.timezone; select.disabled = save.disabled = false;
+    text('clock-result', 'Ustawienie odczytane. Po synchronizacji czas pojawi się na ekranie radia.');
+  } catch (error) { text('clock-result', error.message); }
+  form.onsubmit = async event => {
+    event.preventDefault(); select.disabled = save.disabled = true;
+    try {
+      await api('/api/v1/clock', {method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({timezone:select.value})});
+      text('clock-result', 'Zapisano strefę czasową. Zmiana działa od razu i pozostanie po restarcie.');
+    } catch (error) { text('clock-result', error.message); }
+    finally { select.disabled = save.disabled = false; }
+  };
+}
+setupTabs();
 if (document.getElementById('wifi-form')?.addEventListener) setupForms();
+setupClock();
 update();

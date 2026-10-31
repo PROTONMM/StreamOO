@@ -153,3 +153,7 @@ nadal -- (brak wiarygodnego producenta wartości). Brak wywołań SDK/IO
 w rendererze, bez zmiany geometrii i parametrów FFT/RMS.
 
 ADR0046: pole RSSI x14..37 zamiast x20..43,6px odstępu przed widżetem x44; ikona Wi-Fi x1..11, bez kolizji także dla -127.
+
+ADR0047: prawy panel używa rzeczywistego SNTP/czasu UTC i strefy zapisanej
+przez WWW. Przed potwierdzonym sync kreski. Format YYYY-MM-DD/HH:MM:SS
+bez zmiany geometrii; zegar niezależny od stacji, bez resetowania marquee.
