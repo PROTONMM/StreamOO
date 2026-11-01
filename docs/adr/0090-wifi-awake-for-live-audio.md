@@ -1,6 +1,10 @@
 # ADR0090 — wyłączenie modem sleep podczas pracy radia
 
-Data: 2026-11-01. Status: eksperyment do odbioru na ESP32-S3.
+Data: 2026-11-01. Status: PS_NONE potwierdzony na S3; niedobory pozostały.
+
+Aktualizacja odbioru: log45424bc0/b2431e5 potwierdza pm type0, lecz50 low
+i1 Recover w około3min. Sam ten krok nie rozwiązał problemu. Dalszy test
+na znanym wejściu LAN w ADR0091; brak nowej deklaracji odsłuchu.
 
 ## Wynik pomiarów ADR0089
 

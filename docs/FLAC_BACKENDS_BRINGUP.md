@@ -1,5 +1,11 @@
 # Porównanie dekoderów FLAC na ESP32-S3
 
+ADR0091: PS_NONE potwierdzony na b2431e5, ale50 low/1 Recover w~3min.
+Kolejny test używa znanych plików LAN, bez zmiany firmware. Gotowe media
+i CSV w build/flac-lan-20261101, procedura [FLAC_LAN_TEST](FLAC_LAN_TEST.md).
+FLAC16, ciężki24bit oraz identyczne24bit bez nagłówka pliku pozwalają
+rozdzielać podstawową ścieżkę od bootstrap live i publicznego transportu.
+
 ADR0090: test bf40138/dr ma97 low, HTTP read do674ms, log batch do82,8ms;
 Wi-Fi raportuje pm type1. Kolejny build wyłącza modem sleep, bez zmiany
 buforów/TCP/dekodera. Sprawdź `Wi-Fi power save=NONE; low-latency RX`,

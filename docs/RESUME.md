@@ -1,5 +1,17 @@
 # Punkt wznowienia StreamOO
 
+## Najnowsze — kontrolowany FLAC LAN, bez zmiany firmware / ADR0091
+
+Log45424bc0 potwierdza b2431e5/dr/PS_NONE, lecz50 low w~3min i1 Recover.
+CPU średnio40,6/42,1%, HTTP read max1,141s, log95,9ms. Odsłuch OPEN.
+Nie stroimy kolejnego parametru na innym utworze live. Gotowe3 pliki300s
+i playlist.csv w ignorowanym build/flac-lan-20261101; instrukcja FLAC_LAN_TEST.
+FLAC16~213kbps,24bit~1839kbps i ten sam24bit bez nagłówka. Uruchomić
+python http.server8000 w tym katalogu i zaimportować CSV przez WWW.
+Test po3min każdej stacji z UART; koniec300s/EOF jest oczekiwany.
+440 testów hostowych, HTTP/SHA i realny dr/FFmpeg PCM32 dwa pełne cykle/reset PASS.
+Firmware na płytce b2431e5 pozostaje; źródło CRC i niedoborów nadal OPEN.
+
 ## Najnowsze — test Wi-Fi bez modem sleep / ADR0090
 
 Załącznik3d8f1f16 potwierdza bf40138/dr,97 low,2 Recover, gen3 bez retry.

@@ -1,5 +1,22 @@
 # Status implementacji
 
+## Najnowsze — Wi-Fi NONE nie usunęło niedoborów; test LAN / ADR0091 / 2026-11-01
+
+Log45424bc0, b2431e5/ELFf76a8ebd/dr, potwierdza PS_NONE/pm0, ale50 low,
+starts51,1 Recover, bez retry po gen2, do183,558s. CPU~40,6/42,1%,
+read max1,141s, pakiet logów95,917ms. Odsłuch nieoceniony. Nie zaliczamy
+stabilności po samym wyłączeniu modem sleep; nie porównujemy surowych
+liczników z różnymi długościami testów/utworami.
+
+Przygotowano generator i lokalną playlistę3 znanych plików300s: FLAC16
+~213kbps, FLAC24~1839kbps i identyczne ramki24bit bez fLaC. Prywatne media
+i CSV wyłącznie build/flac-lan-20261101, główny playlist.csv nietknięty.
+Firmware pozostaje b2431e5 — bez nowej kompilacji ani flash.
+Hostowe pełne HTTP/MIME/SHA i300s PCM32 zwykły/live PASS; rzeczywisty
+adapter dr dwa cykle/reset4096B obu plików24bit zgodny bajtowo z FFmpeg.
+440 testów hostowych PASS, w tym3 generatora. Nie przebudowywano firmware:
+zmiana obejmuje narzędzie/testy/dokumentację. Odbiór S3 według FLAC_LAN_TEST.
+
 ## Najnowsze — Wi-Fi bez modem sleep, wynik pomiarów / ADR0090 / 2026-11-01
 
 Log3d8f1f16, bf40138/ELFdbb91c37/dr: 97 low,2 Recover, bez reconnect
