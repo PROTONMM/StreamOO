@@ -234,3 +234,7 @@ Możliwość nadania MIT, ograniczenia zależności i prawa do fontu PL:
 
 Błąd alokacji ciągłego PCM po HTTP200 i rezerwacja przed readerem/TLS:
 `adr/0100-reserve-contiguous-pcm-before-http.md`.
+
+MIT: warianty zakresu, wymiany bibliotek/kodeków i wszystkie moduły:
+`MIT_MIGRATION_ANALYSIS.md`, `MIT_MODULE_INVENTORY.csv`,
+`adr/0101-mit-migration-scope-analysis.md`.

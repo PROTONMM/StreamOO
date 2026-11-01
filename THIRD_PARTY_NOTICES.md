@@ -151,3 +151,15 @@ HLS implementation. MPEG-TS uses `esp_ts_dec` in the existing pinned
 Espressif audio codec2.6.2 under the already retained Espressif Modified MIT
 terms; underlying MP3/AAC registrations retained. API/configuration/license
 checked in the pinned headers. No new dependency or GPL code imported.
+
+## Toolchain runtime in the linked image
+
+The application map also includes libgcc/libstdc++ runtime and Picolibc
+libc/libm. GCC's applicable Runtime Library Exception3.1 permits independent
+non-GPL applications under its conditions; this is separate from importing
+a GPL codec without an exception. Picolibc carries per-file BSD/MIT-family
+notices. These runtimes must be included in the release-license inventory;
+the compiler's own license does not automatically apply to the whole app.
+See [full module and replacement analysis](docs/MIT_MIGRATION_ANALYSIS.md)
+and its local toolchain notice paths. Statements above about no imported GPL
+codec implementations do not claim that every runtime file is MIT.

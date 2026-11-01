@@ -1,5 +1,20 @@
 # Punkt wznowienia StreamOO
 
+## Analiza MIT — wszystkie moduły / ADR0101 / 2026-11-01
+
+Gotowe MIT_MIGRATION_ANALYSIS.md oraz MIT_MODULE_INVENTORY.csv:
+27 komponentów + main,103 archiwa wnoszące sekcje do obrazu,114 rekordów
+z zasobami/opcjonalnymi źródłami/narzędziami. Cele: własna aplikacja MIT
+z odrębnymi zależnościami; usunięcie ograniczenia kodeków do Espressif;
+wyłącznie MIT dla każdego składnika. To trzy różne zakresy.
+Pełna wymiana esp_audio_codec obejmuje MP3/AAC/HE-AAC/Vorbis/Opus/Ogg/TS,
+FLAC już domyślnie dr/MIT-0. Font PL nadal wymaga ustalenia praw/wymiany.
+Uzupełniono noty o runtime GCC z wyjątkiem oraz Picolibc.
+Analiza bez migracji/licencjonowania kodu; rekomendacje nie są decyzją
+o wymianie bibliotek. Firmware47e44c5 pozostaje bez zmian i jest testowany
+przez użytkownika. Zgodność inwentarza i diff check PASS, bez build/flash.
+
+
 ## Najnowsze — pozytywny odbiór PCM i przełączania / ADR0100 / 2026-11-01
 
 Firmware47e44c5/ELF5fa63ece, log minicom13:29:28: start Antyradio i8 zmian

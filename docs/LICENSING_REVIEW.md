@@ -1,5 +1,8 @@
 # Przegląd możliwości wydania na MIT — 2026-11-01
 
+Szczegółowa analiza wymian wszystkich modułów: [MIT_MIGRATION_ANALYSIS](MIT_MIGRATION_ANALYSIS.md).
+Pełny inwentarz bieżącego obrazu i zasobów: [CSV](MIT_MODULE_INVENTORY.csv).
+
 ## Wniosek
 
 **Własny kod aplikacji StreamOO może otrzymać MIT, jeżeli wydający ma prawa
@@ -78,3 +81,13 @@ stwierdzenie, że każdy materiał referencyjny w repo ma licencję MIT.
 - [Mozilla MPL2.0 FAQ](https://www.mozilla.org/en-US/MPL/2.0/FAQ/): zakres plikowy i dystrybucja źródeł pokrytych MPL.
 - Pinned źródła dr_flac/micro-flac i hashe: `components/decoder/third_party/ORIGINS.json` oraz oryginalne nagłówki/LICENSE.
 - Dokładny hash źródła bitmap PL, zgoda użytkownika i stan UNKNOWN: `THIRD_PARTY_NOTICES.md`, ADR0006.
+
+## Uzupełnienie: runtime toolchainu
+
+Pełniejszy przegląd mapy wykazał również libgcc/libstdc++ (GCC Runtime
+Library Exception3.1) i Picolibc/libc/libm z warunkami plikowymi. Wyjątek
+GCC pozwala na niezależne aplikacje nie-GPL przy spełnieniu jego warunków;
+nie należy utożsamiać go ze zwykłym linkowaniem biblioteki GPL bez wyjątku.
+Wcześniejsze stwierdzenia o braku importu GPL dotyczą integracji
+implementacji kodeków, nie są stwierdzeniem jednorodnej licencji całego
+runtime. Szczegóły i źródła pierwotne w MIT_MIGRATION_ANALYSIS.
