@@ -15,6 +15,7 @@
 #include "streamoo_live_decode.h"
 #include "streamoo_network.h"
 #include "streamoo_pcm.h"
+#include "streamoo_spectrum.h"
 #include <inttypes.h>
 #include <string.h>
 typedef enum { COMMAND_ENCODER,COMMAND_PLAYING,COMMAND_VOLUME } command_kind_t;
@@ -541,10 +542,15 @@ static void task(void *context) {
       }
       if(meter) {
         streamoo_metering_state_t spectrum={0};streamoo_metering_state(meter,&spectrum);
-        ESP_LOGI("player","FFT available=%u valid=%u frames=%" PRIu32
-                 " skipped=%" PRIu32 " gaps=%" PRIu32 " max_fft=%" PRIu32 "us",
+        ESP_LOGI("player","FFT backend=%s available=%u valid=%u frames=%" PRIu32
+                 " skipped=%" PRIu32 " gaps=%" PRIu32 " last_fft=%" PRIu32
+                 "us avg_fft=%" PRIu64 "us max_fft=%" PRIu32 "us",
+                 streamoo_spectrum_backend(),
                  (unsigned)spectrum.spectrum_available,(unsigned)spectrum.spectrum_valid,
-                 spectrum.fft_windows,spectrum.fft_skipped,spectrum.fft_gaps,spectrum.max_fft_us);
+                 spectrum.fft_windows,spectrum.fft_skipped,spectrum.fft_gaps,
+                 spectrum.last_fft_us,
+                 spectrum.fft_windows?spectrum.total_fft_us/spectrum.fft_windows:0,
+                 spectrum.max_fft_us);
       }
       if (output && (audio.invalid_buffers || audio.max_fill_us >= 5000)) {
         failure_stage = "i2s_stats";

@@ -85,6 +85,7 @@ struct streamoo_metering {
  streamoo_pcm_ring_t tap; streamoo_pcm_block_t storage[4];
  uint64_t generation; unsigned stopping;bool spectrum_enabled;
 };
+const char *streamoo_spectrum_backend(void){return "test-backend";}
 static streamoo_metering_t *active_meter;
 esp_err_t streamoo_metering_open(uint64_t gen,streamoo_metering_t **out){
  if(disable_meter){*out=NULL;return ESP_ERR_NO_MEM;}
@@ -183,7 +184,7 @@ class NetworkPlayerTests(unittest.TestCase):
      body=body.replace('static inline streamoo_settings_t streamoo_settings_get(void){return (streamoo_settings_t){.list_timeout_s=5,.list_autoselect=true};}', 'extern uint64_t fixture_last;extern bool fixture_autoplay;static inline streamoo_settings_t streamoo_settings_get(void){return (streamoo_settings_t){.list_timeout_s=5,.list_autoselect=true,.autoplay=fixture_autoplay};}').replace('return 0;}\nstatic inline void streamoo_settings_station_changed', 'return fixture_last;}\nstatic inline void streamoo_settings_station_changed')
     (base/name).write_text(body)
    (base/'test.c').write_text(HARNESS)
-   includes=['-I'+str(base)]+['-Icomponents/'+n+'/include' for n in ('metering','levels','player','configuration','stations','network','streaming','decoder','compressed_source','pcm_adapter','pcm','audio_gain','audio_output','ui','ui_widgets','input','graphics','text')]
+   includes=['-I'+str(base)]+['-Icomponents/'+n+'/include' for n in ('spectrum','metering','levels','player','configuration','stations','network','streaming','decoder','compressed_source','pcm_adapter','pcm','audio_gain','audio_output','ui','ui_widgets','input','graphics','text')]
    subprocess.run(['cc','-std=c11','-Wall','-Wextra','-Werror',*os.environ.get('STREAMOO_PLAYER_SANITIZE','').split(),*includes,str(base/'test.c'),'components/player/streamoo_player.c','components/pcm/streamoo_pcm.c','components/audio_gain/streamoo_audio_gain.c','-o',str(base/'player')],cwd=ROOT,check=True)
    subprocess.run([str(base/'player'),str(mode)],check=True,timeout=10)
 

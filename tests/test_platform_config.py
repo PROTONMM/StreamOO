@@ -31,3 +31,12 @@ class PlatformTests(unittest.TestCase):
         self.assertEqual(data['FREERTOS_GENERATE_RUN_TIME_STATS'], 'y')
         self.assertEqual(data['FREERTOS_RUN_TIME_COUNTER_TYPE_U64'], 'y')
         self.assertEqual(data['FREERTOS_RUN_TIME_STATS_USING_ESP_TIMER'], 'y')
+
+    def test_s3_vector_fft_is_explicit_and_bounded(self):
+        data = mod.parse(ROOT / 'sdkconfig.defaults')
+        self.assertEqual(data['DSP_ENABLE_SIMD'], 'y')
+        self.assertEqual(data['DSP_OPTIMIZED'], 'y')
+        self.assertEqual(data['DSP_MAX_FFT_SIZE_2048'], 'y')
+        manifest = (ROOT / 'components/spectrum/idf_component.yml').read_text()
+        self.assertIn('espressif/esp-dsp:', manifest)
+        self.assertIn('version: "==1.8.2"', manifest)

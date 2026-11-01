@@ -1,4 +1,35 @@
-Aktualny krok HOME/ADR0044: zwykły flash bez erase/NVS. Po wybraniu stacji
+# Aktualny odbiór07j — FFT SIMD i CPU (ADR0074)
+
+1. Jeżeli na płytce jest jeszcze53e7e2b, zbierz punkt odniesienia przed
+   nowym flashem: działający HLS HE-AACv2, FFT na HOME,60s logu. W logu
+   musi być PLAYING/phase4, rosnące frames i prawidłowe PCM; błąd TLS nie
+   mierzy dekodowania. Pierwszy blok CPU jest dopiero około20–22s po boot.
+2. Zbuduj bieżący firmware i wgraj zwyczajnie bez erase/NVS/obrazu FS.
+   Domyślna flaga SIMD jest włączona; log FFT ma wskazać
+   `backend=esp-dsp-sc16-aes3-simd`. Agent zweryfikował build w osobnym
+   `build/simd-check`; dla tego katalogu użyj `idf.py -B build/simd-check`
+   zamiast domyślnego `idf.py`. Standardowy build użytkownika też jest poprawny.
+3. TEST HLS64k HE-AACv2:60s FFT, potem30s bargraph, ponownie30s FFT.
+   Powtórz dla działającego TEST FLAC native lossless. Sprawdź też VOL0,
+   STOP/PLAY, zmianę stacji oraz powrót z listy; widmo ma reagować, audio
+   grać czysto. Przyciski/wygaszanie pozostają zgodne z ustawieniami.
+4. Zbierz bloki `CPU interval`, `CPU task`, `player phase`, `Decode perf`,
+   `meters`, `FFT`, heap. Porównaj `audio_levels`/`player` load i affinity,
+   `core_samples`, `last_fft/avg_fft/max_fft`, frames/gaps/drop oraz low/hard/starts.
+   Wartości max/średnie FFT są od początku sesji i zawierają wywłaszczenia.
+   `core_samples` liczy iteracje, nie udział procentowy czasu rdzeni.
+5. Jeśli brak starego pomiaru, A/B można zrobić na tym samym kodzie:
+   w menuconfig Audio and DSP wyłączyć flagę StreamOO SIMD, zbudować/wgrać,
+   zebrać log `portable-float-radix2`, potem ponownie włączyć i powtórzyć.
+   Porównywać tę samą stację/rate/widget i podobny fragment po rozgrzaniu.
+
+OPEN: czas i poprawność wykonania AES3 na S3, wpływ na luki wizualizacji
+i rzeczywiste CPU. Host/NumPy testuje skalowanie przez ANSI sc16, a ELF
+potwierdza instrukcje SIMD; żaden z tych testów nie mierzy czasu na płytce.
+
+---
+
+Historyczny krok HOME/ADR0044: zwykły flash bez erase/NVS. Po wybraniu stacji
 w dolnym lewym panelu oczekuj MP3 lub AAC oraz RSSI (dBm) i słupków Wi-Fi.
 STOP czyści kodek do placeholdera; następny PLAY odtwarza informację po
 dekodowaniu. Bitrate nadal --. RSSI odświeżane co1s, nie steruje roamingiem.

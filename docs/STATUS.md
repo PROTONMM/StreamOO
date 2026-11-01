@@ -1,5 +1,25 @@
 # Status implementacji
 
+## Najnowsze — FFT wektorowy sc16 / ADR0074 / 2026-11-01
+
+Na polecenie użytkownika SIMD jest realnym backendem: ESP-DSP1.8.2
+`dsps_fft2r_sc16_aes3_`, licencja Apache2/API/IDF sprawdzone, wersja i hash
+w locku. ELF native IDF6.1 potwierdza wektorowe mnożenia/butterflies `ee.*`.
+Hann/stereo/pasma/takt oraz affinity pozostawiono. Skalowanie okna każdego
+kanału z odtworzeniem dBFS i headroom,16B alignment, tabela4KiB internal RAM.
+Workspace PSRAM mniejszy, błąd init/alokacji zachowuje RMS/audio.
+Log FFT ma backend oraz last/avg/max czasu ściennego. Profiler CPU nadal działa.
+
+Native build w build/simd-check PASS0x17e240 (90% factory wolne).
+392 testy hostowe PASS; ANSI sc16 porównany z float i NumPy,
+canaries/niezmienność wejścia, cisza/DC/fazy/impulsy/szum/ciche tony oraz
+N1024/2048. Osiem testów sc16 i native harness ASan/UBSan PASS;
+oba walidatory konfiguracji oraz diff --check PASS.
+Wykonanie AES3, speedup i wpływ na HLS/FLAC nadal OPEN: odbiór DSP_BRINGUP,
+logi co najmniej60s przy phase4/FFT oraz30s przy bargraph. Nie flashowano.
+
+Poniższe wpisy opisują stan historyczny sprzed ADR0074.
+
 ## Najnowsze — profil CPU i punkt odniesienia FFT / ADR0073 / 2026-10-31
 
 Do firmware dodano diagnostykę FreeRTOS runtime statistics: po rozgrzaniu

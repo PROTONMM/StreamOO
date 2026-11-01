@@ -1,5 +1,12 @@
 # 07 — FFT, Hann, SIMD/DSP, wskaźniki
 
+Aktualny backend07j/ADR0074: oficjalny ESP-DSP1.8.2 sc16 AES3 z instrukcjami
+PIE/SIMD na S3, domyślnie włączony. Własny float pozostaje do A/B po
+wyłączeniu flagi StreamOO. Skalowanie blokowe z odtworzeniem dBFS,
+wyrównanie16B i prywatna tabela firmware-lifetime; metering nadal droppable.
+Build/host/NumPy PASS, pomiar czasu i CPU oraz odbiór sprzętowy OPEN.
+Procedura: [DSP_BRINGUP](DSP_BRINGUP.md).
+
 **USTALONE:** trzy przełączalne widgety audio: FFT, 2-kanałowy bargraph i dwa małe wskaźniki analogowe. Analiza audio przed regulacją głośności, nie w callbacku I²S ani blokującej ścieżce dekodowania.
 
 ## DSP

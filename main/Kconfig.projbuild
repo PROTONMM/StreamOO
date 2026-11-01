@@ -197,7 +197,11 @@ menu "StreamOO Configuration"
                 bool "2048"
         endchoice
         config STREAMOO_DSP_ENABLE_SIMD
-            bool "Prefer optimized ESP32-S3 DSP routines"
+            bool "Use ESP-DSP sc16 SIMD FFT on ESP32-S3"
             default y
+            depends on IDF_TARGET_ESP32S3
+            help
+                Select the vectorized AES3 fixed-point FFT. Windowing and
+                band aggregation remain outside the I2S path.
     endmenu
 endmenu

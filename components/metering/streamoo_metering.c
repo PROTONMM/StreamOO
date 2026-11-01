@@ -46,8 +46,15 @@ static void analyze(void *context) {
             fft_at = 0;
             streamoo_spectrum_envelope_init(&spectrum_envelope,start);
             if((request&1u) && !spectrum) {
+#if defined(ESP_PLATFORM)
+                spectrum = heap_caps_aligned_calloc(16,1,sizeof *spectrum,MALLOC_CAP_SPIRAM|MALLOC_CAP_8BIT);
+#else
                 spectrum = heap_caps_calloc(1,sizeof *spectrum,MALLOC_CAP_SPIRAM|MALLOC_CAP_8BIT);
-                if(spectrum)streamoo_spectrum_stream_init(spectrum);
+#endif
+                if(spectrum && !streamoo_spectrum_stream_init(spectrum)) {
+                    heap_caps_free(spectrum);
+                    spectrum=NULL;
+                }
             }
             if(spectrum)streamoo_spectrum_stream_reset(spectrum);
             current.spectrum_available = spectrum != NULL;
@@ -60,6 +67,8 @@ static void analyze(void *context) {
                         STREAMOO_PCM_FRAMES,m->block.sequence,fft_start>=fft_at)) {
                     current.spectrum_completed_us = esp_timer_get_time();
                     uint32_t elapsed_fft = (uint32_t)(current.spectrum_completed_us-fft_start);
+                    current.last_fft_us=elapsed_fft;
+                    current.total_fft_us+=elapsed_fft;
                     if(elapsed_fft>current.max_fft_us)current.max_fft_us=elapsed_fft;
                     fft_at=current.spectrum_completed_us+100000;
                     uint16_t target[24];

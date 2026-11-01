@@ -1,5 +1,18 @@
 # Third-party material in StreamOO
 
+## ESP-DSP 1.8.2 — vector FFT on ESP32-S3
+
+Pinned managed component `espressif/esp-dsp`, Apache License 2.0,
+Copyright Espressif Systems (Shanghai) PTE LTD. License, public API,
+target assembly and IDF requirement (`>=4.2`) reviewed before integration
+with ESP-IDF 6.1. Sources remain unmodified and are supplied by the component
+manager. Retained [Apache license](licenses/Apache-2.0.txt) and
+[version/source notice](licenses/ESP-DSP-NOTICE.md). No GPL code imported.
+
+The FFT adapter calls the AES3 sc16 kernel explicitly; host tests use the
+same version's ANSI sc16 implementation as a numerical oracle. They do not
+execute or benchmark the ESP32-S3 instructions.
+
 ## Small bitmap font — LICENSE REVIEW OPEN
 
 Imported on **2026-10-24 on the user's explicit instruction** to copy it now

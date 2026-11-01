@@ -1,5 +1,22 @@
 # Punkt wznowienia StreamOO
 
+## Najnowsze — FFT SIMD i pomiary / ADR0074 / 2026-11-01
+
+FFT domyślnie używa ESP-DSP1.8.2/sc16 AES3, potwierdzone instrukcje SIMD
+w ELF native build IDF6.1 PASS0x17e240. Log: backend + last_fft/avg_fft/max_fft.
+Hann N-1, stereo power, DC, pasma, takt10Hz i task affinity zachowane.
+Skalowanie blokowe odwracane do dBFS,16B-aligned PSRAM, statyczna tabela4KiB.
+392 testy hostowe, sc16/float/NumPy, native sc16 ASan/UBSan i walidatory
+PASS; hardware/time/CPU OPEN.
+
+Wgrać normalnie bez erase/NVS; TEST HLS64 HE-AACv2 oraz FLAC po60s FFT,
+30s bargraph i powrót FFT. Zbierać CPU/player/Decode perf/meters/FFT/heap.
+Przed flashem53e7e2b można zebrać baseline; alternatywnie wyłączyć flagę
+StreamOO SIMD i porównać `portable-float-radix2` na bieżącym kodzie.
+Agent nie flashował. Build agenta jest w build/simd-check, venv w /tmp;
+standardowy lokalny venv6.1 nadal wymaga naprawy przez właściciela środowiska.
+Procedura i interpretacja: DSP_BRINGUP. Poniższe wznowienia są historyczne.
+
 ## Najnowsze — profil CPU i punkt odniesienia FFT / ADR0073 / 2026-10-31
 
 Firmware ma teraz profiler runtime FreeRTOS: po około22s od startu log

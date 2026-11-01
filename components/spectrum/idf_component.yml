@@ -1,0 +1,4 @@
+dependencies:
+  idf: ">=6.1,<6.2"
+  espressif/esp-dsp:
+    version: "==1.8.2"
