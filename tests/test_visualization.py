@@ -109,14 +109,22 @@ class VisualizationTests(unittest.TestCase):
         self.model = Model()
         self.model.rms[0] = self.model.peak[0] = 32767
         self.assertTrue(self.draw(1))
-        self.assertEqual(self.pixel(50, 40), 10)
+        self.assertEqual(self.pixel(50, 40), 0)
+        self.assertEqual(self.pixel(51, 40), 10)
+        self.assertEqual(self.pixel(51, 41), 0)  # alternating rows, fixed texture
+        self.assertTrue(all(self.pixel(x, y) == 10 for x in range(44, 175) for y in (33, 46)))
+        self.assertTrue(all(self.pixel(44, y) == 10 for y in range(33, 47)))
+        self.assertTrue(all(self.pixel(175, y) == 15 for y in range(33, 47)))
+        lit = sum(self.pixel(x, y) > 0 for x in range(44, 176) for y in range(33, 47))
+        self.assertLess(lit, 132 * 14 * 2 // 3)  # materially fewer lit pixels than solid fill
         self.assertEqual(self.pixel(175, 40), 15)
         self.assertEqual(self.pixel(50, 56), 0)
         self.model.rms[0] = self.model.peak[0] = 0
         self.model.rms[1] = 32767
         self.assertTrue(self.draw(1))
         self.assertEqual(self.pixel(50, 40), 0)  # previous mode data are cleared
-        self.assertEqual(self.pixel(50, 56), 10)
+        self.assertEqual(self.pixel(50, 56), 0)
+        self.assertEqual(self.pixel(51, 56), 10)
 
     def test_analog_zero_and_full_scale_needle_positions(self):
         self.model = Model()

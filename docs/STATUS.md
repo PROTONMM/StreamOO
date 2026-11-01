@@ -1,5 +1,15 @@
 # Status implementacji
 
+## Najnowsze — szachownicowy bargraph / ADR0084 / 2026-11-01
+
+Na polecenie użytkownika bargraph RMS ma wypełnienie 1×1 px GS10/czerń
+i ciągły obrys GS10; peak nadal ciągły GS15. Wzór nie przesuwa się przy
+zmianie poziomu. Pełny słupek132×14: około42% mniej świecących pikseli.
+Nie jest to zmierzona redukcja prądu ani potwierdzona naprawa pulsowania.
+Użytkownik potwierdził wcześniej poprawne logo i brak pulsowania wskazówek.
+423 host tests, ASan/UBSan i build dr ESP-IDF6.1 PASS. Podgląd
+build/bargraph-checker.png. Wygląd/wynik na OLED OPEN; agent nie flashował.
+
 ## Najnowsze — kontrolowany test pulsowania OLED / ADR0083 / 2026-11-01
 
 Użytkownik: pulsowanie widoczne gołym okiem, dół w rytm słupków, wyżej

@@ -93,6 +93,10 @@ Animacja testu trwa teraz 20 s (całość około 38 s). Nowy cykl wymaga testu O
 
 ## Część 04g — wymienne widżety
 
+Aktualizacja ADR0084: słupki RMS mają szachownicę1×1 px GS10/czerń
+z ciągłym obrysem GS10; znacznik peak GS15 pozostaje ciągły. Wzór jest
+nieruchomy względem kanału. Wygląd i wpływ na pulsowanie panelu OPEN.
+
 Nowa warstwa `ui_widgets` renderuje spectrum, bargraph L/R z peak oraz dwa
 mierniki analogowe przez wspólny canvas/bounds/model. [ADR 0010](adr/0010-visualization-widgets.md)
 określa API i granice odpowiedzialności. Rysowanie nie wykonuje analizy DSP.

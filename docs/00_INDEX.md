@@ -32,6 +32,7 @@ Pulsowanie/prążki OLED, FPS UI a skanowanie panelu:
 `OLED_TIMING_BRINGUP.md`, `adr/0082-oled-pulsation-investigation.md`.
 Kontrolowany test transferów i obciążenia OLED:
 `adr/0083-oled-controlled-load-and-transfer-probe.md`.
+Szachownica i ciągły obrys bargraphu: `adr/0084-checkerboard-bargraph.md`.
 
 Etap 04b i canvas: `adr/0004-independent-4bpp-canvas.md`.
 

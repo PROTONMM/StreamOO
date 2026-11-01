@@ -3,7 +3,10 @@
 2026-11-01. Zgłoszenie: lekkie pulsowanie oraz poziome prążki na bargraph
 i spectrum. Użytkownik potwierdził widoczność gołym okiem: dół pulsuje
 w rytm wizualizacji, wyżej czasem na ułamek sekundy przygasa napis.
-Zachowanie logo bez transferów i przyczyna, w tym wpływ zasilania: OPEN.
+Użytkownik potwierdził poprawny wygląd logo i brak pulsowania wskazówek.
+Przyczyna, w tym wpływ zasilania: OPEN. ADR0084 zmienia zwykły bargraph
+na szachownicę z obrysem; pięć syntetycznych faz poniżej pozostaje bez zmian,
+aby zachować oryginalne wzorce kontrolne. Wynik nowego wyglądu OLED OPEN.
 
 ## Nowy test rozdzielający przyczyny — ADR0083
 

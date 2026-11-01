@@ -30,7 +30,13 @@ static void bargraph(streamoo_canvas_t *canvas, streamoo_rect_t b,
     for (unsigned channel = 0; channel < 2; ++channel) {
         const int16_t y = b.y + channel * lane + 1;
         const int16_t width = scale(model->rms[channel], b.width);
-        streamoo_canvas_fill(canvas, (streamoo_rect_t){b.x, y, width, lane - 2}, 10);
+        streamoo_canvas_outline(canvas, (streamoo_rect_t){b.x, y, width, lane - 2}, 10);
+        /* Fixed 1px checkerboard inside the moving bar's continuous outline.
+         * Anchor parity to the lane, so changing RMS never shifts the texture. */
+        for (int16_t row = 1; row < lane - 3; ++row) {
+            for (int16_t column = 1 + ((row + 1) & 1); column < width - 1; column += 2)
+                streamoo_canvas_pixel(canvas, b.x + column, y + row, 10);
+        }
         if (model->peak[channel]) {
             const int16_t x = b.x + scale(model->peak[channel], b.width - 1);
             streamoo_canvas_line(canvas, x, y, x, y + lane - 3, 15);

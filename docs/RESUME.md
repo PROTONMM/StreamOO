@@ -1,5 +1,12 @@
 # Punkt wznowienia StreamOO
 
+## Najnowsze — szachownica bargraphu / ADR0084
+
+Logo wygląda poprawnie, wskazówki nie pulsują (potwierdzenie użytkownika).
+Bargraph na jego polecenie: szachownica1×1 GS10/czerń, ciągła ramka GS10,
+peak GS15. 423 host tests, ASan/UBSan, build dr PASS. Do wgrania i oceny
+wyglądu oraz pulsowania; przyczyna nadal OPEN. Bez zmian spectrum/audio.
+
 ## Najnowsze — pulsowanie OLED / ADR0083
 
 Gołym okiem dół pulsuje w rytm słupków; wyżej czasem przygasa tekst.
