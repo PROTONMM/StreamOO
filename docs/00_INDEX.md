@@ -138,6 +138,9 @@ FLAC: pierwszy negatywny odbiór micro na S3 i rozszerzenie prób hostowych:
 FLAC: pewny wybór SDKCONFIG i kontrola binarki przed flash:
 `adr/0080-verified-flac-build-selection.md`, `../tools/build_flac.py`.
 
+Python SDK w wrapperze niezależnie od Pythona rodzica:
+`adr/0081-idf-python-for-flac-builds.md`.
+
 Rzeczywisty kodek i Wi-Fi RSSI w HOME: `adr/0044-live-codec-and-wifi-info.md`.
 
 Sprawdzanie playlisty/kodeków na komputerze: `PLAYLIST_PROBE.md`, `adr/0045-host-playlist-stream-probe.md`.

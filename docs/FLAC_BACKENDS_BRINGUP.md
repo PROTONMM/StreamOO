@@ -1,5 +1,18 @@
 # Porównanie dekoderów FLAC na ESP32-S3
 
+ADR0081: wrapper korzysta z Pythona wskazanego przez IDF_PYTHON_ENV_PATH
+lub środowiska pasującego do wersji SDK, nawet jeśli samo python3 wskazuje
+inny venv/system. Nie rozwiązuje symlinku Pythona do /usr/bin. Po zmianie
+interpretera zachowuje stary katalog kompilacji i tworzy świeży. Narzędzia
+SDK nadal wymagają eksportu środowiska:
+
+```sh
+. "$IDF_PATH/export.sh"
+python3 tools/build_flac.py dr flash --port /dev/ttyUSB0
+```
+
+Pierwsza linia wrappera `ESP-IDF Python: ...` powinna wskazywać venv SDK.
+
 ADR0080 koryguje polecenia wgrywania: samo `-B build/flac-dr` nie wybiera
 backendu. Logc7f8d36f i ELF2262539b9 z tego katalogu nadal miały micro.
 Do porównań używaj sprawdzającego skryptu:

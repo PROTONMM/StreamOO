@@ -1,5 +1,18 @@
 # Punkt wznowienia StreamOO
 
+## Najnowsze — poprawiony Python dla build_flac.py / ADR0081
+
+Po rich_click wrapper nie używa już bezwarunkowo sys.executable. Wybiera
+IDF_PYTHON_ENV_PATH/bin/python lub canonical venv zgodny z wersją SDK,
+ustawia środowisko potomne i nie rozwiązuje symlinku do /usr/bin/python3.
+Zmiana interpretera zachowuje stary build jako previous-python-N i tworzy
+świeży katalog; sdkconfig.flac-* oraz managed_components pozostają.
+418 host tests i native dr build z rodzicem /usr/bin/python3 PASS.
+
+Użytkownik: aktywować SDK przez . "$IDF_PATH/export.sh", następnie
+python3 tools/build_flac.py dr flash --port /dev/ttyUSB0. Oczekiwany log
+backend=dr_flac-0.13.4; nadal czekamy na właściwy odsłuch dr. Agent nie flashuje.
+
 ## Najnowsze — pewny wybór dr i pomyłka poprzedniego polecenia / ADR0080
 
 Logc7f8d36f i ELF2262539b9 w build/flac-dr nadal micro. Samo -B w instrukcji

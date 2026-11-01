@@ -17,6 +17,36 @@ BACKENDS = {
 }
 
 
+def idf_python(idf, environ):
+    """Select IDF's interpreter, independently of the Python running this helper."""
+    subdir = "Scripts" if os.name == "nt" else "bin"
+    executable = "python.exe" if os.name == "nt" else "python"
+    explicit = environ.get("IDF_PYTHON_ENV_PATH")
+    if explicit:
+        candidate = Path(explicit).expanduser() / subdir / executable
+        if not candidate.is_file():
+            raise RuntimeError(f"IDF_PYTHON_ENV_PATH has no Python: {candidate}. Activate ESP-IDF6.1 first.")
+        return candidate
+    # The SDK's canonical environment naming follows get_python_env_path() in
+    # idf_tools.py. Match this SDK version; never choose an unrelated IDF env.
+    version_file = Path(idf).resolve().parents[1] / "tools/cmake/version.cmake"
+    version_text = version_file.read_text()
+    major = re.search(r"set\(IDF_VERSION_MAJOR\s+(\d+)\)", version_text)
+    minor = re.search(r"set\(IDF_VERSION_MINOR\s+(\d+)\)", version_text)
+    if not major or not minor:
+        raise RuntimeError("Cannot determine the SDK version. Activate ESP-IDF6.1 first.")
+    version = major[1] + "." + minor[1]
+    tools_path = Path(environ.get("IDF_TOOLS_PATH", str(Path.home() / ".espressif")))
+    environments = tools_path / "python_env"
+    preferred = environments / f"idf{version}_py{sys.version_info.major}.{sys.version_info.minor}_env" / subdir / executable
+    if preferred.is_file():
+        return preferred
+    candidates = sorted(path for path in environments.glob(f"idf{version}_py*_env/{subdir}/{executable}") if path.is_file())
+    if len(candidates) == 1:
+        return candidates[0]
+    raise RuntimeError(f"Cannot select one ESP-IDF{version} Python environment. Activate that SDK or set IDF_PYTHON_ENV_PATH.")
+
+
 def select_backend(text, backend):
     """Preserve all other settings; write exactly one choice for this backend."""
     symbols = {"CONFIG_STREAMOO_FLAC_" + item[0] for item in BACKENDS.values()}
@@ -52,6 +82,14 @@ def main(argv=None):
     idf = Path(idf_path) / "tools/idf.py" if idf_path else shutil.which("idf.py")
     if not idf or not Path(idf).is_file():
         parser.error("Activate the ESP-IDF6.1 environment first (IDF_PATH or idf.py required).")
+    python = idf_python(idf, os.environ)
+    # Keep the venv executable path: resolving its symlink to /usr/bin/python3
+    # would lose Python's virtual-environment discovery and recreate this bug.
+    environment = dict(os.environ)
+    environment.update(IDF_PYTHON_ENV_PATH=str(python.parent.parent),
+                       VIRTUAL_ENV=str(python.parent.parent), PYTHON=str(python))
+    environment["PATH"] = str(python.parent) + os.pathsep + environment.get("PATH", "")
+    print(f"ESP-IDF Python: {python}", flush=True)
     # Keep configuration outside build/: fullclean must not discard the choice.
     config = ROOT / f"sdkconfig.flac-{args.backend}"
     source = config if config.exists() else ROOT / "sdkconfig"
@@ -59,14 +97,28 @@ def main(argv=None):
         source = ROOT / "sdkconfig.defaults"
     config.write_text(select_backend(source.read_text(), args.backend))
     build_dir = ROOT / "build" / f"flac-{args.backend}"
-    command = [sys.executable, str(idf), "-C", str(ROOT), "-B", str(build_dir),
+    command = [str(python), str(idf), "-C", str(ROOT), "-B", str(build_dir),
                "-D", "SDKCONFIG=" + str(config)]
-    subprocess.run(command + ["build"], cwd=ROOT, check=True)
+    cache = build_dir / "CMakeCache.txt"
+    if cache.exists():
+        configured = re.search(r"^PYTHON:[^=\n]+=(.+)$", cache.read_text(), re.M)
+        if configured and os.path.abspath(configured[1]) != os.path.abspath(python):
+            # A clean CMake directory is required after an interpreter change.
+            # Preserve old ELF/logs and avoid IDF fullclean hooks that can also
+            # remove the project's shared managed_components directory.
+            number = 1
+            backup = build_dir.with_name(build_dir.name + f"-previous-python-{number}")
+            while backup.exists():
+                number += 1
+                backup = build_dir.with_name(build_dir.name + f"-previous-python-{number}")
+            build_dir.rename(backup)
+            print(f"ESP-IDF Python changed; previous build preserved at {backup}", flush=True)
+    subprocess.run(command + ["build"], cwd=ROOT, env=environment, check=True)
     size, digest = verify(build_dir, args.backend)
     print(f"Verified FLAC backend={BACKENDS[args.backend][1].decode()} bytes={size} SHA256={digest}", flush=True)
     if args.action == "flash":
         port = ["-p", args.port] if args.port else []
-        subprocess.run(command + port + ["flash"], cwd=ROOT, check=True)
+        subprocess.run(command + port + ["flash"], cwd=ROOT, env=environment, check=True)
     return 0
 
 

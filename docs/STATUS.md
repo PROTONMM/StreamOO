@@ -1,5 +1,18 @@
 # Status implementacji
 
+## Najnowsze — Python SDK we wrapperze FLAC / ADR0081 / 2026-11-01
+
+Błąd rich_click wynikał z przekazania sys.executable=/usr/bin/python3
+do idf.py. Teraz wrapper wybiera interpreter IDF_PYTHON_ENV_PATH, a bez
+zmiennej środowisko zgodne z wersją SDK; zachowuje ścieżkę symlinku venv.
+Build/flash dostają spójne zmienne Python/PATH. Przy zmianie interpretera
+stary build jest zachowywany jako previous-python-N, konfiguracja nie ginie.
+Pełne narzędzia IDF nadal wymagają export.sh.
+
+418 host tests PASS, w tym 9 testów wrappera. Build dr z systemowego python3
+i innym VIRTUAL_ENV wybrał Python SDK6.1 i przeszedł kontrolę backendu.
+Firmware i pakiety Python bez zmian; agent nie flashował.
+
 ## Najnowsze — poprawiony wybór buildu FLAC / ADR0080 / 2026-11-01
 
 Logc7f8d36f nadal używa micro, potwierdzone także SHA ELF2262539b9

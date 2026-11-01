@@ -54,6 +54,7 @@ class FlacBuildTests(unittest.TestCase):
                 (artifact / "config/sdkconfig.h").write_text("#define CONFIG_STREAMOO_FLAC_MICRO 1\n")
                 (artifact / "streamoo.bin").write_bytes(b"micro-flac-0.3.0\0")
             with patch.object(build, "ROOT", root), patch.dict(build.os.environ, {"IDF_PATH": str(root)}), \
+                    patch.object(build, "idf_python", return_value=root / "idf-venv/bin/python"), \
                     patch.object(build.subprocess, "run", side_effect=fake_run) as run:
                 with self.assertRaises(RuntimeError):
                     build.main(["dr", "flash", "--port", "/dev/unused"])
@@ -71,11 +72,64 @@ class FlacBuildTests(unittest.TestCase):
                     (artifact / "config/sdkconfig.h").write_text("#define CONFIG_STREAMOO_FLAC_DR 1\n")
                     (artifact / "streamoo.bin").write_bytes(b"dr_flac-0.13.4\0")
             with patch.object(build, "ROOT", root), patch.dict(build.os.environ, {"IDF_PATH": str(root)}), \
+                    patch.object(build, "idf_python", return_value=root / "idf-venv/bin/python"), \
                     patch.object(build.subprocess, "run", side_effect=fake_run) as run, \
                     contextlib.redirect_stdout(io.StringIO()):
                 self.assertEqual(build.main(["dr", "flash", "--port", "/dev/unused"]), 0)
                 self.assertEqual(run.call_count, 2)
                 for call in run.call_args_list:
                     self.assertIn("SDKCONFIG=" + str(root / "sdkconfig.flac-dr"), call.args[0])
+                    self.assertEqual(call.args[0][0], str(root / "idf-venv/bin/python"))
+                    self.assertEqual(call.kwargs["env"]["IDF_PYTHON_ENV_PATH"], str(root / "idf-venv"))
                 self.assertIn("CONFIG_BOARD_PIN=6", (root / "sdkconfig.flac-dr").read_text())
                 self.assertEqual((root / "sdkconfig").read_text(), "CONFIG_STREAMOO_FLAC_MICRO=y\nCONFIG_BOARD_PIN=6\n")
+
+    def test_explicit_idf_environment_preserves_venv_symlink_path(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp); (root / "bin").mkdir()
+            (root / "bin/python").symlink_to(build.sys.executable)
+            selected = build.idf_python(root / "unused-idf.py", {"IDF_PYTHON_ENV_PATH": str(root)})
+            self.assertEqual(selected, root / "bin/python")
+            self.assertNotEqual(str(selected), build.sys.executable)
+
+    def test_missing_explicit_environment_does_not_fall_back_to_system_python(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            with self.assertRaises(RuntimeError):
+                build.idf_python(Path(tmp) / "idf.py", {"IDF_PYTHON_ENV_PATH": tmp})
+
+    def test_discovers_only_matching_sdk_version(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp); (root / "sdk/tools/cmake").mkdir(parents=True)
+            (root / "sdk/tools/cmake/version.cmake").write_text("set(IDF_VERSION_MAJOR 6)\nset(IDF_VERSION_MINOR 1)\n")
+            for version in ("5.5", "6.1"):
+                executable = root / f"tools/python_env/idf{version}_py3.12_env/bin/python"
+                executable.parent.mkdir(parents=True); executable.touch()
+            selected = build.idf_python(root / "sdk/tools/idf.py", {"IDF_TOOLS_PATH": str(root / "tools")})
+            self.assertEqual(selected, root / "tools/python_env/idf6.1_py3.12_env/bin/python")
+
+    def test_changed_idf_python_preserves_previous_build_and_shared_sources(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp); (root / "tools").mkdir()
+            (root / "tools/idf.py").write_text("")
+            (root / "sdkconfig").write_text("CONFIG_STREAMOO_FLAC_MICRO=y\n")
+            artifact = root / "build/flac-dr"; artifact.mkdir(parents=True)
+            (artifact / "CMakeCache.txt").write_text("PYTHON:FILEPATH=/previous-idf-venv/bin/python\n")
+            (root / "managed_components").mkdir()
+            (root / "managed_components/keep.h").write_text("untouched")
+            def fake_run(command, **kwargs):
+                self.assertTrue((root / "sdkconfig.flac-dr").exists())
+                if command[-1] == "build":
+                    self.assertTrue((root / "build/flac-dr-previous-python-1/CMakeCache.txt").exists())
+                    (artifact / "config").mkdir(parents=True)
+                    (artifact / "config/sdkconfig.h").write_text("#define CONFIG_STREAMOO_FLAC_DR 1\n")
+                    (artifact / "streamoo.bin").write_bytes(b"dr_flac-0.13.4\0")
+                else:
+                    self.fail("Unexpected flash action")
+            with patch.object(build, "ROOT", root), patch.dict(build.os.environ, {"IDF_PATH": str(root)}), \
+                    patch.object(build, "idf_python", return_value=root / "idf-venv/bin/python"), \
+                    patch.object(build.subprocess, "run", side_effect=fake_run) as run, \
+                    contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(build.main(["dr", "build"]), 0)
+                self.assertEqual([call.args[0][-1] for call in run.call_args_list], ["build"])
+                self.assertTrue((root / "sdkconfig.flac-dr").exists())
+                self.assertEqual((root / "managed_components/keep.h").read_text(), "untouched")
