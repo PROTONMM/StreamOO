@@ -1,5 +1,22 @@
 # Status implementacji
 
+## Najnowsze — audyt RAM, odzysk9792B statycznego DRAM / ADR0098 / 2026-11-01
+
+Raport MEMORY_AUDIT: duże alokacje internal/PSRAM, rozmiary ABI S3 z DWARF,
+stosy i high-water z logu, ramki -fstack-usage. Znaleziono nieużywany tor
+testowy: AUDIO_CONTROL_TEST/AAC i I2S_SMOKE_TEST nadal włączone w normalnym
+profilu. Zadania były pomijane przy sieci, ale bufory pozostawały w RAM.
+Domyślnie testy wyłączone, sieć jawnie zachowuje I2S_ISR_IRAM_SAFE=y.
+Opcje prywatnego root/dr uaktualnione; diagnostyka nadal dostępna opt-in.
+
+ELF: stały DRAM59464→49672B (mniej9792), IRAM text mniej80B, binarka
+1574288→1531776B (mniej42512). Bufory testowe i osadzony AAC usunięte przez
+linker. 474 host tests i native build PASS. Runtime heap po zmianie OPEN;
+nie obiecujemy minimum11344+9792, bo alokacje/ruch/fragmentacja są zmienne.
+Bez zmian PCM/TCP/dekodera/DSP/fill/stosów, bez flash agenta.
+Świeża generacja defaults także potwierdza testy off i IRAM-safe I2S;
+profil dr/hardware/early init/TCP23040/SNTP3 zachowany.
+
 ## Najnowsze — domyślny profil i HTTPS po UTC / ADR0097 / 2026-11-01
 
 Zwykły build wybiera sprawdzony dr_flac + hardware AES/SHA + early init,

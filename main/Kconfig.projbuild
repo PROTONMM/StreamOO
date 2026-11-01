@@ -12,6 +12,7 @@ menu "StreamOO Configuration"
     config STREAMOO_NETWORK_AP_TEST
         bool "Secured SoftAP bring-up TEST (private build password required)"
         default y
+        select I2S_ISR_IRAM_SAFE
         help
             Starts StreamOO-XXXXXX WPA2 AP using a private external JSON file.
             Missing secret leaves Wi-Fi disabled. No portal/STA/HTTP yet.
@@ -115,7 +116,7 @@ menu "StreamOO Configuration"
         config STREAMOO_AUDIO_CONTROL_TEST
             bool "PCM source controlled by encoder VOL/PLAY TEST"
             depends on STREAMOO_ENCODER_UI_TEST
-            default y
+            default n
             select I2S_ISR_IRAM_SAFE
             help
                 Starts in STOP with restored volume. PLAY sends the selected
@@ -154,7 +155,7 @@ menu "StreamOO Configuration"
                 analysis must never block the PCM audio consumer.
         config STREAMOO_I2S_SMOKE_TEST
             bool "Run finite left/right I2S tone TEST at startup"
-            default y
+            default n
             select I2S_ISR_IRAM_SAFE
             help
                 Ignored while continuous audio control TEST is enabled.

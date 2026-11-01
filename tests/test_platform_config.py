@@ -19,6 +19,12 @@ class PlatformTests(unittest.TestCase):
         self.assertNotIn('LWIP_SNTP_STARTUP_DELAY',data)
         self.assertIn('# CONFIG_LWIP_SNTP_STARTUP_DELAY is not set',(ROOT/'sdkconfig.defaults').read_text())
 
+    def test_radio_defaults_disable_unused_fixture_buffers_but_keep_i2s_cache_safe(self):
+        defaults=(ROOT/'sdkconfig.defaults').read_text()
+        for symbol in ('STREAMOO_AUDIO_CONTROL_TEST','STREAMOO_I2S_SMOKE_TEST'):
+            self.assertIn('# CONFIG_'+symbol+' is not set',defaults)
+        self.assertEqual(mod.parse(ROOT/'sdkconfig.defaults')['I2S_ISR_IRAM_SAFE'],'y')
+
     def test_versioned_defaults_match_n16r8(self):
         self.assertEqual(mod.check_platform(mod.parse(ROOT / 'sdkconfig.defaults')), [])
 

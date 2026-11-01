@@ -58,10 +58,12 @@ CONFIG=r'''
 #define CONFIG_LWIP_TCP_WND_DEFAULT 23040
 #define CONFIG_LWIP_TCP_RECVMBOX_SIZE 18
 #define CONFIG_LWIP_TCP_MSS 1440
+#ifndef TEST_RADIO
 #ifndef TEST_FINITE
 #define CONFIG_STREAMOO_AUDIO_CONTROL_TEST 1
 #else
 #define CONFIG_STREAMOO_I2S_SMOKE_TEST 1
+#endif
 #endif
 '''
 HARNESS=r'''
@@ -92,7 +94,9 @@ int main(int argc,char **argv){
  assert(display==1 && network==1);assert(player==(mode!=0));
  if(mode)assert(!controlled && !finite);
  else {
-#ifdef TEST_FINITE
+#ifdef TEST_RADIO
+ assert(!controlled&&!finite);
+#elif defined(TEST_FINITE)
  assert(finite==1 && !controlled);
 #else
  assert(controlled==1 && !finite);
@@ -112,8 +116,8 @@ class APAudioStartupTests(unittest.TestCase):
             (base/name).write_text('#include "common.h"\n')
         shutil.copyfile(ROOT/'main/main.c',base/'app.c');(base/'test.c').write_text(HARNESS)
         cls.binaries=[]
-        for mode in ('controlled','finite'):
-            binary=base/mode;flags=['-DTEST_FINITE'] if mode=='finite' else []
+        for mode in ('controlled','finite','radio'):
+            binary=base/mode;flags=['-DTEST_FINITE'] if mode=='finite' else ['-DTEST_RADIO'] if mode=='radio' else []
             subprocess.run(['cc','-std=c11','-Wall','-Wextra','-Werror',*flags,'-I'+str(base),
                 str(base/'app.c'),str(base/'test.c'),'-o',str(binary)],check=True)
             cls.binaries.append(binary)
@@ -126,3 +130,5 @@ class APAudioStartupTests(unittest.TestCase):
 
     def test_clock_storage_failure_preserves_startup(self):self.run_case(0,3)
     def test_crypto_failure_stops_before_audio_or_network(self):self.run_case(0,4)
+    def test_radio_profile_has_no_diagnostic_audio_with_or_without_network(self):
+        self.run_case(2,1);self.run_case(2,0)

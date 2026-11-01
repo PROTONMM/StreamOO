@@ -1,5 +1,19 @@
 # Punkt wznowienia StreamOO
 
+## Najnowsze — audyt RAM i usunięcie nieużywanej diagnostyki / ADR0098
+
+Raport MEMORY_AUDIT gotowy. Wyłączenie domyślnych AUDIO_CONTROL_TEST oraz
+I2S_SMOKE_TEST usuwa ich statyczne bufory; były nadal w ELF mimo braku
+startu zadań przy sieci. IRAM-safe I2S zachowane osobnym select sieci i defaults.
+Pomiar ELF:9792B mniej DRAM,80B mniej IRAM,42512B mniej firmware.
+PCM/TCP/preroll/dekoder/DSP/stosy bez zmian. 474 testy i zwykły build PASS.
+
+Standardowy flash `idf.py -p /dev/ttyUSB0 flash`, potem kilka minut FLAC
+z logiem heap/minimum/largest. Nowy runtime heap OPEN; odsłuch nie jest
+obecnie dostępny. Nie zwiększać TCP. Następny osobny krok: presja WWW /
+przełączanie i inne kodeki, dopiero potem dalsze przeniesienia/cięcie stosów.
+Display miał tylko572B zapasu, więc jego stos nie zmniejszany.
+
 ## Najnowsze — zwykły build i bramka czasu HTTPS / ADR0097
 
 Normalny profil: dr_flac/hardware AES/SHA/early init/TCP23040/mailbox18.

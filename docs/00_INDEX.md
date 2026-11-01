@@ -54,6 +54,8 @@ Obejście do testu sprzętowego AES/SHA: inicjalizacja crypto przed I2S:
 `adr/0096-early-hardware-crypto-preparation.md`.
 Zwykły profil dr/hardware/TCP23040, bramka UTC dla HTTPS i szybki start SNTP:
 `adr/0097-default-radio-profile-and-https-clock-gate.md`.
+Audyt RAM/stosów i oszczędność przez wyłączenie nieużywanej diagnostyki:
+`MEMORY_AUDIT.md`, `adr/0098-radio-memory-audit-and-unused-fixtures.md`.
 
 Etap 04b i canvas: `adr/0004-independent-4bpp-canvas.md`.
 

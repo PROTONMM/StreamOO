@@ -93,6 +93,12 @@ CONFIG_STREAMOO_CRYPTO_EARLY_INIT=y
 CONFIG_LWIP_TCP_WND_DEFAULT=23040
 CONFIG_LWIP_TCP_RECVMBOX_SIZE=18
 
+# Radio uses the live player. Diagnostic source buffers must not occupy DRAM
+# when their tasks never start. They remain opt-in through menuconfig.
+# CONFIG_STREAMOO_AUDIO_CONTROL_TEST is not set
+# CONFIG_STREAMOO_I2S_SMOKE_TEST is not set
+CONFIG_I2S_ISR_IRAM_SAFE=y
+
 # Start SNTP as soon as STA gets an address; native servers are fallbacks.
 CONFIG_LWIP_SNTP_MAX_SERVERS=3
 # CONFIG_LWIP_SNTP_STARTUP_DELAY is not set

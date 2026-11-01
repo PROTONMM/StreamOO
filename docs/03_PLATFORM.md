@@ -1,9 +1,13 @@
 # 03 — Platforma, architektura i zasoby
 
+Aktualny audyt internal/PSRAM i stosów: [MEMORY_AUDIT](MEMORY_AUDIT.md),
+ADR0098. Domyślne źródła testowe wyłączone:9792B mniej stałego DRAM,
+bez zmniejszenia stosów, PCM lub TCP. Runtime heap po zmianie OPEN.
+
 ADR0096: opcjonalny boot-only probe crypto przed audio/siecią zajmuje
 sprzętowe kanały SDK przed I2S. SHA-256 i AES-CBC1024B z kontrolą wyników;
-bufory internal DMA zwalniane przed audio, bez zmian fill/ISR. Domyślnie n,
-profil --hardware-crypto; skuteczność wobec TLS po I2S pozostaje OPEN.
+bufory internal DMA zwalniane przed audio, bez zmian fill/ISR. ADR0097
+włącza go w domyślnym profilu; skuteczność wobec TLS po I2S pozostaje OPEN.
 
 **USTALONE:** własne komponenty ESP-IDF zamiast monolitu Arduino. Rozdzielone warstwy: HAL display, UI, input, station storage, network/provision, web, player, stream reader, decoder, PCM output, DSP i app state.
 
