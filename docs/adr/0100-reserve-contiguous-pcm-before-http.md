@@ -1,6 +1,6 @@
 # ADR0100: rezerwacja ciągłego PCM przed HTTP/TLS
 
-Data: 2026-11-01. Status: zaimplementowane do odbioru na S3.
+Data: 2026-11-01. Status: pozytywny krótki odbiór S3 z odsłuchem; długi soak OPEN.
 
 ## Dowód i diagnoza
 
@@ -71,3 +71,28 @@ MP3 Antyradio, następnie FLAC/HLS i kilka przełączeń między nimi oraz STOP/
 PLAY. Aktualne firmware nadal ma cichy UART; nazwa/ID przy zmianie stacji
 oraz błędy pozostają. Nie trzeba usuwać zapisanych sieci ani playlisty.
 Nowy runtime heap/largest, log błędów i odsłuch S3 OPEN.
+
+
+## Wynik użytkownika — 2026-11-01
+
+Log wklejony bezpośrednio w rozmowie, minicom13:29:28: firmware47e44c5,
+ELF5fa63ece.9 wpisów Station changed od799 do178019ms — początkowe
+Antyradio i8 zmian: TEST HLS64k-heaacv2-stereo, TEST AAC-LC stereo128k,
+TEST Ogg Vorbis stereo64k, TEST Ogg Opus stereo64k, TEST FLAC native
+lossless, powrót Antyradio, Antyradio AAC-LC, Radio357. W tym fragmencie
+brak pcm_memory/NO_MEM, Connect/Stream failed, Underrun oraz resetu po boot.
+To obserwacja podanego fragmentu; nazwy stacji nie są odczytem parametrów
+rzeczywistego dekodera.
+
+Na pytanie o poprawne granie wszystkich wybranych stacji, również FLAC
+po kolejnych przełączeniach, użytkownik potwierdził: „Tak, wszystkie grały
+poprawnie”. Pozytywny odbiór krótkiej próby zmiany stacji i odsłuchu
+po poprawce alokacji PCM. Cichy UART zgodny z ADR0099: identyfikacja
+firmware i zmiany stacji, bez okresowych raportów/śladów enkodera.
+
+Nie zmieniano kodu po tym wyniku, nie powtarzano kompilacji i testów
+regresji przy aktualizacji wyłącznie dokumentacji. Kontrola diff PASS.
+Nie znamy runtime heap/largest ani szczegółowych liczników przy wyłączonej
+diagnostyce. Długi soak, presja WWW, Wi-Fi flap i osobny końcowy CRC FLAC
+z poprzedniego logu nadal OPEN. Nie uznajemy krótkiego odsłuchu za dowód
+usunięcia wszystkich możliwych błędów pamięci lub źródła.

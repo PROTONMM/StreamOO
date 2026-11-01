@@ -1,5 +1,22 @@
 # Punkt wznowienia StreamOO
 
+## Najnowsze — pozytywny odbiór PCM i przełączania / ADR0100 / 2026-11-01
+
+Firmware47e44c5/ELF5fa63ece, log minicom13:29:28: start Antyradio i8 zmian
+stacji przez~178s od boot. W podanym fragmencie brak pcm_memory/NO_MEM,
+Connect/Stream failed i Underrun. Nazwy obejmują HLS HE-AACv2, AAC-LC,
+Ogg Vorbis, Ogg Opus, FLAC, Antyradio MP3/AAC i Radio357.
+Użytkownik potwierdził odsłuch: wszystkie wybrane stacje grały poprawnie,
+również FLAC i po kolejnych przełączeniach. Krótki odbiór poprawki PCM
+pozytywny. Cichy UART działa zgodnie z ADR0099, bez okresowej diagnostyki.
+
+Kod bez kolejnych zmian; tylko zapis dowodu w dokumentacji/diff check.
+Dłuższy soak, presja WWW/przełączania, Wi-Fi flap i runtime heap/largest
+pozostają do sprawdzenia; przy potrzebie liczników użyć osobnego builda
+DIAGNOSTICS. Osobny final_frame_crc z poprzedniego logu nadal OPEN.
+Nie powtarzać ponownie flash tylko z powodu tego wpisu dokumentacji.
+
+
 ## Najnowsze — PCM przed HTTP/TLS / ADR0100 / 2026-11-01
 
 Log98f94c6a pochodzi z3834551/ELFb2e60f14 (sprzed cichego UART), dwa starty.
