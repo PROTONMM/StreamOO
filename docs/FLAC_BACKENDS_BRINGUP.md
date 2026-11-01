@@ -1,5 +1,9 @@
 # Porównanie dekoderów FLAC na ESP32-S3
 
+Aktualny wynik micro-flac z logu5c378192: zapas CPU, ale błędy LPC/CRC
+i niedobory; stabilność nieodebrana. Następny wariant do odsłuchu: dr_flac.
+Szczegóły pomiarów i granice wniosków w ADR0079.
+
 ADR0078. Dostępne trzy osobne warianty firmware. Wybór przy kompilacji,
 bez zmiany playlisty ani NVS. Domyślnie micro-flac; tylko jeden backend FLAC
 jest używany w danym buildzie. MP3/AAC/Vorbis/Opus pozostają w Espressif.
@@ -104,3 +108,9 @@ tej samej stacji: oba backendy i reset oddają bajtowo zgodny PCM z FFmpeg.
 CPU, płynność, zajętość pamięci i odbiór fizycznego S3 nadal OPEN.
 Hostowe czasy nie stanowią pomiaru wydajności na Xtensa. Nie deklarować,
 że wymiana biblioteki rozwiązała wszystkie niedobory sieci lub PCM.
+
+ADR0079 rozszerza próby hostowe o micro32 (logika bitreader/CLZ32 przy
+ABI64), deterministycznie zmienne porcje1..4096B i ponowne użycie wejścia.
+Nie zmienia oryginalnych plików upstream ani nie testuje ASM Xtensa.
+Także starszy capture178 pełnych ramek przechodzi te warianty; nie jest
+to odtworzenie dokładnej ramki wywołującej nowy błąd LPC/CRC.

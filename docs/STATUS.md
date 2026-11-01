@@ -1,5 +1,22 @@
 # Status implementacji
 
+## Najnowsze — pomiary micro-flac na S3 / ADR0079 / 2026-11-01
+
+Log5c378192 z dd9e9a0: micro-flac ma zapas CPU (średnie22 próbek:
+CPU0 44.3%,CPU1 35.9%,player29.3%), codec_max13.098ms/block_max28.041ms.
+Stabilność FAIL: vendor-13 BAD_LPC_PARAMS w gen3 i-3 CRC_MISMATCH w gen4,
+przy ReaderESP_OK/HTTP200/ended0; osobno45 raportów Underrun i empty ring.
+Dwie początkowe próby TLS-0x2700 przed graniem to osobne błędy weryfikacji
+certyfikatu; szczegółowa przyczyna OPEN. Nie dowodzą utraty Wi-Fi podczas audio.
+
+Rozszerzono testy o wariant32-bitowego bitreadera/CLZ micro na hoście,
+losowane deterministycznie porcje i ponowne użycie/zatrucie wejścia. Kod
+firmware i przypięte biblioteki bez zmian.409 testów i backend6 ASan/UBSan
+PASS;178 ramek wcześniejszego capture również PASS w obu szerokościach
+micro i dr, z sześcioma profilami porcji/resetem. Błędów nowego utworu nie
+odtworzono. Następny test sprzętowy: dr_flac, te same bufory/transport;
+szczegóły ADR0079 i FLAC_BACKENDS_BRINGUP. Agent nie flashował.
+
 ## Najnowsze — wybieralne backendy FLAC / ADR0078 / 2026-11-01
 
 Na polecenie użytkownika FLAC wybierany w menuconfig: Espressif2.6.2,

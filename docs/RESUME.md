@@ -1,5 +1,24 @@
 # Punkt wznowienia StreamOO
 
+## Najnowsze — micro-flac S3 niestabilny, następny dr / ADR0079 / 2026-11-01
+
+Log5c378192: CPU0~44%,CPU1~36%,player~29%, decode max13.1ms, blok28ms;
+micro zwraca-13 BAD_LPC_PARAMS i-3 CRC_MISMATCH przy aktywnym ReaderESP_OK.
+45 raportów Underrun, źródło często empty. Pierwsze dwie próby boot TLS
+mają-0x2700, potem połączenie działa; nie mieszać ich z późniejszymi decode
+fail. Konkretna przyczyna błędów i niedoborów nadal OPEN, micro nieodebrany.
+
+Testy rozszerzone: 32-bitowy bitreader/CLZ na64-bitowym hoście przez kopie
+tymczasowe, porcje zmienne, ponownie używane/zatruwane wejście.409 testów,
+backend6 ASan/UBSan i178 ramek wcześniejszego capture PASS. Nie jest to
+emulacja32-bitowego ABI/ASM. Oryginalne źródła i firmware bez zmian.
+
+Teraz test dr_flac z takim samym transportem/progami/buforami/widgetem.
+Przygotowany katalog build/flac-dr (SDKCONFIG build/flac_dr.sdkconfig);
+alternatywnie wybór dr w menuconfig. Potwierdzić log backend=dr_flac-0.13.4.
+Zebrać CPU/perf/buffers/Underrun i błędy od startu, minimum5min/zmiana utworu.
+Agent nie flashował, nie zmieniał NVS ani prywatnych playlist.
+
 ## Najnowsze — trzy backendy FLAC / ADR0078 / 2026-11-01
 
 W Kconfig StreamOO/Audio and DSP wybór Espressif/micro-flac/dr_flac;
