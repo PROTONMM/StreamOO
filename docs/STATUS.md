@@ -1,5 +1,22 @@
 # Status implementacji
 
+## Najnowsze — FLAC: „Brak danych”, pomiar dopływu / ADR0089 / 2026-11-01
+
+Log5ad29183: dr_flac, 82 Underrun w gen3, dwa Recover, bez Reject i bez
+restartu po udanym połączeniu. Użytkownik nie miał możliwości odsłuchu.
+Widać puste wejście/PCM i BUFFERING; średni CPU42,7/43,4%, FFT~2,84ms,
+gaps/drop1. To nie dowód braku wydajności CPU ani problemu z OLED.
+Wersja firmware niepodana, brak OLED UI nie potwierdza build6b90399.
+
+Dodano Delivery zamiast okresowego Decode flow: delta/tempo body HTTP,
+wiek ostatniego odczytu, max czasu read i czekania na zapis do ring oraz
+max czasu poprzednich pakietów logów playera. Underrun także z wiekiem RX.
+Bez zmiany buforów, progów, dekodera, FFT lub I2S. Nie deklarujemy naprawy;
+następny log ma rozdzielić dopływ, backpressure i blokowanie na logach.
+434 testy hostowe PASS, w tym symulacje czasu HTTP/backpressure i pakietu
+logowania; native build dr/ESP-IDF6.1 PASS. Agent nie flashował.
+Szczegóły i odbiór ADR0089.
+
 ## Najnowsze — OLED odebrany, wysyłki po zmianie pikseli / ADR0088 / 2026-11-01
 
 Użytkownik potwierdził usunięcie problemu wyświetlacza po ostatniej

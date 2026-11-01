@@ -138,8 +138,26 @@ typedef struct {
   size_t pcm_max_bytes,pcm_at_max;
   size_t compressed_min,compressed_max;
   uint32_t pcm_min,pcm_max;
+  uint32_t log_max_us;
+  int64_t delivery_at;
+  uint64_t delivery_bytes;
   bool levels_seen,flac;
 } decode_profile_t;
+static void log_delivery(decode_profile_t *p, const streamoo_http_stream_info_t *i) {
+  int64_t now=esp_timer_get_time();
+  uint64_t interval=now>p->delivery_at ? (uint64_t)(now-p->delivery_at) : 0;
+  uint64_t bytes=i->received_bytes>=p->delivery_bytes ? i->received_bytes-p->delivery_bytes : 0;
+  int64_t age=i->last_rx_us>0 && now>=i->last_rx_us ? (now-i->last_rx_us)/1000 : -1;
+  /* HTTP body throughput, including ICY/manifest data; never codec bitrate.
+   * Maxima are cumulative for this reader session. A full ring can itself
+   * delay the next HTTP read, so interpret rx_age alongside push_wait_max. */
+  ESP_LOGI("player","Delivery: interval_ms=%" PRIu64 " rx_delta=%" PRIu64
+    " body_kbps=%" PRIu64 " rx_age_ms=%" PRId64 " read_max_us=%" PRIu64
+    " push_wait_max_us=%" PRIu64 " log_max_us=%" PRIu32 " wait_empty=%" PRIu32 " wait_busy=%" PRIu32,
+    interval/1000,bytes,interval?bytes*8000/interval:0,age,i->read_max_us,
+    i->push_wait_max_us,p->log_max_us,i->source_empty_waits,i->source_busy_waits);
+  p->delivery_at=now;p->delivery_bytes=i->received_bytes;
+}
 static uint32_t duration_us(int64_t start){
   int64_t elapsed=esp_timer_get_time()-start;
   return elapsed<=0?0:elapsed>UINT32_MAX?UINT32_MAX:(uint32_t)elapsed;
@@ -155,7 +173,7 @@ static esp_err_t decode(void *context,uint8_t *in,size_t n,bool eos,uint8_t *pcm
     p->pcm_after_max=streamoo_pcm_count(p->ring);p->pcm_at_max=r->produced;}
   return error;
 }
-static void log_decode_profile(decode_profile_t *p,const streamoo_live_decode_t *s,bool refill){
+static void log_decode_profile(decode_profile_t *p,const streamoo_live_decode_t *s,bool refill,bool flow){
   if(!s)return;
   ESP_LOGI("player","Decode perf: codec_max=%" PRIu32 "us block_max=%" PRIu32
     "us codec_total=%" PRIu64 "us calls=%" PRIu64 " backend=%s avg_call=%" PRIu64 "us",
@@ -165,7 +183,7 @@ static void log_decode_profile(decode_profile_t *p,const streamoo_live_decode_t 
     " src_wait=%" PRIu64 " budget_yield=%" PRIu64 " reads=%" PRIu64,
     p->pcm_at_max,p->pcm_max_bytes,
     p->pcm_before_max,p->pcm_after_max,s->source_waits,s->work_yields,s->source_calls);
-  ESP_LOGI("player","Decode flow: fetched=%" PRIu64 " produced=%" PRIu64 " cache=%zu input=%zu refill=%u",
+  if(flow)ESP_LOGI("player","Decode flow: fetched=%" PRIu64 " produced=%" PRIu64 " cache=%zu input=%zu refill=%u",
     s->fetched_total,s->produced_total,s->pcm_bytes-s->pcm_cursor,sizeof s->input,(unsigned)refill);
   if(p->levels_seen){
     ESP_LOGI("player","Buffer interval: compressed_min=%zu compressed_max=%zu PCM_min=%" PRIu32 " PCM_max=%" PRIu32,
@@ -370,6 +388,7 @@ static void task(void *context) {
       if (!decoder && info.codec_known &&
           (queued >= reserve || (info.ended && queued))) {
         flac_refill=false;profile=(decode_profile_t){.flac=info.codec==STREAMOO_CODEC_FLAC};logged_underflows=0;
+        profile.delivery_at=esp_timer_get_time();profile.delivery_bytes=info.received_bytes;
         /* Reserve the contiguous DMA/ISR ring before codec allocations can
          * fragment internal RAM. Large decode scratch belongs in PSRAM. */
         failure_stage = "pcm_memory";
@@ -426,10 +445,11 @@ static void task(void *context) {
         if(before.underflows!=logged_underflows) {
           ESP_LOGW("player","Underrun gen=%" PRIu64 " low=%" PRIu32
                    " PCM=%" PRIu32 " compressed=%zu cache=%zu pending=%zu"
-                   " wait_empty=%" PRIu32 " wait_busy=%" PRIu32 " refill=%u",
+                   " wait_empty=%" PRIu32 " wait_busy=%" PRIu32 " refill=%u rx_age_ms=%" PRId64,
                    current.generation,before.underflows,streamoo_pcm_count(&ring),
                    queued,pump->pcm_bytes-pump->pcm_cursor,pump->pending,
-                   info.source_empty_waits,info.source_busy_waits,(unsigned)flac_refill);
+                   info.source_empty_waits,info.source_busy_waits,(unsigned)flac_refill,
+                   info.last_rx_us>0 && now>=info.last_rx_us ? (now-info.last_rx_us)/1000 : INT64_C(-1));
           logged_underflows=before.underflows;
         }
         if(flac_refill&&(queued>=reserve||info.ended))flac_refill=false;
@@ -503,7 +523,7 @@ static void task(void *context) {
                  pump ? (unsigned)pump->observed.channels : 0,
                  pump ? (unsigned)pump->observed.bits : 0,current.station_id,name);
         log_transport(&info,current.generation);
-        log_decode_profile(&profile,pump,flac_refill);
+        log_decode_profile(&profile,pump,flac_refill,true);
         if (pump)
           ESP_LOGW("player",
                    "Decode diag gen=%" PRIu64
@@ -540,6 +560,7 @@ static void task(void *context) {
     portEXIT_CRITICAL(&lock);
   }
     if (now - log_at >= 5000000) {
+      int64_t log_started=esp_timer_get_time();
       streamoo_audio_stats_t audio = {0};
       if (output)
         streamoo_audio_output_stats(output, &audio);
@@ -558,7 +579,13 @@ static void task(void *context) {
                pcm.hard_underflows, pcm.restarts,
                (unsigned)uxTaskGetStackHighWaterMark(NULL),
                (unsigned)reader_hwm);
-      log_decode_profile(&profile,pump,flac_refill);
+      /* Delivery replaces the periodic flow line rather than adding another
+       * UART line while the PCM producer is not being serviced. */
+      log_decode_profile(&profile,pump,flac_refill,false);
+      if(session && pump) {
+        streamoo_http_stream_info_t delivery={0};
+        if(streamoo_http_stream_info(session,&delivery))log_delivery(&profile,&delivery);
+      }
       if (meter) {
         streamoo_metering_state_t measurement = {0};
         streamoo_metering_state(meter, &measurement);
@@ -590,6 +617,8 @@ static void task(void *context) {
         current.error = ESP_FAIL;
       }
       log_at = now;
+      uint32_t log_us=duration_us(log_started);
+      if(log_us>profile.log_max_us)profile.log_max_us=log_us;
     }
     vTaskDelay(pdMS_TO_TICKS(5) ? pdMS_TO_TICKS(5) : 1);
   }

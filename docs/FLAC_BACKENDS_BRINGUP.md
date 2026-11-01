@@ -1,5 +1,12 @@
 # Porównanie dekoderów FLAC na ESP32-S3
 
+ADR0089: log5ad29183 nadal ma82 Underrun i2 Recover bez reconnect gen3.
+Użytkownik nie miał możliwości odsłuchu. Nowy build mierzy dopływ i czasy
+HTTP/body oraz okresowego logowania: `player: Delivery`. Ten sam dr i stacja,
+3–5min logu od resetu. Nie zmieniono buforów ani progów; szczegółowe pola
+i ograniczenia w ADR0089. Brak OLED UI i nagłówka wersji w starym załączniku
+nie potwierdza uruchomienia optymalizacji6b90399.
+
 ADR0086: log ae2a00bd ujawnił frame_limit_no_boundary z niezerowym CRC
 po128KiB. Dodano fallback do kolejnej całej ramki z CRC8+CRC16, dopiero
 przy limicie lub błędnym EOS; wpis Recover oznacza pominięte audio.

@@ -37,6 +37,8 @@ Przygasanie w tych samych wierszach: timingi panelu B3/B1:
 `adr/0087-ssd1322-panel-scan-and-phase-timing.md`.
 Transfer OLED po zmianie pikseli, tylko zakres zmienionych wierszy:
 `adr/0088-display-updates-from-frame-differences.md`.
+Niedobory FLAC, dopływ HTTP i opóźnienia logowania:
+`adr/0089-flac-delivery-and-log-latency-measurement.md`.
 
 Etap 04b i canvas: `adr/0004-independent-4bpp-canvas.md`.
 

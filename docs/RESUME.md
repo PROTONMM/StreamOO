@@ -1,5 +1,18 @@
 # Punkt wznowienia StreamOO
 
+## Najnowsze — niedobory FLAC i pomiar HTTP/logów / ADR0089
+
+Załącznik5ad29183: napis „Brak danych”, bez możliwości odsłuchu. dr_flac,
+82 low,2 Recover, gen3 bez reconnect; FIFO i wejście okresowo puste.
+CPU średnio42,7/43,4%, FFT~2,84ms, gaps/drop1. Nie jest to odbiór audio.
+Brak wersji i OLED UI nie potwierdza wgrania6b90399.
+Nowy Delivery zastępuje okresowy flow: HTTP body delta/kbps/age, read max,
+push wait max i poprzedni max czasu pakietu logów. Underrun z RX age.
+Bufory/progi/FFT/I2S bez zmian. Test tego samego dr/FLAC3–5min od resetu,
+z wersją, Delivery/Underrun/Recover/CPU/OLED UI; odsłuch gdy dostępny.
+434 testy hostowe i native dr/ESP-IDF6.1 PASS; agent nie flashował.
+Źródło uszkodzonych bajtów nadal OPEN.
+
 ## Najnowsze — OLED rozwiązany, optymalizacja SPI / ADR0088
 
 Użytkownik potwierdził usunięcie problemu ekranu po ostatnim buildzie;

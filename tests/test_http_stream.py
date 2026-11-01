@@ -36,6 +36,9 @@ HARNESS=r'''
 #include <stdlib.h>
 #include <string.h>
 static int sdk_get_urls,force_source_busy;
+static bool delivery_case;
+static int64_t clock_us=1000000;
+int64_t esp_timer_get_time(void){return clock_us;}
 static int mode,redirected,reads,cleaned,semaphores,allocations,opened,resolved;
 static char selected_url[2049];
 static void (*reader)(void *);static void *reader_context;static jmp_buf completed;
@@ -52,7 +55,7 @@ int xSemaphoreTake(void *p,unsigned wait){(void)wait;if(force_source_busy||!*(in
 int xSemaphoreGive(void *p){*(int *)p=1;return 1;}
 void vSemaphoreDelete(void *p){--semaphores;free(p);}
 int xTaskCreate(void (*fn)(void *),const char *name,unsigned size,void *ctx,unsigned pri,void *handle){(void)name;(void)handle;assert(size>=8192&&pri==3);reader=fn;reader_context=ctx;return mode==7?0:1;}
-void vTaskDelay(unsigned t){(void)t;if(mode==30&&segments)streamoo_http_stream_stop(stream);}
+void vTaskDelay(unsigned t){clock_us+=(int64_t)t*1000;if(delivery_case)force_source_busy=0;if(mode==30&&segments)streamoo_http_stream_stop(stream);}
 unsigned uxTaskGetStackHighWaterMark(void *task){(void)task;return 8000;}
 void vTaskDelete(void *p){(void)p;longjmp(completed,1);}
 int esp_crt_bundle_attach(void *p){(void)p;return ESP_OK;}
@@ -126,11 +129,11 @@ int esp_http_client_close(void *h){(void)h;return ESP_OK;}
 int esp_http_client_get_errno(void *h){assert(h&&!cleaned);return mode==40?104:0;}
 int esp_http_client_get_and_clear_last_tls_error(void *h,int *code,int *flags){assert(h&&!cleaned);*code=mode==40?-0x3000:0;*flags=mode==40?8:0;return mode==40?ESP_FAIL:ESP_OK;}
 int esp_http_client_cleanup(void *h){assert(h);++cleaned;return ESP_OK;}
-int esp_http_client_read(void *h,char *out,int cap){(void)h;++reads;if(mode==9||(mode==8&&reads<=2))return -ESP_ERR_HTTP_EAGAIN;if(mode==6)streamoo_http_stream_stop(stream);if(mode==25&&!resolved){streamoo_http_stream_stop(stream);return -1;}
+int esp_http_client_read(void *h,char *out,int cap){(void)h;++reads;clock_us+=delivery_case&&reads==1?250000:1000;if(delivery_case&&reads==1)force_source_busy=1;if(mode==9||(mode==8&&reads<=2))return -ESP_ERR_HTTP_EAGAIN;if(mode==6)streamoo_http_stream_stop(stream);if(mode==25&&!resolved){streamoo_http_stream_stop(stream);return -1;}
  if(mode==23&&!resolved){memset(out,'x',(size_t)cap);return cap;}
  if(cursor==wire_bytes){return 0;}
  size_t n=wire_bytes-cursor;if(n>(size_t)cap)n=cap;if(mode==1||mode==16||mode==17||mode>=27)n=1;memcpy(out,wire+cursor,n);cursor+=n;return n;}
-int main(int argc,char **argv){assert(argc==2);mode=atoi(argv[1]);
+int main(int argc,char **argv){assert(argc==2||argc==3);mode=atoi(argv[1]);delivery_case=argc==3;
  memcpy(wire,"ID3",3);wire[3]=2;memcpy(wire+4,"StreamTitle='Test';",19);memcpy(wire+36,"abc",3);wire[39]=0;memcpy(wire+40,"def",3);wire_bytes=43;
  if(mode==15||mode==18){memcpy(wire,"fLaCtest",8);wire_bytes=8;}
  if(mode==16||mode==17){memset(wire,0,sizeof wire);memcpy(wire,"OggS",4);wire[5]=2;wire[26]=1;wire[27]=19;
@@ -153,6 +156,10 @@ int main(int argc,char **argv){assert(argc==2);mode=atoi(argv[1]);
  if(!setjmp(completed))reader(reader_context);
  assert(cleaned==1&&!sdk_get_urls);if(mode==8)assert(opened==1);
  streamoo_http_stream_info_t info;assert(streamoo_http_stream_info(stream,&info)&&info.ended);
+ if(delivery_case){assert(mode==0&&info.read_calls==2&&info.received_bytes==43&&info.response_bytes==43);
+  assert(info.last_rx_us==1250000&&info.read_max_us==250000&&info.push_wait_max_us==5000);
+  assert(clock_us==1256000);}
+ if(mode==9)assert(info.last_rx_us==0&&info.read_max_us==1000&&!info.push_wait_max_us&&!info.received_bytes);
  assert(info.bitrate_kbps==((mode==12||mode==28)?192u:mode==43?112u:mode==27||(mode>=36&&mode<=39)||mode==41||mode==44?128u:mode==33?64u:0u));
  if(mode==41||mode==42){assert(info.error==ESP_ERR_NO_MEM&&!strcmp(info.reason,"set_url_failed")&&!strcmp(info.stage,"set_url")&&!strcmp(info.resource,mode==41?"hls_manifest":"playlist"));streamoo_http_stream_stop(stream);assert(streamoo_http_stream_dispose(stream)&&!semaphores&&!allocations);return 0;}
  if(mode==40){assert(info.ended&&info.error==ESP_FAIL&&!strcmp(info.stage,"open")&&!strcmp(info.reason,"http_open")&&info.http_status==0&&info.socket_errno==104&&info.tls_code==-0x3000&&info.tls_flags==8&&info.tls_error==ESP_FAIL);streamoo_http_stream_stop(stream);assert(streamoo_http_stream_dispose(stream)&&!semaphores&&!allocations);return 0;}
@@ -203,6 +210,8 @@ class HTTPStreamTests(unittest.TestCase):
   subprocess.run(['cc','-std=c11','-Wall','-Wextra','-Werror',*os.environ.get('STREAMOO_HTTP_SANITIZE','').split(),*includes,str(base/'test.c'),'components/streaming/streamoo_http_stream.c','components/streaming/streamoo_playlist_resolver.c','components/streaming/streamoo_hls.c','components/streaming/streamoo_icy.c','components/compressed_source/streamoo_buffered_source.c','components/compressed_source/streamoo_byte_source.c','-o',str(cls.binary)],cwd=ROOT,check=True)
  def run_case(self,n):subprocess.run([str(self.binary),str(n)],check=True,timeout=10)
  def test_http_icy_and_metadata_position(self):self.run_case(0)
+ def test_delivery_measures_http_wait_and_ring_backpressure_without_changing_audio(self):
+  subprocess.run([str(self.binary),'0','delivery'],check=True,timeout=10)
  def test_octet_stream_probe_fragmented_bytewise(self):self.run_case(1)
  def test_redirect_upgrade_and_tls_configuration(self):self.run_case(2)
  def test_reject_tls_downgrade(self):self.run_case(3)

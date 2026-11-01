@@ -3,6 +3,7 @@
 #include "esp_heap_caps.h"
 #include "esp_http_client.h"
 #include "esp_log.h"
+#include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
 #include "freertos/task.h"
@@ -82,10 +83,15 @@ static void response_begin(streamoo_http_stream_t *s) {
 }
 static int read_http(streamoo_http_stream_t *s, esp_http_client_handle_t client,
                      char *data, int capacity) {
+  int64_t started = esp_timer_get_time();
   int n = esp_http_client_read(client, data, capacity);
+  int64_t completed = esp_timer_get_time();
+  uint64_t elapsed = completed >= started ? (uint64_t)(completed - started) : 0;
   portENTER_CRITICAL(&info_lock);
   s->info.last_read = n;
+  if (elapsed > s->info.read_max_us) s->info.read_max_us = elapsed;
   if (n > 0) {
+    s->info.last_rx_us = completed;
     s->info.response_bytes += (unsigned)n;
     s->info.received_bytes += (unsigned)n;
   }
@@ -232,11 +238,22 @@ static esp_err_t follow_redirect(streamoo_http_stream_t *s,
 static bool write_audio(streamoo_http_stream_t *s, const uint8_t *data,
                         size_t n) {
   size_t offset = 0;
+  int64_t wait_at = 0;
+  bool waited = false;
   while (offset < n && !atomic_load(&s->stop)) {
     offset +=
         streamoo_buffered_source_write(s->buffer, 1, data + offset, n - offset);
-    if (offset < n)
+    if (offset < n) {
+      if (!waited) { wait_at = esp_timer_get_time(); waited = true; }
       vTaskDelay(pdMS_TO_TICKS(5) ? pdMS_TO_TICKS(5) : 1);
+    }
+  }
+  if (waited) {
+    int64_t now = esp_timer_get_time();
+    uint64_t elapsed = now >= wait_at ? (uint64_t)(now - wait_at) : 0;
+    portENTER_CRITICAL(&info_lock);
+    if (elapsed > s->info.push_wait_max_us) s->info.push_wait_max_us = elapsed;
+    portEXIT_CRITICAL(&info_lock);
   }
   return offset == n;
 }

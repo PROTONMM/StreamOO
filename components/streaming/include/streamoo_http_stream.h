@@ -18,6 +18,10 @@ typedef struct {
   int last_read, socket_errno, tls_code, tls_flags;
   esp_err_t tls_error;
   uint64_t response_bytes, received_bytes, read_calls;
+  /* Session maxima of wall time, outside I2S. last_rx_us marks a positive
+   * HTTP body read (also manifests/ICY), not packet arrival at the NIC. */
+  int64_t last_rx_us;
+  uint64_t read_max_us, push_wait_max_us;
   uint32_t source_empty_waits, source_busy_waits;
   bool hls;
   uint64_t hls_sequence, hls_next, hls_media_sequence;
