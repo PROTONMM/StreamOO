@@ -1,6 +1,7 @@
 build/
 sdkconfig
 sdkconfig.old
+sdkconfig.flac-*
 managed_components/
 .dependencies.lock
 __pycache__/

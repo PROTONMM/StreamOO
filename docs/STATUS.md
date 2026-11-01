@@ -1,5 +1,25 @@
 # Status implementacji
 
+## Najnowsze — poprawiony wybór buildu FLAC / ADR0080 / 2026-11-01
+
+Logc7f8d36f nadal używa micro, potwierdzone także SHA ELF2262539b9
+z build/flac-dr i wygenerowanym nagłówkiem. Poprzednie polecenie agenta
+z samym -B nie gwarantowało SDKCONFIG; nie ma jeszcze odbioru dr na S3.
+Teraz tools/build_flac.py jawnie wybiera SDKCONFIG poza build/, sprawdza
+nagłówek i etykietę binarki przed flash; CMake blokuje pomylenie backendów
+w nazwanych katalogach. Główny sdkconfig i firmware audio bez zmian.
+
+Najmniejszy firmware: micro1516.33KiB,dr1529.83KiB,Espressif1530.52KiB;
+RAM/CPU całego runtime dr nadal OPEN. dr ma dodatkowy cache132KiB+16B.
+W logu micro tylko5 low do21.4s, potem brak nowych do182s; błędów decode
+brak. CPU0/1 średnio41.8%/36.1%,player30.5%. Kierunek dopływ/buforowanie
+pozostaje istotny, bez dowodu winy konkretnego miejsca lub porównania dr.
+
+414 host tests i3 rzeczywiście zweryfikowane buildy PASS. Negatywna próba
+micro w /tmp/.../flac-dr poprawnie przerwana przez CMake. Teraz w środowisku
+IDF: python3 tools/build_flac.py dr flash --port /dev/ttyUSB0.
+Potwierdzić backend=dr_flac-0.13.4 i zebrać log. Agent nie flashował.
+
 ## Najnowsze — pomiary micro-flac na S3 / ADR0079 / 2026-11-01
 
 Log5c378192 z dd9e9a0: micro-flac ma zapas CPU (średnie22 próbek:

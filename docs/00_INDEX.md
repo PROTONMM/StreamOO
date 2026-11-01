@@ -135,6 +135,9 @@ FLAC: wybór Espressif/micro-flac/dr_flac i pomiary06r:
 FLAC: pierwszy negatywny odbiór micro na S3 i rozszerzenie prób hostowych:
 `adr/0079-micro-flac-hardware-log-and-host-coverage.md`.
 
+FLAC: pewny wybór SDKCONFIG i kontrola binarki przed flash:
+`adr/0080-verified-flac-build-selection.md`, `../tools/build_flac.py`.
+
 Rzeczywisty kodek i Wi-Fi RSSI w HOME: `adr/0044-live-codec-and-wifi-info.md`.
 
 Sprawdzanie playlisty/kodeków na komputerze: `PLAYLIST_PROBE.md`, `adr/0045-host-playlist-stream-probe.md`.

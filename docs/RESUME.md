@@ -1,5 +1,22 @@
 # Punkt wznowienia StreamOO
 
+## Najnowsze — pewny wybór dr i pomyłka poprzedniego polecenia / ADR0080
+
+Logc7f8d36f i ELF2262539b9 w build/flac-dr nadal micro. Samo -B w instrukcji
+agenta nie wymuszało właściwego SDKCONFIG po zmianach/czyszczeniu. Stary
+build/flac_dr.sdkconfig zniknął; porównanie dr na S3 nadal nieprzeprowadzone.
+Nowy tools/build_flac.py micro|dr|esp build|flash --port PORT trzyma
+sdkconfig.flac-* poza build/, podaje go jawnie w obu etapach i sprawdza
+nagłówek oraz binarkę przed flash. Nazwane katalogi mają też guard CMake.
+
+Następny test: python3 tools/build_flac.py dr flash --port /dev/ttyUSB0
+(w aktywnym IDF6.1). Oczekiwany backend=dr_flac-0.13.4. Nie korzystać
+z wcześniejszego skrótu samego -B. Bez zmian NVS/playlist i bez erase.
+Agent wykonał tylko buildy.414 host tests,3 sprawdzone buildy i negatywny
+test CMake PASS. Firmware micro1516.33KiB,dr1529.83KiB,Esp1530.52KiB;
+nie oznacza to jeszcze rankingu CPU/RAM runtime. W najnowszym logu micro
+tylko5 Underrun do21.4s, potem stabilne low5 do182s, bez błędu decode.
+
 ## Najnowsze — micro-flac S3 niestabilny, następny dr / ADR0079 / 2026-11-01
 
 Log5c378192: CPU0~44%,CPU1~36%,player~29%, decode max13.1ms, blok28ms;

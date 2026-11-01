@@ -1,5 +1,21 @@
 # Porównanie dekoderów FLAC na ESP32-S3
 
+ADR0080 koryguje polecenia wgrywania: samo `-B build/flac-dr` nie wybiera
+backendu. Logc7f8d36f i ELF2262539b9 z tego katalogu nadal miały micro.
+Do porównań używaj sprawdzającego skryptu:
+
+```sh
+python3 tools/build_flac.py dr build
+python3 tools/build_flac.py dr flash --port /dev/ttyUSB0
+```
+
+Analogicznie `micro` lub `esp`. Każde wywołanie jawnie podaje SDKCONFIG,
+a konfiguracja sdkconfig.flac-dr/micro/esp jest poza build/ i nie trafia do
+repo. Skrypt sprawdza wygenerowany nagłówek oraz etykietę backendu w binarce
+przed flash. Katalogi flac-dr/micro/esp mają też blokadę CMake na inny backend.
+Zwykłe menuconfig dla domyślnego build nadal działa jak poniżej; nie należy
+traktować samej nazwy katalogu jako wyboru konfiguracji.
+
 Aktualny wynik micro-flac z logu5c378192: zapas CPU, ale błędy LPC/CRC
 i niedobory; stabilność nieodebrana. Następny wariant do odsłuchu: dr_flac.
 Szczegóły pomiarów i granice wniosków w ADR0079.
@@ -21,9 +37,10 @@ idf.py menuconfig
 - dr_flac0.13.4 z adapterem pełnych ramek.
 
 Potem zwykłe `idf.py build` i `idf.py -p PORT flash`, bez erase.
-Używaj tego samego katalogu build w menuconfig/build/flash; dla przygotowanego
-wariantu micro jest to `idf.py -B build/simd-check ...`. Zachowaj log i ELF
-każdego wariantu. Rozstrzygający wpis startowy: `decoder: FLAC backend=...`.
+Używaj tego samego katalogu i jawnie tej samej konfiguracji w menuconfig/
+build/flash. Dla porównawczych katalogów korzystaj ze skryptu powyżej.
+Zachowaj log i ELF każdego wariantu. Rozstrzygający wpis startowy:
+`decoder: FLAC backend=...`.
 Sama zmiana sdkconfig.defaults nie nadpisuje istniejącego wyboru w sdkconfig.
 Wybór nie jest przełącznikiem WWW ani automatycznym fallbackiem po błędzie.
 
