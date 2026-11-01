@@ -1,5 +1,16 @@
 # Punkt wznowienia StreamOO
 
+## Najnowsze — FLAC resync po potwierdzonym CRC / ADR0086
+
+Nowy log ae2a00bd/218ecb2: przerwy słyszalne,72 Underrun i dwa odrzucenia
+frame_limit_no_boundary przy128KiB. Źródło błędnych bajtów/CRC OPEN.
+Fallback przy limicie/EOS tylko po CRC8+CRC16 następnej dobrej ramki,
+log Recover, bez powiększania buforów. Naprawiono cache drain dr na EOS.
+427 host tests/ASan/UBSan i native dr PASS; potrzebny odbiór S3.
+Komputer:80s capture,956 pełnych ramek, prawdziwy ICY i3 backendy PCM PASS.
+Użytkownik: OLED przygasa tylko w tych samych wierszach co bargraph,
+na innym firmware OK. Prąd nie jest główną hipotezą; profil timingów ADR0087.
+
 ## Najnowsze — wynik dr_flac i dokładna diagnostyka parsera / ADR0085
 
 Log85dc8a81 z firmware73fa94e potwierdza dr_flac-0.13.4 na S3.121 ostrzeżeń

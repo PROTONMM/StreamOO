@@ -1,5 +1,18 @@
 # Status implementacji
 
+## Najnowsze — FLAC: fallback po CRC / ADR0086 / 2026-11-01
+
+Log ae2a00bd,218ecb2/dr, potwierdza słyszalne przerwy,72 Underrun,
+2x frame_limit_no_boundary przy scan131072 i niezerowym CRC. Przyczyna
+uszkodzenia OPEN. Capture80s na komputerze:956 pełnych ramek, C ICY
+identyczny z niezależnym stripowaniem; PCM dr/micro/micro32 zgodny z FFmpeg.
+Dodano CRC8+CRC16-zweryfikowany fallback przy limicie lub błędnym EOS;
+log Recover. Poprawiono drain cache dr przy odzyskiwaniu na EOS.
+427 host tests i ASan/UBSan recovery PASS. Native dr build PASS.
+Bufory/progi/transport bez zmian. To nie deklaracja usunięcia niedoborów.
+Przygasanie FLAC1500k tylko w wierszach bargraphu potwierdzone; piksele
+tego napisu w rendererze stałe, profil OLED badany osobno (ADR0087).
+
 ## Najnowsze — test dr na S3 i powód odrzucenia FLAC / ADR0085 / 2026-11-01
 
 Log85dc8a81 (73fa94e, ELF1236eebb5) potwierdza dr_flac-0.13.4.121 ostrzeżeń

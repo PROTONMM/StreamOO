@@ -16,7 +16,7 @@
 struct streamoo_flac_alt {
     drflac *decoder;
     esp_es_parse_frame_info_t info;
-    bool bos,opened;
+    bool bos,opened,last_input_cached;
     uint8_t metadata[42],cache[FRAME_CACHE];
     size_t bytes,source_pos,source_header,source_frame;
 };
@@ -107,18 +107,28 @@ esp_err_t streamoo_flac_alt_open(streamoo_flac_alt_t **out) {
 esp_err_t streamoo_flac_alt_process(streamoo_flac_alt_t *s,uint8_t *p,size_t n,bool eos,
     uint8_t *pcm,size_t cap,streamoo_decode_result_t *r) {
     *r=(streamoo_decode_result_t){0};
-    int ready=packet(s,false);
-    if(!ready){
+    int ready=packet(s,s->last_input_cached);
+    if(!ready&&!s->last_input_cached){
         size_t take=n;if(eos&&take>1)--take; /* Keep final byte pending until cached frames drain. */
         if(take>FRAME_CACHE-s->bytes)take=FRAME_CACHE-s->bytes;
         if(!take){r->codec_status=-1004;return ESP_ERR_INVALID_SIZE;}
         memcpy(s->cache+s->bytes,p,take);s->bytes+=take;r->consumed=take;
-        ready=packet(s,eos&&take==n);
+        if(eos&&take==n){s->last_input_cached=true;--r->consumed;}
+        ready=packet(s,s->last_input_cached);
     }
     if(ready<0){r->codec_status=-1001;return ESP_ERR_INVALID_RESPONSE;}
-    if(!ready)return ESP_OK;
+    if(!ready){
+        if(s->last_input_cached){r->codec_status=-1005;return ESP_ERR_INVALID_RESPONSE;}
+        return ESP_OK;
+    }
     esp_err_t error=decode_frame(s,pcm,cap,r);
-    if(error==ESP_OK){size_t used=s->info.frame_size;memmove(s->cache,s->cache+used,s->bytes-used);s->bytes-=used;}
+    if(error==ESP_OK){
+        size_t used=s->info.frame_size;memmove(s->cache,s->cache+used,s->bytes-used);s->bytes-=used;
+        /* A recovery at EOF may reveal multiple good cached frames. The
+         * caller must retain its final byte until all of them are drained;
+         * it is already cached and must never be appended a second time. */
+        if(s->last_input_cached&&!s->bytes){++r->consumed;s->last_input_cached=false;}
+    }
     return error;
 }
 esp_err_t streamoo_flac_alt_reset(streamoo_flac_alt_t *s) {

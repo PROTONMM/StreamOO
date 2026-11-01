@@ -149,6 +149,8 @@ Python SDK w wrapperze niezależnie od Pythona rodzica:
 
 FLAC: pierwszy potwierdzony wynik dr na S3 i diagnostyka parsera:
 `adr/0085-dr-flac-hardware-log-and-parser-diagnostics.md`.
+FLAC: odzyskanie synchronizacji dopiero po zweryfikowaniu kolejnej ramki:
+`adr/0086-flac-crc-verified-resynchronization.md`.
 
 Rzeczywisty kodek i Wi-Fi RSSI w HOME: `adr/0044-live-codec-and-wifi-info.md`.
 

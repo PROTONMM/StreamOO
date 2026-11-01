@@ -121,3 +121,16 @@ class FlacBackendTests(unittest.TestCase):
   broken=Path(self.tmp.name)/'broken.flac';broken.write_bytes(data)
   for name,binary in self.binaries.items():
    with self.subTest(backend=name):subprocess.run([str(binary),str(broken),str(Path(self.tmp.name)/'bad.pcm'),'4096','0','1'],check=True)
+
+ def test_dr_resync_preserves_pcm_after_damaged_frame(self):
+  path=self.fixture('noise24');base=Path(self.tmp.name);data=bytearray(path.read_bytes())
+  packets=json.loads(subprocess.check_output(['ffprobe','-v','error','-show_packets','-of','json',str(path)]))['packets']
+  first=packets[0];data[int(first['pos'])+int(first['size'])-1]^=1
+  broken=base/'recoverable.flac';broken.write_bytes(data)
+  expected=subprocess.check_output(['ffmpeg','-v','error','-i',str(path),'-af',
+      'atrim=start_sample='+str(first['duration']),'-f','s32le','-'])
+  for chunk in (0,1,7,257,4096,65536):
+   with self.subTest(chunk=chunk):
+    output=base/'recovered.pcm'
+    subprocess.run([str(self.binaries['dr']),str(broken),str(output),str(chunk),'0','0'],check=True)
+    self.assertEqual(output.read_bytes(),expected*2)

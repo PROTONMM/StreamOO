@@ -6,11 +6,29 @@
 #endif
 
 typedef struct {
-    size_t scan;
+    size_t scan,candidate,recovery,recovery_frame;
     uint32_t metadata_left;
-    uint16_t crc;
+    uint16_t crc,candidate_crc;
+    uint8_t candidate_header;
     bool metadata,last_metadata;
 } flac_parse_t;
+
+static void reset_scan(flac_parse_t *s)
+{
+    s->scan=s->candidate=s->recovery=s->recovery_frame=0;
+    s->crc=s->candidate_crc=0;s->candidate_header=0;
+}
+static esp_es_parse_err_t recover(flac_parse_t *s,esp_es_parse_frame_info_t *info)
+{
+    /* Never skip to a sync word alone: the candidate's complete frame must
+     * pass CRC16, and its header has already passed CRC8. Reparse it fresh. */
+    info->skipped_size=(uint32_t)s->recovery;
+#ifdef ESP_PLATFORM
+    ESP_LOGW("flac_parse","Recover skipped=%zu validated_frame=%zu prefix_crc16=%04x",
+        s->recovery,s->recovery_frame,(unsigned)s->crc);
+#endif
+    reset_scan(s);return ESP_ES_PARSE_ERR_OK;
+}
 
 /* Error-only diagnostics, outside the I2S path. Keep the precise parser
  * rejection visible even when an adapter maps it to a generic codec status. */
@@ -90,26 +108,50 @@ esp_es_parse_err_t streamoo_flac_parse(esp_es_parse_raw_t *in,esp_es_parse_frame
     if(s->scan>n)return reject(in,info,ESP_ES_PARSE_ERR_FAIL,"cache_length_regressed");
     while(s->scan+4<=n){
         size_t at=s->scan;
-        if(at>=header+2&&!s->crc&&p[at]==255&&(p[at+1]&0xfe)==0xf8){
+        if(at>=header+2&&p[at]==255&&(p[at+1]&0xfe)==0xf8){
             size_t next=0,left=n-at;if(left>16)left=16;
             streamoo_flac_header_result_t r=streamoo_flac_boundary_header(p+at,left,&next);
             if(r==STREAMOO_FLAC_MORE&&!in->eos)break;
             if(r==STREAMOO_FLAC_FRAME){
-                info->frame_size=(uint32_t)at;s->scan=0;s->crc=0;
-                return ESP_ES_PARSE_ERR_OK;
+                if(!s->crc){
+                    info->frame_size=(uint32_t)at;reset_scan(s);
+                    return ESP_ES_PARSE_ERR_OK;
+                }
+                /* Remember a validated fallback, but never skip early: a
+                 * valid verbatim payload can itself contain full FLAC frames.
+                 * Use recovery only at the original limit or failed EOF CRC. */
+                if(!s->recovery&&s->candidate&&at>=s->candidate+s->candidate_header+2&&!s->candidate_crc){
+                    s->recovery=s->candidate;s->recovery_frame=at-s->candidate;
+                }
+                s->candidate=at;s->candidate_crc=0;s->candidate_header=(uint8_t)next;
             }
         }
-        if(at>=STREAMOO_FLAC_MAX_FRAME_BYTES)return reject(in,info,ESP_ES_PARSE_ERR_NOT_SUPPORT,"frame_limit_no_boundary");
+        if(at>=STREAMOO_FLAC_MAX_FRAME_BYTES){
+            if(s->recovery)return recover(s,info);
+            return reject(in,info,ESP_ES_PARSE_ERR_NOT_SUPPORT,"frame_limit_no_boundary");
+        }
+        if(s->candidate)s->candidate_crc=advance(s->candidate_crc,p[at]);
         s->crc=advance(s->crc,p[s->scan++]);
     }
     if(in->eos){
+        if(n>STREAMOO_FLAC_MAX_FRAME_BYTES&&s->recovery)return recover(s,info);
         if(n>STREAMOO_FLAC_MAX_FRAME_BYTES||n<header+2)return reject(in,info,ESP_ES_PARSE_ERR_WRONG_HEADER,"final_frame_size");
-        while(s->scan<n)s->crc=advance(s->crc,p[s->scan++]);
+        while(s->scan<n){
+            if(s->candidate)s->candidate_crc=advance(s->candidate_crc,p[s->scan]);
+            s->crc=advance(s->crc,p[s->scan++]);
+        }
+        if(s->crc&&!s->recovery&&s->candidate&&n>=s->candidate+s->candidate_header+2&&!s->candidate_crc){
+            s->recovery=s->candidate;s->recovery_frame=n-s->candidate;
+        }
+        if(s->crc&&s->recovery)return recover(s,info);
         if(s->crc)return reject(in,info,ESP_ES_PARSE_ERR_WRONG_HEADER,"final_frame_crc");
-        info->frame_size=(uint32_t)n;s->scan=0;
+        info->frame_size=(uint32_t)n;reset_scan(s);
         return ESP_ES_PARSE_ERR_OK;
     }
-    if(n>=STREAMOO_FLAC_MAX_FRAME_BYTES+16)return reject(in,info,ESP_ES_PARSE_ERR_NOT_SUPPORT,"frame_limit_no_boundary");
+    if(n>=STREAMOO_FLAC_MAX_FRAME_BYTES+16){
+        if(s->recovery)return recover(s,info);
+        return reject(in,info,ESP_ES_PARSE_ERR_NOT_SUPPORT,"frame_limit_no_boundary");
+    }
     info->frame_size=ES_PARSE_REPARSE_FRAME_SIZE;
     return ESP_ES_PARSE_ERR_OK;
 }

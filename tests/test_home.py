@@ -251,6 +251,25 @@ class HomeTests(unittest.TestCase):
         self.assertFalse(self.lib.streamoo_ui_draw_home(C.byref(self.ui), C.byref(self.canvas), 2000))
         self.assertEqual(bytes(self.guard), before)
 
+    def test_flac_bitrate_pixels_do_not_change_with_widget_load(self):
+        s = self.snapshot()
+        s.codec = Text(b'FLAC', 4)
+        s.bitrate_kbps = 1500
+        reference = None
+        for kind in range(3):
+            self.assertTrue(self.lib.streamoo_ui_set_visualization(C.byref(self.ui), kind))
+            for level in (0, 4096, 16384, 32767):
+                s.visualization.rms[:] = (level, level)
+                s.visualization.peak[:] = (level, level)
+                s.visualization.bands[:] = [level] * 64
+                self.assertTrue(self.apply(s))
+                frame = self.draw()
+                text_area = b''.join(frame[y * 128:y * 128 + 22] for y in range(32, 48))
+                if reference is None:
+                    reference = text_area
+                    self.assertTrue(any(reference))
+                self.assertEqual(text_area, reference)
+
     def test_bitrate_and_rssi_extremes_stay_in_bounds(self):
         s = self.snapshot()
         s.bitrate_kbps = 0xffffffff

@@ -1,5 +1,11 @@
 # Porównanie dekoderów FLAC na ESP32-S3
 
+ADR0086: log ae2a00bd ujawnił frame_limit_no_boundary z niezerowym CRC
+po128KiB. Dodano fallback do kolejnej całej ramki z CRC8+CRC16, dopiero
+przy limicie lub błędnym EOS; wpis Recover oznacza pominięte audio.
+To nie naprawa źródła błędnych danych ani zwykłych niedoborów PCM.
+Nowa próba z tym samym dr ma porównać Recover/Reject i Underrun oraz odsłuch.
+
 ADR0085: log85dc8a81 potwierdził dr_flac-0.13.4 na S3 (firmware73fa94e).
 121 ostrzeżeń Underrun i3 błędy parsera adaptera -1001, mimo aktywnego
 ReaderESP_OK/HTTP200. CPU0/1 średnio41,36%/43,98%; bez dowodu stałego

@@ -149,6 +149,65 @@ int parse(uint8_t *p,unsigned n,int bos,int eos,unsigned *out){
         self.lib.reset(); self.parse(self.metadata(), bos=True)
         self.assertEqual(self.parse(frames[0][:16] + b'\0' * (128 * 1024 + 16))[0], -6)
 
+    def test_resync_only_after_a_complete_crc_valid_frame(self):
+        _, frames = self.packets('noise')
+        for fault in ('crc', 'missing', 'extra', 'two_bad'):
+            bad = bytearray(frames[0]); bad[-1] ^= 1
+            if fault == 'missing': del bad[100:103]
+            if fault == 'extra': bad[100:100] = b'noise'
+            lost = 1
+            if fault == 'two_bad':
+                second = bytearray(frames[1]); second[-1] ^= 1
+                bad += second; lost = 2
+            damaged = bytes(bad) + b''.join(frames[lost:])
+            for chunk in (7, 257, 4096):
+                with self.subTest(fault=fault, chunk=chunk):
+                    self.lib.reset(); self.parse(self.metadata(), bos=True)
+                    cache = b''; cursor = 0; skipped = 0; got = []
+                    while cursor < len(damaged) or cache:
+                        piece = damaged[cursor:cursor + chunk]
+                        cache += piece; cursor += len(piece)
+                        while cache:
+                            code, out = self.parse(cache, eos=cursor == len(damaged))
+                            if code == -4 or code == 0 and out[0] == 0x7fffffff: break
+                            self.assertEqual(code, 0)
+                            if out[1]: skipped += out[1]; used = out[1]
+                            else: used = out[0]; got.append(cache[:used])
+                            self.assertGreater(used, 0); cache = cache[used:]
+                        if cursor == len(damaged) and cache: self.fail('Stalled at EOF')
+                    self.assertEqual(skipped, len(bad))
+                    self.assertEqual(got, frames[lost:])
+
+    def test_valid_verbatim_frame_with_embedded_flac_is_never_skipped(self):
+        def crc(data, bits, polynomial):
+            value = 0
+            for byte in data:
+                value ^= byte << (bits - 8)
+                for _ in range(8):
+                    value = ((value << 1) ^ (polynomial if value & (1 << (bits - 1)) else 0)) & ((1 << bits) - 1)
+            return value
+        embedded = []
+        for number in range(1, 5):
+            inner = bytes.fromhex('ff f8 59 1c') + bytes([number])
+            inner += bytes([crc(inner, 8, 7)])
+            inner += bytes(8)  # Two constant subframes, 24-bit zero samples.
+            embedded.append(inner + crc(inner, 16, 0x8005).to_bytes(2, 'big'))
+        header = bytes.fromhex('ff f8 59 1c 00')
+        header += bytes([crc(header, 8, 7)])
+        left = bytearray(4608 * 3)
+        payload = b''.join(embedded)
+        left[100:100 + len(payload)] = payload
+        frame = header + b'\x02' + left + b'\x02' + bytes(4608 * 3)
+        frame += crc(frame, 16, 0x8005).to_bytes(2, 'big')
+        self.assertEqual(crc(frame, 16, 0x8005), 0)
+        self.parse(self.metadata(), bos=True)
+        for end in range(257, len(frame), 257):
+            code, out = self.parse(frame[:end])
+            self.assertEqual((code, out[1]), (0, 0))
+            self.assertEqual(out[0], 0x7fffffff)
+        code, out = self.parse(frame, eos=True)
+        self.assertEqual((code, out[0], out[1]), (0, len(frame), 0))
+
     def test_large_file_metadata_skipped_in_chunks(self):
         meta = bytearray(self.metadata()); meta[4] = 0
         self.parse(meta, bos=True)

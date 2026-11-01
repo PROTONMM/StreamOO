@@ -1,5 +1,10 @@
 # 06 — Audio, dekodery, I²S, player state
 
+ADR0086: potwierdzone frame_limit_no_boundary przy niezerowym CRC.
+Parser potrafi odzyskać następne poprawne ramki po CRC8+CRC16 przy
+dotychczasowym limicie/EOS; log Recover. Przyczyna uszkodzenia OPEN,
+bufory/progi bez zmian, potrzebny odbiór S3 zwykłych niedoborów i resync.
+
 ADR0085: dr_flac potwierdzony na S3;121 ostrzeżeń Underrun i3 przerwane
 sesje przez parser adaptera (-1001), Reader nadal ESP_OK/HTTP200.
 Średnie CPU0/1 około41/44%, stabilność nieodebrana. Dodano dokładny
