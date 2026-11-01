@@ -1,4 +1,23 @@
-# Aktualny odbiór07j — FFT SIMD i CPU (ADR0074)
+# Aktualny odbiór07k — terminowość RMS/FFT (ADR0075)
+
+Po zwykłym build/flash, bez erase, testuj HLS64 HE-AACv2 przez60s z FFT,
+30s bargraph i ponownie FFT, następnie HE-AAC bez HLS oraz FLAC.
+Log startowy ma teraz potwierdzić `RMS/FFT core=0 priority=4`.
+Profiler ma pokazywać audio_levels affinity0x1, a meters core_samples=N/0.
+Porównuj przyrosty drop/gaps oraz last/avg/max_fft i ciągłość frames,
+zachowując low/hard/starts audio. Sprawdź też kilka zmian stacji: procenty
+nowych readerów nie mogą przepełniać się wskutek ponownego użycia TCB.
+
+Pomiar6f27c8b: HLS FFT zwykle2–4ms, ale max wall513.6ms przy PCM32,
+low0/hard0/starts1. Core0 około36%, core1 około59%; analiza około7.5% CPU.
+Wcześniej task po pierwszym FPU przypinał się przypadkowo do0 albo1,
+priority1 pozwalał reader3 lub dekoderowi4 odsunąć analizę. Nowy core0/
+priority4 ma ograniczyć wywłaszczenia przez reader; skuteczność OPEN na S3.
+Nie zmieniono okna/algorytmu SIMD, bufora PCM, expiry ani prezentacji.
+
+---
+
+# Odbiór07j — FFT SIMD i CPU (ADR0074)
 
 1. Jeżeli na płytce jest jeszcze53e7e2b, zbierz punkt odniesienia przed
    nowym flashem: działający HLS HE-AACv2, FFT na HOME,60s logu. W logu

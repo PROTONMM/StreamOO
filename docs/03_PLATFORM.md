@@ -14,6 +14,12 @@
 ## Rdzenie
 Startowe założenie: zadania Wi-Fi/stack zgodnie z konfiguracją ESP-IDF, ciężkie dekodowanie/DSP na rdzeniu dobranym pomiarami. Nie wymuszaj arbitralnie powinowactwa bez profilowania.
 
+Po pomiarach ADR0075: player/dekoder core1 priority4, reader HTTP core0
+priority3, RMS/FFT core0 priority4. ESP-IDF przypina task używający FPU,
+więc nie należy zakładać migracji tasku stworzonego bez affinity.
+Profiler dopasowuje handle i xTaskNumber, aby usunięty reader i nowy task
+pod tym samym adresem nie dawały przepełnionej delty runtime.
+
 ## Pamięć
 - 16MiB flash: jedna factory0x10000/0xEF0000, LittleFS0xF00000/1MiB, NVS/PHY zachowane. Bez OTA na polecenie użytkownika (ADR0055).
 - 8 MB PSRAM na compressed ring, większe PCM i dane WWW/stacji.

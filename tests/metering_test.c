@@ -31,8 +31,8 @@ void vTaskDelete(void *p){
     pthread_cond_broadcast(&changed);pthread_mutex_unlock(&scheduler);pthread_exit(NULL);
 }
 static void *run(void *unused){(void)unused;pause_worker();entry(argument);abort();}
-int xTaskCreate(void (*fn)(void *),const char *name,unsigned stack,void *ctx,unsigned priority,void *handle){
-    assert(!strcmp(name,"audio_levels")&&stack==4096&&priority==1&&!handle);
+int xTaskCreatePinnedToCore(void (*fn)(void *),const char *name,unsigned stack,void *ctx,unsigned priority,void *handle,int core){
+    assert(!strcmp(name,"audio_levels")&&stack==4096&&priority==4&&!handle&&core==0);
     if(fail_task)return 0;
     entry=fn;argument=ctx;permit=paused=finished=false;
     assert(!pthread_create(&worker,NULL,run,NULL));

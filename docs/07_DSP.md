@@ -1,10 +1,16 @@
 # 07 — FFT, Hann, SIMD/DSP, wskaźniki
 
+Aktualne scheduling07k/ADR0075: po pomiarach audio_levels jawnie core0,
+priority4, ponad reader3. Log potwierdził automatyczne przypinanie przez FPU,
+FFT2–4ms i sporadyczne czasy ścienne do514ms przy ciągłym PCM. Pomiary CPU
+mają zapas; odbiór nowej polityki na S3 OPEN, procedura DSP_BRINGUP.
+
 Aktualny backend07j/ADR0074: oficjalny ESP-DSP1.8.2 sc16 AES3 z instrukcjami
 PIE/SIMD na S3, domyślnie włączony. Własny float pozostaje do A/B po
 wyłączeniu flagi StreamOO. Skalowanie blokowe z odtworzeniem dBFS,
 wyrównanie16B i prywatna tabela firmware-lifetime; metering nadal droppable.
-Build/host/NumPy PASS, pomiar czasu i CPU oraz odbiór sprzętowy OPEN.
+Build/host/NumPy PASS, wykonanie SIMD i pierwszy pomiar CPU potwierdzone;
+nie ma jeszcze kontrolowanego pomiaru speedupu float-vs-sc16 ani soak.
 Procedura: [DSP_BRINGUP](DSP_BRINGUP.md).
 
 **USTALONE:** trzy przełączalne widgety audio: FFT, 2-kanałowy bargraph i dwa małe wskaźniki analogowe. Analiza audio przed regulacją głośności, nie w callbacku I²S ani blokującej ścieżce dekodowania.

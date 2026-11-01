@@ -1,5 +1,21 @@
 # Punkt wznowienia StreamOO
 
+## Najnowsze — harmonogram RMS/FFT / ADR0075 / 2026-11-01
+
+Pomiary6f27c8b: SIMD2–4ms, HLS sporadycznie513.6ms czasu ściennego przy
+ciągłym PCM; CPU0~36%,CPU1~59%, metering7.5%. FPU przypinało zadanie do
+pierwszego rdzenia użycia. Teraz audio_levels jawnie core0 priority4 ponad
+reader3, dekoder nadal core1. Profiler dopasowuje handle+xTaskNumber,
+chroni reset runtime po ponownym wykorzystaniu adresu TCB przy zmianie stacji.
+
+396 testów hostowych, metering/profiler ASan/UBSan i konfiguracje PASS;
+native IDF6.1 build PASS0x17e2c0 (build/simd-check).
+Po build/flash HLS64 HE-AACv2 minimum60s FFT/30s bargraph/powrót,
+dalej bezpośredni HE-AAC i FLAC. Oczekuj core0 priority4, affinity0x1,
+core_samples=N/0; porównać przyrosty drop/gaps i czasy FFT oraz low/hard/starts.
+Poprawa na S3 OPEN; bez zmian I2S, ringów, SIMD i maskowania UI.
+Agent nie flashował, nie kasować NVS/LittleFS.
+
 ## Najnowsze — FFT SIMD i pomiary / ADR0074 / 2026-11-01
 
 FFT domyślnie używa ESP-DSP1.8.2/sc16 AES3, potwierdzone instrukcje SIMD

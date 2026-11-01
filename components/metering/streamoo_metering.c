@@ -5,9 +5,14 @@
 #include <string.h>
 #include "esp_heap_caps.h"
 #include "esp_timer.h"
+#ifdef ESP_PLATFORM
+#include "esp_log.h"
+#endif
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include <stdatomic.h>
+
+enum { METERING_CORE = 0, METERING_PRIORITY = 4 };
 
 struct streamoo_metering {
     streamoo_pcm_ring_t tap;
@@ -20,6 +25,10 @@ struct streamoo_metering {
 static portMUX_TYPE lock = portMUX_INITIALIZER_UNLOCKED;
 static void analyze(void *context) {
     streamoo_metering_t *m = context;
+#ifdef ESP_PLATFORM
+    ESP_LOGI("metering","Task placement: RMS/FFT core=%d priority=%u",
+             xPortGetCoreID(),(unsigned)METERING_PRIORITY);
+#endif
     streamoo_metering_state_t current = {.generation = m->state.generation};
     streamoo_ballistics_t ballistics;
     streamoo_ballistics_init(&ballistics, esp_timer_get_time());
@@ -120,7 +129,11 @@ esp_err_t streamoo_metering_open(uint64_t generation, streamoo_metering_t **out)
     m->state.generation = generation;
     streamoo_pcm_ring_init(&m->tap, m->storage, 4);
     streamoo_levels_init(&m->analyzer, STREAMOO_LEVELS_WINDOW_DEFAULT);
-    if (xTaskCreate(analyze, "audio_levels", 4096, m, 1, NULL) != pdPASS) {
+    /* IDF pins floating-point tasks at their first FPU use. Pick core0
+     * explicitly, and preempt the priority3 reader during TLS/HLS bursts.
+     * Wi-Fi/TCP/IP keep their higher priorities; decoder stays on core1. */
+    if (xTaskCreatePinnedToCore(analyze, "audio_levels", 4096, m,
+                               METERING_PRIORITY, NULL, METERING_CORE) != pdPASS) {
         heap_caps_free(m);
         return ESP_ERR_NO_MEM;
     }

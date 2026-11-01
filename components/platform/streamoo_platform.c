@@ -32,6 +32,7 @@ static const char *TAG = "platform";
 
 typedef struct {
     TaskHandle_t handle;
+    UBaseType_t task_number;
     uint64_t runtime_us;
 } streamoo_cpu_sample_t;
 
@@ -40,10 +41,12 @@ static streamoo_cpu_sample_t cpu_previous[STREAMOO_CPU_PROFILE_MAX_TASKS];
 static UBaseType_t cpu_previous_count;
 static int64_t cpu_previous_at_us;
 
-static uint64_t cpu_previous_runtime(TaskHandle_t handle, bool *found)
+static uint64_t cpu_previous_runtime(const TaskStatus_t *task, bool *found)
 {
     for (UBaseType_t i = 0; i < cpu_previous_count; ++i) {
-        if (cpu_previous[i].handle == handle) {
+        if (cpu_previous[i].handle == task->xHandle &&
+            cpu_previous[i].task_number == task->xTaskNumber &&
+            task->ulRunTimeCounter >= cpu_previous[i].runtime_us) {
             *found = true;
             return cpu_previous[i].runtime_us;
         }
@@ -101,6 +104,7 @@ static void log_cpu(void)
     if (cpu_previous_at_us == 0) {
         for (UBaseType_t i = 0; i < count; ++i) {
             cpu_previous[i].handle = cpu_tasks[i].xHandle;
+            cpu_previous[i].task_number = cpu_tasks[i].xTaskNumber;
             cpu_previous[i].runtime_us = cpu_tasks[i].ulRunTimeCounter;
         }
         cpu_previous_count = count;
@@ -113,7 +117,9 @@ static void log_cpu(void)
     uint64_t runtime[STREAMOO_CPU_PROFILE_MAX_TASKS] = {0};
     for (UBaseType_t i = 0; i < count; ++i) {
         bool found = false;
-        const uint64_t previous = cpu_previous_runtime(cpu_tasks[i].xHandle, &found);
+        /* TCB addresses are recycled after station changes. A new task at the
+         * same address must establish a fresh baseline, not underflow U64. */
+        const uint64_t previous = cpu_previous_runtime(&cpu_tasks[i], &found);
         runtime[i] = found ? (uint64_t)cpu_tasks[i].ulRunTimeCounter - previous : 0;
         if (strcmp(cpu_tasks[i].pcTaskName, "IDLE0") == 0) {
             idle_runtime[0] = runtime[i];
@@ -148,6 +154,7 @@ static void log_cpu(void)
     }
     for (UBaseType_t i = 0; i < count; ++i) {
         cpu_previous[i].handle = cpu_tasks[i].xHandle;
+        cpu_previous[i].task_number = cpu_tasks[i].xTaskNumber;
         cpu_previous[i].runtime_us = cpu_tasks[i].ulRunTimeCounter;
     }
     cpu_previous_count = count;

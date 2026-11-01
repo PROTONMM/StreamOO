@@ -1,5 +1,24 @@
 # Status implementacji
 
+## Najnowsze — terminowość RMS/FFT / ADR0075 / 2026-11-01
+
+Log6f27c8b potwierdza działające SIMD i pierwszy profil CPU. HLS HE-AACv2:
+FFT zwykle2–4ms, max wall513.6ms, przy low0/hard0/starts1. Core0 około36%,
+core1 około59%, audio_levels7.5%. FPU przypinało pierwotnie nieprzypięte
+audio_levels do przypadkowego rdzenia; priority1 pozwalał readerowi3 lub
+dekoderowi4 odsuwać pomiary. Teraz RMS/FFT jawnie core0 priority4,
+czyli ponad readerem, zachowując dekoder na core1 i wyższe priorytety sieci.
+Bez zmian ringów, SIMD, I2S, expiry i UI. Odbiór płynności nadal OPEN.
+
+Profiler rozpoznaje teraz lifetime tasku przez handle+xTaskNumber i chroni
+ujemną deltę U64: usunięty reader i nowy pod tym samym adresem nie mogą
+dać setek milionów procent CPU. 396 testów hostowych i targeted metering9/
+profiler4 z ASan/UBSan PASS; walidatory konfiguracji i diff --check PASS.
+Odbiór: log core0/priority4, affinity0x1, core_samples=N/0, mniej luk FFT
+przy niepogorszonym PCM; HLS64 HE-AACv2, bezpośredni HE-AAC i FLAC.
+Native IDF6.1 build w build/simd-check PASS0x17e2c0 (90% factory wolne).
+Agent nie flashował.
+
 ## Najnowsze — FFT wektorowy sc16 / ADR0074 / 2026-11-01
 
 Na polecenie użytkownika SIMD jest realnym backendem: ESP-DSP1.8.2

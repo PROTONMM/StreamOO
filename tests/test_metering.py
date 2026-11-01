@@ -23,7 +23,7 @@ typedef pthread_mutex_t portMUX_TYPE;
 #define pdPASS 1
 #define pdMS_TO_TICKS(x) (x)
 '''
-        headers['freertos/task.h'] += 'void vTaskDelete(void *);\n'
+        headers['freertos/task.h'] += 'void vTaskDelete(void *);\nint xTaskCreatePinnedToCore(void (*)(void *),const char *,unsigned,void *,unsigned,void *,int);\n'
         for name, body in headers.items(): (base / name).write_text(body)
         cls.binary = str(base / 'metering')
         includes = ['-I' + str(base)] + ['-Icomponents/' + n + '/include'

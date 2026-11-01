@@ -16,13 +16,14 @@ typedef struct {
      * preemption. Not kernel-only time or CPU utilization. Session totals. */
     uint32_t last_fft_us, max_fft_us;
     uint64_t total_fft_us;
-    /* Sampling counts, not elapsed CPU time. The task is intentionally
-     * unpinned, so this records which core ran each metering iteration. */
+    /* Sampling counts, not elapsed CPU time. Verify core0 placement;
+     * the second counter should stay zero for this pinned worker. */
     uint32_t core_samples[2];
     int64_t spectrum_completed_us;
 } streamoo_metering_state_t;
 /* Task-only lifecycle owner is the player. Independent low-priority consumer
- * of the existing before-gain SPSC tap. Internal RAM, fixed four-block queue.
+ * of the existing before-gain SPSC tap, core0 priority4. Internal RAM,
+ * fixed four-block queue; FFT data stay in aligned PSRAM.
  * Open before I2S; attach tap while pipeline is quiescent. No backpressure.
  * Allocation/task failure disables metering, not playback. */
 esp_err_t streamoo_metering_open(uint64_t generation, streamoo_metering_t **);
