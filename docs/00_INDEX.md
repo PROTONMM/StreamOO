@@ -147,6 +147,9 @@ FLAC: pewny wybór SDKCONFIG i kontrola binarki przed flash:
 Python SDK w wrapperze niezależnie od Pythona rodzica:
 `adr/0081-idf-python-for-flac-builds.md`.
 
+FLAC: pierwszy potwierdzony wynik dr na S3 i diagnostyka parsera:
+`adr/0085-dr-flac-hardware-log-and-parser-diagnostics.md`.
+
 Rzeczywisty kodek i Wi-Fi RSSI w HOME: `adr/0044-live-codec-and-wifi-info.md`.
 
 Sprawdzanie playlisty/kodeków na komputerze: `PLAYLIST_PROBE.md`, `adr/0045-host-playlist-stream-probe.md`.

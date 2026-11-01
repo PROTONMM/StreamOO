@@ -1,5 +1,21 @@
 # Status implementacji
 
+## Najnowsze — test dr na S3 i powód odrzucenia FLAC / ADR0085 / 2026-11-01
+
+Log85dc8a81 (73fa94e, ELF1236eebb5) potwierdza dr_flac-0.13.4.121 ostrzeżeń
+Underrun: gen6/7/8/9 odpowiednio15/33/25/48. Trzy błędy -1001 pochodzą
+z parsera przed dr decode, przy Reader ended0/ESP_OK/HTTP200. Odsłuch
+niepełny; stabilność FAIL. CPU0/1 średnio41,36/43,98%, brak dowodu stałego
+nasycenia. Pięć wcześniejszych nieudanych prób TLS-0x2700 to osobny problem.
+Log pochodzi sprzed szachownicy bargraphu i nie potwierdza jej odbioru.
+
+Dodano log tylko na błędzie flac_parse: rzeczywisty status i warunek
+odrzucenia, bytes/scan/CRC16/metadane/BOS/EOS oraz krótki prefiks16 bajtów.
+Parser, dr, recovery i bufory zachowują dotychczasowe działanie; nie jest
+to deklaracja naprawy.423 host tests i build dr ESP-IDF6.1 PASS.
+Następny log ma zawęzić przyczynę -1001; pełna ramka może nadal być potrzebna
+do odtworzenia. Agent nie flashował. Raport i metryki w ADR0085.
+
 ## Najnowsze — szachownicowy bargraph / ADR0084 / 2026-11-01
 
 Na polecenie użytkownika bargraph RMS ma wypełnienie 1×1 px GS10/czerń

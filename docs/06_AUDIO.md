@@ -1,5 +1,10 @@
 # 06 — Audio, dekodery, I²S, player state
 
+ADR0085: dr_flac potwierdzony na S3;121 ostrzeżeń Underrun i3 przerwane
+sesje przez parser adaptera (-1001), Reader nadal ESP_OK/HTTP200.
+Średnie CPU0/1 około41/44%, stabilność nieodebrana. Dodano dokładny
+powód odrzucenia flac_parse bez zmiany buforów, progów i recovery.
+
 ADR0078: trzy wybieralne backendy FLAC w Kconfig, domyślnie micro-flac.
 Nowe biblioteki mają prawdziwe testy PCM z FFmpeg na hoście; wszystkie trzy
 warianty budują się na IDF6.1. CPU i odsłuch S3 OPEN. Nie zmieniono transportu,

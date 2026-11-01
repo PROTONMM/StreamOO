@@ -1,5 +1,12 @@
 # Porównanie dekoderów FLAC na ESP32-S3
 
+ADR0085: log85dc8a81 potwierdził dr_flac-0.13.4 na S3 (firmware73fa94e).
+121 ostrzeżeń Underrun i3 błędy parsera adaptera -1001, mimo aktywnego
+ReaderESP_OK/HTTP200. CPU0/1 średnio41,36%/43,98%; bez dowodu stałego
+nasycenia. Odsłuch niepełny, stabilność nieodebrana. Dodano dokładny
+log flac_parse: status/reason/bytes/scan/crc16 i16 bajtów prefiksu na błędzie.
+Następny test pozostaje na dr; nie zmieniono buforów ani progów.
+
 ADR0081: wrapper korzysta z Pythona wskazanego przez IDF_PYTHON_ENV_PATH
 lub środowiska pasującego do wersji SDK, nawet jeśli samo python3 wskazuje
 inny venv/system. Nie rozwiązuje symlinku Pythona do /usr/bin. Po zmianie
@@ -29,9 +36,9 @@ przed flash. Katalogi flac-dr/micro/esp mają też blokadę CMake na inny backen
 Zwykłe menuconfig dla domyślnego build nadal działa jak poniżej; nie należy
 traktować samej nazwy katalogu jako wyboru konfiguracji.
 
-Aktualny wynik micro-flac z logu5c378192: zapas CPU, ale błędy LPC/CRC
-i niedobory; stabilność nieodebrana. Następny wariant do odsłuchu: dr_flac.
-Szczegóły pomiarów i granice wniosków w ADR0079.
+Wynik micro-flac z logu5c378192: zapas CPU, ale błędy LPC/CRC i niedobory;
+stabilność nieodebrana. Wynik dr i następny pomiar opisano powyżej.
+Szczegóły pomiarów micro i granice wniosków w ADR0079.
 
 ADR0078. Dostępne trzy osobne warianty firmware. Wybór przy kompilacji,
 bez zmiany playlisty ani NVS. Domyślnie micro-flac; tylko jeden backend FLAC
@@ -135,7 +142,8 @@ cisza, ton16, szum24, końcowe7 próbek, join po pierwszej ramce, porcje
 aktora player11 PASS (LSan off). Dodatkowo178 pełnych ramek starego capture
 tej samej stacji: oba backendy i reset oddają bajtowo zgodny PCM z FFmpeg.
 
-CPU, płynność, zajętość pamięci i odbiór fizycznego S3 nadal OPEN.
+Pomiary CPU/pamięci S3: pierwszy micro w ADR0079 i dr w ADR0085.
+Kontrolowane A/B, płynność oraz pełny odbiór S3 nadal OPEN.
 Hostowe czasy nie stanowią pomiaru wydajności na Xtensa. Nie deklarować,
 że wymiana biblioteki rozwiązała wszystkie niedobory sieci lub PCM.
 

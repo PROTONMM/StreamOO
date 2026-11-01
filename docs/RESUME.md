@@ -1,5 +1,16 @@
 # Punkt wznowienia StreamOO
 
+## Najnowsze — wynik dr_flac i dokładna diagnostyka parsera / ADR0085
+
+Log85dc8a81 z firmware73fa94e potwierdza dr_flac-0.13.4 na S3.121 ostrzeżeń
+Underrun,3 błędy -1001 przed właściwym dr decode; Reader aktywny/ESP_OK.
+CPU0/1 średnio41,36/43,98%, odsłuch niepełny, stabilność FAIL.
+Dodano error-only flac_parse Reject: reason/status, bytes/scan/CRC,
+BOS/EOS/metadane i maksymalnie16 bajtów prefiksu. Bez zmiany buforów
+i dekodera. Kolejny log ze stacji TEST FLAC native lossless ma zawęzić
+przyczynę -1001. Sama wymiana biblioteki nie rozwiązała niedoborów.
+Z tego logu nie ocenimy szachownicy bargraphu (starszy firmware).
+
 ## Najnowsze — szachownica bargraphu / ADR0084
 
 Logo wygląda poprawnie, wskazówki nie pulsują (potwierdzenie użytkownika).

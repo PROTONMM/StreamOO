@@ -1,6 +1,9 @@
 #include "streamoo_flac_parse.h"
 #include "streamoo_flac_header.h"
 #include <string.h>
+#ifdef ESP_PLATFORM
+#include "esp_log.h"
+#endif
 
 typedef struct {
     size_t scan;
@@ -8,6 +11,24 @@ typedef struct {
     uint16_t crc;
     bool metadata,last_metadata;
 } flac_parse_t;
+
+/* Error-only diagnostics, outside the I2S path. Keep the precise parser
+ * rejection visible even when an adapter maps it to a generic codec status. */
+static esp_es_parse_err_t reject(const esp_es_parse_raw_t *in,
+    const esp_es_parse_frame_info_t *info,esp_es_parse_err_t error,const char *reason)
+{
+#ifdef ESP_PLATFORM
+    const flac_parse_t *s=info?info->extra_data:NULL;
+    ESP_LOGW("flac_parse","Reject status=%d reason=%s bytes=%u scan=%zu crc16=%04x metadata_left=%lu bos=%u eos=%u",
+        (int)error,reason,in?(unsigned)in->len:0,s?s->scan:0,s?(unsigned)s->crc:0,
+        s?(unsigned long)s->metadata_left:0,in?(unsigned)in->bos:0,in?(unsigned)in->eos:0);
+    if(in&&in->buffer&&in->len)
+        ESP_LOG_BUFFER_HEX_LEVEL("flac_parse",in->buffer,in->len<16?in->len:16,ESP_LOG_WARN);
+#else
+    (void)in;(void)info;(void)reason;
+#endif
+    return error;
+}
 
 /* Original nibble table from polynomial x^16+x^15+x^2+1, MSB first. */
 static uint16_t advance(uint16_t crc,uint8_t value)
@@ -29,12 +50,12 @@ esp_es_parse_err_t streamoo_flac_parse(esp_es_parse_raw_t *in,esp_es_parse_frame
     if(in->bos){
         if(n<42)return ESP_ES_PARSE_ERR_DATA_NOT_ENOUGH;
         if(memcmp(p,"fLaC",4)||(p[4]&127)||p[5]||p[6]||p[7]!=34)
-            return ESP_ES_PARSE_ERR_NOT_CONTINUE;
+            return reject(in,info,ESP_ES_PARSE_ERR_NOT_CONTINUE,"streaminfo_header");
         unsigned rate=((unsigned)p[18]<<12)|((unsigned)p[19]<<4)|(p[20]>>4);
         unsigned channels=((p[20]>>1)&7)+1,bits=(((p[20]&1)<<4)|(p[21]>>4))+1;
         if(rate<8000||rate>48000||channels>2||(bits!=16&&bits!=24&&bits!=32))
-            return ESP_ES_PARSE_ERR_NOT_SUPPORT;
-        if(!s){s=calloc(1,sizeof *s);if(!s)return ESP_ES_PARSE_ERR_NO_MEM;info->extra_data=s;}
+            return reject(in,info,ESP_ES_PARSE_ERR_NOT_SUPPORT,"streaminfo_format");
+        if(!s){s=calloc(1,sizeof *s);if(!s)return reject(in,info,ESP_ES_PARSE_ERR_NO_MEM,"state_allocation");info->extra_data=s;}
         *s=(flac_parse_t){.metadata=!(p[4]&128)};
         info->aud_info.sample_rate=(int)rate;info->aud_info.channel=(uint8_t)channels;
         info->aud_info.bits_per_sample=(uint8_t)bits;
@@ -42,7 +63,7 @@ esp_es_parse_err_t streamoo_flac_parse(esp_es_parse_raw_t *in,esp_es_parse_frame
         info->skipped_size=42;
         return ESP_ES_PARSE_ERR_OK;
     }
-    if(!s)return ESP_ES_PARSE_ERR_INVALID_ARG;
+    if(!s)return reject(in,info,ESP_ES_PARSE_ERR_INVALID_ARG,"missing_state");
     if(!n)return ESP_ES_PARSE_ERR_DATA_NOT_ENOUGH;
     /* File metadata can be larger than the audio cache (e.g. cover art). Skip
      * payload incrementally, never ask the SDK to cache the whole block. */
@@ -51,7 +72,7 @@ esp_es_parse_err_t streamoo_flac_parse(esp_es_parse_raw_t *in,esp_es_parse_frame
         if(!s->metadata_left){
             if(n<4)return ESP_ES_PARSE_ERR_DATA_NOT_ENOUGH;
             unsigned type=p[0]&127;
-            if(!type||type==127)return ESP_ES_PARSE_ERR_WRONG_HEADER;
+            if(!type||type==127)return reject(in,info,ESP_ES_PARSE_ERR_WRONG_HEADER,"metadata_type");
             s->last_metadata=(p[0]&128)!=0;
             s->metadata_left=((uint32_t)p[1]<<16)|((uint32_t)p[2]<<8)|p[3];used=4;
         }
@@ -62,11 +83,11 @@ esp_es_parse_err_t streamoo_flac_parse(esp_es_parse_raw_t *in,esp_es_parse_frame
     }
     size_t header=0,available=n>16?16:n;
     streamoo_flac_header_result_t first=streamoo_flac_boundary_header(p,available,&header);
-    if(first==STREAMOO_FLAC_MORE)return in->eos?ESP_ES_PARSE_ERR_WRONG_HEADER:ESP_ES_PARSE_ERR_DATA_NOT_ENOUGH;
-    if(first!=STREAMOO_FLAC_FRAME)return ESP_ES_PARSE_ERR_WRONG_HEADER;
+    if(first==STREAMOO_FLAC_MORE)return in->eos?reject(in,info,ESP_ES_PARSE_ERR_WRONG_HEADER,"truncated_frame_header"):ESP_ES_PARSE_ERR_DATA_NOT_ENOUGH;
+    if(first!=STREAMOO_FLAC_FRAME)return reject(in,info,ESP_ES_PARSE_ERR_WRONG_HEADER,"frame_header");
     /* Reparse on arrival of new input, NOT only after filling max_frame_size.
      * scan/crc refer to the SDK's unchanged cached prefix until a frame is returned. */
-    if(s->scan>n)return ESP_ES_PARSE_ERR_FAIL;
+    if(s->scan>n)return reject(in,info,ESP_ES_PARSE_ERR_FAIL,"cache_length_regressed");
     while(s->scan+4<=n){
         size_t at=s->scan;
         if(at>=header+2&&!s->crc&&p[at]==255&&(p[at+1]&0xfe)==0xf8){
@@ -78,17 +99,17 @@ esp_es_parse_err_t streamoo_flac_parse(esp_es_parse_raw_t *in,esp_es_parse_frame
                 return ESP_ES_PARSE_ERR_OK;
             }
         }
-        if(at>=STREAMOO_FLAC_MAX_FRAME_BYTES)return ESP_ES_PARSE_ERR_NOT_SUPPORT;
+        if(at>=STREAMOO_FLAC_MAX_FRAME_BYTES)return reject(in,info,ESP_ES_PARSE_ERR_NOT_SUPPORT,"frame_limit_no_boundary");
         s->crc=advance(s->crc,p[s->scan++]);
     }
     if(in->eos){
-        if(n>STREAMOO_FLAC_MAX_FRAME_BYTES||n<header+2)return ESP_ES_PARSE_ERR_WRONG_HEADER;
+        if(n>STREAMOO_FLAC_MAX_FRAME_BYTES||n<header+2)return reject(in,info,ESP_ES_PARSE_ERR_WRONG_HEADER,"final_frame_size");
         while(s->scan<n)s->crc=advance(s->crc,p[s->scan++]);
-        if(s->crc)return ESP_ES_PARSE_ERR_WRONG_HEADER;
+        if(s->crc)return reject(in,info,ESP_ES_PARSE_ERR_WRONG_HEADER,"final_frame_crc");
         info->frame_size=(uint32_t)n;s->scan=0;
         return ESP_ES_PARSE_ERR_OK;
     }
-    if(n>=STREAMOO_FLAC_MAX_FRAME_BYTES+16)return ESP_ES_PARSE_ERR_NOT_SUPPORT;
+    if(n>=STREAMOO_FLAC_MAX_FRAME_BYTES+16)return reject(in,info,ESP_ES_PARSE_ERR_NOT_SUPPORT,"frame_limit_no_boundary");
     info->frame_size=ES_PARSE_REPARSE_FRAME_SIZE;
     return ESP_ES_PARSE_ERR_OK;
 }
