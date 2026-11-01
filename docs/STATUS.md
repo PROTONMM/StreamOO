@@ -1,5 +1,26 @@
 # Status implementacji
 
+## Najnowsze — wynik early init; kolejna próba hardware + TCP23040 / 2026-11-01
+
+Loge76bbcb5/39b1c2b/ELFe908f17b:3 osobne starty, każdy potwierdza early
+crypto known-answer PASS, hardware AES/SHA, TCP5760/mailbox6. Użytkownik
+potwierdza poprawę i szybsze łączenie; nie deklaruje ciągłego odsłuchu.
+Brak PSA-149 i Recover/Reject w tych krótkich próbach. TLS po zamknięciu
+I2S nieprzetestowany: wszystkie sesje rozpoczynają od publicznego FLAC.
+
+Sesje kończą się po50,209/28,119/28,149s od resetu, mają17/3/7 Underrun.
+Body1375..1463kbps, zmierzone audio1505..1693kbps; wait_empty nadal rośnie.
+CPU0/1 w pierwszej sesji średnio46,73%/46,03%, bez stałego nasycenia.
+5 początkowych handshake -0x2700,4 przy synced0 i1 przy synced1 — nie
+przypisujemy wszystkich błędów brakowi czasu. Przyczyny TLS/CRC nadal OPEN.
+
+Następny kontrolowany profil łączy ADR0096 hardware/early init z ADR0095
+TCP23040/mailbox18; tylko okno/kolejka różnią się od wersji testowanej.
+Ring/PCM/preroll/dekoder/DSP bez zmian. Wpływ na S3 oraz internal heap OPEN.
+Native dr/hardware AES/SHA/early init/TCP23040 build PASS, binarka1573504B.
+Wrapper potwierdził wszystkie opcje;20 testów wrappera PASS. Kod firmware
+bez zmian w tej iteracji, nie powtarzano pełnej suity462. Agent nie flashował.
+
 ## Najnowsze — early init sprzętowego AES/SHA / ADR0096 / 2026-11-01
 
 Użytkownik: przed software crypto po połączeniu grało dobrze; software

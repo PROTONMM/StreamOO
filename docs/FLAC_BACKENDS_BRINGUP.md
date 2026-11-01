@@ -1,5 +1,18 @@
 # Porównanie dekoderów FLAC na ESP32-S3
 
+Najnowszy wynik e76bbcb5: early init/hardware crypto działa przy starcie,
+użytkownik potwierdza szybsze łączenie; niedobory pozostają (body~1,4Mbps,
+audio~1,5..1,7Mbps). Teraz zachowaj hardware i zwiększ tylko okno TCP:
+
+```sh
+python3 tools/build_flac.py dr flash --port /dev/ttyUSB0 --hardware-crypto --tcp-window 23040
+```
+
+Startup TCP23040/mailbox18/MSS1440 oraz early PASS/AES/SHA hardware.
+FLAC3min z odsłuchem i UART; obserwuj audio_kbps/Delivery, low/starts,
+Recover/Reject i internal heap. Potem próba TLS po I2S. Odbiór OPEN;
+szczegółowy wynik trzech krótkich sesji dopisany do ADR0096.
+
 ADR0096 — aktualny test sprzętowego crypto z przygotowaniem przed I2S:
 
 ```sh

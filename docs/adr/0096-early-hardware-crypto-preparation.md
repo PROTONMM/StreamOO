@@ -107,3 +107,55 @@ trzy symbole i TCP5760/mailbox6; agent nie flashował. Połączenia/odsłuch S3 
 Jeśli TLS nadal będzie zawodzić, następnym rozdzielającym eksperymentem
 może być hardware AES z software SHA. Nie wdrażamy go równocześnie z tą
 próbą i nie uznajemy za sprawdzone obejście.
+
+## Wynik próby e76bbcb5 i dalszy test
+
+Załącznik e76bbcb5-ba55-450a-92d4-4d9c5b8c530f, SHA256
+`d21de71e6220f97dd2c4001a40b45f49c8006c280b4f90b44436228c3ccb55cb`.
+Trzy osobne starty39b1c2b/ELFe908f17b potwierdzają early probe PASS,
+hardware AES/SHA i TCP5760/mailbox6. Użytkownik potwierdza poprawę oraz
+szybsze łączenie. Nie dopisujemy potwierdzenia nieprzerwanego odsłuchu.
+Nie oceniamy przyczyny trzech resetów; log nie zawiera panic/backtrace.
+
+| Próba | Koniec od resetu | Pierwszy STREAMINFO | Underrun | Średnie body_kbps* | audio_kbps |
+|---|---:|---:|---:|---:|---:|
+| 1 | 50,209s | 11,659s | 17 | 1423,3 | 1505..1693 |
+| 2 | 28,119s | 9,209s | 3 | 1431,5 | 1505..1521 |
+| 3 | 28,149s | 12,659s | 7 | 1387,3 | 1520..1662 |
+
+*Średnia arytmetyczna dostępnych interwałów, także pierwszego częściowego;
+nie ważona średnia całej sesji. Nie porównujemy surowych low różnych
+długości ani procentowej poprawy między różnymi utworami. Ostatnie phase
+poprzedzają końcowe Underrun, dlatego liczymy ostrzeżenia, nie tylko low
+z ostatniego snapshotu.
+
+Wszystkie14 interwałów body1375..1463kbps, valid audio1505..1693kbps.
+Inne okna/metadata uniemożliwiają dokładne odejmowanie, lecz utrzymujący
+się deficyt z rosnącym wait_empty uzasadnia próbę zwiększenia okna TCP.
+CPU pierwszej sesji średnio46,73%/46,03%; maksymalny odczyt HTTP146196us,
+max pojedynczego logu17772us (w trzeciej sesji21351us). Brak dowodu stałego
+nasycenia CPU. Zapas internal: minimum40324B, największy obserwowany blok
+pod obciążeniem31744B; zwiększenie TCP nadal wymaga obserwacji pamięci.
+
+5 początkowych błędów TLS -0x2700/code9984/flags0:4 przed SNTP,1 w drugiej
+sesji już synced1/UTC1793532469. Nie nazywamy ich wszystkich błędem zegara
+ani dowodem wadliwego SHA. Brak PSA-149, Recover i Reject w tych próbach
+jest pozytywnym ograniczonym wynikiem, bez zaliczenia scenariusza po I2S:
+każdy start obejmuje tylko jedną stację, bez STOP/PLAY lub zmiany źródła.
+
+Nie zmieniamy teraz kolejności SNTP/TLS, dekodera ani kolejnych opcji
+kryptografii. Następny profil: hardware/early init z TCP23040/mailbox18,
+jedna zmienna względem ostatnich testów; mechanizm opisany w ADR0095.
+
+```sh
+python3 tools/build_flac.py dr flash --port /dev/ttyUSB0 --hardware-crypto --tcp-window 23040
+```
+
+Procedura i metryki jak wyżej; najpierw3min tej samej publicznej stacji
+z odsłuchem, potem powtórne TLS po I2S. Wynik S3 większego okna OPEN.
+Zmiany tej iteracji obejmują dokumentację i istniejący prywatny profil
+kompilacji; bez nowego kodu firmware ani flash agenta.
+Native ESP-IDF6.1/dr hardware + early init + TCP23040/mailbox18 build PASS,
+binarka1573504B. Wrapper sprawdził wygenerowany nagłówek i backend;
+20 testów wrappera PASS, git diff --check PASS. Pełnej suity462 nie
+powtarzano przy zmianie dokumentacji/istniejącego profilu kompilacji.

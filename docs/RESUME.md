@@ -1,5 +1,27 @@
 # Punkt wznowienia StreamOO
 
+## Najnowsze — early init szybciej łączy, niedobory pozostają
+
+Loge76bbcb5,39b1c2b/ELFe908f17b:3 starty z hardware AES/SHA, early probe
+PASS, TCP5760/mailbox6. Użytkownik: poprawa, szybciej się łączy. Nie zalicza
+to odsłuchu/soak ani TLS po I2S. Sesje50/28/28s mają17/3/7 Underrun,
+bez PSA-149/Recover/Reject. Body~1,4Mbps < audio~1,5..1,7Mbps przy rosnącym
+wait_empty; CPU ma zapas.5 początkowych -0x2700, w tym1 już po SNTP.
+Szczegóły i ograniczenia dopisane do ADR0096.
+
+Następny test zmienia tylko TCP, pozostawia sprzętowe crypto/early init:
+
+```sh
+python3 tools/build_flac.py dr flash --port /dev/ttyUSB0 --hardware-crypto --tcp-window 23040
+```
+
+Startup: hardware AES/SHA, early PASS, TCP23040/mailbox18/MSS1440.
+Publiczny TEST FLAC native lossless3min z odsłuchem i logiem; zebrać
+audio_kbps/Delivery, low/starts, Recover/Reject, CPU oraz internal heap
+minimum/largest. Potem STOP/PLAY i LAN→FLAC HTTPS/HLS po I2S. Odbiór OPEN.
+Native build połączonego profilu oraz20 testów wrappera PASS; wygenerowane
+opcje hardware/early init/TCP23040/18 sprawdzone. Bez zmian kodu i flash agenta.
+
 ## Najnowsze — hardware AES/SHA przed I2S / ADR0096
 
 Użytkownik: software crypto łączy szybko, ale rwie; wcześniejszy hardware
