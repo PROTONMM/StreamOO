@@ -1,5 +1,11 @@
 # 06 — Audio, dekodery, I²S, player state
 
+ADR0078: trzy wybieralne backendy FLAC w Kconfig, domyślnie micro-flac.
+Nowe biblioteki mają prawdziwe testy PCM z FFmpeg na hoście; wszystkie trzy
+warianty budują się na IDF6.1. CPU i odsłuch S3 OPEN. Nie zmieniono transportu,
+progów/buforów ani I2S równocześnie z dekoderem. Protokół i ograniczenia
+adaptera dr_flac: [FLAC_BACKENDS_BRINGUP](FLAC_BACKENDS_BRINGUP.md).
+
 ADR0077: kolejny utwór zażądał1050624B, przekraczając także1MiB.
 Nowy przyrostowy parser ramek przez publiczne API SDK ma oddawać pierwszą
 ramkę po CRC8/CRC16 bez oczekiwania na duże okno. Nadal SDK cache/decoder

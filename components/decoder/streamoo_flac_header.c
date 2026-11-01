@@ -45,7 +45,9 @@ static streamoo_flac_header_result_t parse_header(const uint8_t *p,size_t n,
     if(rate_extra==2)rate=(rate<<8)|p[at++];
     if(rate_code==12)rate*=1000;
     if(rate_code==14)rate*=10;
-    if(block<16||block>65535||(!boundary && (rate<8000||rate>48000||
+    /* RFC9639 permits1..15 samples in the final frame. A structural boundary
+     * check must accept it; bootstrap STREAMINFO still needs a normal block. */
+    if(!block||block>65535||(!boundary && (block<16||rate<8000||rate>48000||
        block>capacity/(channels*(bits/8)))))return STREAMOO_FLAC_BAD;
     uint8_t crc=0;
     for(size_t i=0;i<length-1;++i){

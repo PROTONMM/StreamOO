@@ -1,5 +1,6 @@
 #include "streamoo_player.h"
 #include "streamoo_player_buffer.h"
+#include "streamoo_flac_backend.h"
 #include "streamoo_settings.h"
 #include "esp_attr.h"
 #include "esp_heap_caps.h"
@@ -135,6 +136,9 @@ typedef struct {
   uint64_t codec_calls,codec_us;
   uint32_t codec_max_us,block_max_us,pcm_before_max,pcm_after_max;
   size_t pcm_max_bytes,pcm_at_max;
+  size_t compressed_min,compressed_max;
+  uint32_t pcm_min,pcm_max;
+  bool levels_seen,flac;
 } decode_profile_t;
 static uint32_t duration_us(int64_t start){
   int64_t elapsed=esp_timer_get_time()-start;
@@ -151,15 +155,23 @@ static esp_err_t decode(void *context,uint8_t *in,size_t n,bool eos,uint8_t *pcm
     p->pcm_after_max=streamoo_pcm_count(p->ring);p->pcm_at_max=r->produced;}
   return error;
 }
-static void log_decode_profile(const decode_profile_t *p,const streamoo_live_decode_t *s,bool refill){
+static void log_decode_profile(decode_profile_t *p,const streamoo_live_decode_t *s,bool refill){
   if(!s)return;
   ESP_LOGI("player","Decode perf: codec_max=%" PRIu32 "us block_max=%" PRIu32
-    "us codec_total=%" PRIu64 "us calls=%" PRIu64 " pcm_at_max=%zu pcm_max=%zu"
-    " ring_at_max=%" PRIu32 "/%" PRIu32 " src_wait=%" PRIu64 " budget_yield=%" PRIu64
-    " reads=%" PRIu64 " fetched=%" PRIu64 " produced=%" PRIu64 " cache=%zu input=%zu refill=%u",
-    p->codec_max_us,p->block_max_us,p->codec_us,p->codec_calls,p->pcm_at_max,p->pcm_max_bytes,
-    p->pcm_before_max,p->pcm_after_max,s->source_waits,s->work_yields,s->source_calls,
+    "us codec_total=%" PRIu64 "us calls=%" PRIu64 " backend=%s avg_call=%" PRIu64 "us",
+    p->codec_max_us,p->block_max_us,p->codec_us,p->codec_calls,
+    p->flac?streamoo_flac_backend_name():"espressif",p->codec_calls?p->codec_us/p->codec_calls:0);
+  ESP_LOGI("player","Decode buffers: pcm_at_max=%zu pcm_max=%zu ring_at_max=%" PRIu32 "/%" PRIu32
+    " src_wait=%" PRIu64 " budget_yield=%" PRIu64 " reads=%" PRIu64,
+    p->pcm_at_max,p->pcm_max_bytes,
+    p->pcm_before_max,p->pcm_after_max,s->source_waits,s->work_yields,s->source_calls);
+  ESP_LOGI("player","Decode flow: fetched=%" PRIu64 " produced=%" PRIu64 " cache=%zu input=%zu refill=%u",
     s->fetched_total,s->produced_total,s->pcm_bytes-s->pcm_cursor,sizeof s->input,(unsigned)refill);
+  if(p->levels_seen){
+    ESP_LOGI("player","Buffer interval: compressed_min=%zu compressed_max=%zu PCM_min=%" PRIu32 " PCM_max=%" PRIu32,
+      p->compressed_min,p->compressed_max,p->pcm_min,p->pcm_max);
+    p->levels_seen=false;
+  }
 }
 static void task(void *context) {
   (void)context;
@@ -357,7 +369,7 @@ static void task(void *context) {
       size_t reserve=streamoo_player_reserve(info.codec==STREAMOO_CODEC_FLAC,info.bitrate_kbps);
       if (!decoder && info.codec_known &&
           (queued >= reserve || (info.ended && queued))) {
-        flac_refill=false;profile=(decode_profile_t){0};logged_underflows=0;
+        flac_refill=false;profile=(decode_profile_t){.flac=info.codec==STREAMOO_CODEC_FLAC};logged_underflows=0;
         /* Reserve the contiguous DMA/ISR ring before codec allocations can
          * fragment internal RAM. Large decode scratch belongs in PSRAM. */
         failure_stage = "pcm_memory";
@@ -399,6 +411,13 @@ static void task(void *context) {
         }
       }
       if (current.error == ESP_OK && output) {
+        uint32_t pcm_level=streamoo_pcm_count(&ring);
+        if(!profile.levels_seen){profile.compressed_min=profile.compressed_max=queued;
+          profile.pcm_min=profile.pcm_max=pcm_level;profile.levels_seen=true;}
+        if(queued<profile.compressed_min)profile.compressed_min=queued;
+        if(queued>profile.compressed_max)profile.compressed_max=queued;
+        if(pcm_level<profile.pcm_min)profile.pcm_min=pcm_level;
+        if(pcm_level>profile.pcm_max)profile.pcm_max=pcm_level;
         /* First owner observation of an ISR underflow, before replenishing
          * PCM. No logging or additional work is added to the ISR itself. */
         portENTER_CRITICAL(&lock);

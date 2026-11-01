@@ -184,6 +184,16 @@ menu "StreamOO Configuration"
         endchoice
     endmenu
     menu "Audio and DSP"
+        choice STREAMOO_FLAC_BACKEND
+            prompt "FLAC decoder for comparison tests"
+            default STREAMOO_FLAC_MICRO
+            config STREAMOO_FLAC_ESPRESSIF
+                bool "Espressif 2.6.2 with incremental frame parser"
+            config STREAMOO_FLAC_MICRO
+                bool "micro-flac 0.3.0 (incremental, Xtensa LPC assembly)"
+            config STREAMOO_FLAC_DR
+                bool "dr_flac 0.13.4 (complete-frame feed, scalar S3)"
+        endchoice
         config STREAMOO_STREAM_BUFFER_KIB
             int "Compressed stream ring size (KiB)"
             range 64 2048

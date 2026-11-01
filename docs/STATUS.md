@@ -1,5 +1,27 @@
 # Status implementacji
 
+## Najnowsze — wybieralne backendy FLAC / ADR0078 / 2026-11-01
+
+Na polecenie użytkownika FLAC wybierany w menuconfig: Espressif2.6.2,
+micro-flac0.3.0 (domyślny), dr_flac0.13.4. Przypięte niezmodyfikowane
+źródła/licencje/hashes w third_party. micro przyrostowy, dr podaje pełne
+ramki do trwałego handle z cache PSRAM; nie myli WAIT z EOF. Wspólny
+bootstrap/resampler/transport/FIFO/I2S. Nowe backendy oddają PCM32.
+
+Log3ee4ad16: awarie stage=decode/vendor-7 przy aktywnym ReaderESP_OK/HTTP200;
+brak dowodu na pierwotne zerwanie sieci. Zidentyfikowano osobny błąd readera:
+ostatnia ramka może mieć1..15 próbek; naprawiony i testowany przypadek7.
+Nie ogłaszamy go przyczyną logu. Backend, krótsze Decode perf/buffers/flow
+oraz min/max buforów co5s ułatwiają nowy odbiór. CPU RTOS już dostępne.
+
+409 testów hostowych PASS;6 z prawdziwymi nowymi dekoderami/FFmpeg, również
+ASan/UBSan6 i actor11 PASS.178 pełnych ramek starego capture daje zgodny
+PCM w obu bibliotekach, także po reset. Native IDF6.1 trzy buildy PASS:
+micro0x17b150,dr0x17e750,Espressif0x17ea10;90% factory wolne. micro LPC
+ma skalarny ASM Xtensa, dr skalarne C; nie potwierdzono SIMD PIE w FLAC.
+S3 odsłuch/CPU/bufory OPEN; instrukcja FLAC_BACKENDS_BRINGUP.md.
+Agent nie flashował; zwykły flash bez erase/NVS/zmiany playlist.
+
 ## Najnowsze — przyrostowe ramki FLAC / ADR0077 / 2026-11-01
 
 Log6e9a0e50 wykazał kolejny limit: needed1050624 > scratch1MiB; poprzednie

@@ -1,5 +1,23 @@
 # SIMD w dekoderach i szybkość FFT — audyt 2026-11-01
 
+## Uzupełnienie ADR0078 — alternatywne FLAC
+
+micro-flac0.3.0/f9c27d4: build S3 zawiera restore_lpc_32bit_asm i
+restore_lpc_64bit_asm wywoływane z LPC. Kod źródłowy używa skalarnych mull,
+mulsh i pętli sprzętowych; pierwsza pętla32-bit w ELF potwierdza mull/loop.
+Nie jest to wektoryzacja PIE. Tablice skoków po wymuszeniu disassembly
+potrafią wyglądać jak ee.vmulas — nie zaliczać ich jako instrukcji kodeka.
+
+dr_flac0.13.4/35b5c39 ma backendy SIMD dla SSE/NEON, nie Xtensa. W nowym
+adapterze DR_FLAC_NO_SIMD jest jawne, build S3 używa skalarnego C; inspekcja
+obiektu nie potwierdza arytmetyki PIE. Własne źródła pozwalają rozważyć
+optymalizację, ale żadnej nowej wektoryzacji kodeka nie zaimplementowano.
+Oba buildy PASS; porównanie CPU, najdłuższego decode i stabilności na
+sprzęcie nadal OPEN. FFT wizualizacji pozostaje ESP-DSP SIMD.
+
+Piny źródeł/licencji: components/decoder/third_party/ORIGINS.json.
+Protokół: [FLAC_BACKENDS_BRINGUP](FLAC_BACKENDS_BRINGUP.md).
+
 ## Zakres i metoda
 
 Analiza dotyczy konkretnego firmware StreamOO na ESP32-S3, nie wszystkich

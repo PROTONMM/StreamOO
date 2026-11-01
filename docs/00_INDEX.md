@@ -129,6 +129,9 @@ FLAC: żądanie525312B i rozróżnienie WAIT06p:
 FLAC: kolejny limit1050624B i przyrostowy parser06q:
 `adr/0077-incremental-flac-parser.md`.
 
+FLAC: wybór Espressif/micro-flac/dr_flac i pomiary06r:
+`adr/0078-selectable-flac-backends.md`, `FLAC_BACKENDS_BRINGUP.md`.
+
 Rzeczywisty kodek i Wi-Fi RSSI w HOME: `adr/0044-live-codec-and-wifi-info.md`.
 
 Sprawdzanie playlisty/kodeków na komputerze: `PLAYLIST_PROBE.md`, `adr/0045-host-playlist-stream-probe.md`.

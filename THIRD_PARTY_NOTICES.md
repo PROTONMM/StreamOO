@@ -125,6 +125,18 @@ only), with vendor-attributed Xiph BSD backends. See expanded
 [codec notice](licenses/ESP-Audio-Codec-NOTICE.md) and retained Opus/FLAC/
 Vorbis license texts. No external codec implementation copied.
 
+## Selectable FLAC comparison backends (ADR0078)
+
+micro-flac0.3.0, Apache-2.0, decoder-only source subset including original
+Xtensa LPC assembly; encoder and Ogg submodule excluded. dr_flac0.13.4,
+MIT-0 selected, original single header including both license texts retained.
+Exact commits, per-file SHA-256 and scope are recorded in
+[third-party origins](components/decoder/third_party/ORIGINS.json) and
+[source notice](components/decoder/third_party/README.md).
+micro-flac license is retained at components/decoder/third_party/micro-flac/LICENSE.
+No GPL imported; both upstream implementations are unmodified. Native IDF6.1
+builds verified; physical S3 performance and playback remain OPEN.
+
 ## HLS / MPEG-TS — ADR0060
 
 HLS manifests, sequence handling, ID3 prefix stripping and HTTP segment

@@ -1,5 +1,28 @@
 # Punkt wznowienia StreamOO
 
+## Najnowsze — trzy backendy FLAC / ADR0078 / 2026-11-01
+
+W Kconfig StreamOO/Audio and DSP wybór Espressif/micro-flac/dr_flac;
+domyślnie micro-flac. Mikro przyrostowy, dr trwały handle i własny cache
+pełnych ramek PSRAM, oba PCM32. Transport/progi/bufory/I2S bez zmian.
+Źródła/licencje/hashes przypięte w components/decoder/third_party.
+Krótka końcowa ramka7 próbek już obsługiwana przez reader granic.
+Log3ee4ad16 wskazuje błąd dekodowania-7 przy ReaderESP_OK, nie dowodzi
+pierwotnej utraty Wi-Fi. Odsłuch po nowych backendach nadal OPEN.
+
+409 host tests i ASan/UBSan nowych backendów6/actor11 PASS. Realny capture
+178 ramek daje PCM identyczny z FFmpeg w obu alternatywach. Native3 buildy
+PASS: build/simd-check=micro0x17b150, build/flac-dr=dr0x17e750,
+build/flac-esp=Espressif0x17ea10. micro ASM LPC skalarny, dr C skalarny;
+FFT nadal SIMD. Nie mylić pozornych ee.* w tablicach danych z SIMD.
+
+Następny krok: flash micro, ten sam FLAC minimum5min/zmiana utworu,
+FFT/bargraph; potem wybór dr i analogiczny test. Zachować logi/ELF.
+Najlepszy benchmark CPU: ten sam plik lokalny, nie różne utwory live.
+Zbierać CPU interval/task, phase, Decode perf/buffers/flow, Buffer interval,
+Underrun i błędy Reader/Stream failed. Protokół FLAC_BACKENDS_BRINGUP.md.
+Nie wykonano flash/erase; NVS/LittleFS/prywatne playlisty zachowane.
+
 ## Najnowsze — przyrostowy parser FLAC / ADR0077 / 2026-11-01
 
 Poprzedni1MiB scratch też okazał się niewystarczający: log6e9a0e50 ma

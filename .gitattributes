@@ -1,0 +1,2 @@
+# Keep vendored sources byte-identical to pinned upstream hashes.
+components/decoder/third_party/** -whitespace

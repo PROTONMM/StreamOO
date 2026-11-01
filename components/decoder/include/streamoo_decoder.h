@@ -1,6 +1,9 @@
 #pragma once
 #include "esp_err.h"
 #include "streamoo_pcm_adapter.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 /* AAC_LC is the legacy enum name for the complete ADTS AAC family. */
 typedef enum { STREAMOO_CODEC_MP3, STREAMOO_CODEC_AAC_LC, STREAMOO_CODEC_FLAC, STREAMOO_CODEC_VORBIS, STREAMOO_CODEC_OPUS, STREAMOO_CODEC_MPEG_TS, STREAMOO_CODEC_COUNT } streamoo_codec_t;
 typedef struct streamoo_decoder streamoo_decoder_t;
@@ -18,3 +21,6 @@ esp_err_t streamoo_decoder_process(streamoo_decoder_t *decoder, uint8_t *input,
     size_t bytes, bool eos, uint8_t *pcm, size_t capacity, streamoo_decode_result_t *result);
 esp_err_t streamoo_decoder_reset(streamoo_decoder_t *decoder);
 void streamoo_decoder_close(streamoo_decoder_t *decoder);
+#ifdef __cplusplus
+}
+#endif

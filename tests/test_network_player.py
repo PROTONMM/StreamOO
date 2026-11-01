@@ -27,7 +27,7 @@ HARNESS=r'''
 #include <string.h>
 #include <stdarg.h>
 #include <stdio.h>
-static char failure_log[1024],diagnostic_log[1024],perf_log[1024],reader_log[2048],station_log[1024];
+static char failure_log[1024],diagnostic_log[1024],perf_log[1024],buffers_log[1024],reader_log[2048],station_log[1024];
 static char underrun_log[256];
 static unsigned station_changes;static bool transport_eof_test,reader_done;
 static bool profile_test;static streamoo_stream_decode_fn measured_decode;static void *measured_context;static bool measured_once;
@@ -52,6 +52,7 @@ void fake_log(const char *tag,const char *fmt,...){(void)tag;va_list args;va_sta
  else if(strstr(fmt,"Reader gen="))vsnprintf(reader_log,sizeof reader_log,fmt,args);
  else if(strstr(fmt,"Stream failed"))vsnprintf(failure_log,sizeof failure_log,fmt,args);
  else if(strstr(fmt,"Decode perf:"))vsnprintf(perf_log,sizeof perf_log,fmt,args);
+ else if(strstr(fmt,"Decode buffers:"))vsnprintf(buffers_log,sizeof buffers_log,fmt,args);
  else if(strstr(fmt,"Decode diag"))vsnprintf(diagnostic_log,sizeof diagnostic_log,fmt,args);
  va_end(args);}
 const char *streamoo_live_failure_name(streamoo_live_failure_t f){return f==STREAMOO_LIVE_SOURCE_EOF?"source_eof":f==STREAMOO_LIVE_DECODER_NO_PROGRESS?"decoder_no_progress":"none";}
@@ -173,7 +174,7 @@ void vTaskDelay(unsigned ms){now+=(int64_t)ms*1000;++tick;
  if(tick==328)catalog=&reordered;
  if(tick==335)assert(opens==3&&s.station_id==11&&s.phase==STREAMOO_PLAYER_PLAYING);
  if(tick==340)catalog=&second;
- if(tick==420){if(profile_test)assert(strstr(perf_log,"codec_max=125000us")&&strstr(perf_log,"block_max=125000us")&&strstr(perf_log,"pcm_at_max=16384"));assert(!s.running&&!s.station_id&&!output_live&&opens==3&&closes==3&&!allocations&&first.refs==0&&reordered.refs==0);longjmp(completed,1);}
+ if(tick==420){if(profile_test)assert(strstr(perf_log,"codec_max=125000us")&&strstr(perf_log,"block_max=125000us")&&strstr(buffers_log,"pcm_at_max=16384")&&strstr(perf_log,"backend="));assert(!s.running&&!s.station_id&&!output_live&&opens==3&&closes==3&&!allocations&&first.refs==0&&reordered.refs==0);longjmp(completed,1);}
 }
 int main(int argc,char **argv){assert(streamoo_player_reserve(false,1500)==8192);assert(streamoo_player_reserve(true,1500)==93750);assert(streamoo_player_reserve(true,0)==65536);assert(streamoo_player_reserve(true,1)==32768);assert(streamoo_player_reserve(true,UINT32_MAX)==196608);manual=argc>1?atoi(argv[1]):0;flac_case=manual==10;profile_test=manual==11;transport_eof_test=manual==12;disable_meter=manual==3;wrong_meter_generation=manual==4;web_commands=manual==5;web_retry=manual==6;if(manual>=7&&manual<=9){boot=manual;fixture_last=manual==9?99:11;fixture_autoplay=manual==8;}if(manual>=3)manual=0;assert(streamoo_player_start(50)==ESP_OK);assert(!streamoo_player_select(NULL,&(streamoo_ui_select_command_t){11,99}));assert(first.refs==0);if(!setjmp(completed))actor(NULL);return 0;}
 '''
