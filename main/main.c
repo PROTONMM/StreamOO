@@ -18,6 +18,13 @@ static const char *TAG = "StreamOO";
 
 void app_main(void)
 {
+#ifndef CONFIG_STREAMOO_DIAGNOSTICS
+    esp_log_level_set("*",ESP_LOG_WARN);
+    esp_log_level_set(TAG,ESP_LOG_INFO);
+    esp_log_level_set("player",ESP_LOG_INFO);
+#else
+    esp_log_level_set("*",ESP_LOG_INFO);
+#endif
     if (streamoo_board_validate() != ESP_OK) {
         ESP_LOGE(TAG, "Invalid hardware configuration; peripherals remain disabled");
         return;
@@ -35,9 +42,10 @@ void app_main(void)
     esp_err_t clock_error=streamoo_clock_settings_start();
     if(clock_error!=ESP_OK)ESP_LOGW(TAG,"Clock settings unavailable: %s; no erase",esp_err_to_name(clock_error));
     const esp_app_desc_t *app=esp_app_get_description();
-    if(app)ESP_LOGI(TAG,"StreamOO firmware=%s IDF=%s ELF=%02x%02x%02x%02x diagnostics=2",
+    if(app)ESP_LOGI(TAG,"StreamOO firmware=%s IDF=%s ELF=%02x%02x%02x%02x",
         app->version,app->idf_ver,(unsigned)app->app_elf_sha256[0],(unsigned)app->app_elf_sha256[1],
         (unsigned)app->app_elf_sha256[2],(unsigned)app->app_elf_sha256[3]);
+#ifdef CONFIG_STREAMOO_DIAGNOSTICS
     ESP_LOGI(TAG, "SSD1322 SPI: MOSI=%d SCLK=%d CS=%d DC=%d",
              CONFIG_STREAMOO_LCD_MOSI, CONFIG_STREAMOO_LCD_SCLK,
              CONFIG_STREAMOO_LCD_CS, CONFIG_STREAMOO_LCD_DC);
@@ -62,14 +70,15 @@ void app_main(void)
     ESP_LOGI(TAG,"TCP RX: window=%d bytes mailbox=%d MSS=%d",
              CONFIG_LWIP_TCP_WND_DEFAULT,CONFIG_LWIP_TCP_RECVMBOX_SIZE,CONFIG_LWIP_TCP_MSS);
 #endif
-#if defined(CONFIG_STREAMOO_ENCODER_UI_TEST)
+#endif
+#if defined(CONFIG_STREAMOO_UI_ENABLED)
     const esp_err_t prefs_error = streamoo_preferences_start();
     if (prefs_error != ESP_OK)
         ESP_LOGW(TAG, "Preferences unavailable: %s; using defaults, no erase", esp_err_to_name(prefs_error));
 #endif
-#if defined(CONFIG_STREAMOO_ENCODER_GESTURE_TEST)
+#if defined(CONFIG_STREAMOO_ENCODER_ENABLED)
     if (streamoo_input_probe_start() != ESP_OK) {
-        ESP_LOGE(TAG, "Input probe could not start");
+        ESP_LOGE(TAG, "Encoder input could not start");
     }
 #endif
 #if defined(CONFIG_STREAMOO_AUDIO_CONTROL_TEST) || defined(CONFIG_STREAMOO_I2S_SMOKE_TEST)
@@ -87,20 +96,20 @@ void app_main(void)
 #endif
     }
 #endif
-#if defined(CONFIG_STREAMOO_NETWORK_AP_TEST)
+#if defined(CONFIG_STREAMOO_NETWORK_ENABLED)
     if(streamoo_network_boot_ap_enabled()) {
         streamoo_preferences_value_t initial={50,0};streamoo_preferences_initial(&initial);
         if(streamoo_player_start(initial.volume)!=ESP_OK)ESP_LOGE(TAG,"Network player startup failed");
     }
 #endif
-#if defined(CONFIG_STREAMOO_LCD_SMOKE_TEST)
+#if defined(CONFIG_STREAMOO_DISPLAY_ENABLED)
     if (streamoo_display_smoke_start() != ESP_OK) {
-        ESP_LOGE(TAG, "Display smoke task could not start");
+        ESP_LOGE(TAG, "Display task could not start");
     }
 #endif
-#if defined(CONFIG_STREAMOO_NETWORK_AP_TEST)
+#if defined(CONFIG_STREAMOO_NETWORK_ENABLED)
     esp_err_t network_error=streamoo_network_start(&streamoo_app_network_hooks);
     if (network_error!=ESP_OK)
-        ESP_LOGW(TAG,"AP test inactive: %s; see docs/NETWORK_BRINGUP.md",esp_err_to_name(network_error));
+        ESP_LOGW(TAG,"Network inactive: %s; see docs/NETWORK_BRINGUP.md",esp_err_to_name(network_error));
 #endif
 }

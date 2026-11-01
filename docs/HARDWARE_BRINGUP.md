@@ -1,5 +1,11 @@
 # Protokół bramy sprzętowej — HARDWARE_TEST_PENDING
 
+Aktualizacja ADR0099: poniżej zachowano historię prób i dawnych nazw TEST.
+Normalne firmware nie uruchamia tych pokazów ani tonów. Aktualne opcje
+HARDWARE_TESTS/DIAGNOSTICS i konfiguracje prób opisuje
+[RELEASE_REVIEW](RELEASE_REVIEW.md). Funkcjonalne flagi mają dziś nazwy
+NETWORK_ENABLED, ENCODER_ENABLED, UI_ENABLED i DISPLAY_ENABLED.
+
 Nie wykonano flashowania, kasowania flash ani operacji eFuse.
 Potwierdzenie bazowego uruchomienia N16R8 przekazane przez użytkownika
 pozostaje ważne; nie trzeba go powtarzać jako odrębnego etapu.

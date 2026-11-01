@@ -8,6 +8,7 @@ import unittest
 ROOT=Path(__file__).resolve().parents[1]
 HEADERS={
     'sdkconfig.h': '''#pragma once
+#define CONFIG_STREAMOO_DIAGNOSTICS 1
 #define CONFIG_FREERTOS_GENERATE_RUN_TIME_STATS 1
 #define CONFIG_SPIRAM_MODE_OCT 1
 #define CONFIG_SPIRAM_SPEED_80M 1
@@ -26,12 +27,15 @@ HEADERS={
     'freertos/task.h': '''#pragma once
 #include "FreeRTOS.h"
 typedef void *TaskHandle_t;
+#ifndef configRUN_TIME_COUNTER_TYPE
+#define configRUN_TIME_COUNTER_TYPE uint64_t
+#endif
 typedef struct{
  TaskHandle_t xHandle;const char *pcTaskName;UBaseType_t xTaskNumber;
- uint64_t ulRunTimeCounter;unsigned usStackHighWaterMark;
+ configRUN_TIME_COUNTER_TYPE ulRunTimeCounter;unsigned usStackHighWaterMark;
 }TaskStatus_t;
 UBaseType_t uxTaskGetNumberOfTasks(void);
-UBaseType_t uxTaskGetSystemState(TaskStatus_t *,UBaseType_t,uint64_t *);
+UBaseType_t uxTaskGetSystemState(TaskStatus_t *,UBaseType_t,configRUN_TIME_COUNTER_TYPE *);
 BaseType_t xTaskGetCoreID(TaskHandle_t);
 unsigned uxTaskGetStackHighWaterMark(void *);
 void vTaskDelay(unsigned);
@@ -58,7 +62,7 @@ void fake_log(const char *tag,const char *format,...){
 }
 int64_t esp_timer_get_time(void){return clock_us;}
 UBaseType_t uxTaskGetNumberOfTasks(void){return 3;}
-UBaseType_t uxTaskGetSystemState(TaskStatus_t *tasks,UBaseType_t capacity,uint64_t *total){
+UBaseType_t uxTaskGetSystemState(TaskStatus_t *tasks,UBaseType_t capacity,configRUN_TIME_COUNTER_TYPE *total){
  assert(capacity>=3);*total=(uint64_t)clock_us*2;
  tasks[0]=(TaskStatus_t){(void *)1,"IDLE0",1,(uint64_t)clock_us/2,1000};
  tasks[1]=(TaskStatus_t){(void *)2,"IDLE1",2,(uint64_t)clock_us/2,1000};
@@ -118,3 +122,13 @@ class CpuProfileTests(unittest.TestCase):
     def test_recycled_task_handle_lower_counter(self):self.case(1)
     def test_recycled_task_handle_higher_counter(self):self.case(2)
     def test_counter_reset_never_underflows(self):self.case(3)
+
+    def test_diagnostics_also_accept_sdk_32_bit_counter(self):
+        base=Path(self.temp.name)
+        binary=str(base/'cpu_profile_u32')
+        subprocess.run(['cc','-std=c11','-Wall','-Wextra','-Werror',
+            '-DconfigRUN_TIME_COUNTER_TYPE=uint32_t',
+            '-I'+str(base),'-Icomponents/platform/include','-Icomponents/platform',
+            str(base/'test.c'),'-o',binary],cwd=ROOT,check=True)
+        for mode in range(4):
+            subprocess.run([binary,str(mode)],check=True,timeout=10)

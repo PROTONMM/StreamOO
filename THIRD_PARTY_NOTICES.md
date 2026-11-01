@@ -1,5 +1,9 @@
 # Third-party material in StreamOO
 
+Current release-license assessment: [MIT feasibility review](docs/LICENSING_REVIEW.md).
+Original application licensing does not replace the licenses below.
+The small Polish font remains a public-release blocker until resolved.
+
 ## ESP-DSP 1.8.2 — vector FFT on ESP32-S3
 
 Pinned managed component `espressif/esp-dsp`, Apache License 2.0,
@@ -71,8 +75,10 @@ MIT** (Espressif-only restriction, not unrestricted MIT). Complete license:
 [Espressif notice](licenses/Espressif-Audio-Codec-Modified-MIT.txt).
 Vendor attribution for MP3 and AAC: Android Open Source Project2005–2008, Apache2.0;
 [Apache text](licenses/Apache-2.0.txt) and [version/audit/source details](licenses/ESP-Audio-Codec-NOTICE.md).
-MP3 and AAC-LC/ADTS are supported by the adapter; only the selected codec
-is registered. AAC-Plus is disabled; HE-AAC remains unverified.
+The adapter supports MP3, AAC-LC/HE-AAC, FLAC and Ogg Vorbis/Opus;
+registration is limited to the requested format/container. The earlier
+AAC-LC-only scope is superseded by the extended integration described below.
+The Espressif restriction still applies when dr_flac is selected for FLAC.
 Host tests do not use the vendor binaries. FFmpeg/libmp3lame are host fixture
 generation/reference tools, not linked target dependencies. No GPL implementation
 is copied to firmware. The synthetic MP3/AAC fixtures contain no external recording.

@@ -9,7 +9,7 @@ HEADERS={
  'esp_log.h':'#pragma once\nvoid fake_log(const char *,const char *,...) __attribute__((format(printf,2,3)));\n#define ESP_LOGI fake_log\n#define ESP_LOGW fake_log\n',
  'esp_timer.h':'#pragma once\n#include <stdint.h>\nint64_t esp_timer_get_time(void);\n',
  'esp_heap_caps.h':'#pragma once\n#include <stddef.h>\n#define MALLOC_CAP_INTERNAL 1\n#define MALLOC_CAP_8BIT 2\n#define MALLOC_CAP_SPIRAM 4\nvoid *heap_caps_calloc(size_t,size_t,unsigned);\nvoid heap_caps_free(void *);\n',
- 'sdkconfig.h':'#pragma once\n#define CONFIG_STREAMOO_I2S_DOUT 48\n#define CONFIG_STREAMOO_I2S_BCLK 47\n#define CONFIG_STREAMOO_I2S_LRCLK 21\n',
+ 'sdkconfig.h':'#pragma once\n#ifndef STREAMOO_TEST_RELEASE\n#define CONFIG_STREAMOO_DIAGNOSTICS 1\n#endif\n#define CONFIG_STREAMOO_I2S_DOUT 48\n#define CONFIG_STREAMOO_I2S_BCLK 47\n#define CONFIG_STREAMOO_I2S_LRCLK 21\n',
  'freertos/FreeRTOS.h':'#pragma once\ntypedef int portMUX_TYPE;\n#define portMUX_INITIALIZER_UNLOCKED 0\n#define portENTER_CRITICAL(p) ((void)(p))\n#define portEXIT_CRITICAL(p) ((void)(p))\n#define portENTER_CRITICAL_ISR(p) ((void)(p))\n#define portEXIT_CRITICAL_ISR(p) ((void)(p))\n#define pdTRUE 1\n#define pdPASS 1\n#define pdMS_TO_TICKS(x) (x)\n',
  'freertos/queue.h':'#pragma once\n#include <stddef.h>\ntypedef void *QueueHandle_t;\nvoid *xQueueCreate(unsigned,size_t);\nvoid vQueueDelete(void *);\nint xQueueSend(void *,const void *,unsigned);\nint xQueueReceive(void *,void *,unsigned);\n',
  'freertos/task.h':'#pragma once\nint xTaskCreate(void (*)(void *),const char *,unsigned,void *,unsigned,void *);\nvoid vTaskDelay(unsigned);\nunsigned uxTaskGetStackHighWaterMark(void *);\n'}
@@ -30,6 +30,7 @@ HARNESS=r'''
 static char failure_log[1024],diagnostic_log[1024],perf_log[1024],buffers_log[1024],reader_log[2048],station_log[1024];
 static char underrun_log[256],delivery_log[512];
 static unsigned station_changes;static bool transport_eof_test,reader_done;
+static bool release_test,release_fault,fault_reported;
 static bool profile_test,delivery_test,logging_test,bitrate_test,bitrate_header;static streamoo_stream_decode_fn measured_decode;static void *measured_context;static bool measured_once;
 static void advance_time(int64_t us);
 static int64_t next_audio_at;
@@ -90,7 +91,7 @@ bool streamoo_live_decode_init(streamoo_live_decode_t *p,streamoo_byte_source_t 
 streamoo_stream_result_t streamoo_live_decode_read(streamoo_live_decode_t *p,int32_t *out){(void)p;if(logging_test)advance_time(1000);if(bitrate_test){p->consumed_total+=120;p->produced_total+=1920;}if(profile_test&&!measured_once){uint8_t in=0,pcm=0;streamoo_decode_result_t result={0};assert(measured_decode(measured_context,&in,1,false,&pcm,1,&result)==ESP_OK);measured_once=true;}if(flac_case){++flac_reads;if(flac_queued==1)return STREAMOO_STREAM_WAIT;}if(force_fail){if(transport_eof_test)reader_done=true;p->failure=transport_eof_test?STREAMOO_LIVE_SOURCE_EOF:STREAMOO_LIVE_DECODER_NO_PROGRESS;p->last_input=19;return STREAMOO_STREAM_FAILED;}for(unsigned i=0;i<480;++i)out[i]=65536;return STREAMOO_STREAM_READY;}
 esp_err_t streamoo_audio_output_open(streamoo_audio_pins_t p,streamoo_audio_fill_fn fn,void *ctx,streamoo_audio_output_t **out){(void)p;assert(!output_live&&online&&!ap);output_live=true;output_fill=fn;output_context=ctx;next_audio_at=now+5000;*out=(void *)1;return ESP_OK;}
 esp_err_t streamoo_audio_output_close(streamoo_audio_output_t *out){assert(out&&output_live);output_live=false;++closes;return ESP_OK;}
-bool streamoo_audio_output_stats(streamoo_audio_output_t *s,streamoo_audio_stats_t *out){(void)s;*out=(streamoo_audio_stats_t){tick,10,0};return true;}
+bool streamoo_audio_output_stats(streamoo_audio_output_t *s,streamoo_audio_stats_t *out){(void)s;*out=(streamoo_audio_stats_t){tick,10,0};if(release_fault&&!fault_reported&&now>=5000000){out->invalid_buffers=1;fault_reported=true;}return true;}
 
 struct streamoo_metering {
  streamoo_pcm_ring_t tap; streamoo_pcm_block_t storage[4];
@@ -142,16 +143,18 @@ void vTaskDelay(unsigned ms){
  if(logging_test||bitrate_test){
   if(tick==1){online=true;ap=false;assert(streamoo_player_select(NULL,&(streamoo_ui_select_command_t){11,1}));}
   if(tick==1600){
+   if(release_fault)assert(fault_reported&&strstr(failure_log,"stage=i2s_stats"));
    assert(output_live&&s.phase==STREAMOO_PLAYER_PLAYING);
-   if(logging_test)assert(log_lines>=7);
+   if(logging_test&&!release_test)assert(log_lines>=7);
+   if(release_test)assert(!log_lines&&!buffers_log[0]&&!perf_log[0]);
    if(bitrate_test)assert(s.bitrate_kbps==(bitrate_header?320u:192u)&&s.bitrate_measured==!bitrate_header);
    if(bitrate_test)assert(strstr(buffers_log,"audio_kbps=192"));
    streamoo_pcm_pipeline_t *pcm=output_context;
    assert(pcm->stats.underflows==0&&pcm->stats.hard_underflows==0&&pcm->stats.restarts==1);
-   if(logging_test)assert(max_lines_per_turn==1);
+   if(logging_test)assert(max_lines_per_turn==(release_test?0u:1u));
    assert(streamoo_player_set_playing(false));
   }
-  if(tick==1670){assert(!output_live&&!allocations&&opens==1&&closes==1);longjmp(completed,1);}
+  if(tick==1670){assert(!output_live&&!allocations&&closes==opens);if(!release_fault)assert(opens==1);longjmp(completed,1);}
   return;
  }
  if(flac_case){
@@ -211,7 +214,7 @@ void vTaskDelay(unsigned ms){
  if(tick==340)catalog=&second;
  if(tick==420){if(delivery_test)assert(strstr(delivery_log,"body_kbps=192 rx_age_ms=125 read_max_us=250000 push_wait_max_us=5000 log_step_max_us=123000 wait_empty=7 wait_busy=3"));if(profile_test)assert(strstr(perf_log,"codec_max=125000us")&&strstr(perf_log,"block_max=125000us")&&strstr(buffers_log,"pcm_at_max=16384")&&strstr(perf_log,"backend="));assert(!s.running&&!s.station_id&&!output_live&&opens==3&&closes==3&&!allocations&&first.refs==0&&reordered.refs==0);longjmp(completed,1);}
 }
-int main(int argc,char **argv){assert(streamoo_player_reserve(false,1500)==8192);assert(streamoo_player_reserve(true,1500)==93750);assert(streamoo_player_reserve(true,0)==65536);assert(streamoo_player_reserve(true,1)==32768);assert(streamoo_player_reserve(true,UINT32_MAX)==196608);manual=argc>1?atoi(argv[1]):0;flac_case=manual==10;profile_test=manual==11;delivery_test=manual==13;logging_test=manual==14;bitrate_test=manual==15||manual==16;bitrate_header=manual==16;transport_eof_test=manual==12;disable_meter=manual==3;wrong_meter_generation=manual==4;web_commands=manual==5;web_retry=manual==6;if(manual>=7&&manual<=9){boot=manual;fixture_last=manual==9?99:11;fixture_autoplay=manual==8;}if(manual>=3)manual=0;assert(streamoo_player_start(50)==ESP_OK);assert(!streamoo_player_select(NULL,&(streamoo_ui_select_command_t){11,99}));assert(first.refs==0);if(!setjmp(completed))actor(NULL);return 0;}
+int main(int argc,char **argv){assert(streamoo_player_reserve(false,1500)==8192);assert(streamoo_player_reserve(true,1500)==93750);assert(streamoo_player_reserve(true,0)==65536);assert(streamoo_player_reserve(true,1)==32768);assert(streamoo_player_reserve(true,UINT32_MAX)==196608);manual=argc>1?atoi(argv[1]):0;flac_case=manual==10;profile_test=manual==11;delivery_test=manual==13;release_test=manual==17||manual==18;release_fault=manual==18;logging_test=manual==14||release_test;bitrate_test=manual==15||manual==16;bitrate_header=manual==16;transport_eof_test=manual==12;disable_meter=manual==3;wrong_meter_generation=manual==4;web_commands=manual==5;web_retry=manual==6;if(manual>=7&&manual<=9){boot=manual;fixture_last=manual==9?99:11;fixture_autoplay=manual==8;}if(manual>=3)manual=0;assert(streamoo_player_start(50)==ESP_OK);assert(!streamoo_player_select(NULL,&(streamoo_ui_select_command_t){11,99}));assert(first.refs==0);if(!setjmp(completed))actor(NULL);return 0;}
 '''
 class NetworkPlayerTests(unittest.TestCase):
  def run_case(self,mode):
@@ -223,7 +226,7 @@ class NetworkPlayerTests(unittest.TestCase):
     (base/name).write_text(body)
    (base/'test.c').write_text(HARNESS)
    includes=['-I'+str(base)]+['-Icomponents/'+n+'/include' for n in ('spectrum','metering','levels','player','configuration','stations','network','streaming','decoder','compressed_source','pcm_adapter','pcm','audio_gain','audio_output','ui','ui_widgets','input','graphics','text')]
-   subprocess.run(['cc','-std=c11','-Wall','-Wextra','-Werror',*os.environ.get('STREAMOO_PLAYER_SANITIZE','').split(),*includes,str(base/'test.c'),'components/player/streamoo_player.c','components/pcm/streamoo_pcm.c','components/audio_gain/streamoo_audio_gain.c','-o',str(base/'player')],cwd=ROOT,check=True)
+   subprocess.run(['cc','-std=c11','-Wall','-Wextra','-Werror',*(['-DSTREAMOO_TEST_RELEASE'] if mode in (17,18) else []),*os.environ.get('STREAMOO_PLAYER_SANITIZE','').split(),*includes,str(base/'test.c'),'components/player/streamoo_player.c','components/pcm/streamoo_pcm.c','components/audio_gain/streamoo_audio_gain.c','-o',str(base/'player')],cwd=ROOT,check=True)
    subprocess.run([str(base/'player'),str(mode)],check=True,timeout=10)
 
  def test_actor_ap_gate_generation_switch_cancel_retry_and_removed_station(self):self.run_case(0)
@@ -253,3 +256,6 @@ class NetworkPlayerTests(unittest.TestCase):
  def test_measured_bitrate_without_header_and_declared_header_priority(self):
   for mode in (15,16):
    with self.subTest(mode=mode):self.run_case(mode)
+
+ def test_release_has_no_periodic_uart_and_preserves_pcm(self):self.run_case(17)
+ def test_release_i2s_fault_detection_is_independent_of_uart(self):self.run_case(18)

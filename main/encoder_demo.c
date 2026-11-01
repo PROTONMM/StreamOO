@@ -4,7 +4,16 @@
 #include "streamoo_ui_connection_row.h"
 #include <stdio.h>
 #include <string.h>
+#ifdef ESP_PLATFORM
+#include "sdkconfig.h"
+#endif
+#if !defined(ESP_PLATFORM) || defined(CONFIG_STREAMOO_HARDWARE_TESTS)
+#define SYNTHETIC_UI 1
+#else
+#define SYNTHETIC_UI 0
+#endif
 
+#if SYNTHETIC_UI
 static const streamoo_ui_station_t stations[] = {
     {1001, (const uint8_t *)"TEST: Pierwsza", sizeof("TEST: Pierwsza")-1},
     {1002, (const uint8_t *)"TEST: Łódź", sizeof("TEST: Łódź")-1},
@@ -12,37 +21,54 @@ static const streamoo_ui_station_t stations[] = {
     {1004, (const uint8_t *)"TEST: Poznań", sizeof("TEST: Poznań")-1},
     {1005, (const uint8_t *)"TEST: Żory", sizeof("TEST: Żory")-1},
 };
+#endif
 static bool select_station(void *context, const streamoo_ui_select_command_t *cmd)
 {
     streamoo_encoder_demo_t *d = context;
     if(d->station_post) return d->station_post(d->station_context,cmd);
+#if SYNTHETIC_UI
     if (d->selection_pending) return false;
     d->selection = *cmd;
     d->selection_pending = true;
     return true;
+#else
+    return false;
+#endif
 }
 static bool post_control(void *context, const streamoo_control_command_t *cmd)
 {
     streamoo_encoder_demo_t *d = context;
     if (d->audio_post) return d->audio_post(d->audio_context,cmd);
+#if SYNTHETIC_UI
     if (d->control_pending) return false;
     d->control = *cmd;
     d->control_pending = true;
     return true;
+#else
+    return false;
+#endif
 }
 bool streamoo_encoder_demo_init(streamoo_encoder_demo_t *d)
 {
     if (!d) return false;
+#if SYNTHETIC_UI
     *d = (streamoo_encoder_demo_t){.station_id=1002, .generation=1, .volume=50, .running=true};
     if (!streamoo_ui_init(&d->ui, 160, select_station, d) ||
         !streamoo_ui_set_catalog(&d->ui, stations, 5, 1)) return false;
     streamoo_ui_set_playing(&d->ui, d->station_id);
+#else
+    *d = (streamoo_encoder_demo_t){.generation=1,.volume=50,.imported_catalog=true};
+    if(!streamoo_ui_init(&d->ui,160,select_station,d) ||
+       !streamoo_ui_set_catalog(&d->ui,NULL,0,1))return false;
+    d->ui.running=false;
+#endif
     return true;
 }
 bool streamoo_encoder_demo_input(streamoo_encoder_demo_t *d, streamoo_input_event_t e,
                                   streamoo_control_mode_t mode, uint64_t now)
 {
     if (!d || !streamoo_ui_handle_input(&d->ui, e, mode, post_control, d, now)) return false;
+#if SYNTHETIC_UI
     /* Diagnostic owner applies copied commands after the UI callback returns.
      * Production adapter will enqueue to player_manager instead. */
     if (d->selection_pending) {
@@ -62,6 +88,7 @@ bool streamoo_encoder_demo_input(streamoo_encoder_demo_t *d, streamoo_input_even
         }
         d->control_pending = false;
     }
+#endif
     d->ui.running=d->running;
     /* Sync TEST source before next gesture, including open-list selection. */
     streamoo_ui_set_playing(&d->ui, d->station_id);
@@ -80,11 +107,13 @@ bool streamoo_encoder_demo_draw(streamoo_encoder_demo_t *d, uint8_t *frame,
     for (uint32_t i=0; i<d->ui.count; ++i)
         if (d->ui.stations[i].stable_id == d->station_id)
             s.station_name=(streamoo_ui_text_t){d->ui.stations[i].name,d->ui.stations[i].name_bytes};
+#if SYNTHETIC_UI
     static const char silent[]="TEST sterowania - bez audio";
     static const char audible[]="TEST: ton 1kHz, widżety TEST";
     s.title=d->audio_post ? (streamoo_ui_text_t){(const uint8_t *)audible,sizeof audible-1} :
                             (streamoo_ui_text_t){(const uint8_t *)silent,sizeof silent-1};
     if (d->audio_post && d->audio_title.data) s.title=d->audio_title;
+#endif
     if (d->imported_catalog) {
         static const uint8_t choose[]="Wybierz stację z listy", selected[]="Odtwarzanie niedostępne", empty[]="Wgraj playlistę przez WWW";
         s.visualization_valid=false;
@@ -102,6 +131,7 @@ bool streamoo_encoder_demo_draw(streamoo_encoder_demo_t *d, uint8_t *frame,
     s.bitrate_kbps=d->codec[0] ? d->bitrate_kbps:0;
     s.bitrate_measured=d->codec[0] && d->bitrate_measured;
     s.codec=(streamoo_ui_text_t){(const uint8_t *)d->codec,strlen(d->codec)};
+#if SYNTHETIC_UI
     for (unsigned i=0; i<24; ++i) {
         unsigned phase=(unsigned)(now%2000+i*61)%2000;
         s.visualization.bands[i]=d->running ? (phase<1000 ? phase : 2000-phase)*32 : 0;
@@ -110,6 +140,7 @@ bool streamoo_encoder_demo_draw(streamoo_encoder_demo_t *d, uint8_t *frame,
     s.visualization.rms[1]=s.visualization.bands[12];
     s.visualization.peak[0]=s.visualization.rms[0];
     s.visualization.peak[1]=s.visualization.rms[1];
+#endif
     if (d->imported_catalog && d->levels_valid &&
         (d->ui.visualization != STREAMOO_VIS_SPECTRUM || d->levels.band_count)) {
         s.visualization = d->levels;
@@ -120,15 +151,19 @@ bool streamoo_encoder_demo_draw(streamoo_encoder_demo_t *d, uint8_t *frame,
     if (!streamoo_canvas_init(&canvas,frame,bytes,256,64,128)) return false;
     if (d->ui.screen == STREAMOO_UI_STATIONS) {
         streamoo_canvas_fill(&canvas,(streamoo_rect_t){0,0,256,64},0);
-        const char *label=d->imported_catalog ? "Lista stacji" : "TEST - lista stacji";
+        const char *label="Lista stacji";
+#if SYNTHETIC_UI
+        if(!d->imported_catalog)label="TEST - lista stacji";
+#endif
         return streamoo_text_line(&canvas,(streamoo_rect_t){0,0,256,8},(const uint8_t *)label,strlen(label),
             STREAMOO_TEXT_CENTER,0,0,0,10,streamoo_font5x8,NULL) &&
             streamoo_ui_draw_list(&d->ui,&canvas,(streamoo_rect_t){0,8,256,56},now);
     }
     if (!streamoo_ui_draw_home(&d->ui,&canvas,now)) return false;
-    char status[44];
     if(d->network_ip[0]) return streamoo_ui_connection_row_draw(&canvas,
         (const uint8_t *)d->network_ip,strlen(d->network_ip),d->volume);
+#if SYNTHETIC_UI
+    char status[44];
     int length=snprintf(status,sizeof(status),"TEST VOL %d  %s  W%u",d->volume,
                         d->running ? (d->buffering ? "BUF" : "PLAY") : "STOP",(unsigned)d->ui.visualization+1);
     if (length<0 || (size_t)length>=sizeof(status)) return false;
@@ -136,6 +171,10 @@ bool streamoo_encoder_demo_draw(streamoo_encoder_demo_t *d, uint8_t *frame,
     streamoo_canvas_fill(&canvas,(streamoo_rect_t){0,24,256,8},0);
     return streamoo_text_line(&canvas,(streamoo_rect_t){0,24,256,8},
         (const uint8_t *)status,(size_t)length,STREAMOO_TEXT_CENTER,0,0,0,12,streamoo_font5x8,NULL);
+#else
+    static const uint8_t no_address[]="0.0.0.0";
+    return streamoo_ui_connection_row_draw(&canvas,no_address,sizeof no_address-1,d->volume);
+#endif
 }
 
 bool streamoo_encoder_demo_bind_audio(streamoo_encoder_demo_t *d, streamoo_control_post_fn post, void *context)

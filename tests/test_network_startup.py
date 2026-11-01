@@ -210,7 +210,7 @@ class NetworkStartupTests(unittest.TestCase):
   cls.tmp=tempfile.TemporaryDirectory();cls.addClassCleanup(cls.tmp.cleanup);base=Path(cls.tmp.name);(base/'freertos').mkdir()
   files=dict(COMMON);files['freertos/FreeRTOS.h']+='#define pdFALSE 0\n'
   files['esp_err.h']+='\n#define ESP_ERR_TIMEOUT 4\n#define ESP_ERR_NOT_SUPPORTED 5\n'
-  files['sdkconfig.h']+='#define CONFIG_STREAMOO_NETWORK_AP_TEST 1\n#define CONFIG_LWIP_SNTP_MAX_SERVERS 3\n'
+  files['sdkconfig.h']+='#define CONFIG_STREAMOO_NETWORK_ENABLED 1\n#define CONFIG_LWIP_SNTP_MAX_SERVERS 3\n'
   files['network_secret.h']='#pragma once\n#define STREAMOO_NETWORK_SECRET_AVAILABLE 1\nstatic const unsigned char streamoo_ap_password[]="test-only-key";\n'
   files['freertos/event_groups.h']='#pragma once\n#include <stdint.h>\ntypedef void *EventGroupHandle_t;\ntypedef uint32_t EventBits_t;\nvoid *xEventGroupCreate(void);\nvoid vEventGroupDelete(void *);\nuint32_t xEventGroupClearBits(void *,uint32_t);\nuint32_t xEventGroupSetBits(void *,uint32_t);\nuint32_t xEventGroupGetBits(void *);\nuint32_t xEventGroupWaitBits(void *,uint32_t,int,int,unsigned);\n'
   files['freertos/task.h']+='void vTaskDelete(void *);\n'

@@ -1,5 +1,34 @@
 # Status implementacji
 
+## Najnowsze — przegląd kodu, testy opt-in i cichy UART / ADR0099 / 2026-11-01
+
+Normalne radio: testy sprzętowe i klipy wyłączone także w CMake, osobne
+DIAGNOSTICS/HARDWARE_TESTS. Funkcjonalne flagi sieci/enkodera/UI/ekranu
+przemianowane na ENABLED, stare ustawienia migruje main/sdkconfig.rename.
+Syntetyczne stacje/tytuły/słupki i lokalny testowy owner poza zwykłym S3.
+Testy hostowe zachowane poza firmware. Brak health taska i cyklicznego
+UART CPU/heap/PCM/FFT/OLED/IRQ; WARN oraz identyfikacja firmware/nazwa
+zmienianej stacji pozostają. Underrun pierwszy, potem najwyżej co5s.
+Kontrola błędów I2S osobno od logów; crypto early init zachowane.
+Raport zakresu, ustaleń i instrukcje: RELEASE_REVIEW.md.
+
+481 testów hostowych PASS. Native ESP-IDF6.1: zwykłe radio, diagnostyczne
+radio, kontrolowany AAC i skończony OLED/I2S PASS. Rozmiary i potwierdzenie
+konfiguracji/ELF w ADR0099. Bez zmian TCP/PCM/dekodera/DSP/stosów pozostałych
+zadań, brak flash/erase przez agenta. Nowy runtime/odsłuch OPEN.
+
+MIT: własny kod może otrzymać tę licencję po ustaleniu praw/właściciela;
+kompletny firmware zawiera odrębne warunki Modified MIT Espressif,
+Apache/BSD/OFL/MPL. Niewyjaśnione bitmapy fontu PL blokują publiczną
+redystrybucję tej zawartości. Nie nadano licencji ani nie wymieniono fontów.
+Pełny wynik: LICENSING_REVIEW.md i THIRD_PARTY_NOTICES.md.
+
+Następny odbiór: zwykły `idf.py -p /dev/ttyUSB0 flash`, logo/autoplay,
+wybór stacji, STOP/wygaszenie/PLAY, WWW oraz kilka minut FLAC/HLS.
+W normalnym buildzie okresowe raporty nie są dostępne; do dalszych
+pomiarów użyć osobnego builda DIAGNOSTICS według RELEASE_REVIEW.md.
+
+
 ## Najnowsze — audyt RAM, odzysk9792B statycznego DRAM / ADR0098 / 2026-11-01
 
 Raport MEMORY_AUDIT: duże alokacje internal/PSRAM, rozmiary ABI S3 z DWARF,

@@ -16,7 +16,10 @@ static const int pins[] = {CONFIG_STREAMOO_ENCODER_GPIO_A,
 typedef struct { uint64_t ms; uint8_t levels; } edge_t;
 static QueueHandle_t queue, gestures;
 static portMUX_TYPE lock = portMUX_INITIALIZER_UNLOCKED;
-static uint32_t edges[3], lost;
+static uint32_t lost;
+#ifdef CONFIG_STREAMOO_DIAGNOSTICS
+static uint32_t edges[3];
+#endif
 static bool consumer_active;
 static streamoo_input_t decoder;
 static edge_t current;
@@ -47,11 +50,17 @@ static void initialize_decoder(edge_t e)
 
 static void edge_isr(void *arg)
 {
+#ifdef CONFIG_STREAMOO_DIAGNOSTICS
     unsigned pin_index = (unsigned)(uintptr_t)arg;
+#else
+    (void)arg;
+#endif
     const edge_t e = read_levels();
     BaseType_t wake = pdFALSE;
     portENTER_CRITICAL_ISR(&lock);
+#ifdef CONFIG_STREAMOO_DIAGNOSTICS
     ++edges[pin_index];
+#endif
     if (xQueueSendFromISR(queue, &e, &wake) != pdTRUE) ++lost;
     portEXIT_CRITICAL_ISR(&lock);
     if (wake) portYIELD_FROM_ISR();
@@ -66,8 +75,10 @@ static void decode(edge_t e)
     streamoo_input_event_t event = streamoo_input_sample(
         &decoder, e.levels & 1, e.levels & 2, !(e.levels & 4), e.ms);
     if (event.kind != STREAMOO_INPUT_NONE) {
+#ifdef CONFIG_STREAMOO_DIAGNOSTICS
         static const char *const names[] = {"NONE", "ROTATE", "SHORT", "LONG", "PRESSED_ROTATE"};
         ESP_LOGI("input_probe", "TEST %s delta=%d", names[event.kind], event.delta);
+#endif
         portENTER_CRITICAL(&lock);
         bool forward = consumer_active;
         portEXIT_CRITICAL(&lock);
@@ -79,10 +90,12 @@ static void decode(edge_t e)
 static void probe_task(void *context)
 {
     (void)context;
+#ifdef CONFIG_STREAMOO_DIAGNOSTICS
     ESP_LOGI("input_probe", "TEST IRQ capture: A=GPIO%d B=GPIO%d BTN=GPIO%d; half=%d reverse=%d",
              pins[0], pins[1], pins[2], decoder.half, decoder.reversed);
     ESP_LOGI("input_probe", "Expected: both A/B IRQ counts change; opposite rotation has opposite delta");
     uint64_t last_log = current.ms;
+#endif
     for (;;) {
         edge_t e;
         bool received = xQueueReceive(queue, &e, 1) == pdTRUE;
@@ -109,6 +122,7 @@ static void probe_task(void *context)
             e.ms = (uint64_t)esp_timer_get_time() / 1000;
             decode(e);
         }
+#ifdef CONFIG_STREAMOO_DIAGNOSTICS
         uint64_t now = (uint64_t)esp_timer_get_time() / 1000;
         if (now - last_log >= 1000) {
             uint32_t counts[3];
@@ -125,6 +139,7 @@ static void probe_task(void *context)
                 ESP_LOGW("input_probe", "B changes, A has no IRQ: verify A signal on GPIO%d; direction unavailable", pins[0]);
             last_log = now;
         }
+#endif
     }
 }
 

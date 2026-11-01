@@ -21,6 +21,11 @@
 #include <inttypes.h>
 #include <string.h>
 #include <time.h>
+#ifdef CONFIG_STREAMOO_DIAGNOSTICS
+#define DIAGNOSTICS 1
+#else
+#define DIAGNOSTICS 0
+#endif
 typedef enum { COMMAND_ENCODER,COMMAND_PLAYING,COMMAND_VOLUME } command_kind_t;
 typedef struct {
   command_kind_t kind;
@@ -123,11 +128,12 @@ static void station_label(char out[129],const streamoo_station_t *station){
 static void log_transport(const streamoo_http_stream_info_t *i,uint64_t generation){
   streamoo_network_state_t network={0};
   streamoo_network_state(&network);
+  if(DIAGNOSTICS || i->tls_error!=ESP_OK || i->tls_code || i->tls_flags)
   ESP_LOGW("player","TLS gen=%" PRIu64 " error=%s(%d) code=%d flags=0x%x errno=%d utc=%lld synced=%u",
     generation,esp_err_to_name(i->tls_error),i->tls_error,i->tls_code,(unsigned)i->tls_flags,
     i->socket_errno,(long long)time(NULL),(unsigned)network.time_synced);
   const char *resource=i->resource[0]?i->resource:"none",*stage=i->stage[0]?i->stage:"none",*reason=i->reason[0]?i->reason:"none";
-  ESP_LOGW("player","Reader gen=%" PRIu64 " ended=%u error=%s(%d) resource=%s stage=%s reason=%s"
+  if(DIAGNOSTICS)ESP_LOGW("player","Reader gen=%" PRIu64 " ended=%u error=%s(%d) resource=%s stage=%s reason=%s"
     " HTTP=%d mime=\"%s\" read=%d rx=%" PRIu64 "/%" PRIu64 " redirects=%" PRIu32
     " HLS=%u seq=%" PRIu64 " next=%" PRIu64 " media=%" PRIu64 "+%" PRIu32 " segments=%" PRIu32
     " reloads=%" PRIu32 " socket_errno=%d tls=%s(%d) tls_code=%d tls_flags=0x%x",
@@ -210,7 +216,7 @@ static void log_decode_profile(decode_profile_t *p,const streamoo_live_decode_t 
 }
 static void task(void *context) {
   (void)context;
-#ifdef ESP_PLATFORM
+#if defined(ESP_PLATFORM) && defined(CONFIG_STREAMOO_DIAGNOSTICS)
   ESP_LOGI("player", "Task placement: decoder/PCM core=%d (affinity=1)",
            xPortGetCoreID());
 #endif
@@ -225,7 +231,7 @@ static void task(void *context) {
   streamoo_metering_t *meter = NULL;
   bool retiring = false, flac_refill=false;
   uint32_t sequence = 0, reader_hwm = 0, logged_underflows = 0;
-  int64_t retry_at = 0, log_at = 0, fade_until = 0;
+  int64_t retry_at = 0, log_at = 0, fade_until = 0, health_at=0, underrun_report_at=0;
   uint64_t log_generation=UINT64_MAX;
   unsigned log_step=0;
   unsigned backoff = 1;
@@ -395,7 +401,7 @@ static void task(void *context) {
         current.phase = STREAMOO_PLAYER_RETRY;
         retry_at = now + (int64_t)backoff * 1000000;
         backoff = backoff < 8 ? backoff * 2 : 15;
-      } else
+      } else if(DIAGNOSTICS)
         ESP_LOGI("player", "Connect generation=%" PRIu64 " station=%016" PRIx64 " name=\"%s\"", current.generation,current.station_id,name);
     }
     if (session && !retiring && current.running && online) {
@@ -461,7 +467,8 @@ static void task(void *context) {
         portENTER_CRITICAL(&lock);
         streamoo_pcm_stats_t before = stats;
         portEXIT_CRITICAL(&lock);
-        if(before.underflows!=logged_underflows) {
+        if(before.underflows!=logged_underflows &&
+           (DIAGNOSTICS || !logged_underflows || now-underrun_report_at>=5000000)) {
           ESP_LOGW("player","Underrun gen=%" PRIu64 " low=%" PRIu32
                    " PCM=%" PRIu32 " compressed=%zu cache=%zu pending=%zu"
                    " wait_empty=%" PRIu32 " wait_busy=%" PRIu32 " refill=%u rx_age_ms=%" PRId64,
@@ -470,6 +477,7 @@ static void task(void *context) {
                    info.source_empty_waits,info.source_busy_waits,(unsigned)flac_refill,
                    info.last_rx_us>0 && now>=info.last_rx_us ? (now-info.last_rx_us)/1000 : INT64_C(-1));
           logged_underflows=before.underflows;
+          underrun_report_at=now;
         }
         if(flac_refill&&(queued>=reserve||info.ended))flac_refill=false;
         for (unsigned burst = 0; !flac_refill && burst < 8 && streamoo_pcm_count(&ring) < 32;
@@ -546,8 +554,8 @@ static void task(void *context) {
                  pump ? (unsigned)pump->observed.channels : 0,
                  pump ? (unsigned)pump->observed.bits : 0,current.station_id,name);
         log_transport(&info,current.generation);
-        log_decode_profile(&profile,pump,flac_refill);
-        if (pump)
+        if(DIAGNOSTICS)log_decode_profile(&profile,pump,flac_refill);
+        if (DIAGNOSTICS && pump)
           ESP_LOGW("player",
                    "Decode diag gen=%" PRIu64
                    " in=%zu used=%zu out=%zu needed=%zu calls=%" PRIu64
@@ -585,8 +593,18 @@ static void task(void *context) {
     /* Periodic UART output is synchronous. Service PCM between individual
      * lines rather than blocking its producer for the whole report. Never
      * carry a partially printed report into another stream generation. */
+    /* Fault detection must remain active when periodic UART is compiled out. */
+    if(output && now-health_at>=5000000) {
+      health_at=now;
+      streamoo_audio_stats_t audio={0};
+      streamoo_audio_output_stats(output,&audio);
+      if(audio.invalid_buffers || audio.max_fill_us>=5000){
+        failure_stage="i2s_stats";
+        current.error=ESP_FAIL;
+      }
+    }
     if(log_generation!=current.generation){log_generation=current.generation;log_step=0;}
-    if (log_step || now - log_at >= 5000000) {
+    if (DIAGNOSTICS && (log_step || now - log_at >= 5000000)) {
       int64_t log_started=esp_timer_get_time();
       portENTER_CRITICAL(&lock);
       streamoo_pcm_stats_t pcm = stats;
@@ -609,10 +627,6 @@ static void task(void *context) {
                  pcm.hard_underflows, pcm.restarts,
                  (unsigned)uxTaskGetStackHighWaterMark(NULL),
                  (unsigned)reader_hwm);
-        if (output && (audio.invalid_buffers || audio.max_fill_us >= 5000)) {
-          failure_stage = "i2s_stats";
-          current.error = ESP_FAIL;
-        }
         break;
       }
       case 1:

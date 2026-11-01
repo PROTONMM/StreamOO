@@ -1,4 +1,19 @@
 menu "StreamOO Configuration"
+    config STREAMOO_DIAGNOSTICS
+        bool "Compile detailed UART diagnostics and runtime profiling"
+        default n
+        select FREERTOS_GENERATE_RUN_TIME_STATS
+        help
+            Includes periodic CPU/heap, PCM/decoder/FFT, OLED and encoder
+            reports. Disabled for the normal radio. Select a 64-bit runtime
+            counter for long diagnostic sessions. No diagnostics run in I2S.
+    config STREAMOO_HARDWARE_TESTS
+        bool "Compile hardware test sources and synthetic screens"
+        default n
+        select STREAMOO_DIAGNOSTICS
+        help
+            Enables optional audio fixtures, finite display tests and OLED
+            timing experiments. Host tests remain independent in tests/.
     config STREAMOO_CRYPTO_EARLY_INIT
         bool "Prepare hardware AES/SHA before I2S"
         depends on IDF_TARGET_ESP32S3 && MBEDTLS_HARDWARE_AES && MBEDTLS_HARDWARE_SHA
@@ -9,33 +24,30 @@ menu "StreamOO Configuration"
             before I2S can use them. Application workaround for TLS failures
             after I2S teardown, not an SDK fix. Stops startup on check failure.
             No change to certificate verification. See ADR0096.
-    config STREAMOO_NETWORK_AP_TEST
-        bool "Secured SoftAP bring-up TEST (private build password required)"
+    config STREAMOO_NETWORK_ENABLED
+        bool "Enable network radio and Wi-Fi configuration"
         default y
         select I2S_ISR_IRAM_SAFE
         help
-            Starts StreamOO-XXXXXX WPA2 AP using a private external JSON file.
-            Missing secret leaves Wi-Fi disabled. No portal/STA/HTTP yet.
+            Starts saved Wi-Fi profiles or the StreamOO-XXXXXX WPA2 setup AP.
+            Uses the private external JSON file for the shared AP key.
+            Missing secret leaves Wi-Fi disabled.
             Run tools/configure_network.py locally, then idf.py reconfigure build.
 
-    config STREAMOO_ENCODER_GESTURE_TEST
-        bool "Diagnostic encoder GPIO and gesture probe"
+    config STREAMOO_ENCODER_ENABLED
+        bool "Enable encoder input"
         default y
         help
             Capture both edges of A/B/button with GPIO interrupts and a bounded
-            queue. Log IRQ counts once per second and decoded TEST gestures.
-            Overflow resets the decoder and is reported. Emits gestures only;
-            the interactive UI TEST option maps them to test commands.
-    config STREAMOO_ENCODER_UI_TEST
-        bool "Interactive encoder UI TEST instead of finite OLED sequence"
-        depends on STREAMOO_ENCODER_GESTURE_TEST && STREAMOO_LCD_SMOKE_TEST
+            queue. Overflow resets the decoder and is reported. UART edge
+            counts and gesture traces require detailed diagnostics.
+    config STREAMOO_UI_ENABLED
+        bool "Enable interactive radio UI"
+        depends on STREAMOO_ENCODER_ENABLED && STREAMOO_DISPLAY_ENABLED
         default y
         help
-            Start interactive HOME immediately and keep rendering until reset.
-            Synthetic catalog and visualization. Continuous audio control TEST
-            optionally connects VOL/PLAY to a test tone; otherwise UI-only.
-            Network labels remain synthetic. Volume/widget saved after 5s idle.
-            Disable for the finite OLED diagnostic.
+            Radio HOME, station selection and live audio widgets. Volume/widget
+            saved after 5s idle. Synthetic content requires hardware tests.
     config STREAMOO_RESERVE_USB
         bool "Reserve GPIO19/20 for USB debugging"
         default y
@@ -45,7 +57,7 @@ menu "StreamOO Configuration"
     menu "Hardware: SSD1322"
         config STREAMOO_LCD_TIMING_PROBE
             bool "OLED pulsation experiment after playback starts (40 seconds)"
-            depends on STREAMOO_ENCODER_UI_TEST && STREAMOO_NETWORK_AP_TEST
+            depends on STREAMOO_HARDWARE_TESTS && STREAMOO_UI_ENABLED && STREAMOO_NETWORK_ENABLED
             default n
             help
                 One sequence per reset, after network player reaches PLAYING:
@@ -56,18 +68,18 @@ menu "StreamOO Configuration"
                 UART logs phases and measured present times. Any encoder event
                 exits the probe (that event is consumed). Audio/web continue.
                 No changes to panel analog timings, brightness, NVS or codec.
-        config STREAMOO_LCD_SMOKE_TEST
-            bool "Run finite SSD1322 diagnostic at startup"
+        config STREAMOO_DISPLAY_ENABLED
+            bool "Enable SSD1322 display"
             default y
             help
-                With interactive encoder UI TEST enabled, show interactive HOME.
-                Otherwise: black, white, grayscale, inverse, geometry and Polish text,
-                then 20 seconds of full HOME snapshots with synthetic network,
-                clock and audio data, followed by 8 seconds of station-list
-                navigation. Display off
-                after approximately 46 seconds. No player or real station catalog.
+                Starts the OLED driver and boot logo. Enable interactive UI
+                for the radio. Finite synthetic tests are a separate option.
                 User module is configured with R5/R8: BS1=0 and BS0=0.
                 Cold power-on/reset must be provided by the board if RESET=-1.
+        config STREAMOO_DISPLAY_TEST
+            bool "Run finite display test instead of radio UI"
+            depends on STREAMOO_HARDWARE_TESTS && STREAMOO_DISPLAY_ENABLED && !STREAMOO_UI_ENABLED
+            default n
         config STREAMOO_LCD_COLUMN_OFFSET
             int "Experimental panel column offset (four-pixel units)"
             range 0 56
@@ -115,7 +127,7 @@ menu "StreamOO Configuration"
     menu "Hardware: PCM5102A (I2S)"
         config STREAMOO_AUDIO_CONTROL_TEST
             bool "PCM source controlled by encoder VOL/PLAY TEST"
-            depends on STREAMOO_ENCODER_UI_TEST
+            depends on STREAMOO_HARDWARE_TESTS && STREAMOO_UI_ENABLED
             default n
             select I2S_ISR_IRAM_SAFE
             help
@@ -156,6 +168,7 @@ menu "StreamOO Configuration"
         config STREAMOO_I2S_SMOKE_TEST
             bool "Run finite left/right I2S tone TEST at startup"
             default n
+            depends on STREAMOO_HARDWARE_TESTS
             select I2S_ISR_IRAM_SAFE
             help
                 Ignored while continuous audio control TEST is enabled.

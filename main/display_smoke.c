@@ -71,7 +71,7 @@ static esp_err_t display_timing_probe(streamoo_ssd1322_t *display, uint8_t *fram
 }
 #endif
 
-#ifdef CONFIG_STREAMOO_ENCODER_UI_TEST
+#ifdef CONFIG_STREAMOO_UI_ENABLED
 static bool sync_catalog(streamoo_encoder_demo_t *demo,streamoo_catalog_snapshot_t **held,streamoo_ui_station_t **entries)
 {
     streamoo_catalog_snapshot_t *next=streamoo_config_catalog_acquire();
@@ -112,7 +112,7 @@ static void display_task(void *context)
     if (error == ESP_OK) error = streamoo_ssd1322_present(display, frame, SSD1322_FRAME_BYTES);
     if (error == ESP_OK) error = streamoo_ssd1322_enable(display, true);
     if(error==ESP_OK&&show_logo){boot_logo_presented=true;vTaskDelay(pdMS_TO_TICKS(1500));}
-#ifdef CONFIG_STREAMOO_ENCODER_UI_TEST
+#ifdef CONFIG_STREAMOO_UI_ENABLED
     if (error == ESP_OK) {
         streamoo_catalog_snapshot_t *catalog_snapshot=NULL;
         streamoo_ui_station_t *catalog_entries=NULL;
@@ -155,12 +155,16 @@ static void display_task(void *context)
         /* Discard input captured before this UI session was ready. */
         while (streamoo_input_probe_receive(&event)) {}
         TickType_t wake = xTaskGetTickCount();
+#ifdef CONFIG_STREAMOO_DIAGNOSTICS
         int64_t oled_stats_at=esp_timer_get_time(),oled_max_present=0;
         uint32_t oled_checked=0,oled_sent=0,oled_rows=0;
         uint64_t oled_bytes=0;
+#endif
+#ifdef CONFIG_STREAMOO_DIAGNOSTICS
         ESP_LOGI("display_smoke", "%s",streamoo_network_boot_ap_enabled() ?
             "Encoder UI ready; stored station catalog; network player" :
             "Interactive encoder TEST ready; synthetic catalog/widgets; no stream player");
+#endif
         while (error == ESP_OK) {
             uint64_t now = (uint64_t)esp_timer_get_time() / 1000;
             if(streamoo_network_boot_ap_enabled() && now>=catalog_check_at) {
@@ -254,7 +258,7 @@ static void display_task(void *context)
                 if (setup) continue;
                 startup_logo=false;
                 if (!streamoo_encoder_demo_input(&demo,event,mode,now))
-                    ESP_LOGW("display_smoke", "TEST gesture rejected; state preserved");
+                    ESP_LOGW("display_smoke", "Gesture rejected; state preserved");
                 const streamoo_preferences_value_t preferences = {(uint8_t)demo.volume, (uint8_t)demo.ui.visualization};
                 if (preferences_ready && !streamoo_preferences_submit(preferences))
                     ESP_LOGW("display_smoke", "Preferences update not accepted");
@@ -304,12 +308,15 @@ static void display_task(void *context)
                 break;
             }
             ssd1322_update_t update={0};
+#ifdef CONFIG_STREAMOO_DIAGNOSTICS
             int64_t present_at=esp_timer_get_time();
+#endif
             if(!panel_enabled) {
                 /* A wake always restores all RAM before enabling the panel. */
                 error=streamoo_ssd1322_present(display,frame,SSD1322_FRAME_BYTES);
                 update=(ssd1322_update_t){SSD1322_FRAME_BYTES,0,SSD1322_HEIGHT};
             } else error=streamoo_ssd1322_present_changed(display,frame,SSD1322_FRAME_BYTES,&update);
+#ifdef CONFIG_STREAMOO_DIAGNOSTICS
             int64_t measured_at=esp_timer_get_time(),present_us=measured_at-present_at;
             if(error==ESP_OK) {
                 ++oled_checked;
@@ -322,13 +329,14 @@ static void display_task(void *context)
                     (measured_at-oled_stats_at)/1000,oled_checked,oled_sent,oled_rows,oled_bytes,oled_max_present);
                 oled_stats_at=measured_at;oled_max_present=0;oled_checked=oled_sent=oled_rows=0;oled_bytes=0;
             }
+#endif
             if(error==ESP_OK&&!panel_enabled){error=streamoo_ssd1322_enable(display,true);if(error==ESP_OK)panel_enabled=true;}
             vTaskDelayUntil(&wake,pdMS_TO_TICKS(40) ? pdMS_TO_TICKS(40) : 1);
         }
         streamoo_config_catalog_release(catalog_snapshot);
         heap_caps_free(catalog_entries);
     }
-#else
+#elif defined(CONFIG_STREAMOO_DISPLAY_TEST)
     if (error == ESP_OK) {
         ESP_LOGW("display_smoke", "Experimental panel profile; verify image on OLED. RESET GPIO=%d",
                  CONFIG_STREAMOO_LCD_RST);
@@ -404,7 +412,9 @@ static void display_task(void *context)
         if (close_error != ESP_OK) ESP_LOGE("display_smoke", "Close failed: %s", esp_err_to_name(close_error));
     }
     heap_caps_free(frame);
+#ifdef CONFIG_STREAMOO_DISPLAY_TEST
     ESP_LOGI("display_smoke", "Test ended; visual acceptance remains HARDWARE_TEST_PENDING");
+#endif
     vTaskDelete(NULL);
 }
 

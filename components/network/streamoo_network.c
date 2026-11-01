@@ -2,7 +2,7 @@
 #include "streamoo_network.h"
 #include "network_secret.h"
 #include "sdkconfig.h"
-#if defined(CONFIG_STREAMOO_NETWORK_AP_TEST) &&                                \
+#if defined(CONFIG_STREAMOO_NETWORK_ENABLED) &&                                \
     STREAMOO_NETWORK_SECRET_AVAILABLE
 #include "esp_event.h"
 #include "esp_log.h"
@@ -419,10 +419,12 @@ static void network_task(void *context) {
         portENTER_CRITICAL(&state_lock);
         state.clients = clients.num;
         portEXIT_CRITICAL(&state_lock);
+#ifdef CONFIG_STREAMOO_DIAGNOSTICS
         ESP_LOGI("network", "AP clients=%d STA=%u saved=%u stack_hwm=%u",
                  clients.num, (unsigned)snapshot.sta_connected,
                  snapshot.saved_profiles,
                  (unsigned)uxTaskGetStackHighWaterMark(NULL));
+#endif
         last_log = now;
       }
     }

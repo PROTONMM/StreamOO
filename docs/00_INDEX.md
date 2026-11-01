@@ -226,3 +226,8 @@ FLAC: dopływ HTTP i dekodowanie na oddzielnych rdzeniach: `adr/0069-flac-reader
 Import playlisty dopisujący stacje: `adr/0070-append-playlist-import.md`.
 
 Logo podczas Wi-Fi i autoplay: `adr/0068-boot-logo-through-autoplay.md`.
+
+Przegląd kodu, normalny cichy profil i testy sprzętowe opt-in:
+`RELEASE_REVIEW.md`, `adr/0099-release-diagnostics-tests-and-license-review.md`.
+Możliwość nadania MIT, ograniczenia zależności i prawa do fontu PL:
+`LICENSING_REVIEW.md`.

@@ -1,4 +1,5 @@
 #include "network_portal.h"
+#include "sdkconfig.h"
 #include "streamoo_portal.h"
 #include "streamoo_portal_config.h"
 #include "streamoo_config_store.h"
@@ -29,6 +30,7 @@ static bool status(void *context,streamoo_portal_status_t *out)
         }
         return true;
     }
+#ifdef CONFIG_STREAMOO_AUDIO_CONTROL_TEST
     streamoo_audio_control_state_t audio={0};
     if (streamoo_audio_control_state(&audio)) {
         out->audio_available=audio.ready;
@@ -36,6 +38,7 @@ static bool status(void *context,streamoo_portal_status_t *out)
         out->buffering=audio.buffering;
         out->volume=audio.model.volume;
     }
+#endif
     return true;
 }
 static bool player_mode(void){

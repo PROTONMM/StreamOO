@@ -4,7 +4,8 @@ Przygotowany 2026-10-25 po stabilnym przebiegu06c. Nie zmienia algorytmu
 PCM/gain. Łączy dwa istniejące eksperymenty w jednym firmware, żeby odebrać
 powrót po niedoborze i niezależność analizy pod obciążeniem.
 
-Profil eksperymentalny wymaga:
+Aktualne bramki ADR0099: HARDWARE_TESTS=y i AUDIO_CONTROL_TEST=y,
+NETWORK_ENABLED=n, zwykły UI włączony. Najpierw włącz te opcje, potem:
 
 ```text
 CONFIG_STREAMOO_PCM_STALL_TEST=y
@@ -15,14 +16,14 @@ Normalne wartości domyślne w Kconfig pozostają n/0. Fragment
 `config/pcm_stress.defaults` pozwala odtworzyć profil przy tworzeniu NOWEGO
 sdkconfig, podając go po sdkconfig.defaults w SDKCONFIG_DEFAULTS. Fragment
 nie zastępuje już zapisanych wartości istniejącego sdkconfig. Dla istniejącej
-konfiguracji zmień te dwie opcje w menuconfig → StreamOO Configuration →
+konfiguracji ustaw powyższe bramki i te dwie opcje w menuconfig → StreamOO Configuration →
 Hardware: PCM5102A (I2S), potem build. Nie kasuj konfiguracji ani NVS.
 
 ## Próba na płytce
 
 1. Wgraj bieżący firmware jak dotychczas. W monitorze oczekuj:
    `PCM test profile: producer_stall=ON tap_delay_ms=100`.
-2. Start w STOP, volume z NVS. Ustaw VOL80–100 i włącz PLAY długim kliknięciem
+2. Start w STOP, volume z NVS. Ustaw VOL80–100 i włącz PLAY krótkim kliknięciem
    w trybieA. Źródło jest ciche, jak w poprzednich próbach.
 3. Po około3s od pierwszego PLAY producent zatrzyma się na400ms. Usłyszysz
    JEDNĄ celową przerwę z rampami; możliwe chwilowe BUF. Dźwięk ma sam wrócić.
@@ -44,9 +45,10 @@ rzeczywistego strumienia ani test prawdziwych widżetów.
 
 ## Po teście
 
-Przywróć PCM_STALL_TEST=n i PCM_TAP_DELAY_MS=0 w menuconfig i przebuduj
-przed zwykłym użytkowaniem lub następnym etapem. W nowej wersji komunikat
-startowy pokazuje też normalne `producer_stall=OFF tap_delay_ms=0`.
+Przywróć PCM_STALL_TEST=n i PCM_TAP_DELAY_MS=0, wyłącz HARDWARE_TESTS,
+AUDIO_CONTROL_TEST i DIAGNOSTICS, włącz NETWORK_ENABLED oraz zwykły UI.
+Przebuduj przed zwykłym użytkowaniem. Normalne radio nie wypisuje raportu
+fixture; `producer_stall=OFF tap_delay_ms=0` dotyczy builda testowego bez stresu.
 NVS volume/widżetu pozostaje bez zmian. Domyślnych flag stresu nie zapisano
 w sdkconfig.defaults; bieżący sdkconfig jest lokalny i ignorowany przez Git.
 

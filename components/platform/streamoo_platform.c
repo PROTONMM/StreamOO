@@ -13,7 +13,7 @@
 #include "freertos/task.h"
 #include "freertos/idf_additions.h"
 
-#if CONFIG_FREERTOS_GENERATE_RUN_TIME_STATS
+#if defined(CONFIG_STREAMOO_DIAGNOSTICS) && CONFIG_FREERTOS_GENERATE_RUN_TIME_STATS
 #include "esp_timer.h"
 #endif
 
@@ -26,7 +26,7 @@
 
 static const char *TAG = "platform";
 
-#if CONFIG_FREERTOS_GENERATE_RUN_TIME_STATS
+#if defined(CONFIG_STREAMOO_DIAGNOSTICS) && CONFIG_FREERTOS_GENERATE_RUN_TIME_STATS
 #define STREAMOO_CPU_PROFILE_MAX_TASKS 48u
 #define STREAMOO_CPU_PROFILE_TOP_TASKS 6u
 
@@ -92,7 +92,7 @@ static void log_cpu(void)
                  (unsigned)expected, STREAMOO_CPU_PROFILE_MAX_TASKS);
         return;
     }
-    uint64_t total_runtime = 0;
+    configRUN_TIME_COUNTER_TYPE total_runtime = 0;
     const UBaseType_t count = uxTaskGetSystemState(cpu_tasks,
                                                     STREAMOO_CPU_PROFILE_MAX_TASKS,
                                                     &total_runtime);
@@ -162,6 +162,7 @@ static void log_cpu(void)
 }
 #endif
 
+#ifdef CONFIG_STREAMOO_DIAGNOSTICS
 static void log_heap(void)
 {
     ESP_LOGI(TAG, "heap internal free=%zu min=%zu largest=%zu; PSRAM free=%zu min=%zu largest=%zu",
@@ -186,6 +187,7 @@ static void health_task(void *context)
                  (unsigned)uxTaskGetStackHighWaterMark(NULL));
     }
 }
+#endif
 
 esp_err_t streamoo_platform_start(void)
 {
@@ -209,10 +211,12 @@ esp_err_t streamoo_platform_start(void)
         ESP_LOGE(TAG, "Hardware does not match the N16R8 profile");
         return ESP_ERR_INVALID_STATE;
     }
+#ifdef CONFIG_STREAMOO_DIAGNOSTICS
     log_heap();
     if (xTaskCreate(health_task, "streamoo_health", 3072, NULL, 1, NULL) != pdPASS) {
         return ESP_ERR_NO_MEM;
     }
+#endif
     started = true;
     return ESP_OK;
 }

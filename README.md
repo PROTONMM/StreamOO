@@ -1,6 +1,12 @@
 # StreamOO — ESP32-S3 Internet Radio
 
-**Status:** konfiguracja WWW/Wi-Fi i katalog/lista OLED potwierdzone na sprzęcie; pierwszy player HTTP/HTTPS/ICY MP3/AAC-LC przygotowany do odsłuchu. **Projekt nie jest ukończony**. Bieżący punkt: [RESUME](docs/RESUME.md), wyniki: [STATUS](docs/STATUS.md), pierwszy odsłuch: [HTTP_PLAYER_BRINGUP](docs/HTTP_PLAYER_BRINGUP.md). Starsze opisy diagnostyki poniżej dokumentują wcześniejsze etapy.
+**Status:** zaimplementowano radio HTTP/HTTPS, MP3/AAC/HE-AAC, alternatywne dekodery FLAC,
+Ogg, HLS, konfiguracja WWW i rzeczywiste wizualizacje. Odbiór poszczególnych
+formatów i ograniczenia: [STATUS](docs/STATUS.md), wznowienie: [RESUME](docs/RESUME.md).
+Normalny build ma wyłączone testy sprzętowe i szczegółowe raporty UART.
+[Tryby builda i przegląd kodu](docs/RELEASE_REVIEW.md),
+[możliwość wydania na MIT i otwarte prawa do fontu PL](docs/LICENSING_REVIEW.md).
+Starsze opisy poniżej dokumentują historyczne etapy, a nie bieżące defaults.
 
 Celem jest nowa implementacja natywna ESP-IDF, nie port starego programu Arduino. Materiałem odniesienia przy rekonstrukcji zachowania jest yoRadio; implementacja musi być niezależna i spełniać wymagania opisane w `docs/`.
 

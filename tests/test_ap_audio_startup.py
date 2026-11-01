@@ -21,6 +21,9 @@ static inline void test_log(const char *tag,const char *format,...){(void)tag;(v
 #define ESP_LOGI(...) test_log(__VA_ARGS__)
 #define ESP_LOGW(...) test_log(__VA_ARGS__)
 #define ESP_LOGE(...) test_log(__VA_ARGS__)
+#define ESP_LOG_WARN 2
+#define ESP_LOG_INFO 3
+static inline void esp_log_level_set(const char *tag,int level){(void)tag;(void)level;}
 typedef struct { uint8_t volume,visualization; } streamoo_preferences_value_t;
 typedef struct { int unused; } streamoo_network_hooks_t;
 extern const streamoo_network_hooks_t streamoo_app_network_hooks;
@@ -41,10 +44,10 @@ esp_err_t streamoo_network_start(const streamoo_network_hooks_t *);
 '''
 CONFIG=r'''
 #pragma once
-#define CONFIG_STREAMOO_ENCODER_UI_TEST 1
-#define CONFIG_STREAMOO_ENCODER_GESTURE_TEST 1
-#define CONFIG_STREAMOO_LCD_SMOKE_TEST 1
-#define CONFIG_STREAMOO_NETWORK_AP_TEST 1
+#define CONFIG_STREAMOO_UI_ENABLED 1
+#define CONFIG_STREAMOO_ENCODER_ENABLED 1
+#define CONFIG_STREAMOO_DISPLAY_ENABLED 1
+#define CONFIG_STREAMOO_NETWORK_ENABLED 1
 #define CONFIG_STREAMOO_LCD_MOSI 11
 #define CONFIG_STREAMOO_LCD_SCLK 12
 #define CONFIG_STREAMOO_LCD_CS 9
