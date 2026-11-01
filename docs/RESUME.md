@@ -1,5 +1,14 @@
 # Punkt wznowienia StreamOO
 
+## Uzupełnienie — audyt SIMD i czas FFT / 2026-11-01
+
+[CODEC_SIMD_AUDIT](CODEC_SIMD_AUDIT.md) dokumentuje częściowy SIMD Opus/SILK
+i brak wykrytego SIMD w zbadanych MP3/AAC/HE-AAC/FLAC/Vorbis. Zawiera też
+pochodzenie pomiarów i orientacyjny iloraz FFT1.5–1.8×: jedna stara próbka
+4.104ms kontra wybrane nowe2.3–2.7ms. Nie podawać tej liczby jako potwierdzonego
+speedupu A/B lub średnich. Następny krok nadal odbiór da70514 na S3;
+brak nowego firmware w tym uzupełnieniu.
+
 ## Najnowsze — harmonogram RMS/FFT / ADR0075 / 2026-11-01
 
 Pomiary6f27c8b: SIMD2–4ms, HLS sporadycznie513.6ms czasu ściennego przy

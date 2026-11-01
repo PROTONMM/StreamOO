@@ -60,3 +60,13 @@ Host ANSI oracle i ASan/UBSan nie zastępują wykonania AES3 na S3.
 392 testy hostowe PASS, osiem testów sc16 wraz z native harness ASan/UBSan
 PASS (LSan off); oba walidatory konfiguracji oraz diff --check PASS.
 Brak flash/erase/eFuse; NVS, partycje i prywatne playlisty nietknięte.
+
+## Uzupełnienie pomiarów — 2026-11-01
+
+Log6f27c8b potwierdził wykonanie backendu na S3. Szczegółowy audyt kodeków,
+wartości z logów float/SIMD i ograniczenia porównania są w
+[CODEC_SIMD_AUDIT](../CODEC_SIMD_AUDIT.md). Pojedyncza próbka float4.104ms
+wobec wybranych SIMD2.3–2.7ms sugeruje około1.5–1.8×, ale to orientacyjny
+iloraz różnych przebiegów, nie benchmark A/B ani pomiar zysku samego SIMD.
+Średnia i najgorszy czas zależą od wywłaszczeń; poprawkę scheduling ADR0075
+należy oceniać osobno. Dokładny speedup i soak nadal OPEN.

@@ -120,6 +120,9 @@ Wektorowy FFT sc16 ESP-DSP07j: `adr/0074-vector-sc16-fft-and-measurement.md`.
 
 Terminowość RMS/FFT i tożsamość tasków07k: `adr/0075-metering-scheduling-and-task-identity.md`.
 
+Audyt SIMD w kodekach i orientacyjne porównanie czasu FFT:
+`CODEC_SIMD_AUDIT.md`.
+
 Rzeczywisty kodek i Wi-Fi RSSI w HOME: `adr/0044-live-codec-and-wifi-info.md`.
 
 Sprawdzanie playlisty/kodeków na komputerze: `PLAYLIST_PROBE.md`, `adr/0045-host-playlist-stream-probe.md`.

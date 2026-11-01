@@ -1,5 +1,11 @@
 # 06 — Audio, dekodery, I²S, player state
 
+Audyt konkretnej biblioteki2.6.2 na S3: [CODEC_SIMD_AUDIT](CODEC_SIMD_AUDIT.md).
+Częściowe SIMD potwierdzono w dekoderze Opus/SILK LPC. W sprawdzonych
+gorących ścieżkach MP3, AAC/HE-AAC, FLAC i Vorbis nie wykryto arytmetyki
+SIMD; ręczny asembler DSP nie musi być wektorowy. FFT wizualizacji od
+ADR0074 ma własny backend SIMD i nie przyspiesza automatycznie dekoderów.
+
 Bieżąca implementacja06i: pierwszy owner player HTTP/HTTPS/ICY, wybór z OLED,
 MP3/AAC-LC i resample do48kHz. Build/testy hostowe PASS, odbiór na S3 OPEN.
 Granice/ownership: ADR0034; protokół: HTTP_PLAYER_BRINGUP. Historyczne opisy

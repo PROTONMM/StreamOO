@@ -13,6 +13,11 @@ Build/host/NumPy PASS, wykonanie SIMD i pierwszy pomiar CPU potwierdzone;
 nie ma jeszcze kontrolowanego pomiaru speedupu float-vs-sc16 ani soak.
 Procedura: [DSP_BRINGUP](DSP_BRINGUP.md).
 
+Analiza szybkości: [CODEC_SIMD_AUDIT](CODEC_SIMD_AUDIT.md). Porównanie starej
+pojedynczej próbki4.104ms z wybranymi SIMD2.3–2.7ms daje orientacyjnie
+1.5–1.8×, lecz różne warunki i brak starej średniej wykluczają uznanie tego
+za wynik A/B. Dokładny speedup samej wektoryzacji pozostaje OPEN.
+
 **USTALONE:** trzy przełączalne widgety audio: FFT, 2-kanałowy bargraph i dwa małe wskaźniki analogowe. Analiza audio przed regulacją głośności, nie w callbacku I²S ani blokującej ścieżce dekodowania.
 
 ## DSP

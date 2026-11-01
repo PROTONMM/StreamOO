@@ -1,5 +1,19 @@
 # Status implementacji
 
+## Najnowsze — audyt SIMD i analiza czasu FFT / 2026-11-01
+
+Uzupełniono [CODEC_SIMD_AUDIT](CODEC_SIMD_AUDIT.md): końcowy ELF da70514,
+wersja/hash biblioteki, symbole i referencje. Opus ma częściowy SIMD w LPC
+SILK (decode_core i PLC). W sprawdzonych ścieżkach MP3/AAC/HE-AAC/FLAC/
+Vorbis nie wykryto arytmetyki wektorowej. Wektorowy MDCT enkodera AAC
+z archiwum nie jest zlinkowany do firmware.
+
+Stara pojedyncza próbka float4.104ms i wybrane nowe SIMD2.3–2.7ms dają
+orientacyjnie1.5–1.8× (34–44% krótszy czas); to nie pomiar A/B ani wynik
+dla średnich. Brak starego avg_fft i różne wywłaszczenia nie pozwalają
+potwierdzić dokładnego speedupu. Utrzymano OPEN benchmarku, odbioru poprawki
+ADR0075 i soak. Zmiana wyłącznie dokumentacji, bez nowego testu na S3.
+
 ## Najnowsze — terminowość RMS/FFT / ADR0075 / 2026-11-01
 
 Log6f27c8b potwierdza działające SIMD i pierwszy profil CPU. HLS HE-AACv2:
