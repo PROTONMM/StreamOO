@@ -28,6 +28,9 @@ Implementacyjne ADR: `adr/0001-n16r8-gpio-policy.md`, `adr/0002-platform-and-bri
 
 Etap 04a i moduł msalamon: `adr/0003-ssd1322-msalamon-spi-bringup.md`.
 
+Pulsowanie/prążki OLED, FPS UI a skanowanie panelu:
+`OLED_TIMING_BRINGUP.md`, `adr/0082-oled-pulsation-investigation.md`.
+
 Etap 04b i canvas: `adr/0004-independent-4bpp-canvas.md`.
 
 Etap 04c-1 i referencyjny font PL: `adr/0005-font-reference-and-utf8.md`.

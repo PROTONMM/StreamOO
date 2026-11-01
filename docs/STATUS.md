@@ -1,5 +1,15 @@
 # Status implementacji
 
+## Najnowsze — analiza pulsowania OLED / ADR0082 / 2026-11-01
+
+UI ma docelowo 25 FPS, pełne 8192 B przez SPI 10 MHz bez synchronizacji
+ze skanowaniem panelu; sam payload minimum 6,5536 ms. Brak transmisji
+pustej klatki i AE/AF między klatkami. Spectrum GS8/15, bargraph GS10/15;
+B3=0x50 jest osobnym zegarem panelu. Nie zmieniono FPS ani ustawień OLED.
+Przyczyna OPEN: potrzebne porównanie gołym okiem logo bez kolejnych
+transferów z ruchomymi widżetami. Procedura i źródła OLED_TIMING_BRINGUP.md.
+Wyłącznie analiza/dokumentacja; nie uruchamiano nowego buildu ani flash.
+
 ## Najnowsze — Python SDK we wrapperze FLAC / ADR0081 / 2026-11-01
 
 Błąd rich_click wynikał z przekazania sys.executable=/usr/bin/python3
