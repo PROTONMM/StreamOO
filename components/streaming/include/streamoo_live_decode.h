@@ -19,7 +19,10 @@ typedef struct {
   void *context;
   streamoo_stream_decode_fn decode;
   uint8_t input[4096]; /* Production batches; sources may still return1 byte. */
-  _Alignas(int32_t) uint8_t pcm[524288];
+  /* Vendor parser output may contain more than one FLAC block. The observed
+   * 525312-byte batch exceeds a maximum single-block sized 512KiB buffer.
+   * Fixed startup allocation in PSRAM; never resized from decode/I2S. */
+  _Alignas(int32_t) uint8_t pcm[1048576];
   size_t pending, input_cursor, pcm_bytes, pcm_cursor, assembled;
   streamoo_pcm_format_t format, observed;
   int32_t codec_status;

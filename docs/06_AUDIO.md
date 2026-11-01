@@ -1,5 +1,10 @@
 # 06 — Audio, dekodery, I²S, player state
 
+ADR0076: obserwowane needed525312B przekraczało scratch512KiB; live pump
+ma teraz stały scratch1MiB PSRAM przed I2S. To poprawka konkretnego limitu,
+nie deklaracja usunięcia wszystkich przerw FLAC. Nowy log Underrun i osobne
+wait_empty/wait_busy odróżniają brak danych od zajętej blokady źródła.
+
 Audyt konkretnej biblioteki2.6.2 na S3: [CODEC_SIMD_AUDIT](CODEC_SIMD_AUDIT.md).
 Częściowe SIMD potwierdzono w dekoderze Opus/SILK LPC. W sprawdzonych
 gorących ścieżkach MP3, AAC/HE-AAC, FLAC i Vorbis nie wykryto arytmetyki

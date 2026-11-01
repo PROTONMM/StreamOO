@@ -96,13 +96,23 @@ int main(int argc,char **argv) {
         assert(streamoo_buffered_source_stats(s,&stats) && stats.generation==2 && !stats.queued && !stats.ended && stats.stale==2);
         assert(streamoo_buffered_source_write(s,2,data,8)==8);
     } else if (mode==2) {
+        uint32_t empty=99,busy=99;
+        assert(streamoo_buffered_source_waits(s,&empty,&busy)&&!empty&&!busy);
+        assert(streamoo_buffered_source_write(s,1,data,8)==8);
         force_busy=1; memset(out,33,sizeof out);
         assert(streamoo_buffered_source_read(s,out,sizeof out,&bytes,&last)==STREAMOO_SOURCE_WAIT);
+        assert(streamoo_buffered_source_waits(s,&empty,&busy)&&!empty&&busy==1);
         assert(!bytes && !last && out[0]==33);
         assert(!streamoo_buffered_source_write(s,1,data,8));
         assert(!streamoo_buffered_source_rewind(s)); assert(!streamoo_buffered_source_stop(s));
         assert(!streamoo_buffered_source_stats(s,&stats)); force_busy=0;
-        assert(streamoo_buffered_source_stats(s,&stats) && stats.generation==1 && !stats.queued);
+        assert(streamoo_buffered_source_stats(s,&stats) && stats.generation==1 && stats.queued==8);
+        assert(streamoo_buffered_source_read(s,out,sizeof out,&bytes,&last)==STREAMOO_SOURCE_DATA&&bytes==7);
+        assert(streamoo_buffered_source_read(s,out,sizeof out,&bytes,&last)==STREAMOO_SOURCE_WAIT);
+        assert(streamoo_buffered_source_waits(s,&empty,&busy)&&empty==1&&busy==1);
+        assert(!streamoo_buffered_source_waits(NULL,&empty,&busy));
+        assert(!streamoo_buffered_source_waits(s,NULL,&busy));
+        assert(!streamoo_buffered_source_waits(s,&empty,NULL));
     } else if (mode==3) {
         pthread_t thread; assert(!pthread_create(&thread,NULL,producer,NULL));
         size_t offset=0;

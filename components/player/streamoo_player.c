@@ -177,7 +177,7 @@ static void task(void *context) {
   streamoo_pcm_block_t *storage = NULL, *block = NULL;
   streamoo_metering_t *meter = NULL;
   bool retiring = false, flac_refill=false;
-  uint32_t sequence = 0, reader_hwm = 0;
+  uint32_t sequence = 0, reader_hwm = 0, logged_underflows = 0;
   int64_t retry_at = 0, log_at = 0, fade_until = 0;
   unsigned backoff = 1;
   const char *failure_stage = "none";
@@ -357,7 +357,7 @@ static void task(void *context) {
       size_t reserve=streamoo_player_reserve(info.codec==STREAMOO_CODEC_FLAC,info.bitrate_kbps);
       if (!decoder && info.codec_known &&
           (queued >= reserve || (info.ended && queued))) {
-        flac_refill=false;profile=(decode_profile_t){0};
+        flac_refill=false;profile=(decode_profile_t){0};logged_underflows=0;
         /* Reserve the contiguous DMA/ISR ring before codec allocations can
          * fragment internal RAM. Large decode scratch belongs in PSRAM. */
         failure_stage = "pcm_memory";
@@ -399,6 +399,20 @@ static void task(void *context) {
         }
       }
       if (current.error == ESP_OK && output) {
+        /* First owner observation of an ISR underflow, before replenishing
+         * PCM. No logging or additional work is added to the ISR itself. */
+        portENTER_CRITICAL(&lock);
+        streamoo_pcm_stats_t before = stats;
+        portEXIT_CRITICAL(&lock);
+        if(before.underflows!=logged_underflows) {
+          ESP_LOGW("player","Underrun gen=%" PRIu64 " low=%" PRIu32
+                   " PCM=%" PRIu32 " compressed=%zu cache=%zu pending=%zu"
+                   " wait_empty=%" PRIu32 " wait_busy=%" PRIu32 " refill=%u",
+                   current.generation,before.underflows,streamoo_pcm_count(&ring),
+                   queued,pump->pcm_bytes-pump->pcm_cursor,pump->pending,
+                   info.source_empty_waits,info.source_busy_waits,(unsigned)flac_refill);
+          logged_underflows=before.underflows;
+        }
         if(flac_refill&&(queued>=reserve||info.ended))flac_refill=false;
         for (unsigned burst = 0; !flac_refill && burst < 8 && streamoo_pcm_count(&ring) < 32;
              ++burst) {

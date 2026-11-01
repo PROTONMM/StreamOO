@@ -35,7 +35,7 @@ HARNESS=r'''
 #include <setjmp.h>
 #include <stdlib.h>
 #include <string.h>
-static int sdk_get_urls;
+static int sdk_get_urls,force_source_busy;
 static int mode,redirected,reads,cleaned,semaphores,allocations,opened,resolved;
 static char selected_url[2049];
 static void (*reader)(void *);static void *reader_context;static jmp_buf completed;
@@ -48,7 +48,7 @@ void *heap_caps_calloc(size_t n,size_t s,unsigned caps){(void)caps;void *p=callo
 void heap_caps_free(void *p){if(p){assert(allocations);--allocations;free(p);}}
 void *xSemaphoreCreateBinary(void){int *p=calloc(1,sizeof *p);++semaphores;return p;}
 void *xSemaphoreCreateMutex(void){int *p=xSemaphoreCreateBinary();*p=1;return p;}
-int xSemaphoreTake(void *p,unsigned wait){(void)wait;if(!*(int *)p)return 0;*(int *)p=0;return 1;}
+int xSemaphoreTake(void *p,unsigned wait){(void)wait;if(force_source_busy||!*(int *)p)return 0;*(int *)p=0;return 1;}
 int xSemaphoreGive(void *p){*(int *)p=1;return 1;}
 void vSemaphoreDelete(void *p){--semaphores;free(p);}
 int xTaskCreate(void (*fn)(void *),const char *name,unsigned size,void *ctx,unsigned pri,void *handle){(void)name;(void)handle;assert(size>=8192&&pri==3);reader=fn;reader_context=ctx;return mode==7?0:1;}
@@ -142,6 +142,14 @@ int main(int argc,char **argv){assert(argc==2);mode=atoi(argv[1]);
  int e=streamoo_http_stream_open(mode>=27?"https://radio.invalid/hls/master.m3u8":mode>=19?"https://radio.invalid/list.m3u":mode==3?"https://radio.invalid":"http://radio.invalid",&stream);
  if(mode==7){assert(e==ESP_ERR_NO_MEM&&!allocations&&!semaphores);return 0;}
  assert(e==ESP_OK&&!streamoo_http_stream_dispose(stream));
+ {
+  streamoo_byte_source_t src=streamoo_http_stream_source(stream);uint8_t byte=77;size_t n=99;bool last=true;
+  assert(src.read(src.context,&byte,1,&n,&last)==STREAMOO_SOURCE_WAIT&&!n&&!last&&byte==77);
+  force_source_busy=1;
+  assert(src.read(src.context,&byte,1,&n,&last)==STREAMOO_SOURCE_WAIT&&!n&&!last&&byte==77);
+  force_source_busy=0;streamoo_http_stream_info_t waits;
+  assert(streamoo_http_stream_info(stream,&waits)&&waits.source_empty_waits==1&&waits.source_busy_waits==1);
+ }
  if(!setjmp(completed))reader(reader_context);
  assert(cleaned==1&&!sdk_get_urls);if(mode==8)assert(opened==1);
  streamoo_http_stream_info_t info;assert(streamoo_http_stream_info(stream,&info)&&info.ended);

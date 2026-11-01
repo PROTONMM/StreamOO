@@ -851,6 +851,14 @@ static streamoo_source_result_t source_read(void *context, uint8_t *data,
   streamoo_http_stream_t *s = context;
   streamoo_source_result_t result =
       streamoo_buffered_source_read(s->buffer, data, cap, bytes, last);
+  if(result==STREAMOO_SOURCE_WAIT) {
+    uint32_t empty=0,busy=0;
+    streamoo_buffered_source_waits(s->buffer,&empty,&busy);
+    portENTER_CRITICAL(&info_lock);
+    s->info.source_empty_waits=empty;
+    s->info.source_busy_waits=busy;
+    portEXIT_CRITICAL(&info_lock);
+  }
   if (result == STREAMOO_SOURCE_DATA) {
     portENTER_CRITICAL(&info_lock);
     s->consumed += *bytes;

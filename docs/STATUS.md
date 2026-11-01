@@ -1,5 +1,25 @@
 # Status implementacji
 
+## Najnowsze — FLAC: limit PCM i pomiar niedoborów / ADR0076 / 2026-11-01
+
+Logda70514 potwierdził stabilne FFT około3.1ms, core0priority4, ale FLAC
+gen3 ma wiele low/rebuffer przy zapasie CPU i kończy sesję z vendor-8:
+needed525312 > scratch524288. Scratch live zwiększono do1MiB PSRAM przed
+I2S (dodatkowe512KiB także dla pozostałych kodeków). Bez realloc w decode
+i bez zmiany parsera/bootstrap, prebuffer lub progów PCM. To adresuje
+wykazany limit, nie dowodzi naprawy wszystkich wcześniejszych przerw.
+
+Źródło rozróżnia teraz wait_empty i wait_busy, bo samo src_wait nie dowodziło
+niedoboru sieci. Nowa linia Underrun przy zmianie low pokazuje te liczniki,
+compressed, cache, pending i PCM przed kolejnym uzupełnieniem przez ownera.
+Brak dodatkowej pracy w I2S; test regresji obejmuje pełną paczkę525312B
+i granicę następnej, osobno mutex busy przy danych oraz rzeczywisty empty.
+397 testów hostowych PASS; live10/HTTP23/actor11 ASan/UBSan PASS,
+walidatory konfiguracji i diff --check PASS. Native IDF6.1 build
+w build/simd-check PASS0x17e4a0 (90% factory wolne).
+Odbiór3–5min FLAC/zmiana utworu, brak restartu na525312, interpretacja
+przyrostów nowych liczników. Płynność FLAC nadal OPEN. Agent nie flashował.
+
 ## Najnowsze — audyt SIMD i analiza czasu FFT / 2026-11-01
 
 Uzupełniono [CODEC_SIMD_AUDIT](CODEC_SIMD_AUDIT.md): końcowy ELF da70514,

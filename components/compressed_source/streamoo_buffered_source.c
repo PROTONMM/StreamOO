@@ -2,10 +2,14 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
 #include <stdlib.h>
+#include <stdatomic.h>
 struct streamoo_buffered_source {
     streamoo_byte_ring_t ring;
     SemaphoreHandle_t mutex;
     uint32_t generation, backpressure, stale;
+    /* One consumer writes these; diagnostic readers use atomic loads. Avoid
+     * RMW operations, which the ESP32-S3 build deliberately disables. */
+    atomic_uint empty_waits, busy_waits;
     bool stopped;
 };
 static TickType_t wait_ticks(void) { return pdMS_TO_TICKS(5) ? pdMS_TO_TICKS(5) : 1; }
@@ -16,7 +20,9 @@ streamoo_buffered_source_t *streamoo_buffered_source_create(uint8_t *storage,siz
     if (!streamoo_byte_ring_init(&s->ring,storage,capacity) || !(s->mutex=xSemaphoreCreateMutex())) {
         free(s); return NULL;
     }
-    s->generation=1; return s;
+    s->generation=1;
+    atomic_init(&s->empty_waits,0);atomic_init(&s->busy_waits,0);
+    return s;
 }
 void streamoo_buffered_source_destroy(streamoo_buffered_source_t *s)
 {
@@ -49,10 +55,25 @@ streamoo_source_result_t streamoo_buffered_source_read(void *context,uint8_t *da
     if (last) *last=false;
     streamoo_buffered_source_t *s=context;
     if (!s || !data || !capacity || !bytes || !last) return STREAMOO_SOURCE_ERROR;
-    if (xSemaphoreTake(s->mutex,0)!=pdTRUE) return STREAMOO_SOURCE_WAIT;
+    if (xSemaphoreTake(s->mutex,0)!=pdTRUE) {
+        atomic_store_explicit(&s->busy_waits,
+            atomic_load_explicit(&s->busy_waits,memory_order_relaxed)+1u,memory_order_relaxed);
+        return STREAMOO_SOURCE_WAIT;
+    }
     streamoo_source_result_t result=s->stopped ? STREAMOO_SOURCE_ERROR :
         streamoo_byte_ring_read(&s->ring,data,capacity,bytes,last);
+    if(result==STREAMOO_SOURCE_WAIT)
+        atomic_store_explicit(&s->empty_waits,
+            atomic_load_explicit(&s->empty_waits,memory_order_relaxed)+1u,memory_order_relaxed);
     xSemaphoreGive(s->mutex); return result;
+}
+bool streamoo_buffered_source_waits(const streamoo_buffered_source_t *s,
+                                   uint32_t *empty,uint32_t *busy)
+{
+    if(!s||!empty||!busy)return false;
+    *empty=atomic_load_explicit(&s->empty_waits,memory_order_relaxed);
+    *busy=atomic_load_explicit(&s->busy_waits,memory_order_relaxed);
+    return true;
 }
 bool streamoo_buffered_source_rewind(void *context)
 {

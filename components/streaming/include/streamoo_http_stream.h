@@ -18,6 +18,7 @@ typedef struct {
   int last_read, socket_errno, tls_code, tls_flags;
   esp_err_t tls_error;
   uint64_t response_bytes, received_bytes, read_calls;
+  uint32_t source_empty_waits, source_busy_waits;
   bool hls;
   uint64_t hls_sequence, hls_next, hls_media_sequence;
   uint32_t redirects, hls_segments, hls_reloads, hls_media_count;

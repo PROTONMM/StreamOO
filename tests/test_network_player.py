@@ -28,6 +28,7 @@ HARNESS=r'''
 #include <stdarg.h>
 #include <stdio.h>
 static char failure_log[1024],diagnostic_log[1024],perf_log[1024],reader_log[2048],station_log[1024];
+static char underrun_log[256];
 static unsigned station_changes;static bool transport_eof_test,reader_done;
 static bool profile_test;static streamoo_stream_decode_fn measured_decode;static void *measured_context;static bool measured_once;
 static void (*actor)(void *);static jmp_buf completed;
@@ -46,7 +47,8 @@ static const streamoo_station_t entries[]={{.stable_id=11,.name=(const uint8_t *
 static const streamoo_station_t reversed[]={{.stable_id=22,.name=(const uint8_t *)"Test B\x1b[31m",.name_bytes=sizeof "Test B\x1b[31m"-1,.url=(const uint8_t *)"http://b.invalid"},{.stable_id=11,.name=(const uint8_t *)"Zażółć A",.name_bytes=sizeof "Zażółć A"-1,.url=(const uint8_t *)"http://a.invalid"}};
 static streamoo_catalog_snapshot_t first={.view={entries,2,1}},second={.view={NULL,0,3}},reordered={.view={reversed,2,2}},*catalog=&first;
 void fake_log(const char *tag,const char *fmt,...){(void)tag;va_list args;va_start(args,fmt);
- if(strstr(fmt,"Station changed")){++station_changes;vsnprintf(station_log,sizeof station_log,fmt,args);}
+ if(strstr(fmt,"Underrun gen="))vsnprintf(underrun_log,sizeof underrun_log,fmt,args);
+ else if(strstr(fmt,"Station changed")){++station_changes;vsnprintf(station_log,sizeof station_log,fmt,args);}
  else if(strstr(fmt,"Reader gen="))vsnprintf(reader_log,sizeof reader_log,fmt,args);
  else if(strstr(fmt,"Stream failed"))vsnprintf(failure_log,sizeof failure_log,fmt,args);
  else if(strstr(fmt,"Decode perf:"))vsnprintf(perf_log,sizeof perf_log,fmt,args);
@@ -67,7 +69,7 @@ streamoo_catalog_view_t streamoo_config_catalog_view(const streamoo_catalog_snap
 void streamoo_config_catalog_release(streamoo_catalog_snapshot_t *s){if(s){assert(s->refs);--s->refs;}}
 bool streamoo_network_state(streamoo_network_state_t *s){*s=(streamoo_network_state_t){.sta_connected=online,.ap_ready=ap};return true;}
 esp_err_t streamoo_http_stream_open(const char *url,streamoo_http_stream_t **s){assert(!strcmp(url,(manual==1&&opens==2)?"http://b.invalid":"http://a.invalid"));assert(online&&!ap);++opens;force_fail=false;reader_done=false;*s=heap_caps_calloc(1,sizeof **s,0);return *s?ESP_OK:ESP_ERR_NO_MEM;}
-bool streamoo_http_stream_info(streamoo_http_stream_t *s,streamoo_http_stream_info_t *i){(void)s;*i=(streamoo_http_stream_info_t){.codec_known=true,.codec=flac_case?STREAMOO_CODEC_FLAC:STREAMOO_CODEC_MP3,.bitrate_kbps=flac_case?1500:192,.ended=transport_eof_test?reader_done:force_fail,.error=transport_eof_test?(reader_done?ESP_ERR_NOT_SUPPORTED:ESP_OK):force_fail?ESP_FAIL:ESP_OK};if(reader_done){strcpy(i->resource,"hls_reload");strcpy(i->stage,"parse");strcpy(i->reason,"master_after_media");i->hls=true;i->hls_segments=3;i->hls_reloads=1;}return true;}
+bool streamoo_http_stream_info(streamoo_http_stream_t *s,streamoo_http_stream_info_t *i){(void)s;*i=(streamoo_http_stream_info_t){.source_empty_waits=7,.source_busy_waits=3,.codec_known=true,.codec=flac_case?STREAMOO_CODEC_FLAC:STREAMOO_CODEC_MP3,.bitrate_kbps=flac_case?1500:192,.ended=transport_eof_test?reader_done:force_fail,.error=transport_eof_test?(reader_done?ESP_ERR_NOT_SUPPORTED:ESP_OK):force_fail?ESP_FAIL:ESP_OK};if(reader_done){strcpy(i->resource,"hls_reload");strcpy(i->stage,"parse");strcpy(i->reason,"master_after_media");i->hls=true;i->hls_segments=3;i->hls_reloads=1;}return true;}
 streamoo_byte_source_t streamoo_http_stream_source(streamoo_http_stream_t *s){(void)s;return (streamoo_byte_source_t){0};}
 size_t streamoo_http_stream_queued(streamoo_http_stream_t *s){(void)s;return flac_case?flac_queued:force_fail?0:8192;}
 void streamoo_http_stream_stop(streamoo_http_stream_t *s){if(!s->closing){s->closing=true;s->stopped=tick;}}
@@ -123,7 +125,7 @@ void vTaskDelay(unsigned ms){now+=(int64_t)ms*1000;++tick;
   if(tick==12){assert(output_live&&s.phase==STREAMOO_PLAYER_PLAYING);flac_queued=1;}
   if(tick==50){reads_before=flac_reads;flac_queued=1000;}
   if(tick==55){assert(flac_reads==reads_before&&opens==1);flac_queued=93750;}
-  if(tick==63){assert(flac_reads>reads_before&&s.phase==STREAMOO_PLAYER_PLAYING&&opens==1);assert(streamoo_player_set_playing(false));}
+  if(tick==63){assert(flac_reads>reads_before&&s.phase==STREAMOO_PLAYER_PLAYING&&opens==1);assert(strstr(underrun_log,"low=1")&&strstr(underrun_log,"wait_empty=7 wait_busy=3"));assert(streamoo_player_set_playing(false));}
   if(tick==130){assert(!output_live&&!allocations&&opens==1&&closes==1);longjmp(completed,1);}return;
  }
  if(boot){

@@ -1,5 +1,14 @@
 # Odbiór HE-AAC, FLAC, Ogg Vorbis/Opus i M3U/PLS
 
+Aktualny odbiór FLAC/ADR0076: zwykły build/flash bez erase, NVS ani ponownego
+importu. TEST FLAC native lossless przez3–5min i zmianę utworu. Live scratch
+ma teraz1MiB PSRAM, obejmuje zaobserwowane needed525312. Przy dalszych
+przerwach przesłać nowe linie `Underrun` oraz Decode perf/diag, phase i CPU.
+wait_empty oznacza brak czytelnych danych w ring, wait_busy zajętą blokadę;
+oba liczniki są kumulacyjne. Porównać także cache/pending/compressed i
+przyrost low/starts. Nie zwiększono prebuffer ani nie zmieniono fade/I2S.
+Wcześniejsze rozmiary scratch poniżej są historią kolejnych implementacji.
+
 Wgraj zwykłym `idf.py -p PORT flash` cały bieżący build, łącznie z tablicą
 partycji; bez erase. Factory wykorzystuje dawną pustą lukę, LittleFS i NVS
 pozostają w swoich miejscach. Zachowaj build/streamoo.elf: asercje nadal

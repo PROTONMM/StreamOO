@@ -43,22 +43,26 @@ static void resample(unsigned rate,unsigned channels){
 
 typedef struct{unsigned bits,frame,batch;} wide_t;
 static int64_t pattern(unsigned bits,unsigned i){switch(i%4){case 0:return -(INT64_C(1)<<(bits-1));case 1:return (INT64_C(1)<<(bits-1))-1;case 2:return 1;default:return -1;}}
+static int64_t wide_pattern(unsigned bits,unsigned i,unsigned batch){
+ if(batch>65535)return (int64_t)(((uint64_t)i*12347)&((UINT64_C(1)<<(bits-1))-1))-(INT64_C(1)<<(bits-2));
+ return pattern(bits,i);
+}
 static esp_err_t wide_decode(void *ctx,uint8_t *in,size_t bytes,bool eos,uint8_t *pcm,size_t cap,streamoo_decode_result_t *r){
  wide_t *w=ctx;(void)in;(void)eos;unsigned width=w->bits/8,frames=w->batch?w->batch:64;assert(bytes&&cap>=frames*2*width);
- for(unsigned f=0;f<frames;++f)for(unsigned c=0;c<2;++c){uint32_t value=(uint32_t)pattern(w->bits,w->frame+f+c);
+ for(unsigned f=0;f<frames;++f)for(unsigned c=0;c<2;++c){uint32_t value=(uint32_t)wide_pattern(w->bits,w->frame+f+c,w->batch);
  for(unsigned j=0;j<width;++j)pcm[(f*2+c)*width+j]=(uint8_t)(value>>(8*j));}
  w->frame+=frames;*r=(streamoo_decode_result_t){.consumed=1,.produced=frames*2*width,.format={48000,2,w->bits}};return ESP_OK;
 }
 static void wide(unsigned bits,unsigned batch){
  wide_t w={.bits=bits,.batch=batch};fake_t source={0};streamoo_live_decode_t s;int32_t out[480];
  assert(streamoo_live_decode_init(&s,(streamoo_byte_source_t){&source,read_source,NULL},&w,wide_decode));
- unsigned blocks=0;
- for(unsigned calls=0;calls<100 && blocks<3;++calls){streamoo_stream_result_t r=streamoo_live_decode_read(&s,out);
+ unsigned blocks=0,goal=batch>65535?(batch+239)/240+1:3;
+ for(unsigned calls=0;calls<goal*10 && blocks<goal;++calls){streamoo_stream_result_t r=streamoo_live_decode_read(&s,out);
  if(r==STREAMOO_STREAM_WAIT)continue;
  assert(r==STREAMOO_STREAM_READY);
- for(unsigned f=0;f<240;++f)for(unsigned c=0;c<2;++c)assert(out[f*2+c]==pattern(bits,blocks*240+f+c)*(INT64_C(1)<<(32-bits)));
+ for(unsigned f=0;f<240;++f)for(unsigned c=0;c<2;++c)assert(out[f*2+c]==wide_pattern(bits,blocks*240+f+c,batch)*(INT64_C(1)<<(32-bits)));
  ++blocks;}
- assert(blocks==3);
+ assert(blocks==goal);
 }
 static void icy(unsigned chunk){
  streamoo_icy_t s;assert(streamoo_icy_init(&s,3));uint8_t wire[128]={0},audio[128],out[128];size_t n=0,total=0;
@@ -135,7 +139,7 @@ static void batched(void){
  assert(r==STREAMOO_STREAM_READY&&b.packets==2&&b.reads==48&&s.decode_calls==48&&s.fetched_total==196608&&s.source_waits==0&&s.work_yields==2);
  for(unsigned i=0;i<480;++i)assert(!out[i]);
 }
-int main(int argc,char **argv){assert(argc==2);int mode=atoi(argv[1]);if(mode==400)batched();else if(mode==301)wide(24,23040);else if(mode==302)wide(32,65535);else if(mode==300)wide(24,13824);else if(mode>=200)wide((unsigned)(mode-200),64);else if(mode>=100)diagnostic(mode-100);else if(mode<3)resample(mode==0?48000:mode==1?44100:22050,mode==2?1:2);else icy(mode-2);return 0;}
+int main(int argc,char **argv){assert(argc==2);int mode=atoi(argv[1]);if(mode==400)batched();else if(mode==303)wide(24,87552);else if(mode==301)wide(24,23040);else if(mode==302)wide(32,65535);else if(mode==300)wide(24,13824);else if(mode>=200)wide((unsigned)(mode-200),64);else if(mode>=100)diagnostic(mode-100);else if(mode<3)resample(mode==0?48000:mode==1?44100:22050,mode==2?1:2);else icy(mode-2);return 0;}
 '''
 class LiveStreamTests(unittest.TestCase):
  @classmethod
@@ -167,3 +171,6 @@ class LiveStreamTests(unittest.TestCase):
 
  def test_production_4k_reads_keep_byte_budget_and_do_not_report_network_wait(self):
   subprocess.run([str(self.binary),'400'],check=True)
+
+ def test_observed_525312_byte_flac_batch_drains_across_entire_boundary(self):
+  subprocess.run([str(self.binary),'303'],check=True)

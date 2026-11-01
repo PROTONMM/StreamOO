@@ -1,5 +1,20 @@
 # Punkt wznowienia StreamOO
 
+## Najnowsze — FLAC: pojemność i WAIT / ADR0076 / 2026-11-01
+
+Po loguda70514: FFT stabilny3.1ms, CPU ma zapas; FLAC low/starts rosną,
+a needed525312 przekracza512KiB i restartuje sesję. Live scratch teraz1MiB
+PSRAM, przed I2S, bez realloc. Prebuffer/fade/parser i priorytety bez zmian.
+Nowy Underrun przed uzupełnianiem PCM: compressed/cache/pending oraz
+wait_empty/wait_busy (osobne nieblokujące liczniki źródła, kumulacyjne).
+
+397 testów hostowych, live/HTTP/actor ASan/UBSan i konfiguracje PASS.
+Native IDF6.1 build PASS0x17e4a0 w build/simd-check.
+
+Po flashu FLAC3–5min/zmiana utworu, log Underrun/phase/Decode perf/diag/CPU.
+Brak restartu na525312 do odbioru, pozostałe przerwy nadal OPEN; src_wait
+nie utożsamiać już wyłącznie z siecią. Bez erase/NVS/zmian playlist.
+
 ## Uzupełnienie — audyt SIMD i czas FFT / 2026-11-01
 
 [CODEC_SIMD_AUDIT](CODEC_SIMD_AUDIT.md) dokumentuje częściowy SIMD Opus/SILK
