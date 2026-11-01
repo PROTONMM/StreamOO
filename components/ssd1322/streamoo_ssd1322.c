@@ -14,6 +14,7 @@ struct streamoo_ssd1322 {
     spi_host_device_t host;
     int dc;
     uint8_t *dma;
+    ssd1322_frame_cache_t cache;
 };
 
 static int write_spi(void *context, bool data, const uint8_t *bytes, size_t length)
@@ -54,7 +55,10 @@ esp_err_t streamoo_ssd1322_open(const streamoo_ssd1322_config_t *c,
     streamoo_ssd1322_t *d = calloc(1, sizeof(*d));
     if (!d) return ESP_ERR_NO_MEM;
     d->dma = heap_caps_malloc(SSD1322_FRAME_BYTES, MALLOC_CAP_DMA | MALLOC_CAP_INTERNAL);
-    if (!d->dma) { free(d); return ESP_ERR_NO_MEM; }
+    d->cache.pixels = heap_caps_malloc(SSD1322_FRAME_BYTES, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+    if (!d->dma || !d->cache.pixels) {
+        heap_caps_free(d->cache.pixels);heap_caps_free(d->dma);free(d);return ESP_ERR_NO_MEM;
+    }
     d->dc = c->dc;
     d->host = c->spi_host == 2 ? SPI2_HOST : SPI3_HOST;
     const spi_bus_config_t bus = {
@@ -97,6 +101,7 @@ remove_device:
 free_bus:
     spi_bus_free(d->host);
 free_memory:
+    heap_caps_free(d->cache.pixels);
     heap_caps_free(d->dma);
     free(d);
     return error;
@@ -106,7 +111,22 @@ esp_err_t streamoo_ssd1322_present(streamoo_ssd1322_t *d,
                                    const uint8_t *frame, size_t length)
 {
     if (!d || !frame || length != SSD1322_FRAME_BYTES) return ESP_ERR_INVALID_ARG;
-    return ssd1322_protocol_present(&d->protocol, frame, length);
+    d->cache.valid = false;
+    esp_err_t error = ssd1322_protocol_present(&d->protocol, frame, length);
+    if (error == ESP_OK) {
+        memcpy(d->cache.pixels, frame, length);d->cache.valid = true;
+    }
+    return error;
+}
+
+esp_err_t streamoo_ssd1322_present_changed(streamoo_ssd1322_t *d,
+    const uint8_t *frame, size_t length, ssd1322_update_t *update)
+{
+    if (!d || !frame || length != SSD1322_FRAME_BYTES) {
+        if (update) *update = (ssd1322_update_t){0};
+        return ESP_ERR_INVALID_ARG;
+    }
+    return ssd1322_protocol_present_changed(&d->protocol, &d->cache, frame, length, update);
 }
 
 esp_err_t streamoo_ssd1322_enable(streamoo_ssd1322_t *d, bool enabled)
@@ -124,6 +144,7 @@ esp_err_t streamoo_ssd1322_close(streamoo_ssd1322_t *d)
     esp_err_t error = spi_bus_remove_device(d->spi);
     if (error != ESP_OK) return error;
     error = spi_bus_free(d->host);
+    heap_caps_free(d->cache.pixels);
     heap_caps_free(d->dma);
     free(d);
     return off_error != ESP_OK ? off_error : error;

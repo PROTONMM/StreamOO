@@ -35,6 +35,8 @@ Kontrolowany test transferów i obciążenia OLED:
 Szachownica i ciągły obrys bargraphu: `adr/0084-checkerboard-bargraph.md`.
 Przygasanie w tych samych wierszach: timingi panelu B3/B1:
 `adr/0087-ssd1322-panel-scan-and-phase-timing.md`.
+Transfer OLED po zmianie pikseli, tylko zakres zmienionych wierszy:
+`adr/0088-display-updates-from-frame-differences.md`.
 
 Etap 04b i canvas: `adr/0004-independent-4bpp-canvas.md`.
 

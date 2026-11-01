@@ -1,5 +1,15 @@
 # Testy hostowe
 
+Aktualizacje OLED po zmianie pikseli: testy w test_ssd1322.py oraz stress
+GDDRAM/awarii częściowego zapisu:
+
+```sh
+cc -std=c11 -Wall -Wextra -Werror -fsanitize=address,undefined -fno-omit-frame-pointer -g -Icomponents/ssd1322/include components/ssd1322/ssd1322_protocol.c tests/ssd1322_update_sanitizer.c -o /tmp/streamoo-ssd1322-update-sanitizer
+ASAN_OPTIONS=detect_leaks=0 /tmp/streamoo-ssd1322-update-sanitizer
+```
+
+LeakSanitizer wyłączony ze względu na ptrace środowiska; test nie alokuje.
+
 Uruchom `python3 -m unittest discover -s tests -v`. Wymagane Python 3.9+
 i kompilator C (`cc`), bez instalowania bibliotek Pythona. Testy są także
 wykrywane przez pytest, jeśli jest dostępny.

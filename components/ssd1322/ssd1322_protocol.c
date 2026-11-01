@@ -1,4 +1,5 @@
 #include "ssd1322_protocol.h"
+#include <string.h>
 
 static int command(ssd1322_protocol_t *d, uint8_t cmd,
                    const uint8_t *parameters, size_t length)
@@ -42,19 +43,48 @@ int ssd1322_protocol_init(ssd1322_protocol_t *d, ssd1322_write_fn write,
     return 0;
 }
 
-int ssd1322_protocol_present(ssd1322_protocol_t *d,
-                             const uint8_t *frame, size_t length)
+static int present_rows(ssd1322_protocol_t *d, const uint8_t *frame,
+                        unsigned first, unsigned count)
 {
-    if (!d || !d->ready || !frame || length != SSD1322_FRAME_BYTES) {
-        return -1;
-    }
     const uint8_t columns[] = {d->profile.column_offset, d->profile.column_offset + 63};
-    const uint8_t rows[] = {0, 63};
+    const uint8_t rows[] = {first, first + count - 1};
     int error = command(d, 0x15, columns, sizeof(columns));
     if (!error) error = command(d, 0x75, rows, sizeof(rows));
     if (!error) error = command(d, 0x5c, NULL, 0);
-    if (!error) error = d->write(d->context, true, frame, length);
+    if (!error) error = d->write(d->context, true, frame + first * (SSD1322_WIDTH / 2),
+                                count * (SSD1322_WIDTH / 2));
     return error;
+}
+
+int ssd1322_protocol_present(ssd1322_protocol_t *d,
+                             const uint8_t *frame, size_t length)
+{
+    if (!d || !d->ready || !frame || length != SSD1322_FRAME_BYTES) return -1;
+    return present_rows(d, frame, 0, SSD1322_HEIGHT);
+}
+
+int ssd1322_protocol_present_changed(ssd1322_protocol_t *d,
+    ssd1322_frame_cache_t *cache, const uint8_t *frame, size_t length,
+    ssd1322_update_t *update)
+{
+    if (update) *update = (ssd1322_update_t){0};
+    if (!d || !d->ready || !cache || !cache->pixels || !frame ||
+        length != SSD1322_FRAME_BYTES) return -1;
+    const size_t stride = SSD1322_WIDTH / 2;
+    unsigned first = 0, end = SSD1322_HEIGHT;
+    if (cache->valid) {
+        while (first < end && !memcmp(frame + first * stride, cache->pixels + first * stride, stride)) ++first;
+        if (first == end) return 0;
+        while (end > first + 1 && !memcmp(frame + (end - 1) * stride, cache->pixels + (end - 1) * stride, stride)) --end;
+    }
+    cache->valid = false;
+    const int error = present_rows(d, frame, first, end - first);
+    if (error) return error;
+    const size_t bytes = (end - first) * stride;
+    memcpy(cache->pixels + first * stride, frame + first * stride, bytes);
+    cache->valid = true;
+    if (update) *update = (ssd1322_update_t){bytes, first, end - first};
+    return 0;
 }
 
 int ssd1322_protocol_enable(ssd1322_protocol_t *d, bool enabled)

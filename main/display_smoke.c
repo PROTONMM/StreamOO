@@ -155,6 +155,9 @@ static void display_task(void *context)
         /* Discard input captured before this UI session was ready. */
         while (streamoo_input_probe_receive(&event)) {}
         TickType_t wake = xTaskGetTickCount();
+        int64_t oled_stats_at=esp_timer_get_time(),oled_max_present=0;
+        uint32_t oled_checked=0,oled_sent=0,oled_rows=0;
+        uint64_t oled_bytes=0;
         ESP_LOGI("display_smoke", "%s",streamoo_network_boot_ap_enabled() ?
             "Encoder UI ready; stored station catalog; network player" :
             "Interactive encoder TEST ready; synthetic catalog/widgets; no stream player");
@@ -282,6 +285,8 @@ static void display_task(void *context)
                 timing_probe_pending=false;
                 error=display_timing_probe(display,frame);
                 wake=xTaskGetTickCount();
+                oled_stats_at=esp_timer_get_time();oled_max_present=0;
+                oled_checked=oled_sent=oled_rows=0;oled_bytes=0;
                 continue;
             }
 #endif
@@ -296,7 +301,25 @@ static void display_task(void *context)
                 error = ESP_ERR_INVALID_ARG;
                 break;
             }
-            error = streamoo_ssd1322_present(display,frame,SSD1322_FRAME_BYTES);
+            ssd1322_update_t update={0};
+            int64_t present_at=esp_timer_get_time();
+            if(!panel_enabled) {
+                /* A wake always restores all RAM before enabling the panel. */
+                error=streamoo_ssd1322_present(display,frame,SSD1322_FRAME_BYTES);
+                update=(ssd1322_update_t){SSD1322_FRAME_BYTES,0,SSD1322_HEIGHT};
+            } else error=streamoo_ssd1322_present_changed(display,frame,SSD1322_FRAME_BYTES,&update);
+            int64_t measured_at=esp_timer_get_time(),present_us=measured_at-present_at;
+            if(error==ESP_OK) {
+                ++oled_checked;
+                if(update.bytes){++oled_sent;oled_rows+=update.row_count;oled_bytes+=update.bytes;}
+                if(present_us>oled_max_present)oled_max_present=present_us;
+            }
+            if(measured_at-oled_stats_at>=10000000) {
+                ESP_LOGI("display_smoke","OLED UI interval_ms=%" PRId64 " checked=%" PRIu32
+                    " sent=%" PRIu32 " rows=%" PRIu32 " payload=%" PRIu64 " max_present_us=%" PRId64,
+                    (measured_at-oled_stats_at)/1000,oled_checked,oled_sent,oled_rows,oled_bytes,oled_max_present);
+                oled_stats_at=measured_at;oled_max_present=0;oled_checked=oled_sent=oled_rows=0;oled_bytes=0;
+            }
             if(error==ESP_OK&&!panel_enabled){error=streamoo_ssd1322_enable(display,true);if(error==ESP_OK)panel_enabled=true;}
             vTaskDelayUntil(&wake,pdMS_TO_TICKS(40) ? pdMS_TO_TICKS(40) : 1);
         }

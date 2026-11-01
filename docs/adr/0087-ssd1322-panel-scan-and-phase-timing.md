@@ -1,6 +1,8 @@
 # ADR0087 — timingi panelu zamiast wartości resetowych SSD1322
 
-Data:2026-11-01. Status: protokół host PASS, wynik obrazu na module OPEN.
+Data:2026-11-01. Status: protokół host PASS; użytkownik potwierdził usunięcie
+problemu wyświetlacza po ostatniej kompilacji. Nowego logu/hashu nie podał.
+Częstotliwość skanowania i dokładny mechanizm fizyczny niezmierzone.
 
 Użytkownik: przygasa FLAC1500k tylko na wysokości bargraphu, reszta obrazu
 OK; ma oscyloskop, ale wskazuje poprawne działanie tego sprzętu na innym

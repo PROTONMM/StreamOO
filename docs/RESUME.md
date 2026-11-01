@@ -1,12 +1,23 @@
 # Punkt wznowienia StreamOO
 
-## Najnowsze — OLED B3/B1 do odbioru / ADR0087
+## Najnowsze — OLED rozwiązany, optymalizacja SPI / ADR0088
+
+Użytkownik potwierdził usunięcie problemu ekranu po ostatnim buildzie;
+nie podał nowego identyfikatora. W nowym kroku wysyłki zależą od pikseli:
+identyczny framebuffer bez SPI, zmieniony tylko zakres wierszy. UI40ms
+zachowane dla animacji; dodatkowe8KiB PSRAM, bez alokacji w present.
+Pierwszy/wake pełne, nieudany transfer unieważnia cache. Nowy tryb do
+odbioru: scroll, lista, STOP/PLAY oraz log OLED UI checked/sent/payload.
+Potwierdzenie poprzedniego buildu nie jest odbiorem nowych transferów.
+432 testy hostowe, stress ASan/UBSan i native dr build PASS; agent bez flash.
+
+## OLED B3/B1 — poprawa potwierdzona / ADR0087
 
 Inny firmware na tym sprzęcie OK, przygasa tylko tekst w wierszach słupków.
 Profil panelu zamiast resetowych timingów: B3 0x50→0x91, B1 0x74→0xE2.
 Bez zwiększania prądu/napięć, bez zmiany szachownicy/FPS.9 testów i build dr
-PASS; sprawdzić FLAC1500k przy zmiennym wypełnieniu. Skuteczność nowego
-profilu i przyczyna objawu OPEN. W tym samym firmware resync FLAC ADR0086.
+PASS; użytkownik potwierdził usunięcie problemu w późniejszej wiadomości.
+Przyczyna fizyczna niezmierzona. W tym samym firmware resync FLAC ADR0086.
 
 ## Najnowsze — FLAC resync po potwierdzonym CRC / ADR0086
 

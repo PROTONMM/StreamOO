@@ -13,10 +13,13 @@ typedef struct {
 
 /* Single-task ownership for the handle and frame. All calls are synchronous;
  * invoke only from a display/UI task, never from PCM output. Allocations occur
- * only in open. present accepts RAM/PSRAM, stages to internal DMA memory. */
+ * only in open: internal DMA staging and a PSRAM frame cache. present forces
+ * a full transfer; present_changed sends only changed rows or nothing. */
 esp_err_t streamoo_ssd1322_open(const streamoo_ssd1322_config_t *config,
                                 streamoo_ssd1322_t **out);
 esp_err_t streamoo_ssd1322_present(streamoo_ssd1322_t *display,
                                    const uint8_t *frame, size_t length);
+esp_err_t streamoo_ssd1322_present_changed(streamoo_ssd1322_t *display,
+    const uint8_t *frame, size_t length, ssd1322_update_t *update);
 esp_err_t streamoo_ssd1322_enable(streamoo_ssd1322_t *display, bool enabled);
 esp_err_t streamoo_ssd1322_close(streamoo_ssd1322_t *display);

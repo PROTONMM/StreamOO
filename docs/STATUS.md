@@ -1,14 +1,29 @@
 # Status implementacji
 
+## Najnowsze — OLED odebrany, wysyłki po zmianie pikseli / ADR0088 / 2026-11-01
+
+Użytkownik potwierdził usunięcie problemu wyświetlacza po ostatniej
+kompilacji; nowego hashu/logu nie podał. Odbiór timingów ADR0087 zapisany,
+bez uznawania tego za pomiar częstotliwości lub przyczyny fizycznej.
+
+Osobna optymalizacja: UI40ms dla scrolla/listy, SPI tylko po zmianie obrazu,
+zakres od pierwszego do ostatniego zmienionego wiersza. Cache8192B PSRAM
+oddzielony od staging DMA. Pierwszy/wake pełne, błąd wymusza pełną naprawę.
+Log OLED UI co10s: checked/sent/rows/payload/max_present_us.
+Nowy tryb wymaga odbioru na S3; szczegóły i procedura ADR0088.
+432 testy hostowe (14 protokołu), stress2000 iteracji ASan/UBSan i native
+build dr ESP-IDF6.1 PASS. Agent nie flashował.
+
 ## Najnowsze — OLED: profil skanowania i ładowania pikseli / ADR0087 / 2026-11-01
 
 Przygasanie tylko w wierszach bargraphu, sprzęt na innym firmware OK:
 priorytetem parametry sterownika. Zamiast resetowych B3=0x50/B1=0x74
 użyto pary referencyjnego panelu256×64:0x91/0xE2. Pozostałe parametry,
-prąd, napięcia, UI25FPS i szachownica bez zmian. Rzeczywisty skan i wynik
-na module msalamon OPEN.427 pełnych testów hostowych (w tym9 protokołu)
+prąd, napięcia, UI25FPS i szachownica bez zmian. Użytkownik potwierdził
+usunięcie problemu; częstotliwość skanowania niezmierzona.
+427 pełnych testów hostowych (w tym9 protokołu)
 PASS; build dr PASS.
-Nie deklarujemy naprawy przygasania bez odbioru. Szczegóły ADR0087.
+Szczegóły i aktualizacja odbioru ADR0087.
 
 ## Najnowsze — FLAC: fallback po CRC / ADR0086 / 2026-11-01
 

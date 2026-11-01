@@ -19,7 +19,9 @@ Szerokości kolumn dolnego panelu 44/132/80 są **PROPONOWANE** — dopasuj po t
 - Niższy panel: RSSI Wi-Fi jako mała ikona, nad nią kodek i bitrate; po prawej data i zegar; środek to FFT/2×L/R bargraph/2×analog.
 - Wykryj utratę metadanych i resetuj tekst poprzedniej stacji po przełączeniu.
 - Wybór stacji: pionowa animowana lista z wyróżnioną **środkową pozycją** (najwyższa jasność), wybór odbywa się dopiero po zatwierdzeniu, aktualna stacja nadal gra.
-- Parametry docelowe: ~25 FPS efektów, auto redukcja przy obciążeniu, ograniczenie wysyłania bufora przez SPI przy możliwości.
+- Rytm UI ~25 FPS dla scrolla/listy; od ADR0088 SPI tylko po zmianie pikseli,
+  w zakresie od pierwszego do ostatniego zmienionego wiersza.
+  Identyczna klatka bez transmisji; pierwszy obraz i wybudzenie zawsze pełne.
 
 ## Fonty
 - Monaspace Krypton (OFL 1.1) do większych tekstów; zasoby z TTF generowane przez skrypt Python do tablic C i podglądu PNG. Zachowaj OFL/noty prawne. Nie dołączaj cudzych fontów bez weryfikacji licencji.

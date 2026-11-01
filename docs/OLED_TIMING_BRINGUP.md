@@ -1,5 +1,11 @@
 # Pulsowanie i poziome prążki OLED
 
+Aktualizacja2026-11-01: użytkownik potwierdził, że ostatnia kompilacja
+rozwiązała problem wyświetlacza po zmianie timingów ADR0087. Nowego logu
+z hashem nie podał. Optymalizacja transferów ADR0088 jest osobnym krokiem:
+porównanie pikseli i wysyłanie zakresu wierszy. Test pięciu faz poniżej nadal
+używa wymuszonego present, w tym REPEAT.
+
 2026-11-01. Zgłoszenie: lekkie pulsowanie oraz poziome prążki na bargraph
 i spectrum. Użytkownik potwierdził widoczność gołym okiem: dół pulsuje
 w rytm wizualizacji, wyżej czasem na ułamek sekundy przygasa napis.
