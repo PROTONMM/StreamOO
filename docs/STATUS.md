@@ -1,5 +1,21 @@
 # Status implementacji
 
+## Najnowsze — kontrolowany test pulsowania OLED / ADR0083 / 2026-11-01
+
+Użytkownik: pulsowanie widoczne gołym okiem, dół w rytm słupków, wyżej
+sporadycznie przygasa napis. Canvas jest czyszczony w RAM; brak blank
+frame przesyłanej do panelu. Dodano opcjonalne STREAMOO_LCD_TIMING_PROBE
+(domyślnie n), pięć faz po 8 s po PLAYING: HOLD bez dalszych transferów,
+identyczny REPEAT25, LOAD25/10 i MOVE25 przy stałej liczbie pikseli każdego
+półtonu. Stałe referencje u góry, log czasów i liczby transferów.
+Audio/WWW działają dalej; enkoder przerywa test. Po nim wraca normalny UI.
+
+423 host tests PASS, w tym 5 kontroli nowej sceny. ESP-IDF6.1 build dr
+z włączoną diagnostyką PASS, flaga potwierdzona w wygenerowanym nagłówku.
+Nie zmieniono B3, gamma, precharge, prądu, normalnego FPS ani audio.
+Obserwacje pięciu faz i pomiar zasilania: OPEN; agent nie flashował.
+Instrukcja OLED_TIMING_BRINGUP.md. Konfiguracji głównej nie modyfikowano.
+
 ## Najnowsze — analiza pulsowania OLED / ADR0082 / 2026-11-01
 
 UI ma docelowo 25 FPS, pełne 8192 B przez SPI 10 MHz bez synchronizacji

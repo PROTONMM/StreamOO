@@ -16,6 +16,7 @@ _Static_assert(sizeof(time_t)>=8,"Clock requires 64-bit time_t through2099");
 #include "text_smoke.h"
 #include "home_probe.h"
 #include "ui_list_probe.h"
+#include "display_timing_probe.h"
 
 #include <inttypes.h>
 #include <string.h>
@@ -28,6 +29,47 @@ _Static_assert(sizeof(time_t)>=8,"Clock requires 64-bit time_t through2099");
 #include "streamoo_ssd1322.h"
 
 static bool boot_logo_presented;
+
+#ifdef CONFIG_STREAMOO_LCD_TIMING_PROBE
+static esp_err_t display_timing_probe(streamoo_ssd1322_t *display, uint8_t *frame)
+{
+    static const char *const names[] = {
+        "HOLD no SPI after first frame", "REPEAT identical frame 25fps",
+        "LOAD changing lit area 25fps", "LOAD changing lit area 10fps",
+        "MOVE constant lit area 25fps"
+    };
+    for (unsigned phase = 0; phase < STREAMOO_OLED_PROBE_COUNT; ++phase) {
+        ESP_LOGI("oled_probe", "phase=%u/5 %s; observe fixed upper text/gray fields for 8s", phase + 1, names[phase]);
+        const int64_t start = esp_timer_get_time();
+        TickType_t wake = xTaskGetTickCount();
+        const unsigned period_ms = phase == STREAMOO_OLED_LOAD10 ? 100 : 40;
+        unsigned frames = 0;
+        int64_t total_us = 0, max_us = 0;
+        while (esp_timer_get_time() - start < 8000000) {
+            streamoo_input_event_t input;
+            if (streamoo_input_probe_receive(&input)) {
+                ESP_LOGI("oled_probe", "Aborted by encoder; returning to normal UI");
+                return ESP_OK;
+            }
+            if (phase != STREAMOO_OLED_HOLD || frames == 0) {
+                uint32_t elapsed = (esp_timer_get_time() - start) / 1000;
+                if (!streamoo_oled_probe_draw(frame, SSD1322_FRAME_BYTES, phase, elapsed)) return ESP_ERR_INVALID_ARG;
+                int64_t before = esp_timer_get_time();
+                esp_err_t error = streamoo_ssd1322_present(display, frame, SSD1322_FRAME_BYTES);
+                int64_t duration = esp_timer_get_time() - before;
+                if (error != ESP_OK) return error;
+                ++frames; total_us += duration;
+                if (duration > max_us) max_us = duration;
+            }
+            vTaskDelayUntil(&wake, pdMS_TO_TICKS(period_ms) ? pdMS_TO_TICKS(period_ms) : 1);
+        }
+        ESP_LOGI("oled_probe", "phase=%u frames=%u elapsed_us=%" PRId64 " present_avg_us=%" PRId64 " present_max_us=%" PRId64,
+                 phase + 1, frames, esp_timer_get_time() - start, frames ? total_us / frames : 0, max_us);
+    }
+    ESP_LOGI("oled_probe", "Complete; returning to normal UI");
+    return ESP_OK;
+}
+#endif
 
 #ifdef CONFIG_STREAMOO_ENCODER_UI_TEST
 static bool sync_catalog(streamoo_encoder_demo_t *demo,streamoo_catalog_snapshot_t **held,streamoo_ui_station_t **entries)
@@ -90,6 +132,9 @@ static void display_task(void *context)
         uint64_t startup_connected_at=0;
         streamoo_player_phase_t startup_phase=STREAMOO_PLAYER_STOPPED;
         bool startup_player_ready=false;
+#ifdef CONFIG_STREAMOO_LCD_TIMING_PROBE
+        bool timing_probe_pending=true;
+#endif
         uint64_t player_generation=0;
         uint32_t player_volume_revision=0;
         if (!streamoo_ui_set_visualization(&demo.ui, restored.visualization)) error = ESP_ERR_INVALID_STATE;
@@ -232,6 +277,14 @@ static void display_task(void *context)
                 if(panel_enabled){error=streamoo_ssd1322_enable(display,false);if(error==ESP_OK)panel_enabled=false;}
                 vTaskDelayUntil(&wake,pdMS_TO_TICKS(40));continue;
             }
+#ifdef CONFIG_STREAMOO_LCD_TIMING_PROBE
+            if(timing_probe_pending && panel_enabled && !setup && startup_phase==STREAMOO_PLAYER_PLAYING) {
+                timing_probe_pending=false;
+                error=display_timing_probe(display,frame);
+                wake=xTaskGetTickCount();
+                continue;
+            }
+#endif
             bool drawn=ap_active ? streamoo_ui_ap_draw(frame,SSD1322_FRAME_BYTES,
                 (const uint8_t *)ap.ssid,15,ap.password,ap.password_bytes) :
                 setup ? streamoo_ui_sta_draw(frame,SSD1322_FRAME_BYTES,

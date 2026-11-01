@@ -1,5 +1,15 @@
 # Punkt wznowienia StreamOO
 
+## Najnowsze — pulsowanie OLED / ADR0083
+
+Gołym okiem dół pulsuje w rytm słupków; wyżej czasem przygasa tekst.
+Brak pustej klatki wysyłanej przed obrazem. Opcjonalny test
+STREAMOO_LCD_TIMING_PROBE (domyślnie n): HOLD/REPEAT/LOAD25/LOAD10/MOVE,
+5x8 s po PLAYING, audio działa dalej. Enkoder przerywa; potem zwykły UI.
+Procedura OLED_TIMING_BRINGUP.md; wyniki obserwacji i przyczyna OPEN.
+Nie zmieniono profilu OLED ani audio. Porównanie dr_FLAC nadal osobnym
+otwartym odbiorem; do diagnostyki OLED wybrać stabilną stację MP3.
+
 ## Najnowsze — poprawiony Python dla build_flac.py / ADR0081
 
 Po rich_click wrapper nie używa już bezwarunkowo sys.executable. Wybiera

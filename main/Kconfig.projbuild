@@ -32,6 +32,19 @@ menu "StreamOO Configuration"
             Disable only when USB is disconnected and is not used for console,
             USB devices or JTAG. Flash/PSRAM and strapping pins are always rejected.
     menu "Hardware: SSD1322"
+        config STREAMOO_LCD_TIMING_PROBE
+            bool "OLED pulsation experiment after playback starts (40 seconds)"
+            depends on STREAMOO_ENCODER_UI_TEST && STREAMOO_NETWORK_AP_TEST
+            default n
+            help
+                One sequence per reset, after network player reaches PLAYING:
+                8s static frame without SPI, 8s identical frame at 25 FPS,
+                8s changing lit area at 25 FPS, 8s same animation at 10 FPS,
+                8s moving bars with constant lit area at 25 FPS.
+                Fixed upper text and GS6/8/10/15 fields are brightness references.
+                UART logs phases and measured present times. Any encoder event
+                exits the probe (that event is consumed). Audio/web continue.
+                No changes to panel analog timings, brightness, NVS or codec.
         config STREAMOO_LCD_SMOKE_TEST
             bool "Run finite SSD1322 diagnostic at startup"
             default y

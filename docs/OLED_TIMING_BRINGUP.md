@@ -1,8 +1,60 @@
 # Pulsowanie i poziome prążki OLED
 
 2026-11-01. Zgłoszenie: lekkie pulsowanie oraz poziome prążki na bargraph
-i spectrum. Przyczyna OPEN; nie potwierdzono jeszcze, czy widać je gołym
-okiem, na nieruchomym obrazie, ani czy zależą od zasilania.
+i spectrum. Użytkownik potwierdził widoczność gołym okiem: dół pulsuje
+w rytm wizualizacji, wyżej czasem na ułamek sekundy przygasa napis.
+Zachowanie logo bez transferów i przyczyna, w tym wpływ zasilania: OPEN.
+
+## Nowy test rozdzielający przyczyny — ADR0083
+
+Opcja `STREAMOO_LCD_TIMING_PROBE` jest domyślnie wyłączona. Po włączeniu
+uruchamia się raz po resecie, po przejściu playera sieciowego w PLAYING
+i zakończeniu logo. Radio oraz WWW pracują dalej. Diagnostyka zastępuje UI
+przez 40 s; dowolne zdarzenie enkodera kończy test i zostaje zużyte.
+Potem wraca zwykły UI. Test nie powtarza się przy zmianie stacji/PLAY.
+Stały napis i cztery pola GS6/8/10/15 u góry są referencją jasności.
+
+| Faza w logu oled_probe | Czas | Zawartość / transmisja |
+|---|---|---|
+| HOLD | 8 s | Stałe słupki, jedna klatka, potem brak transferów OLED |
+| REPEAT | 8 s | Dokładnie te same piksele, pełna klatka co 40 ms |
+| LOAD 25fps | 8 s | Zmienna wysokość słupków, okres 40 ms |
+| LOAD 10fps | 8 s | Ta sama funkcja animacji, okres 100 ms |
+| MOVE | 8 s | Ruch w poziomie przy stałej liczbie pikseli każdego półtonu, 40 ms |
+
+To wzór syntetyczny, niezależny od amplitudy muzyki. Wybierz wcześniej
+stabilną stację MP3, aby ograniczyć wpływ ponownych połączeń/dekodera.
+Test nie reprodukuje dokładnie kosztu renderowania zwykłego UI ani
+identycznego obciążenia Wi-Fi między fazami. Log pokazuje rzeczywistą
+liczbę transmisji, czas fazy oraz średni/maksymalny czas present. Czas
+rysowania w RAM nie wchodzi do metryki present. Podane FPS są zadanym
+okresem, rzeczywiste tempo można obliczyć z frames/elapsed_us.
+
+Przykład dla aktualnego wariantu dr (bez zmiany backendu):
+
+```sh
+. /home/mariuszk/.espressif/v6.1/esp-idf/export.sh
+idf.py -B build/flac-dr -D SDKCONFIG="$PWD/sdkconfig.flac-dr" menuconfig
+# StreamOO Configuration -> Hardware: SSD1322
+# zaznacz OLED pulsation experiment after playback starts (40 seconds)
+python3 tools/build_flac.py dr flash --port /dev/ttyUSB0
+```
+
+Po teście wyłącz opcję w tym samym menu i ponownie zbuduj/wgraj firmware.
+Konfiguracja główna sdkconfig oraz NVS nie wymagają usuwania.
+
+Interpretacja, bez przesądzania wyniku:
+
+- HOLD pulsuje: aktualizacja obrazu nie jest jedynym powodem.
+- REPEAT gorzej niż HOLD: badać wpływ SPI/zapisów RAM, także elektryczny;
+  zawartość obrazu oraz liczba świecących pikseli nie zmieniają się.
+- LOAD pogarsza stały napis bardziej niż MOVE: podejrzenie zależności od
+  obciążenia panelu/zasilania; wymaga pomiaru napięć, nie dowodzi usterki PSU.
+- Zmiana 25 na 10 FPS wpływa na prążki: istnieje zależność czasowa, ale
+  nadal trzeba rozdzielić skanowanie od zakłóceń związanych z transferami.
+
+Przekaż log `oled_probe` i obserwacje osobno dla pięciu faz. B3, precharge,
+gamma, kontrast, prąd, SPI i bufory audio nie są zmieniane przez test.
 
 ## Co wynika z bieżącego kodu
 
@@ -64,5 +116,5 @@ nie identyfikuje żadnej z tych przyczyn.
 5. Dopiero osobno porównać B3 po ustaleniu zachowania stałego obrazu.
    Nie zmieniać jednocześnie kontrastu, gamma, precharge i napięć panelu.
 
-Wynik obserwacji użytkownika i pomiary SPI/zasilania: OPEN.
-Na tym etapie nie zmieniono firmware ani parametrów panelu.
+Wyniki pięciu faz i pomiary SPI/zasilania: OPEN. Pierwotna analiza ADR0082
+nie zmieniała firmware; ADR0083 dodaje wyłącznie opcjonalną diagnostykę.

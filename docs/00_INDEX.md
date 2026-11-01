@@ -30,6 +30,8 @@ Etap 04a i moduł msalamon: `adr/0003-ssd1322-msalamon-spi-bringup.md`.
 
 Pulsowanie/prążki OLED, FPS UI a skanowanie panelu:
 `OLED_TIMING_BRINGUP.md`, `adr/0082-oled-pulsation-investigation.md`.
+Kontrolowany test transferów i obciążenia OLED:
+`adr/0083-oled-controlled-load-and-transfer-probe.md`.
 
 Etap 04b i canvas: `adr/0004-independent-4bpp-canvas.md`.
 
