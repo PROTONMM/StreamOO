@@ -1,5 +1,19 @@
 # Porównanie dekoderów FLAC na ESP32-S3
 
+ADR0095 — aktualny test: software AES/SHA nie usunęło słyszalnych przerw
+publicznego FLAC (logb129d3af,42 low). Sprawdzamy dopływ przy większym
+oknie TCP, zachowując dr, ring, PCM i preroll:
+
+```sh
+python3 tools/build_flac.py dr flash --port /dev/ttyUSB0 --software-crypto --tcp-window 23040
+```
+
+Startup `TCP RX: window=23040 bytes mailbox=18 MSS=1440`. Ta sama publiczna
+stacja3min z UART i odsłuchem; zbierz Delivery, Decode buffers/audio_kbps,
+Underrun, Recover, CPU oraz heap minimum/largest. Wynik na S3 OPEN.
+Profil dotyczy nowych socketów TCP także WWW; większy koszt internal RAM.
+Rollback: --tcp-window 5760. Szczegóły i ograniczenia próby hostowej ADR0095.
+
 ADR0093–0094: do odbioru bitrate bez nagłówka (OLED ~) i test TLS po
 PSA-149 występującym po I2S. Polecenie dla tego eksperymentu:
 

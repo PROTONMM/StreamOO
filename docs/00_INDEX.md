@@ -48,6 +48,8 @@ Wyniki LAN i ograniczenie okresowych logów playera do jednej linii na iterację
 Bitrate mierzony czasem dekodowanego audio bez nagłówka serwera:
 `adr/0093-decoded-audio-bitrate-estimate.md`.
 TLS po I2S i test programowego AES/SHA: `adr/0094-software-tls-crypto-profile.md`.
+Niedobory publicznego FLAC i kontrolowany profil okna TCP/mailbox:
+`adr/0095-tcp-receive-window-profile.md`.
 
 Etap 04b i canvas: `adr/0004-independent-4bpp-canvas.md`.
 

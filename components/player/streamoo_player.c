@@ -189,9 +189,9 @@ static void log_decode_perf(const decode_profile_t *p){
 }
 static void log_decode_buffers(const decode_profile_t *p,const streamoo_live_decode_t *s){
   ESP_LOGI("player","Decode buffers: pcm_at_max=%zu pcm_max=%zu ring_at_max=%" PRIu32 "/%" PRIu32
-    " src_wait=%" PRIu64 " budget_yield=%" PRIu64 " reads=%" PRIu64,
+    " src_wait=%" PRIu64 " budget_yield=%" PRIu64 " reads=%" PRIu64 " audio_kbps=%" PRIu32,
     p->pcm_at_max,p->pcm_max_bytes,
-    p->pcm_before_max,p->pcm_after_max,s->source_waits,s->work_yields,s->source_calls);
+    p->pcm_before_max,p->pcm_after_max,s->source_waits,s->work_yields,s->source_calls,p->bitrate.kbps);
 }
 static void log_buffer_interval(decode_profile_t *p){
   if(p->levels_seen){

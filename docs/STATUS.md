@@ -1,5 +1,23 @@
 # Status implementacji
 
+## Najnowsze — niedobory WAN i profil TCP RX / ADR0095 / 2026-11-01
+
+Logb129d3af/b53faff potwierdza software AES/SHA, lecz użytkownik słyszy
+bardzo częste przerwy:42 Underrun,30 przy compressed1; low42/hard0/starts43,
+wait_empty632/busy8. HTTP średnio1155kbps, CPU średnio58,04%/38,18%.
+1 Recover mimo software crypto; źródło CRC i wcześniejsze TLS po I2S OPEN.
+Brak dowodu, że samo przeciążenie CPU wyjaśnia opróżnianie wejścia.
+
+Nowy kontrolowany profil wrappera `--tcp-window 23040`:
+TCP RX z5760 na23040B, mailbox6→18 przy MSS1440. Weryfikacja konfiguracji
+przed flash, startup TCP RX. audio_kbps w Decode buffers pokazuje zmierzone
+zapotrzebowanie audio niezależnie od icy-br. Ring/PCM/preroll/DSP bez zmian,
+software AES/SHA zachowane. Wpływ S3 i dodatkowa pamięć TCP do odbioru;
+próba komputerowa jest tylko wskazówką, nie benchmarkiem ESP32.
+454 testy hostowe PASS (w tym poprawiona atrapa logów startu/AP).
+Native dr/software crypto/TCP23040 build PASS; wygenerowane wartości
+23040/18/1440 i brak hardware AES/SHA potwierdzone. Agent nie flashował.
+
 ## Najnowsze — bitrate LAN i wariant TLS software / ADR0093–0094 / 2026-11-01
 
 Logf02f1a01/90958c2: LAN headerless~145s low0/hard0/starts1,

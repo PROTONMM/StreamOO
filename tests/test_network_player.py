@@ -145,6 +145,7 @@ void vTaskDelay(unsigned ms){
    assert(output_live&&s.phase==STREAMOO_PLAYER_PLAYING);
    if(logging_test)assert(log_lines>=7);
    if(bitrate_test)assert(s.bitrate_kbps==(bitrate_header?320u:192u)&&s.bitrate_measured==!bitrate_header);
+   if(bitrate_test)assert(strstr(buffers_log,"audio_kbps=192"));
    streamoo_pcm_pipeline_t *pcm=output_context;
    assert(pcm->stats.underflows==0&&pcm->stats.hard_underflows==0&&pcm->stats.restarts==1);
    if(logging_test)assert(max_lines_per_turn==1);

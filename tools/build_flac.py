@@ -67,7 +67,25 @@ def select_software_crypto(text):
     return "\n".join(lines+["# "+symbol+" is not set" for symbol in symbols])+"\n"
 
 
-def verify(build_dir, backend, software_crypto=False):
+def tcp_mailbox(window, mss):
+    if not 5760 <= window <= 32768 or not 536 <= mss <= 1460:
+        raise RuntimeError("TCP window must be 5760..32768 bytes; MSS must be 536..1460")
+    slots=max(6,(window+mss-1)//mss+2)
+    if slots>64:
+        raise RuntimeError("TCP receive mailbox exceeds the unscaled SDK limit")
+    return slots
+
+
+def select_tcp_window(text, window):
+    match=re.search(r"^CONFIG_LWIP_TCP_MSS=(\d+)\s*$",text,re.M)
+    mailbox=tcp_mailbox(window,int(match[1]) if match else 1440)
+    values={"CONFIG_LWIP_TCP_WND_DEFAULT":window,"CONFIG_LWIP_TCP_RECVMBOX_SIZE":mailbox}
+    lines=[line for line in text.splitlines() if not any(
+        line.startswith(symbol+"=") or line=="# "+symbol+" is not set" for symbol in values)]
+    return "\n".join(lines+[f"{symbol}={value}" for symbol,value in values.items()])+"\n"
+
+
+def verify(build_dir, backend, software_crypto=False, tcp_window=None):
     header = (build_dir / "config/sdkconfig.h").read_text()
     selected = [key for key, (symbol, _) in BACKENDS.items()
                 if re.search(r"^#define CONFIG_STREAMOO_FLAC_" + symbol + r"\s+1\s*$", header, re.M)]
@@ -75,6 +93,16 @@ def verify(build_dir, backend, software_crypto=False):
         raise RuntimeError(f"Generated configuration selects {selected}, expected {backend}")
     if software_crypto and re.search(r"^#define CONFIG_MBEDTLS_HARDWARE_(AES|SHA)\b",header,re.M):
         raise RuntimeError("Generated configuration still enables hardware AES/SHA; software crypto required")
+    if tcp_window is not None:
+        def setting(symbol):
+            match=re.search(r"^#define "+symbol+r"\s+(\d+)\s*$",header,re.M)
+            if not match:
+                raise RuntimeError(f"Generated configuration is missing {symbol}")
+            return int(match[1])
+        expected=tcp_mailbox(tcp_window,setting("CONFIG_LWIP_TCP_MSS"))
+        if (setting("CONFIG_LWIP_TCP_WND_DEFAULT")!=tcp_window or
+                setting("CONFIG_LWIP_TCP_RECVMBOX_SIZE")<expected):
+            raise RuntimeError("Generated TCP receive window/mailbox does not match the requested profile")
     binary = (build_dir / "streamoo.bin").read_bytes()
     labels = [key for key, (_, label) in BACKENDS.items() if label in binary]
     if labels != [backend]:
@@ -89,6 +117,7 @@ def main(argv=None):
     parser.add_argument("--port", help="Serial port for flash, e.g. /dev/ttyUSB0")
     parser.add_argument("--software-crypto", action="store_true",
                         help="Persist SDK software AES/SHA and verify the generated config before flash")
+    parser.add_argument("--tcp-window",type=int,help="TCP RX window 5760..32768 bytes; also sizes and verifies the receive mailbox")
     args = parser.parse_args(argv)
     idf_path = os.environ.get("IDF_PATH")
     idf = Path(idf_path) / "tools/idf.py" if idf_path else shutil.which("idf.py")
@@ -110,6 +139,8 @@ def main(argv=None):
     selected=select_backend(source.read_text(), args.backend)
     if args.software_crypto:
         selected=select_software_crypto(selected)
+    if args.tcp_window is not None:
+        selected=select_tcp_window(selected,args.tcp_window)
     config.write_text(selected)
     build_dir = ROOT / "build" / f"flac-{args.backend}"
     command = [str(python), str(idf), "-C", str(ROOT), "-B", str(build_dir),
@@ -129,9 +160,11 @@ def main(argv=None):
             build_dir.rename(backup)
             print(f"ESP-IDF Python changed; previous build preserved at {backup}", flush=True)
     subprocess.run(command + ["build"], cwd=ROOT, env=environment, check=True)
-    size, digest = verify(build_dir, args.backend, args.software_crypto)
+    size, digest = verify(build_dir, args.backend, args.software_crypto,args.tcp_window)
     if args.software_crypto:
         print("Verified TLS crypto: software AES/SHA (generated configuration)", flush=True)
+    if args.tcp_window is not None:
+        print(f"Verified TCP RX window: {args.tcp_window} bytes (generated configuration)",flush=True)
     print(f"Verified FLAC backend={BACKENDS[args.backend][1].decode()} bytes={size} SHA256={digest}", flush=True)
     if args.action == "flash":
         port = ["-p", args.port] if args.port else []

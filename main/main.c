@@ -54,6 +54,10 @@ void app_main(void)
     const char *tls_sha="software";
 #endif
     ESP_LOGI(TAG, "TLS crypto: AES=%s SHA=%s; certificate verification enabled",tls_aes,tls_sha);
+#if defined(CONFIG_LWIP_TCP_WND_DEFAULT) && defined(CONFIG_LWIP_TCP_RECVMBOX_SIZE) && defined(CONFIG_LWIP_TCP_MSS)
+    ESP_LOGI(TAG,"TCP RX: window=%d bytes mailbox=%d MSS=%d",
+             CONFIG_LWIP_TCP_WND_DEFAULT,CONFIG_LWIP_TCP_RECVMBOX_SIZE,CONFIG_LWIP_TCP_MSS);
+#endif
 #if defined(CONFIG_STREAMOO_ENCODER_UI_TEST)
     const esp_err_t prefs_error = streamoo_preferences_start();
     if (prefs_error != ESP_OK)

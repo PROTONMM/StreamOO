@@ -14,6 +14,62 @@ spec.loader.exec_module(build)
 
 
 class FlacBuildTests(unittest.TestCase):
+    def test_tcp_window_sizes_mailbox_preserves_settings_and_is_idempotent(self):
+        original='CONFIG_LWIP_TCP_MSS=1440\nCONFIG_LWIP_TCP_WND_DEFAULT=5760\nCONFIG_LWIP_TCP_RECVMBOX_SIZE=6\nCONFIG_BOARD_PIN=6\n'
+        selected=build.select_tcp_window(original,23040)
+        self.assertIn('CONFIG_LWIP_TCP_WND_DEFAULT=23040\n',selected)
+        self.assertIn('CONFIG_LWIP_TCP_RECVMBOX_SIZE=18\n',selected)
+        self.assertIn('CONFIG_BOARD_PIN=6\n',selected)
+        self.assertEqual(build.select_tcp_window(selected,23040),selected)
+        self.assertIn('CONFIG_LWIP_TCP_RECVMBOX_SIZE=25\n',build.select_tcp_window('CONFIG_LWIP_TCP_MSS=1024\n',23040))
+        self.assertEqual(build.tcp_mailbox(32768,536),64)
+
+    def test_tcp_profile_rejects_out_of_range_values(self):
+        for window in (0,5759,32769):
+            with self.assertRaises(RuntimeError):build.select_tcp_window('',window)
+        for mss in (0,535,1461):
+            with self.assertRaises(RuntimeError):build.tcp_mailbox(23040,mss)
+
+    def test_generated_tcp_window_and_mailbox_are_required(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root=Path(temp);(root/'config').mkdir();(root/'streamoo.bin').write_bytes(b'dr_flac-0.13.4\0')
+            base='#define CONFIG_STREAMOO_FLAC_DR 1\n#define CONFIG_LWIP_TCP_MSS 1440\n'
+            for window,mailbox in ((5760,18),(23040,6)):
+                (root/'config/sdkconfig.h').write_text(base+f'#define CONFIG_LWIP_TCP_WND_DEFAULT {window}\n#define CONFIG_LWIP_TCP_RECVMBOX_SIZE {mailbox}\n')
+                with self.assertRaises(RuntimeError):build.verify(root,'dr',tcp_window=23040)
+            (root/'config/sdkconfig.h').write_text(base)
+            with self.assertRaises(RuntimeError):build.verify(root,'dr',tcp_window=23040)
+            (root/'config/sdkconfig.h').write_text(base+'#define CONFIG_LWIP_TCP_WND_DEFAULT 23040\n#define CONFIG_LWIP_TCP_RECVMBOX_SIZE 18\n')
+            self.assertGreater(build.verify(root,'dr',tcp_window=23040)[0],0)
+
+    def test_tcp_profile_blocks_wrong_flash_and_persists_successful_settings(self):
+        for correct in (False,True):
+            with self.subTest(correct=correct),tempfile.TemporaryDirectory() as temp:
+                root=Path(temp);(root/'tools').mkdir();(root/'tools/idf.py').write_text('')
+                original='CONFIG_LWIP_TCP_MSS=1440\nCONFIG_LWIP_TCP_WND_DEFAULT=5760\nCONFIG_LWIP_TCP_RECVMBOX_SIZE=6\nCONFIG_BOARD_PIN=6\n'
+                (root/'sdkconfig').write_text(original)
+                def fake_run(command,**kwargs):
+                    selected=(root/'sdkconfig.flac-dr').read_text()
+                    self.assertIn('CONFIG_LWIP_TCP_RECVMBOX_SIZE=18',selected)
+                    self.assertIn('CONFIG_BOARD_PIN=6',selected)
+                    if command[-1]=='build':
+                        artifact=root/'build/flac-dr';(artifact/'config').mkdir(parents=True,exist_ok=True)
+                        window=23040 if correct else 5760
+                        (artifact/'config/sdkconfig.h').write_text('#define CONFIG_STREAMOO_FLAC_DR 1\n#define CONFIG_LWIP_TCP_MSS 1440\n'+f'#define CONFIG_LWIP_TCP_WND_DEFAULT {window}\n#define CONFIG_LWIP_TCP_RECVMBOX_SIZE 18\n')
+                        (artifact/'streamoo.bin').write_bytes(b'dr_flac-0.13.4\0')
+                with patch.object(build,'ROOT',root),patch.dict(build.os.environ,{'IDF_PATH':str(root)}), \
+                        patch.object(build,'idf_python',return_value=root/'idf-venv/bin/python'), \
+                        patch.object(build.subprocess,'run',side_effect=fake_run) as run,contextlib.redirect_stdout(io.StringIO()):
+                    command=['dr','flash','--port','/dev/unused','--tcp-window','23040']
+                    if correct:
+                        self.assertEqual(build.main(command),0)
+                        self.assertEqual(run.call_count,2)
+                        self.assertEqual(build.main(['dr','build']),0)
+                    else:
+                        with self.assertRaises(RuntimeError):build.main(command)
+                        self.assertEqual(run.call_count,1)
+                    self.assertEqual((root/'sdkconfig').read_text(),original)
+
     def test_software_crypto_selection_is_idempotent_and_preserves_other_settings(self):
         original='CONFIG_MBEDTLS_HARDWARE_AES=y\nCONFIG_MBEDTLS_HARDWARE_SHA=y\nCONFIG_BOARD_PIN=6\n'
         selected=build.select_software_crypto(original)

@@ -1,5 +1,25 @@
 # Punkt wznowienia StreamOO
 
+## Najnowsze — profil TCP23040/mailbox18 / ADR0095
+
+Logb129d3af: b53faff/dr/software AES/SHA,42 Underrun/1 Recover w~1min,
+odsłuch użytkownika: bardzo rwie. Większość low przy pustym wejściu,
+wait_empty632/busy8, HTTP~1155kbps, CPU~58%/38%. Źródło CRC/TLS OPEN.
+Do sprawdzenia małe okno TCP5760B: nowy wrapper dobiera23040B i mailbox18,
+sprawdza wygenerowany nagłówek przed flash. Bez zmiany PCM/ring/preroll.
+Decode buffers ma audio_kbps do porównania z Delivery body_kbps.
+
+```sh
+python3 tools/build_flac.py dr flash --port /dev/ttyUSB0 --software-crypto --tcp-window 23040
+```
+
+Startup: TCP RX window23040/mailbox18/MSS1440 oraz software AES/SHA.
+Publiczny TEST FLAC native lossless3min z odsłuchem i UART; zebrać low/starts,
+audio_kbps, Delivery, Recover, CPU oraz heap minimum/largest (TCP zużywa
+pamięć wewnętrzną). Potem LAN24/headerless i LAN→TLS/HLS po I2S.
+454 testy hostowe i native build PASS, agent nie flashował; wpływ na płytce OPEN.
+Rollback samego TCP: `--tcp-window 5760`, mailbox6.
+
 ## Najnowsze — bitrate z PCM i TLS software AES/SHA / ADR0093–0094
 
 Logf02f1a01/90958c2: LAN headerless~145s bez low; po I2S14 PSA-149 przy

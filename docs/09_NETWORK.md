@@ -1,5 +1,11 @@
 # 09 — Wi-Fi provisioning i mDNS
 
+ADR0095: profil wrappera `--tcp-window 23040` zwiększa domyślne okno RX
+TCP5760→23040B i mailbox6→18 (MSS1440), weryfikuje sdkconfig.h przed flash.
+Bez flagi zachowuje prywatną konfigurację backendu. Hipoteza ograniczenia
+WAN, nie potwierdzona naprawa; koszty pamięci/odsłuch S3 OPEN. Bez zmian
+ring/PCM/preroll i bez modyfikowania globalnego SDK.
+
 ADR0090: po starcie drivera radio ustawia WIFI_PS_NONE, aby ograniczyć
 opóźnienia odbioru względem domyślnego modem sleep. Potwierdza getterem;
 błąd tylko ostrzega i nie blokuje sieci/AP. Większy pobór energii Wi-Fi,

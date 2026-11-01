@@ -15,9 +15,12 @@ const esp_app_desc_t *esp_app_get_description(void);
 typedef int esp_err_t;
 #define ESP_OK 0
 #define ESP_FAIL -1
-#define ESP_LOGI(tag,...) ((void)(tag))
-#define ESP_LOGW(tag,...) ((void)(tag))
-#define ESP_LOGE(tag,...) ((void)(tag))
+static inline const char *esp_err_to_name(esp_err_t err){(void)err;return "fake";}
+static inline void test_log(const char *tag,const char *format,...) __attribute__((format(printf,2,3)));
+static inline void test_log(const char *tag,const char *format,...){(void)tag;(void)format;}
+#define ESP_LOGI(...) test_log(__VA_ARGS__)
+#define ESP_LOGW(...) test_log(__VA_ARGS__)
+#define ESP_LOGE(...) test_log(__VA_ARGS__)
 typedef struct { uint8_t volume,visualization; } streamoo_preferences_value_t;
 typedef struct { int unused; } streamoo_network_hooks_t;
 extern const streamoo_network_hooks_t streamoo_app_network_hooks;
@@ -41,6 +44,19 @@ CONFIG=r'''
 #define CONFIG_STREAMOO_ENCODER_GESTURE_TEST 1
 #define CONFIG_STREAMOO_LCD_SMOKE_TEST 1
 #define CONFIG_STREAMOO_NETWORK_AP_TEST 1
+#define CONFIG_STREAMOO_LCD_MOSI 11
+#define CONFIG_STREAMOO_LCD_SCLK 12
+#define CONFIG_STREAMOO_LCD_CS 9
+#define CONFIG_STREAMOO_LCD_DC 10
+#define CONFIG_STREAMOO_I2S_DOUT 48
+#define CONFIG_STREAMOO_I2S_BCLK 47
+#define CONFIG_STREAMOO_I2S_LRCLK 21
+#define CONFIG_STREAMOO_ENCODER_GPIO_A 5
+#define CONFIG_STREAMOO_ENCODER_GPIO_B 6
+#define CONFIG_STREAMOO_ENCODER_GPIO_BUTTON 7
+#define CONFIG_LWIP_TCP_WND_DEFAULT 23040
+#define CONFIG_LWIP_TCP_RECVMBOX_SIZE 18
+#define CONFIG_LWIP_TCP_MSS 1440
 #ifndef TEST_FINITE
 #define CONFIG_STREAMOO_AUDIO_CONTROL_TEST 1
 #else
