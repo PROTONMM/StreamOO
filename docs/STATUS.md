@@ -9,6 +9,12 @@ niepełny; stabilność FAIL. CPU0/1 średnio41,36/43,98%, brak dowodu stałego
 nasycenia. Pięć wcześniejszych nieudanych prób TLS-0x2700 to osobny problem.
 Log pochodzi sprzed szachownicy bargraphu i nie potwierdza jej odbioru.
 
+Dodatkowe sprawdzenie serwera (ADR0085): obecnie302→200; po2 próby TLS
+obu hostów z CAfile SDK PASS na komputerze. Kod startuje HTTPS przed
+potwierdzeniem asynchronicznego SNTP przy włączonym sprawdzaniu dat.
+Niepoprawny czas to hipoteza początkowego -0x2700; pełne UTC/tls_flags
+z urządzenia nadal potrzebne. Stan serwera z przeszłego logu nieustalony.
+
 Dodano log tylko na błędzie flac_parse: rzeczywisty status i warunek
 odrzucenia, bytes/scan/CRC16/metadane/BOS/EOS oraz krótki prefiks16 bajtów.
 Parser, dr, recovery i bufory zachowują dotychczasowe działanie; nie jest

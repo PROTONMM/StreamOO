@@ -85,3 +85,28 @@ odtworzenia CRC. Kolejny etap zależy od konkretnego odrzucenia: kontrolowany
 plik LAN z identycznym PCM/porcjami lub przechwycenie dokładnych bajtów
 błędnej ramki. Nie zwiększamy równocześnie buforów i nie zmieniamy kodeka.
 Wyniki host/build w STATUS; brak flash przez agenta i brak deklaracji naprawy.
+
+## Dodatkowe sprawdzenie hipotezy serwera / startu TLS
+
+Na pytanie użytkownika o serwer sprawdzono bieżący endpoint z playlisty
+testowej. 2026-11-01 około08:40UTC: HTTPS302 z streams.radiomast.io do
+audio-edge-3mayu.fra.h.radiomast.io, następnie HTTP200 audio/flac, icy-br1500.
+OpenSSL przez Python ssl z CAfile DOKŁADNIE przypiętego SDK6.1: po dwie
+zweryfikowane próby obu hostów, wszystkie PASS, około318–321ms i70–72ms.
+Leaf pierwszego hosta ważny20.09–19.12.2026, edge11.09–10.12.2026.
+To stan bieżący i trasa komputera, nie dowód poprawności serwera w chwili
+wcześniejszego logu ani identycznej trasy DNS/łańcucha na urządzeniu.
+
+Kod sieci uruchamia SNTP dopiero po GOT_IP, wait_for_sync=false, callback
+ustawia time_synced bez logu. Player nie czeka na czas przed otwarciem
+HTTPS; HAVE_TIME_DATE=y. Niepoprawny czas przed SNTP jest zatem silną
+hipotezą początkowych błędów -0x2700, nie potwierdzonym wynikiem logu.
+Do rozstrzygnięcia potrzebny UTC/time_synced i pełne tls_flags w momencie
+błędu. Nie wyłączamy sprawdzania dat ani nie przypisujemy winy serwerowi.
+
+[Radio Mast](https://www.radiomast.io/reference-streams) opisuje tę próbkę
+jako native FLAC16/stereo44,1kHz, VBR300–1500kbps. Zależność od utworu może
+więc wynikać z zapotrzebowania na transfer/bufor, ale nie dowodzi awarii CDN.
+[Espressif](https://docs.espressif.com/projects/esp-techpedia/en/latest/esp-friends/advanced-development/protocol/mbedtls-troubleshooting.html)
+klasyfikuje -0x2700 jako błąd weryfikacji certyfikatu, nie timeout serwera.
+W tym dodatkowym sprawdzeniu nie zmieniono kodu i nie wykonano flash.

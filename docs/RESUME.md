@@ -10,6 +10,9 @@ BOS/EOS/metadane i maksymalnie16 bajtów prefiksu. Bez zmiany buforów
 i dekodera. Kolejny log ze stacji TEST FLAC native lossless ma zawęzić
 przyczynę -1001. Sama wymiana biblioteki nie rozwiązała niedoborów.
 Z tego logu nie ocenimy szachownicy bargraphu (starszy firmware).
+Aktualny serwer sprawdzony z komputera:302→200, obie domeny TLS PASS
+z CAfile SDK. HTTPS w firmware startuje przed potwierdzeniem SNTP;
+do wyjaśnienia początkowego -0x2700 potrzebny UTC i pełne tls_flags.
 
 ## Najnowsze — szachownica bargraphu / ADR0084
 
