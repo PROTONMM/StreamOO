@@ -1,5 +1,11 @@
 # Narzędzia pomocnicze
 
+`build_flac.py ... --hardware-crypto` — eksperymentalny profil hardware
+AES/SHA z przygotowaniem i kontrolą znanego wyniku przed pierwszym I2S.
+Sprawdza wszystkie trzy opcje wygenerowanego sdkconfig przed flash;
+wyklucza --software-crypto. Zwykły build zachowuje wybór. Software profil
+wyłącza też early init. Procedura: [ADR0096](../docs/adr/0096-early-hardware-crypto-preparation.md).
+
 `build_flac.py ... --tcp-window 23040` — profil RX TCP: okno i mailbox
 dobrane do MSS, kontrola wygenerowanego nagłówka przed flash. Ustawienia
 pozostają w prywatnym sdkconfig wybranego backendu. Można połączyć

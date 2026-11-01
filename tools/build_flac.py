@@ -61,10 +61,18 @@ def select_backend(text, backend):
 
 def select_software_crypto(text):
     """Use the SDK software AES/SHA implementations; preserve TLS verification."""
-    symbols=("CONFIG_MBEDTLS_HARDWARE_AES", "CONFIG_MBEDTLS_HARDWARE_SHA")
+    symbols=("CONFIG_MBEDTLS_HARDWARE_AES", "CONFIG_MBEDTLS_HARDWARE_SHA", "CONFIG_STREAMOO_CRYPTO_EARLY_INIT")
     lines=[line for line in text.splitlines() if not any(
         line.startswith(symbol+"=") or line=="# "+symbol+" is not set" for symbol in symbols)]
     return "\n".join(lines+["# "+symbol+" is not set" for symbol in symbols])+"\n"
+
+
+def select_hardware_crypto(text):
+    """Reserve the SDK hardware crypto channels before the first I2S use."""
+    symbols=("CONFIG_MBEDTLS_HARDWARE_AES", "CONFIG_MBEDTLS_HARDWARE_SHA", "CONFIG_STREAMOO_CRYPTO_EARLY_INIT")
+    lines=[line for line in text.splitlines() if not any(
+        line.startswith(symbol+"=") or line=="# "+symbol+" is not set" for symbol in symbols)]
+    return "\n".join(lines+[symbol+"=y" for symbol in symbols])+"\n"
 
 
 def tcp_mailbox(window, mss):
@@ -85,7 +93,7 @@ def select_tcp_window(text, window):
     return "\n".join(lines+[f"{symbol}={value}" for symbol,value in values.items()])+"\n"
 
 
-def verify(build_dir, backend, software_crypto=False, tcp_window=None):
+def verify(build_dir, backend, software_crypto=False, tcp_window=None, hardware_crypto=False):
     header = (build_dir / "config/sdkconfig.h").read_text()
     selected = [key for key, (symbol, _) in BACKENDS.items()
                 if re.search(r"^#define CONFIG_STREAMOO_FLAC_" + symbol + r"\s+1\s*$", header, re.M)]
@@ -93,6 +101,10 @@ def verify(build_dir, backend, software_crypto=False, tcp_window=None):
         raise RuntimeError(f"Generated configuration selects {selected}, expected {backend}")
     if software_crypto and re.search(r"^#define CONFIG_MBEDTLS_HARDWARE_(AES|SHA)\b",header,re.M):
         raise RuntimeError("Generated configuration still enables hardware AES/SHA; software crypto required")
+    if hardware_crypto:
+        for symbol in ("CONFIG_MBEDTLS_HARDWARE_AES","CONFIG_MBEDTLS_HARDWARE_SHA","CONFIG_STREAMOO_CRYPTO_EARLY_INIT"):
+            if not re.search(r"^#define "+symbol+r"\s+1\s*$",header,re.M):
+                raise RuntimeError(f"Generated configuration missing {symbol}; hardware crypto with early init required")
     if tcp_window is not None:
         def setting(symbol):
             match=re.search(r"^#define "+symbol+r"\s+(\d+)\s*$",header,re.M)
@@ -115,8 +127,11 @@ def main(argv=None):
     parser.add_argument("backend", choices=BACKENDS)
     parser.add_argument("action", choices=("build", "flash"), nargs="?", default="build")
     parser.add_argument("--port", help="Serial port for flash, e.g. /dev/ttyUSB0")
-    parser.add_argument("--software-crypto", action="store_true",
+    crypto=parser.add_mutually_exclusive_group()
+    crypto.add_argument("--software-crypto", action="store_true",
                         help="Persist SDK software AES/SHA and verify the generated config before flash")
+    crypto.add_argument("--hardware-crypto",action="store_true",
+                        help="Persist hardware AES/SHA with checked early GDMA initialization; verify before flash")
     parser.add_argument("--tcp-window",type=int,help="TCP RX window 5760..32768 bytes; also sizes and verifies the receive mailbox")
     args = parser.parse_args(argv)
     idf_path = os.environ.get("IDF_PATH")
@@ -139,6 +154,8 @@ def main(argv=None):
     selected=select_backend(source.read_text(), args.backend)
     if args.software_crypto:
         selected=select_software_crypto(selected)
+    elif args.hardware_crypto:
+        selected=select_hardware_crypto(selected)
     if args.tcp_window is not None:
         selected=select_tcp_window(selected,args.tcp_window)
     config.write_text(selected)
@@ -160,9 +177,11 @@ def main(argv=None):
             build_dir.rename(backup)
             print(f"ESP-IDF Python changed; previous build preserved at {backup}", flush=True)
     subprocess.run(command + ["build"], cwd=ROOT, env=environment, check=True)
-    size, digest = verify(build_dir, args.backend, args.software_crypto,args.tcp_window)
+    size, digest = verify(build_dir, args.backend, args.software_crypto,args.tcp_window,args.hardware_crypto)
     if args.software_crypto:
         print("Verified TLS crypto: software AES/SHA (generated configuration)", flush=True)
+    elif args.hardware_crypto:
+        print("Verified TLS crypto: hardware AES/SHA with early init (generated configuration)",flush=True)
     if args.tcp_window is not None:
         print(f"Verified TCP RX window: {args.tcp_window} bytes (generated configuration)",flush=True)
     print(f"Verified FLAC backend={BACKENDS[args.backend][1].decode()} bytes={size} SHA256={digest}", flush=True)

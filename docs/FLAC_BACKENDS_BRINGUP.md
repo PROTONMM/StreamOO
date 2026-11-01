@@ -1,5 +1,18 @@
 # Porównanie dekoderów FLAC na ESP32-S3
 
+ADR0096 — aktualny test sprzętowego crypto z przygotowaniem przed I2S:
+
+```sh
+python3 tools/build_flac.py dr flash --port /dev/ttyUSB0 --hardware-crypto --tcp-window 5760
+```
+
+Startup: Early crypto known-answer PASS before I2S, AES/SHA hardware,
+TCP5760/mailbox6. Software profil użytkownik ocenił jako mocno przerywający;
+skuteczność early init OPEN. FLAC3min z odsłuchem, kilka STOP/PLAY, potem
+LAN→zewnętrzny FLAC→HLS→FLAC. Zachować TLS/UTC, low/starts, audio_kbps,
+Delivery, Recover/Reject, CPU/heap. Bufory/progi i TLS verification zachowane.
+Nie łączymy tej próby ze zmianą okna TCP23040; ADR0095 nadal do odbioru.
+
 ADR0095 — aktualny test: software AES/SHA nie usunęło słyszalnych przerw
 publicznego FLAC (logb129d3af,42 low). Sprawdzamy dopływ przy większym
 oknie TCP, zachowując dr, ring, PCM i preroll:

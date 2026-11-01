@@ -1,5 +1,22 @@
 # Status implementacji
 
+## Najnowsze — early init sprzętowego AES/SHA / ADR0096 / 2026-11-01
+
+Użytkownik: przed software crypto po połączeniu grało dobrze; software
+szybko łączy, ale mocno przerywa. Hipoteza kosztu TLS niepotwierdzona,
+powracamy do akceleracji z kontrolowanym przygotowaniem DMA przed I2S.
+Wrapper --hardware-crypto wybiera hardware AES/SHA i early init, kontroluje
+trzy symbole przed flash. Probe SHA-256/AES-CBC1024B z referencjami pełnego
+wyniku, przed audio/siecią; błędy zatrzymują startup. Bez zmian SDK/fill/TLS
+verification. Domyślnie early init wyłączone. Bufory/progi pozostają.
+Do tej próby TCP5760/mailbox6: odbiór większego okna ADR0095 niezgłoszony.
+Relacja obejścia upstream to wskazówka, nie potwierdzony fix dla StreamOO.
+Odbiór S3 OPEN: FLAC, STOP/PLAY, LAN→TLS/HLS po I2S; instrukcja ADR0096.
+462 testy hostowe PASS; native ESP-IDF6.1/dr hardware AES/SHA + early init
+build PASS. Wygenerowany nagłówek potwierdza trzy opcje oraz TCP5760/6;
+binarka1573520B. Test probe z OpenSSL obejmuje10 awarii/korupcji i cleanup.
+Agent nie flashował urządzenia.
+
 ## Najnowsze — niedobory WAN i profil TCP RX / ADR0095 / 2026-11-01
 
 Logb129d3af/b53faff potwierdza software AES/SHA, lecz użytkownik słyszy

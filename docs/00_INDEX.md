@@ -50,6 +50,8 @@ Bitrate mierzony czasem dekodowanego audio bez nagłówka serwera:
 TLS po I2S i test programowego AES/SHA: `adr/0094-software-tls-crypto-profile.md`.
 Niedobory publicznego FLAC i kontrolowany profil okna TCP/mailbox:
 `adr/0095-tcp-receive-window-profile.md`.
+Obejście do testu sprzętowego AES/SHA: inicjalizacja crypto przed I2S:
+`adr/0096-early-hardware-crypto-preparation.md`.
 
 Etap 04b i canvas: `adr/0004-independent-4bpp-canvas.md`.
 

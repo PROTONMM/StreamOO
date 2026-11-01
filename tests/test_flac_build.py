@@ -14,6 +14,61 @@ spec.loader.exec_module(build)
 
 
 class FlacBuildTests(unittest.TestCase):
+    def test_hardware_crypto_selection_roundtrips_without_changing_tcp_or_board(self):
+        original='CONFIG_BOARD_PIN=6\nCONFIG_LWIP_TCP_WND_DEFAULT=5760\n'
+        hardware=build.select_hardware_crypto(build.select_software_crypto(original))
+        for symbol in ('CONFIG_MBEDTLS_HARDWARE_AES','CONFIG_MBEDTLS_HARDWARE_SHA','CONFIG_STREAMOO_CRYPTO_EARLY_INIT'):
+            self.assertIn(symbol+'=y\n',hardware)
+        self.assertEqual(build.select_hardware_crypto(hardware),hardware)
+        self.assertIn(original,hardware)
+        software=build.select_software_crypto(hardware)
+        self.assertIn('# CONFIG_STREAMOO_CRYPTO_EARLY_INIT is not set\n',software)
+        self.assertEqual(build.select_hardware_crypto(software),hardware)
+
+    def test_hardware_profile_requires_both_accelerators_and_early_init(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root=Path(temp);(root/'config').mkdir();(root/'streamoo.bin').write_bytes(b'dr_flac-0.13.4\0')
+            symbols=('CONFIG_MBEDTLS_HARDWARE_AES','CONFIG_MBEDTLS_HARDWARE_SHA','CONFIG_STREAMOO_CRYPTO_EARLY_INIT')
+            base='#define CONFIG_STREAMOO_FLAC_DR 1\n'
+            for missing in symbols:
+                for value in ('',f'#define {missing} 0\n'):
+                    (root/'config/sdkconfig.h').write_text(base+value+''.join(f'#define {symbol} 1\n' for symbol in symbols if symbol!=missing))
+                    with self.assertRaises(RuntimeError):build.verify(root,'dr',hardware_crypto=True)
+            (root/'config/sdkconfig.h').write_text(base+''.join(f'#define {symbol} 1\n' for symbol in symbols))
+            self.assertGreater(build.verify(root,'dr',hardware_crypto=True)[0],0)
+
+    def test_hardware_profile_checks_artifacts_before_flash_and_persists_selection(self):
+        for correct in (False,True):
+            with self.subTest(correct=correct),tempfile.TemporaryDirectory() as temp:
+                root=Path(temp);(root/'tools').mkdir();(root/'tools/idf.py').write_text('')
+                original='CONFIG_BOARD_PIN=6\n';(root/'sdkconfig').write_text(original)
+                def fake_run(command,**kwargs):
+                    config=(root/'sdkconfig.flac-dr').read_text()
+                    for symbol in ('CONFIG_MBEDTLS_HARDWARE_AES','CONFIG_MBEDTLS_HARDWARE_SHA','CONFIG_STREAMOO_CRYPTO_EARLY_INIT'):
+                        self.assertIn(symbol+'=y\n',config)
+                    if command[-1]=='build':
+                        artifact=root/'build/flac-dr';(artifact/'config').mkdir(parents=True,exist_ok=True)
+                        header='#define CONFIG_STREAMOO_FLAC_DR 1\n#define CONFIG_MBEDTLS_HARDWARE_AES 1\n#define CONFIG_MBEDTLS_HARDWARE_SHA 1\n'
+                        if correct:header+='#define CONFIG_STREAMOO_CRYPTO_EARLY_INIT 1\n'
+                        (artifact/'config/sdkconfig.h').write_text(header)
+                        (artifact/'streamoo.bin').write_bytes(b'dr_flac-0.13.4\0')
+                with patch.object(build,'ROOT',root),patch.dict(build.os.environ,{'IDF_PATH':str(root)}), \
+                        patch.object(build,'idf_python',return_value=root/'idf-venv/bin/python'), \
+                        patch.object(build.subprocess,'run',side_effect=fake_run) as run,contextlib.redirect_stdout(io.StringIO()):
+                    command=['dr','flash','--hardware-crypto','--port','/dev/unused']
+                    if correct:
+                        self.assertEqual(build.main(command),0);self.assertEqual(run.call_count,2)
+                        self.assertEqual(build.main(['dr','build']),0)
+                    else:
+                        with self.assertRaises(RuntimeError):build.main(command)
+                        self.assertEqual(run.call_count,1)
+                    self.assertEqual((root/'sdkconfig').read_text(),original)
+
+    def test_hardware_and_software_flags_are_mutually_exclusive(self):
+        with contextlib.redirect_stderr(io.StringIO()),self.assertRaises(SystemExit) as result:
+            build.main(['dr','--software-crypto','--hardware-crypto'])
+        self.assertEqual(result.exception.code,2)
+
     def test_tcp_window_sizes_mailbox_preserves_settings_and_is_idempotent(self):
         original='CONFIG_LWIP_TCP_MSS=1440\nCONFIG_LWIP_TCP_WND_DEFAULT=5760\nCONFIG_LWIP_TCP_RECVMBOX_SIZE=6\nCONFIG_BOARD_PIN=6\n'
         selected=build.select_tcp_window(original,23040)

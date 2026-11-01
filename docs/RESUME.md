@@ -1,5 +1,25 @@
 # Punkt wznowienia StreamOO
 
+## Najnowsze — hardware AES/SHA przed I2S / ADR0096
+
+Użytkownik: software crypto łączy szybko, ale rwie; wcześniejszy hardware
+po połączeniu grał dobrze. Gotowy eksperyment early init: SHA-256/AES-CBC
+1024B, znany pełny wynik, rezerwacja kanałów crypto SDK przed audio/siecią.
+Nie resetujemy GDMA/globalnego SDK, walidacja TLS pozostaje. Probe domyślnie
+n, błąd zatrzymuje startup. --software-crypto wyłącza też early init.
+
+```sh
+python3 tools/build_flac.py dr flash --port /dev/ttyUSB0 --hardware-crypto --tcp-window 5760
+```
+
+Oczekuj Early crypto known-answer PASS before I2S oraz TLS AES/SHA hardware.
+TCP5760/mailbox6 dla porównania z przetestowanym software; większe okno
+ADR0095 nadal nieodebrane. Publiczny FLAC3min z odsłuchem/logiem, kilka
+STOP/PLAY, potem LAN24/headerless→FLAC HTTPS→HLS→FLAC. Zachować TLS/UTC,
+audio_kbps/Delivery, low/starts, Recover/Reject, CPU/heap. Odbiór S3 OPEN.
+462 host tests oraz native dr/hardware AES/SHA/early init/TCP5760 build
+PASS; konfiguracja sprawdzona przez wrapper, bez flash agenta.
+
 ## Najnowsze — profil TCP23040/mailbox18 / ADR0095
 
 Logb129d3af: b53faff/dr/software AES/SHA,42 Underrun/1 Recover w~1min,

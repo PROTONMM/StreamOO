@@ -26,6 +26,7 @@ typedef struct { int unused; } streamoo_network_hooks_t;
 extern const streamoo_network_hooks_t streamoo_app_network_hooks;
 esp_err_t streamoo_board_validate(void);
 esp_err_t streamoo_platform_start(void);
+esp_err_t streamoo_platform_crypto_prepare(void);
 esp_err_t streamoo_preferences_start(void);
 esp_err_t streamoo_clock_settings_start(void);
 esp_err_t streamoo_settings_start(void);
@@ -67,24 +68,27 @@ HARNESS=r'''
 #include "common.h"
 #include <stdlib.h>
 const esp_app_desc_t *esp_app_get_description(void){static const esp_app_desc_t a={.version="fixture",.idf_ver="fake"};return &a;}
-static int mode,controlled,finite,network,display,player,clock_started;
+static int mode,controlled,finite,network,display,player,clock_started,prepared;
+esp_err_t streamoo_platform_crypto_prepare(void){assert(!controlled&&!finite&&!network&&!display&&!player);++prepared;return mode==4?ESP_FAIL:ESP_OK;}
 esp_err_t streamoo_settings_start(void){return ESP_OK;}
 esp_err_t streamoo_clock_settings_start(void){++clock_started;return mode==3?ESP_FAIL:ESP_OK;}
-esp_err_t streamoo_player_start(uint8_t v){assert(v==87);++player;return ESP_OK;}
+esp_err_t streamoo_player_start(uint8_t v){assert(v==87&&prepared==1);++player;return ESP_OK;}
 const streamoo_network_hooks_t streamoo_app_network_hooks={0};
 esp_err_t streamoo_board_validate(void){return ESP_OK;}
 esp_err_t streamoo_platform_start(void){return ESP_OK;}
 esp_err_t streamoo_preferences_start(void){return ESP_OK;}
 bool streamoo_preferences_initial(streamoo_preferences_value_t *v){v->volume=87;v->visualization=1;return true;}
 esp_err_t streamoo_input_probe_start(void){return ESP_OK;}
-esp_err_t streamoo_audio_control_start(uint8_t volume){assert(volume==87);++controlled;return ESP_OK;}
-esp_err_t streamoo_audio_probe_start(void){++finite;return ESP_OK;}
-esp_err_t streamoo_display_smoke_start(void){assert(clock_started==1);++display;return ESP_OK;}
+esp_err_t streamoo_audio_control_start(uint8_t volume){assert(volume==87&&prepared==1);++controlled;return ESP_OK;}
+esp_err_t streamoo_audio_probe_start(void){assert(prepared==1);++finite;return ESP_OK;}
+esp_err_t streamoo_display_smoke_start(void){assert(clock_started==1&&prepared==1);++display;return ESP_OK;}
 bool streamoo_network_boot_ap_enabled(void){return mode!=0;}
-esp_err_t streamoo_network_start(const streamoo_network_hooks_t *h){assert(h);++network;return mode==2 ? ESP_FAIL:ESP_OK;}
+esp_err_t streamoo_network_start(const streamoo_network_hooks_t *h){assert(h&&prepared==1);++network;return mode==2 ? ESP_FAIL:ESP_OK;}
 void app_main(void);
 int main(int argc,char **argv){
  assert(argc==2);mode=atoi(argv[1]);app_main();
+ assert(prepared==1);
+ if(mode==4){assert(!controlled&&!finite&&!network&&!display&&!player&&!clock_started);return 0;}
  assert(display==1 && network==1);assert(player==(mode!=0));
  if(mode)assert(!controlled && !finite);
  else {
@@ -121,3 +125,4 @@ class APAudioStartupTests(unittest.TestCase):
     def test_ap_disabled_preserves_finite_test(self):self.run_case(1,0)
 
     def test_clock_storage_failure_preserves_startup(self):self.run_case(0,3)
+    def test_crypto_failure_stops_before_audio_or_network(self):self.run_case(0,4)

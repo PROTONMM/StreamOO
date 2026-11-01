@@ -26,6 +26,10 @@ void app_main(void)
         ESP_LOGE(TAG, "Platform startup failed; peripherals remain disabled");
         return;
     }
+    if (streamoo_platform_crypto_prepare() != ESP_OK) {
+        ESP_LOGE(TAG,"Crypto preparation failed; startup stopped before audio/network");
+        return;
+    }
     esp_err_t settings_error=streamoo_settings_start();
     if(settings_error!=ESP_OK)ESP_LOGW(TAG,"System settings unavailable: %s",esp_err_to_name(settings_error));
     esp_err_t clock_error=streamoo_clock_settings_start();

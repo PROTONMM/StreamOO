@@ -1,4 +1,14 @@
 menu "StreamOO Configuration"
+    config STREAMOO_CRYPTO_EARLY_INIT
+        bool "Experimental hardware AES/SHA preparation before I2S"
+        depends on IDF_TARGET_ESP32S3 && MBEDTLS_HARDWARE_AES && MBEDTLS_HARDWARE_SHA
+        default n
+        help
+            Run checked SHA-256 and 1024-byte AES-CBC operations at boot before
+            audio/network tasks. The SDK reserves shared crypto GDMA channels
+            before I2S can use them. Experimental workaround for TLS failures
+            after I2S teardown, not an SDK fix. Stops startup on check failure.
+            No change to certificate verification. See ADR0096.
     config STREAMOO_NETWORK_AP_TEST
         bool "Secured SoftAP bring-up TEST (private build password required)"
         default y
