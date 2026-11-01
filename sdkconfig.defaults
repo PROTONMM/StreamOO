@@ -81,3 +81,18 @@ CONFIG_MBEDTLS_CERTIFICATE_BUNDLE_CROSS_SIGNED_VERIFY=y
 
 # SNTP supplies UTC; enforce real X.509 validity windows as well as signatures/names.
 CONFIG_MBEDTLS_HAVE_TIME_DATE=y
+
+# Accepted FLAC profile: dr_flac + hardware crypto prepared before I2S.
+# Keep this explicit so a normal idf.py build uses the tested configuration.
+CONFIG_STREAMOO_FLAC_DR=y
+# CONFIG_STREAMOO_FLAC_MICRO is not set
+# CONFIG_STREAMOO_FLAC_ESPRESSIF is not set
+CONFIG_MBEDTLS_HARDWARE_AES=y
+CONFIG_MBEDTLS_HARDWARE_SHA=y
+CONFIG_STREAMOO_CRYPTO_EARLY_INIT=y
+CONFIG_LWIP_TCP_WND_DEFAULT=23040
+CONFIG_LWIP_TCP_RECVMBOX_SIZE=18
+
+# Start SNTP as soon as STA gets an address; native servers are fallbacks.
+CONFIG_LWIP_SNTP_MAX_SERVERS=3
+# CONFIG_LWIP_SNTP_STARTUP_DELAY is not set

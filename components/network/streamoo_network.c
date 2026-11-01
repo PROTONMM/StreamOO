@@ -147,8 +147,13 @@ static bool connect_profiles(const streamoo_wifi_profiles_t *profiles,
       memcpy(state.sta_ssid, p->ssid, sizeof state.sta_ssid);
       portEXIT_CRITICAL(&state_lock);
       if (!sntp_started) {
-        esp_sntp_config_t time_config =
-            ESP_NETIF_SNTP_DEFAULT_CONFIG("pool.ntp.org");
+#if CONFIG_LWIP_SNTP_MAX_SERVERS >= 3
+        esp_sntp_config_t time_config = ESP_NETIF_SNTP_DEFAULT_CONFIG_MULTIPLE(
+            3, ESP_SNTP_SERVER_LIST("0.pool.ntp.org", "1.pool.ntp.org", "2.pool.ntp.org"));
+#else
+        /* Preserve older comparison sdkconfigs; normal builds provide 3. */
+        esp_sntp_config_t time_config = ESP_NETIF_SNTP_DEFAULT_CONFIG("0.pool.ntp.org");
+#endif
         time_config.wait_for_sync = false;
         time_config.sync_cb = time_synchronized;
         esp_err_t time_error = esp_netif_sntp_init(&time_config);
@@ -156,6 +161,8 @@ static bool connect_profiles(const streamoo_wifi_profiles_t *profiles,
         if (time_error != ESP_OK)
           ESP_LOGW("network", "SNTP unavailable: %s",
                    esp_err_to_name(time_error));
+        else
+          ESP_LOGI("network", "SNTP started: %u fallback servers",(unsigned)time_config.num_of_servers);
       }
       ESP_LOGI("network", "STA connected: IPv4=%s", address);
       return true;

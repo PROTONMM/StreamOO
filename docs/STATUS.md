@@ -1,5 +1,26 @@
 # Status implementacji
 
+## Najnowsze — domyślny profil i HTTPS po UTC / ADR0097 / 2026-11-01
+
+Zwykły build wybiera sprawdzony dr_flac + hardware AES/SHA + early init,
+TCP23040/mailbox18. defaults/Kconfig i odpowiednie opcje prywatnego root
+sdkconfig oraz dr uaktualnione bez zmiany GPIO/sekretów/partycji/buforów.
+HTTP startuje bez zegara; reader przed każdym HTTPS czeka na UTC2020..2099,
+także po redirect/playlist/HLS. Zachowany wiarygodny zakresem RTC nie czeka
+na nowy SNTP. Limit30s daje clock_timeout bez TLS; STOP sprawdzany co50ms.
+Weryfikacja certyfikatów pozostaje, brak zmian fill/ISR i dodatkowych tasków.
+
+SNTP bez losowej zwłoki0..5s, trzy serwery0/1/2.pool.ntp.org. Natywny klient
+odpytuje kolejno (timeout odpowiedzi15s), bez równoległego wyścigu. Pierwsze
+połączenie i rzeczywisty czas na S3 do odbioru; nie deklarujemy przyspieszenia
+o stałą wartość. Instrukcja standardowego flash i testy w ADR0097.
+472 testy hostowe PASS;33 regresje readera z ASan/UBSan PASS (LSan off).
+Zwykłe idf.py build/ESP-IDF6.1 PASS, binarka1574288B. Wygenerowane opcje
+dr/hardware AES/SHA/early init/TCP23040/18/SNTP3/no-delay i etykieta binarki
+sprawdzone. Bez flash agenta; odbiór nowego startu na S3 OPEN.
+Osobna świeża generacja z sdkconfig.defaults (SDKCONFIG w /tmp) również
+potwierdza profil i SNTP3/no-delay; nie budowano drugiej kopii binarki.
+
 ## Najnowsze — TCP23040 bez niedoborów przez prawie12min / 2026-11-01
 
 Log0dcbb56c/dcd5279/ELF742f9352 potwierdza hardware AES/SHA, early probe

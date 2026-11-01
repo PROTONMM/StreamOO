@@ -1,5 +1,12 @@
 # 09 — Wi-Fi provisioning i mDNS
 
+ADR0097: normalny profil SNTP ma trzy serwery0/1/2.pool.ntp.org i nie ma
+losowej zwłoki startowej0..5s. To fallbacki sekwencyjne, nie trzy zapytania
+jednocześnie; lokalny timeout odpowiedzi15s. HTTP nie czeka na zegar,
+reader wstrzymuje wyłącznie HTTPS do poprawnego zakresem UTC (max30s,
+anulowanie co50ms), także dla redirect/playlist/HLS. Daty certyfikatów
+sprawdzane nadal. Odbiór rzeczywistego czasu startu na S3 OPEN.
+
 ADR0095: profil wrappera `--tcp-window 23040` zwiększa domyślne okno RX
 TCP5760→23040B i mailbox6→18 (MSS1440), weryfikuje sdkconfig.h przed flash.
 Bez flagi zachowuje prywatną konfigurację backendu. Hipoteza ograniczenia

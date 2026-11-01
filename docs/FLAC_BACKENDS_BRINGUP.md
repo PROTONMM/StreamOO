@@ -1,5 +1,11 @@
 # Porównanie dekoderów FLAC na ESP32-S3
 
+ADR0097: sprawdzony profil dr/hardware AES/SHA/early init/TCP23040 jest teraz
+domyślny. W tym workspace wystarczy `idf.py -p /dev/ttyUSB0 flash`; wrapper
+pozostaje do świadomego porównania backendów/profili. Pierwszy HTTPS czeka
+na UTC, HTTP nie czeka; SNTP bez losowej zwłoki, trzy serwery sekwencyjne.
+Nie zwiększano buforów. Procedura odbioru zimnego startu w ADR0097.
+
 Wynik0dcbb56c (dcd5279/hardware crypto/early init/TCP23040):~11min52s
 publicznego FLAC bez low/hard/Recover/Reject, wait_empty0, starts1.
 Zachowaj ten profil; kolejne logi/soak, WWW i zmiany źródła bez nowej

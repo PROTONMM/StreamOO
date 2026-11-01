@@ -68,8 +68,10 @@ int esp_wifi_sta_get_ap_info(wifi_ap_record_t *);
 int esp_wifi_ap_get_sta_list(wifi_sta_list_t *);
 int esp_read_mac(uint8_t *,int);
 #include <sys/time.h>
-typedef struct {bool wait_for_sync;const char *server;void (*sync_cb)(struct timeval *);} esp_sntp_config_t;
-#define ESP_NETIF_SNTP_DEFAULT_CONFIG(s) {.wait_for_sync=true,.server=(s)}
+typedef struct {bool wait_for_sync;unsigned num_of_servers;const char *servers[3];void (*sync_cb)(struct timeval *);} esp_sntp_config_t;
+#define ESP_SNTP_SERVER_LIST(...) { __VA_ARGS__ }
+#define ESP_NETIF_SNTP_DEFAULT_CONFIG_MULTIPLE(n,list) {.wait_for_sync=true,.num_of_servers=(n),.servers=list}
+#define ESP_NETIF_SNTP_DEFAULT_CONFIG(s) ESP_NETIF_SNTP_DEFAULT_CONFIG_MULTIPLE(1,{s})
 int esp_netif_sntp_init(const esp_sntp_config_t *);
 '''
 HARNESS=r'''
@@ -173,7 +175,7 @@ int esp_wifi_connect(void){assert(attempts<63&&ps_sets==1&&ps_gets==1);order[att
 int esp_wifi_sta_get_ap_info(wifi_ap_record_t *p){if(!connected||(scenario==12&&polls>=20))return ESP_FAIL;memcpy(p->ssid,target,33);p->rssi=scenario==12?(polls>=10?3:polls>=1?-80:-65):-65;return ESP_OK;}
 int esp_wifi_ap_get_sta_list(wifi_sta_list_t *p){p->num=0;return ESP_OK;}
 int esp_read_mac(uint8_t *mac,int type){assert(type==ESP_MAC_WIFI_SOFTAP);memset(mac,0,6);mac[3]=0x12;mac[4]=0x34;mac[5]=0x56;return ESP_OK;}
-int esp_netif_sntp_init(const esp_sntp_config_t *c){assert(!c->wait_for_sync&&!strcmp(c->server,"pool.ntp.org")&&c->sync_cb);time_callback=c->sync_cb;struct timeval tv={.tv_sec=scenario==13?100:1793448000};c->sync_cb(&tv);return ESP_OK;}
+int esp_netif_sntp_init(const esp_sntp_config_t *c){assert(!c->wait_for_sync&&c->num_of_servers==3&&c->sync_cb);assert(!strcmp(c->servers[0],"0.pool.ntp.org")&&!strcmp(c->servers[1],"1.pool.ntp.org")&&!strcmp(c->servers[2],"2.pool.ntp.org"));time_callback=c->sync_cb;struct timeval tv={.tv_sec=scenario==13?100:1793448000};c->sync_cb(&tv);return ESP_OK;}
 static void ready(void *ctx){(void)ctx;++ready_calls;streamoo_network_state_t s;assert(streamoo_network_state(&s));assert(s.sta_connected||s.ap_ready);}
 static void stopped(void *ctx){(void)ctx;++stop_calls;}
 int main(int argc,char **argv){assert(argc==2);scenario=atoi(argv[1]);
@@ -208,7 +210,7 @@ class NetworkStartupTests(unittest.TestCase):
   cls.tmp=tempfile.TemporaryDirectory();cls.addClassCleanup(cls.tmp.cleanup);base=Path(cls.tmp.name);(base/'freertos').mkdir()
   files=dict(COMMON);files['freertos/FreeRTOS.h']+='#define pdFALSE 0\n'
   files['esp_err.h']+='\n#define ESP_ERR_TIMEOUT 4\n#define ESP_ERR_NOT_SUPPORTED 5\n'
-  files['sdkconfig.h']+='#define CONFIG_STREAMOO_NETWORK_AP_TEST 1\n'
+  files['sdkconfig.h']+='#define CONFIG_STREAMOO_NETWORK_AP_TEST 1\n#define CONFIG_LWIP_SNTP_MAX_SERVERS 3\n'
   files['network_secret.h']='#pragma once\n#define STREAMOO_NETWORK_SECRET_AVAILABLE 1\nstatic const unsigned char streamoo_ap_password[]="test-only-key";\n'
   files['freertos/event_groups.h']='#pragma once\n#include <stdint.h>\ntypedef void *EventGroupHandle_t;\ntypedef uint32_t EventBits_t;\nvoid *xEventGroupCreate(void);\nvoid vEventGroupDelete(void *);\nuint32_t xEventGroupClearBits(void *,uint32_t);\nuint32_t xEventGroupSetBits(void *,uint32_t);\nuint32_t xEventGroupGetBits(void *);\nuint32_t xEventGroupWaitBits(void *,uint32_t,int,int,unsigned);\n'
   files['freertos/task.h']+='void vTaskDelete(void *);\n'

@@ -9,6 +9,16 @@ spec.loader.exec_module(mod)
 
 
 class PlatformTests(unittest.TestCase):
+    def test_normal_radio_defaults_preserve_accepted_flac_crypto_and_tcp_profile(self):
+        data=mod.parse(ROOT/'sdkconfig.defaults')
+        for symbol in ('FLAC_DR','MBEDTLS_HARDWARE_AES','MBEDTLS_HARDWARE_SHA','CRYPTO_EARLY_INIT'):
+            self.assertEqual(data[symbol],'y')
+        self.assertEqual(data['LWIP_TCP_WND_DEFAULT'],'23040')
+        self.assertEqual(data['LWIP_TCP_RECVMBOX_SIZE'],'18')
+        self.assertEqual(data['LWIP_SNTP_MAX_SERVERS'],'3')
+        self.assertNotIn('LWIP_SNTP_STARTUP_DELAY',data)
+        self.assertIn('# CONFIG_LWIP_SNTP_STARTUP_DELAY is not set',(ROOT/'sdkconfig.defaults').read_text())
+
     def test_versioned_defaults_match_n16r8(self):
         self.assertEqual(mod.check_platform(mod.parse(ROOT / 'sdkconfig.defaults')), [])
 

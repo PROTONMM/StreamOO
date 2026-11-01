@@ -1,5 +1,10 @@
 # 06 — Audio, dekodery, I²S, player state
 
+ADR0097: zwykły build wybiera teraz dr_flac + hardware AES/SHA/early init
+i TCP23040/mailbox18, zgodnie z udanym testem liczników ADR0095. Alternatywne
+backendy nadal wybieralne. HTTP startuje bez czasu, HTTPS czeka w readerze
+na UTC, bez zmian dekodera/PCM/fill. Odbiór nowego startu na S3 OPEN.
+
 ADR0093: fallback bitrate bez nagłówka z liczników compressed/PCM i czasu
 źródłowego audio, osobny od szybkości HTTP i sterowania buforami.
 ADR0094: do odbioru wariant software AES/SHA po PSA-149 przy przełączeniu

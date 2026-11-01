@@ -35,6 +35,12 @@ HARNESS=r'''
 #include <setjmp.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
+static int clock_case,clock_delays;
+static bool clock_reset;
+static time_t utc=1793530000;
+time_t time(time_t *out){if(out)*out=utc;return utc;}
+void fake_log(const char *tag,const char *format,...){(void)tag;(void)format;}
 static int sdk_get_urls,force_source_busy;
 static bool delivery_case;
 static int64_t clock_us=1000000;
@@ -55,13 +61,21 @@ int xSemaphoreTake(void *p,unsigned wait){(void)wait;if(force_source_busy||!*(in
 int xSemaphoreGive(void *p){*(int *)p=1;return 1;}
 void vSemaphoreDelete(void *p){--semaphores;free(p);}
 int xTaskCreate(void (*fn)(void *),const char *name,unsigned size,void *ctx,unsigned pri,void *handle){(void)name;(void)handle;assert(size>=8192&&pri==3);reader=fn;reader_context=ctx;return mode==7?0:1;}
-void vTaskDelay(unsigned t){clock_us+=(int64_t)t*1000;if(delivery_case)force_source_busy=0;if(mode==30&&segments)streamoo_http_stream_stop(stream);}
+void vTaskDelay(unsigned t){clock_us+=(int64_t)t*1000;if(delivery_case)force_source_busy=0;if(mode==30&&segments)streamoo_http_stream_stop(stream);
+ if(clock_case){streamoo_http_stream_info_t info;assert(streamoo_http_stream_info(stream,&info));
+  if(!strcmp(info.stage,"time_sync")){assert(t==50);++clock_delays;
+   if(clock_case==3)assert(opened==1); /* HTTP hop already opened, HTTPS must wait. */
+   if(clock_case==4)streamoo_http_stream_stop(stream);
+   else if(clock_case!=5&&clock_delays==4)utc=1793530000;
+  }
+ }
+}
 unsigned uxTaskGetStackHighWaterMark(void *task){(void)task;return 8000;}
 void vTaskDelete(void *p){(void)p;longjmp(completed,1);}
 int esp_crt_bundle_attach(void *p){(void)p;return ESP_OK;}
 void *esp_http_client_init(const esp_http_client_config_t *c){config=*c;strcpy(selected_url,c->url);assert(c->timeout_ms==3000&&c->disable_auto_redirect&&c->crt_bundle_attach==esp_crt_bundle_attach&&c->auth_type==0);return (void *)1;}
 int esp_http_client_set_header(void *h,const char *key,const char *value){(void)h;if(!strcmp(key,"Icy-MetaData"))assert(!strcmp(value,"1")||!strcmp(value,"0"));else assert(!strcmp(key,"Accept-Encoding")&&!strcmp(value,"identity"));return ESP_OK;}
-int esp_http_client_open(void *h,int size){(void)h;assert(!size);++opened;return mode==40?ESP_FAIL:ESP_OK;}
+int esp_http_client_open(void *h,int size){(void)h;assert(!size);if(clock_case&&!strncmp(selected_url,"https://",8))assert(utc>=1577836800&&utc<4102444800LL);++opened;return mode==40?ESP_FAIL:ESP_OK;}
 static void header(const char *name,const char *value){esp_http_client_event_t e={HTTP_EVENT_ON_HEADER,config.user_data,(char *)name,(char *)value};assert(config.event_handler(&e)==ESP_OK);}
 long long esp_http_client_fetch_headers(void *h){(void)h;
  if((mode==2||mode==3||mode==10||mode==14)&&!redirected)header("Location",mode==10?"http://user:key@radio.invalid":mode==3?"http://radio.invalid":"https://radio.invalid");
@@ -121,6 +135,7 @@ static void hls_wire(const char *url){
  strcpy((char *)wire,doc);wire_bytes=strlen(doc);
 }
 int esp_http_client_set_url(void *h,const char *url){(void)h;if(mode==41||mode==42)return ESP_ERR_NO_MEM;strcpy(selected_url,url);++resolved;cursor=0;
+ if(clock_case==9&&!clock_reset&&strstr(url,"segment")){utc=0;clock_reset=true;}
  if(mode==2||mode==3||mode==10||mode==14){redirected=1;return ESP_OK;}
  if(mode>=27)hls_wire(url);else if(mode!=21){memcpy(wire,"ID3test",7);wire_bytes=7;}
  return ESP_OK;}
@@ -133,7 +148,8 @@ int esp_http_client_read(void *h,char *out,int cap){(void)h;++reads;clock_us+=de
  if(mode==23&&!resolved){memset(out,'x',(size_t)cap);return cap;}
  if(cursor==wire_bytes){return 0;}
  size_t n=wire_bytes-cursor;if(n>(size_t)cap)n=cap;if(mode==1||mode==16||mode==17||mode>=27)n=1;memcpy(out,wire+cursor,n);cursor+=n;return n;}
-int main(int argc,char **argv){assert(argc==2||argc==3);mode=atoi(argv[1]);delivery_case=argc==3;
+int main(int argc,char **argv){assert(argc==2||argc==3);mode=atoi(argv[1]);delivery_case=argc==3&&!strcmp(argv[2],"delivery");
+ if(argc==3&&!delivery_case){clock_case=atoi(argv[2]);utc=clock_case==7||clock_case==9?1793530000:clock_case==6?4102444800LL:0;}
  memcpy(wire,"ID3",3);wire[3]=2;memcpy(wire+4,"StreamTitle='Test';",19);memcpy(wire+36,"abc",3);wire[39]=0;memcpy(wire+40,"def",3);wire_bytes=43;
  if(mode==15||mode==18){memcpy(wire,"fLaCtest",8);wire_bytes=8;}
  if(mode==16||mode==17){memset(wire,0,sizeof wire);memcpy(wire,"OggS",4);wire[5]=2;wire[26]=1;wire[27]=19;
@@ -142,7 +158,7 @@ int main(int argc,char **argv){assert(argc==2||argc==3);mode=atoi(argv[1]);deliv
  strcpy((char *)wire,doc);wire_bytes=strlen(doc);}
  if(mode>=27)hls_wire("https://radio.invalid/hls/master.m3u8");
  assert(streamoo_http_stream_open("ftp://radio.invalid",&stream)==ESP_ERR_INVALID_ARG);
- int e=streamoo_http_stream_open(mode>=27?"https://radio.invalid/hls/master.m3u8":mode>=19?"https://radio.invalid/list.m3u":mode==3?"https://radio.invalid":"http://radio.invalid",&stream);
+ int e=streamoo_http_stream_open(mode>=27?"https://radio.invalid/hls/master.m3u8":mode>=19?"https://radio.invalid/list.m3u":mode==3||(clock_case>=2&&clock_case!=3)?"https://radio.invalid":"http://radio.invalid",&stream);
  if(mode==7){assert(e==ESP_ERR_NO_MEM&&!allocations&&!semaphores);return 0;}
  assert(e==ESP_OK&&!streamoo_http_stream_dispose(stream));
  {
@@ -154,6 +170,16 @@ int main(int argc,char **argv){assert(argc==2||argc==3);mode=atoi(argv[1]);deliv
   assert(streamoo_http_stream_info(stream,&waits)&&waits.source_empty_waits==1&&waits.source_busy_waits==1);
  }
  if(!setjmp(completed))reader(reader_context);
+ if(clock_case){streamoo_http_stream_info_t c;assert(streamoo_http_stream_info(stream,&c)&&c.ended);
+  if(clock_case==4||clock_case==5){assert(!opened&&!cleaned&&!reads&&!strcmp(c.stage,"time_sync"));
+   assert(c.error==(clock_case==5?ESP_ERR_TIMEOUT:ESP_ERR_INVALID_STATE));
+   assert(!strcmp(c.reason,clock_case==5?"clock_timeout":"cancelled"));
+   assert(clock_delays==(clock_case==5?600:1));
+   streamoo_http_stream_stop(stream);assert(streamoo_http_stream_dispose(stream)&&!allocations&&!semaphores);return 0;
+  }
+  assert(clock_delays==((clock_case==1||clock_case==7)?0:4));
+  if(clock_case==9)assert(clock_reset);
+ }
  assert(cleaned==1&&!sdk_get_urls);if(mode==8)assert(opened==1);
  streamoo_http_stream_info_t info;assert(streamoo_http_stream_info(stream,&info)&&info.ended);
  if(delivery_case){assert(mode==0&&info.read_calls==2&&info.received_bytes==43&&info.response_bytes==43);
@@ -196,6 +222,17 @@ int main(int argc,char **argv){assert(argc==2||argc==3);mode=atoi(argv[1]);deliv
  streamoo_http_stream_stop(stream);assert(streamoo_http_stream_dispose(stream));assert(!semaphores&&!allocations);return 0;}
 '''
 class HTTPStreamTests(unittest.TestCase):
+ def test_http_starts_with_unset_clock(self):self.run_clock_case(0,1)
+ def test_https_waits_before_opening_tls(self):self.run_clock_case(0,2)
+ def test_http_redirect_to_https_waits_only_at_https_hop(self):self.run_clock_case(2,3)
+ def test_stop_cancels_time_wait_before_client_allocation(self):self.run_clock_case(0,4)
+ def test_no_ntp_times_out_without_attempting_tls(self):self.run_clock_case(0,5)
+ def test_invalid_future_clock_waits_for_correction(self):self.run_clock_case(0,6)
+ def test_plausible_retained_utc_does_not_delay_https(self):self.run_clock_case(0,7)
+ def test_hls_manifest_waits_for_time(self):self.run_clock_case(27,8)
+ def test_hls_resource_rechecks_time_before_open(self):self.run_clock_case(27,9)
+ def run_clock_case(self,mode,clock_case):
+  subprocess.run([str(self.binary),str(mode),str(clock_case)],check=True,timeout=10)
  @classmethod
  def setUpClass(cls):
   cls.tmp=tempfile.TemporaryDirectory();cls.addClassCleanup(cls.tmp.cleanup);base=Path(cls.tmp.name);(base/'freertos').mkdir()

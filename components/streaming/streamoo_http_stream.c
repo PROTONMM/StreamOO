@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
+#include <time.h>
 #define CAPACITY (256u * 1024u)
 static portMUX_TYPE info_lock = portMUX_INITIALIZER_UNLOCKED;
 struct streamoo_http_stream {
@@ -64,6 +65,32 @@ static esp_err_t fail(streamoo_http_stream_t *s, const char *reason,
     copy_tag(s->info.reason, sizeof s->info.reason, reason);
   portEXIT_CRITICAL(&info_lock);
   return error;
+}
+/* Gate each TLS destination, including HTTP redirects, resolved playlists and
+ * HLS resources. Only the reader waits; STOP remains cancellable. A plausible
+ * retained RTC is also usable: certificate validity is still checked by TLS.
+ * Cold boot UTC is supplied by SNTP. Never retry TLS with an epoch-zero clock. */
+static esp_err_t wait_for_utc(streamoo_http_stream_t *s) {
+  if (strncasecmp(s->request_url,"https://",8)) return ESP_OK;
+  int64_t began=esp_timer_get_time();
+  bool waiting=false;
+  while (!atomic_load(&s->stop)) {
+    int64_t utc=(int64_t)time(NULL);
+    if (utc>=1577836800LL && utc<4102444800LL) {
+      if(waiting)ESP_LOGI("http_reader","HTTPS UTC ready after %lldms",
+                         (long long)((esp_timer_get_time()-began)/1000));
+      return ESP_OK;
+    }
+    if (!waiting) {
+      trace(s,NULL,"time_sync");
+      ESP_LOGI("http_reader","HTTPS waiting for UTC (SNTP); HTTP remains available");
+      waiting=true;
+    }
+    if (esp_timer_get_time()-began>=30000000LL)
+      return fail(s,"clock_timeout",ESP_ERR_TIMEOUT);
+    vTaskDelay(pdMS_TO_TICKS(50) ? pdMS_TO_TICKS(50) : 1);
+  }
+  return ESP_ERR_INVALID_STATE;
 }
 static void response_begin(streamoo_http_stream_t *s) {
   s->interval = 0;
@@ -274,7 +301,10 @@ static esp_err_t hls_open(streamoo_http_stream_t *s,
   for (unsigned redirects = 0; redirects <= 5 && !atomic_load(&s->stop);
        ++redirects) {
     response_begin(s);
-    esp_err_t error = esp_http_client_open(client, 0);
+    esp_err_t error = wait_for_utc(s);
+    if(error!=ESP_OK)return error;
+    trace(s,NULL,"open");
+    error = esp_http_client_open(client, 0);
     if (error != ESP_OK)
       return fail(s, "http_open", error);
     trace(s, NULL, "headers");
@@ -574,11 +604,14 @@ static void reader(void *context) {
                                      .crt_bundle_attach = esp_crt_bundle_attach,
                                      .user_agent = "StreamOO/1",
                                      .auth_type = HTTP_AUTH_TYPE_NONE};
-  trace(s, "stream", "client_init");
-  esp_http_client_handle_t client = esp_http_client_init(&config);
-  esp_err_t error = client ? ESP_OK : ESP_ERR_NO_MEM;
-  if (!client)
-    fail(s, "client_alloc", ESP_ERR_NO_MEM);
+  trace(s, "stream", "time_check");
+  esp_err_t error = wait_for_utc(s);
+  esp_http_client_handle_t client = NULL;
+  if(error==ESP_OK) {
+    trace(s,NULL,"client_init");
+    client=esp_http_client_init(&config);
+    if(!client)error=fail(s,"client_alloc",ESP_ERR_NO_MEM);
+  }
   bool accepted = false;
   if (client) {
     esp_http_client_set_header(client, "Icy-MetaData", "1");
@@ -592,6 +625,9 @@ static void reader(void *context) {
     s->info.codec_known = false;
     s->info.bitrate_kbps = 0;
     portEXIT_CRITICAL(&info_lock);
+    error = wait_for_utc(s);
+    if(error!=ESP_OK)break;
+    trace(s,NULL,"open");
     error = esp_http_client_open(client, 0);
     if (error != ESP_OK) {
       fail(s, "http_open", error);

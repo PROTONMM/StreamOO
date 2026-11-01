@@ -1,5 +1,27 @@
 # Punkt wznowienia StreamOO
 
+## Najnowsze — zwykły build i bramka czasu HTTPS / ADR0097
+
+Normalny profil: dr_flac/hardware AES/SHA/early init/TCP23040/mailbox18.
+Prywatny sdkconfig w tym workspace już uaktualniony; nie trzeba wrappera.
+NTP: trzy kolejne fallbacki0/1/2.pool.ntp.org, wyłączona losowa zwłoka0..5s.
+Bez trzech równoległych zapytań — ograniczenie natywnego klienta; timeout
+pojedynczej odpowiedzi15s. Pierwsza synchronizacja DNS/UDP na S3 OPEN.
+
+```sh
+idf.py -p /dev/ttyUSB0 flash
+```
+
+HTTP nie czeka na czas. Reader przed każdym HTTPS, także redirect/playlist/
+HLS, czeka na UTC2020..2099; zachowany RTC w tym zakresie może być użyty
+od razu. Po30s brak czasu→clock_timeout bez TLS, STOP anuluje co50ms.
+Log HTTPS waiting for UTC / UTC ready after ...ms, SNTP started:3 fallback
+servers. Certyfikaty i dotychczasowy tor audio bez zmian. Odbiór: HTTPS
+po resecie, HTTP bez NTP, STOP podczas czekania i wybór HTTP; potem dalszy
+soak FLAC i pamięć przy WWW. Odsłuch nadal niedostępny, niezaliczony.
+472 host tests,33 regresje readera ASan/UBSan i zwykły native build PASS.
+Konfiguracja i backend binarki sprawdzone. Agent nie flashował.
+
 ## Najnowsze — hardware/early init/TCP23040: liczniki stabilne ~12min
 
 Log0dcbb56c,dcd5279/ELF742f9352: publiczny FLAC gen4 przez~11min52s

@@ -12,6 +12,13 @@ Celem jest nowa implementacja natywna ESP-IDF, nie port starego programu Arduino
 
 Zależności są przypięte w manifestach/dependencies.lock, a licencje i źródła opisane w THIRD_PARTY_NOTICES.md. Źródeł yoRadio nie kopiujemy do firmware. Build sprawdzono z ESP-IDF v6.1. Komponenty `board_config` i `platform` kontrolują konfigurację i raportują pamięć; opcjonalny `hardware_probe` próbkuje surowe wejścia enkodera. Funkcje radia zostaną dodane etapowo.
 
+Domyślny profil radia: dr_flac, sprzętowe AES/SHA z przygotowaniem przed I²S,
+okno TCP23040B/mailbox18. W aktualnym workspace wystarcza zwykłe
+`idf.py -p /dev/ttyUSB0 flash`. HTTP startuje bez zegara, HTTPS czeka na UTC;
+SNTP rusza bez losowej zwłoki i ma trzy zapasowe serwery. Starszy prywatny
+sdkconfig w innym checkout ma pierwszeństwo przed defaults — sprawdź wybór
+w menuconfig. Szczegóły: [ADR0097](docs/adr/0097-default-radio-profile-and-https-clock-gate.md).
+
 ## Decyzje
 - ESP32-S3-WROOM-1-N16R8, ESP-IDF bez Arduino, PCM5102A, SSD1322 256×64 4bpp, jeden enkoder.
 - Renderer własny; Monaspace Krypton dla dużych tekstów, bitmapa 5×7/wiersz 8px z polskimi znakami dla mniejszych.
