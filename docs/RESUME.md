@@ -1,5 +1,13 @@
 # Punkt wznowienia StreamOO
 
+## Najnowsze — OLED B3/B1 do odbioru / ADR0087
+
+Inny firmware na tym sprzęcie OK, przygasa tylko tekst w wierszach słupków.
+Profil panelu zamiast resetowych timingów: B3 0x50→0x91, B1 0x74→0xE2.
+Bez zwiększania prądu/napięć, bez zmiany szachownicy/FPS.9 testów i build dr
+PASS; sprawdzić FLAC1500k przy zmiennym wypełnieniu. Skuteczność nowego
+profilu i przyczyna objawu OPEN. W tym samym firmware resync FLAC ADR0086.
+
 ## Najnowsze — FLAC resync po potwierdzonym CRC / ADR0086
 
 Nowy log ae2a00bd/218ecb2: przerwy słyszalne,72 Underrun i dwa odrzucenia

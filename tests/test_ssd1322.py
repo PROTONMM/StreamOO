@@ -68,6 +68,10 @@ class SSD1322Tests(unittest.TestCase):
         self.assertNotIn((False, b'\xaf'), self.events)
         vsl = self.events.index((False, b'\xb4'))
         self.assertEqual(self.events[vsl + 1], (True, b'\xa0\xb5'))
+        clock = self.events.index((False, b'\xb3'))
+        phase = self.events.index((False, b'\xb1'))
+        self.assertEqual(self.events[clock + 1], (True, b'\x91'))
+        self.assertEqual(self.events[phase + 1], (True, b'\xe2'))
 
     def test_negative_transport_error_is_preserved(self):
         self.fail_at = 0

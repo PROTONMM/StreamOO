@@ -1,5 +1,15 @@
 # Status implementacji
 
+## Najnowsze — OLED: profil skanowania i ładowania pikseli / ADR0087 / 2026-11-01
+
+Przygasanie tylko w wierszach bargraphu, sprzęt na innym firmware OK:
+priorytetem parametry sterownika. Zamiast resetowych B3=0x50/B1=0x74
+użyto pary referencyjnego panelu256×64:0x91/0xE2. Pozostałe parametry,
+prąd, napięcia, UI25FPS i szachownica bez zmian. Rzeczywisty skan i wynik
+na module msalamon OPEN.427 pełnych testów hostowych (w tym9 protokołu)
+PASS; build dr PASS.
+Nie deklarujemy naprawy przygasania bez odbioru. Szczegóły ADR0087.
+
 ## Najnowsze — FLAC: fallback po CRC / ADR0086 / 2026-11-01
 
 Log ae2a00bd,218ecb2/dr, potwierdza słyszalne przerwy,72 Underrun,

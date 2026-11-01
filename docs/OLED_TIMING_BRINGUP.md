@@ -4,7 +4,11 @@
 i spectrum. Użytkownik potwierdził widoczność gołym okiem: dół pulsuje
 w rytm wizualizacji, wyżej czasem na ułamek sekundy przygasa napis.
 Użytkownik potwierdził poprawny wygląd logo i brak pulsowania wskazówek.
-Przyczyna, w tym wpływ zasilania: OPEN. ADR0084 zmienia zwykły bargraph
+Przygasa FLAC1500k tylko na wysokości bargraphu, reszta obrazu i inne
+oprogramowanie na tym sprzęcie OK. Zasilanie nie jest główną hipotezą.
+Przyczyna OPEN. ADR0087 zmienia wyłącznie timing B3/B1 z0x50/0x74 na
+0x91/0xE2, profil do potwierdzenia na module. Nie zwiększa prądu/napięć.
+ADR0084 zmienia zwykły bargraph
 na szachownicę z obrysem; pięć syntetycznych faz poniżej pozostaje bez zmian,
 aby zachować oryginalne wzorce kontrolne. Wynik nowego wyglądu OLED OPEN.
 
@@ -75,8 +79,9 @@ gamma, kontrast, prąd, SPI i bufory audio nie są zmieniane przez test.
 - Spectrum ma wypełnienie GS8 i szczyt GS15; bargraph GS10 i peak GS15.
   Większe jednolite pola półtonów mogą ujawniać artefakty słabo widoczne
   na małych jasnych literach. Nie stosujemy czasowego ditheringu w rendererze.
-- Zegar panelu jest niezależny od SPI/FPS aplikacji: B3=0x50 (poziom
-  oscylatora 5, dzielnik 1), MUX=64, B1=0x74, tabela szarości B9.
+- Zegar panelu jest niezależny od SPI/FPS aplikacji. Od ADR0087: B3=0x91
+  (poziom oscylatora9, dzielnik2), MUX=64, B1=0xE2, tabela szarości B9.
+  Pierwotny eksperyment ADR0082/83 używał B3=0x50 i B1=0x74.
   Nie zmierzono rzeczywistej częstotliwości skanowania tego modułu.
 
 ## Interpretacja i źródła

@@ -19,13 +19,14 @@ int ssd1322_protocol_init(ssd1322_protocol_t *d, ssd1322_write_fn write,
     }
     *d = (ssd1322_protocol_t){.write = write, .context = context, .profile = *p};
     /* Independently specified from SSD1322 rev.1.2 command table.
-     * Analog timings/voltages use reset values; no borrowed panel sequence.
+     * Scan/phase timing uses the 256x64 panel reference (ADR0087), rather
+     * than controller reset timing. Voltages/current remain conservative.
      * B[4]=1 enables dual COM for 64 rows; reserved B[0] must be one. */
     const struct { uint8_t cmd, count, data[2]; } setup[] = {
         {0xfd, 1, {0x12}}, {0xae, 0, {0}},
         {0xa0, 2, {p->remap, 0x11}}, {0xca, 1, {63}},
         {0xa1, 1, {0}}, {0xa2, 1, {0}}, {0xa9, 0, {0}},
-        {0xab, 1, {1}}, {0xb3, 1, {0x50}}, {0xb1, 1, {0x74}},
+        {0xab, 1, {1}}, {0xb3, 1, {0x91}}, {0xb1, 1, {0xe2}},
         {0xb4, 2, {0xa0, 0xb5}}, {0xb6, 1, {8}},
         {0xbb, 1, {0x17}}, {0xbe, 1, {4}},
         {0xc1, 1, {p->contrast}}, {0xc7, 1, {p->master_current}},
