@@ -1,5 +1,13 @@
 # Odbiór HE-AAC, FLAC, Ogg Vorbis/Opus i M3U/PLS
 
+Aktualny odbiór ADR0077 zastępuje poniższy plan ADR0076:1MiB też przekroczono
+(needed1050624). Nowy parser przyrostowy przez publiczne API SDK, z zachowaniem
+cache/dekodera i STREAMINFO. Build/host PASS, odsłuch S3 OPEN. Po zwykłym
+flashu ten sam FLAC5min i zmiana utworu; log startowy zawiera `incremental
+CRC frame parser`. Zebrać Decode perf/diag/Underrun/CPU, szczególnie pcm_max,
+codec_max, low/starts i nowe błędy; potem MP3/AAC i powrót na FLAC, STOP/PLAY.
+Nie kasować NVS/LittleFS ani nie importować ponownie playlisty.
+
 Aktualny odbiór FLAC/ADR0076: zwykły build/flash bez erase, NVS ani ponownego
 importu. TEST FLAC native lossless przez3–5min i zmianę utworu. Live scratch
 ma teraz1MiB PSRAM, obejmuje zaobserwowane needed525312. Przy dalszych

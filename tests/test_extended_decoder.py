@@ -6,6 +6,9 @@ ROOT=Path(__file__).resolve().parents[1]
 HARNESS=r'''
 #include "streamoo_decoder.h"
 #include "esp_audio_simple_dec.h"
+#include "esp_audio_simple_dec_reg.h"
+#include "esp_flac_dec.h"
+#include "streamoo_flac_parse.h"
 #include "esp_aac_dec.h"
 #include "impl/esp_ts_dec.h"
 #include <assert.h>
@@ -16,6 +19,12 @@ static esp_audio_err_t reg(unsigned kind){selected=kind;return fault==1?ESP_AUDI
 esp_audio_err_t esp_mp3_dec_register(void){return reg(0);}
 esp_audio_err_t esp_aac_dec_register(void){return reg(1);}
 esp_audio_err_t esp_flac_dec_register(void){return reg(2);}
+esp_audio_err_t esp_flac_dec_open(void *cfg,uint32_t size,void **out){(void)cfg;(void)size;(void)out;abort();}
+esp_audio_err_t esp_flac_dec_decode(void *h,esp_audio_dec_in_raw_t *raw,esp_audio_dec_out_frame_t *out,esp_audio_dec_info_t *info){(void)h;(void)raw;(void)out;(void)info;abort();}
+esp_audio_err_t esp_flac_dec_reset(void *h){(void)h;abort();}
+esp_audio_err_t esp_flac_dec_close(void *h){(void)h;abort();}
+esp_audio_err_t esp_audio_simple_dec_register(esp_audio_simple_dec_type_t type,esp_audio_simple_dec_reg_info_t *info){
+ assert(type==ESP_AUDIO_SIMPLE_DEC_TYPE_FLAC&&info->parser==streamoo_flac_parse&&info->decoder_ops.decode==esp_flac_dec_decode&&!info->free);return ESP_AUDIO_ERR_OK;}
 esp_audio_err_t esp_vorbis_dec_register(void){return reg(3);}
 esp_audio_err_t esp_opus_dec_register(void){return reg(4);}
 esp_audio_err_t esp_ts_dec_register(void){return reg(5);}
@@ -25,6 +34,7 @@ esp_audio_err_t esp_audio_simple_dec_open(esp_audio_simple_dec_cfg_t *cfg,void *
  if(selected==1){esp_aac_dec_cfg_t *aac=cfg->dec_cfg;assert(aac&&aac->aac_plus_enable&&!aac->no_adts_header&&aac->bits_per_sample==16);}
  else if(selected==5){esp_ts_dec_cfg_t *ts=cfg->dec_cfg;assert(ts&&ts->aac_plus_enable);}
  else assert(!cfg->dec_cfg&&!cfg->cfg_size);
+ assert(!cfg->use_frame_dec); /* Retain SDK cache/decoder orchestration, including FLAC. */
  if(fault==3)return ESP_AUDIO_ERR_MEM_LACK;
  *out=(void *)1;return ESP_AUDIO_ERR_OK;
 }
@@ -71,10 +81,10 @@ class ExtendedDecoderTests(unittest.TestCase):
   (base/'esp_err.h').write_text('typedef int esp_err_t;\n#define ESP_OK 0\n#define ESP_FAIL -1\n#define ESP_ERR_INVALID_ARG 1\n#define ESP_ERR_NO_MEM 2\n#define ESP_ERR_INVALID_SIZE 3\n#define ESP_ERR_INVALID_RESPONSE 4\n')
   (base/'esp_log.h').write_text('#include <stdio.h>\n#define ESP_LOGE(tag,...) ((void)printf(__VA_ARGS__))\n#define ESP_LOGI(tag,...) ((void)printf(__VA_ARGS__))\n')
   (base/'test.c').write_text(HARNESS);cls.binary=base/'test'
-  includes=['-I'+str(base),'-Icomponents/decoder/include','-Icomponents/pcm_adapter/include']
+  includes=['-I'+str(base),'-Icomponents/decoder','-Icomponents/decoder/include','-Icomponents/pcm_adapter/include']
   vendor=ROOT/'managed_components/espressif__esp_audio_codec/include'
   includes += ['-I'+str(vendor/p) for p in ['.','decoder','decoder/impl','simple_dec']]
-  subprocess.run(['cc','-std=c11','-Wall','-Wextra','-Werror',*os.environ.get('STREAMOO_DECODER_SANITIZE','').split(),*includes,'components/decoder/streamoo_decoder.c','components/decoder/streamoo_flac_header.c',str(base/'test.c'),'-o',str(cls.binary)],cwd=ROOT,check=True)
+  subprocess.run(['cc','-std=c11','-Wall','-Wextra','-Werror',*os.environ.get('STREAMOO_DECODER_SANITIZE','').split(),*includes,'components/decoder/streamoo_decoder.c','components/decoder/streamoo_flac_header.c','components/decoder/streamoo_flac_parse.c',str(base/'test.c'),'-o',str(cls.binary)],cwd=ROOT,check=True)
  def test_all_codecs_and_bounded_failures(self):
   for codec in range(6):
    for fault in range(7):

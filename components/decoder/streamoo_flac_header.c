@@ -1,8 +1,9 @@
 #include "streamoo_flac_header.h"
 #include <string.h>
+#include <stdbool.h>
 
-streamoo_flac_header_result_t streamoo_flac_header(const uint8_t *p,size_t n,
-    size_t capacity,uint8_t out[42],size_t *header_bytes)
+static streamoo_flac_header_result_t parse_header(const uint8_t *p,size_t n,
+    size_t capacity,uint8_t out[42],size_t *header_bytes,bool boundary)
 {
     if(!p||!out||!header_bytes||n>16)return STREAMOO_FLAC_BAD;
     *header_bytes=0;
@@ -13,8 +14,9 @@ streamoo_flac_header_result_t streamoo_flac_header(const uint8_t *p,size_t n,
     static const unsigned rates[12]={0,88200,176400,192000,8000,16000,22050,24000,32000,44100,48000,96000};
     static const unsigned depths[8]={0,8,12,0,16,20,24,32};
     unsigned bits=depths[(p[3]>>1)&7];
+    if(boundary && !((p[3]>>1)&7))bits=16; /* STREAMINFO reference; structural check only. */
     unsigned channels=channel_code<=7?channel_code+1:channel_code<=10?2:0;
-    if(!block_code||!rate_code||rate_code==15||!channels||channels>2||
+    if(!block_code||(!rate_code&&!boundary)||rate_code==15||!channels||channels>2||
        (bits!=16&&bits!=24&&bits!=32))return STREAMOO_FLAC_BAD;
     if(n<5)return STREAMOO_FLAC_MORE;
     /* FLAC's coded number extends UTF-8 to seven octets, up to36 bits. */
@@ -43,23 +45,25 @@ streamoo_flac_header_result_t streamoo_flac_header(const uint8_t *p,size_t n,
     if(rate_extra==2)rate=(rate<<8)|p[at++];
     if(rate_code==12)rate*=1000;
     if(rate_code==14)rate*=10;
-    if(rate<8000||rate>48000||block<16||block>65535||
-       block>capacity/(channels*(bits/8)))return STREAMOO_FLAC_BAD;
+    if(block<16||block>65535||(!boundary && (rate<8000||rate>48000||
+       block>capacity/(channels*(bits/8)))))return STREAMOO_FLAC_BAD;
     uint8_t crc=0;
     for(size_t i=0;i<length-1;++i){
         crc^=p[i];
         for(unsigned bit=0;bit<8;++bit)crc=(uint8_t)((crc<<1)^((crc&0x80)?7:0));
     }
     if(crc!=p[length-1])return STREAMOO_FLAC_BAD;
+    *header_bytes=length;
+    if(boundary)return STREAMOO_FLAC_FRAME;
     memset(out,0,42);memcpy(out,"fLaC\x80\0\0\x22",8);
     unsigned min_block=(p[1]&1)?16:block;
     unsigned max_block=(p[1]&1)?(unsigned)(capacity/(channels*(bits/8))):block;
     if(max_block>65535)max_block=65535;
     out[8]=(uint8_t)(min_block>>8);out[9]=(uint8_t)min_block;
     out[10]=(uint8_t)(max_block>>8);out[11]=(uint8_t)max_block;
-    /* Zero makes Espressif2.6.2 choose a20KiB parser window, too small for
-     * live24-bit stereo. Declare our supported upper bound, not a measured
-     * frame length or a bitrate estimate. Larger frames remain unsupported. */
+    /* Declare our encoded-frame limit, not a measured size or bitrate. The
+     * incremental parser requests reparse independently of this upper bound.
+     * A zero here formerly selected the SDK's insufficient20KiB window. */
     out[15]=(uint8_t)(STREAMOO_FLAC_MAX_FRAME_BYTES>>16);
     out[16]=(uint8_t)(STREAMOO_FLAC_MAX_FRAME_BYTES>>8);
     out[17]=(uint8_t)STREAMOO_FLAC_MAX_FRAME_BYTES;
@@ -68,4 +72,16 @@ streamoo_flac_header_result_t streamoo_flac_header(const uint8_t *p,size_t n,
     /* Unknown minimum frame size, sample count and MD5 stay zero. */
     *header_bytes=length;
     return STREAMOO_FLAC_FRAME;
+}
+
+streamoo_flac_header_result_t streamoo_flac_header(const uint8_t *p,size_t n,
+    size_t capacity,uint8_t out[42],size_t *header_bytes)
+{
+    return parse_header(p,n,capacity,out,header_bytes,false);
+}
+streamoo_flac_header_result_t streamoo_flac_boundary_header(const uint8_t *p,size_t n,
+    size_t *header_bytes)
+{
+    uint8_t unused[42];
+    return parse_header(p,n,SIZE_MAX,unused,header_bytes,true);
 }

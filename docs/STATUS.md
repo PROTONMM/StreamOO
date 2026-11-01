@@ -1,5 +1,23 @@
 # Status implementacji
 
+## Najnowsze — przyrostowe ramki FLAC / ADR0077 / 2026-11-01
+
+Log6e9a0e50 wykazał kolejny limit: needed1050624 > scratch1MiB; poprzednie
+powiększenie nie naprawiło problemu. Gen8 ma wait_empty139/busy2 i zapas CPU,
+ale wywołanie kodeka264ms opróżnia PCM. Agregacja/opóźnianie ramek pozostaje
+hipotezą zgodną z logiem, nie pełną diagnozą binarnego SDK.
+
+Własny przyrostowy parser CRC8/CRC16 zarejestrowany publicznym API2.6.2:
+REPARSE po nowych danych, pierwsza poprawna granica, zamiast zależności od
+dużego okna. Zachowane SDK cache/decoder, use_frame_dec=false i STREAMINFO.
+To nie powrót raw z ADR0061; bez dalszego powiększania PCM ani zmian I2S.
+403 testy hostowe, header/parser14 i adapter2 ASan/UBSan PASS.178 pełnych
+ramek wcześniejszego realnego capture zgodnych z granicami FFprobe.
+Native IDF6.1 build/simd-check PASS0x17e810,90% factory wolne; konfiguracje
+i diff PASS. Odsłuch i kontrakt binarnego SDK nadal OPEN. Test5min FLAC,
+zmiana utworu, MP3/AAC i powrót; log Decode perf/diag/Underrun/CPU.
+Zwykły flash bez erase/NVS/playlist. Szczegóły i ograniczenia w ADR0077.
+
 ## Najnowsze — FLAC: limit PCM i pomiar niedoborów / ADR0076 / 2026-11-01
 
 Logda70514 potwierdził stabilne FFT około3.1ms, core0priority4, ale FLAC

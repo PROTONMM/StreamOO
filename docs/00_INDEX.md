@@ -126,6 +126,9 @@ Audyt SIMD w kodekach i orientacyjne porównanie czasu FFT:
 FLAC: żądanie525312B i rozróżnienie WAIT06p:
 `adr/0076-flac-output-capacity-and-wait-diagnostics.md`.
 
+FLAC: kolejny limit1050624B i przyrostowy parser06q:
+`adr/0077-incremental-flac-parser.md`.
+
 Rzeczywisty kodek i Wi-Fi RSSI w HOME: `adr/0044-live-codec-and-wifi-info.md`.
 
 Sprawdzanie playlisty/kodeków na komputerze: `PLAYLIST_PROBE.md`, `adr/0045-host-playlist-stream-probe.md`.

@@ -1,5 +1,11 @@
 # 06 — Audio, dekodery, I²S, player state
 
+ADR0077: kolejny utwór zażądał1050624B, przekraczając także1MiB.
+Nowy przyrostowy parser ramek przez publiczne API SDK ma oddawać pierwszą
+ramkę po CRC8/CRC16 bez oczekiwania na duże okno. Nadal SDK cache/decoder
+i STREAMINFO, bez raw ADR0061 i dalszego zwiększania scratch. Host/build
+PASS; kontrakt binarnego SDK i płynność na S3 OPEN.
+
 ADR0076: obserwowane needed525312B przekraczało scratch512KiB; live pump
 ma teraz stały scratch1MiB PSRAM przed I2S. To poprawka konkretnego limitu,
 nie deklaracja usunięcia wszystkich przerw FLAC. Nowy log Underrun i osobne

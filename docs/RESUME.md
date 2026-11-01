@@ -1,5 +1,24 @@
 # Punkt wznowienia StreamOO
 
+## Najnowsze — przyrostowy parser FLAC / ADR0077 / 2026-11-01
+
+Poprzedni1MiB scratch też okazał się niewystarczający: log6e9a0e50 ma
+needed1050624, empty139/busy2, codec_max264ms, CPU około46%/40%.
+Teraz własny parser przez publiczne esp_audio_simple_dec_register:
+CRC8/CRC16, pierwsza granica, REPARSE po nadejściu danych. Nadal SDK cache,
+decoder i STREAMINFO, use_frame_dec=false. Nie przywrócono raw ADR0061,
+nie zwiększono buforów/progów. Przyczyna wszystkich przerw nadal OPEN.
+
+403 host tests, header/parser14 i adapter2 ASan/UBSan PASS;178 pełnych
+ramek starego capture zgodnych z FFprobe. Native IDF6.1 build/simd-check
+PASS0x17e810; GPIO/diff PASS. Agent nie flashował.
+
+Następny krok: zwykły flash bez erase/NVS/playlist, ten sam TEST FLAC native
+lossless5min/zmiana utworu. Oczekiwany log `incremental CRC frame parser`.
+Zebrać Decode perf/diag, Underrun, phase/CPU; sprawdzić needed1050624,
+pcm_max, codec_max i low/starts. Potem MP3/AAC, powrót FLAC, STOP/PLAY/reset.
+Kontrakt binarnego SDK/cache/rejestracji/reset i odsłuch S3 nadal OPEN.
+
 ## Najnowsze — FLAC: pojemność i WAIT / ADR0076 / 2026-11-01
 
 Po loguda70514: FFT stabilny3.1ms, CPU ma zapas; FLAC low/starts rosną,
