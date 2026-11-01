@@ -39,6 +39,8 @@ Transfer OLED po zmianie pikseli, tylko zakres zmienionych wierszy:
 `adr/0088-display-updates-from-frame-differences.md`.
 Niedobory FLAC, dopływ HTTP i opóźnienia logowania:
 `adr/0089-flac-delivery-and-log-latency-measurement.md`.
+Wynik pomiarów HTTP/OLED i Wi-Fi bez modem sleep dla radia:
+`adr/0090-wifi-awake-for-live-audio.md`.
 
 Etap 04b i canvas: `adr/0004-independent-4bpp-canvas.md`.
 

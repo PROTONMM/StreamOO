@@ -1,5 +1,10 @@
 # 09 — Wi-Fi provisioning i mDNS
 
+ADR0090: po starcie drivera radio ustawia WIFI_PS_NONE, aby ograniczyć
+opóźnienia odbioru względem domyślnego modem sleep. Potwierdza getterem;
+błąd tylko ostrzega i nie blokuje sieci/AP. Większy pobór energii Wi-Fi,
+bez zmian TCP/buforów/mocy TX. Odbiór wpływu na FLAC pozostaje OPEN.
+
 Stan implementacji 2026-10-31: 09e/ADR0036 — STA przed AP; do 8 uporządkowanych profili NVS, worker STA, fallback i AP-off po IPv4. Odbiór sprzętowy OPEN. ADR0031 i NETWORK_BRINGUP.
 
 **USTALONE:** przy pierwszym uruchomieniu bez danych STA urządzenie tworzy SoftAP z unikatową nazwą `StreamOO-XXXXXX` opartą na MAC. **Hasło AP jest stałe, wspólne dla wszystkich urządzeń** (przekazywane poza repo); WPA2-Personal. Portal WWW pod `http://192.168.4.1`; po pomyślnym połączeniu z Wi-Fi STA wyłącz SoftAP. Użytkownik może później zmienić Wi-Fi przez stronę WWW.

@@ -269,6 +269,18 @@ static void network_task(void *context) {
   if (error == ESP_OK)
     error = esp_wifi_start();
   if (error == ESP_OK) {
+    /* Keep the STA receiver awake for live audio. The SDK defaults to
+     * MIN_MODEM, which can defer reception until a DTIM. A failed performance
+     * setting must not disable networking or its recovery portal. */
+    esp_err_t ps_error = esp_wifi_set_ps(WIFI_PS_NONE);
+    wifi_ps_type_t actual_ps = WIFI_PS_MIN_MODEM;
+    esp_err_t ps_query = esp_wifi_get_ps(&actual_ps);
+    if (ps_error == ESP_OK && ps_query == ESP_OK && actual_ps == WIFI_PS_NONE)
+      ESP_LOGI("network", "Wi-Fi power save=NONE; low-latency RX");
+    else
+      ESP_LOGW("network", "Wi-Fi power save NONE unconfirmed: set=%s get=%s actual=%d",
+               esp_err_to_name(ps_error), esp_err_to_name(ps_query),
+               ps_query == ESP_OK ? (int)actual_ps : -1);
     portENTER_CRITICAL(&state_lock);
     memcpy(state.ap_ssid, ssid, sizeof state.ap_ssid);
     state.ap_ready = false;

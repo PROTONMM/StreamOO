@@ -42,6 +42,9 @@ typedef int wifi_init_config_t;
 #define WIFI_FAST_SCAN 0
 #define WIFI_ALL_CHANNEL_SCAN 1
 #define WIFI_STORAGE_RAM 0
+typedef enum {WIFI_PS_NONE,WIFI_PS_MIN_MODEM,WIFI_PS_MAX_MODEM} wifi_ps_type_t;
+int esp_wifi_set_ps(wifi_ps_type_t);
+int esp_wifi_get_ps(wifi_ps_type_t *);
 #define ESP_MAC_WIFI_SOFTAP 1
 #define ESP_ERR_WIFI_NOT_CONNECT 6
 #define ESP_ERR_ESP_NETIF_DHCP_ALREADY_STOPPED 7
@@ -82,12 +85,17 @@ HARNESS=r'''
 #include <string.h>
 static int scenario,mode,attempts,ap_starts,ready_calls,stop_calls,saves,polls,idle_disconnects;
 static bool radio_started,ap_configured,connected;
+static wifi_ps_type_t ps_mode=WIFI_PS_MIN_MODEM;
+static unsigned ps_sets,ps_gets;
+static bool ps_confirmed,ps_warning;
 static uint32_t bits;static int64_t now;
 static char target[33],order[64];static void (*worker)(void *);static jmp_buf completed;
 static void (*wifi_event)(void *,esp_event_base_t,int32_t,void *),(*ip_event)(void *,esp_event_base_t,int32_t,void *);
 static void (*time_callback)(struct timeval *);
 static streamoo_wifi_profiles_t persisted,queued;static bool has_queued;
-void fake_log(const char *tag,const char *fmt,...){(void)tag;(void)fmt;}
+void fake_log(const char *tag,const char *fmt,...){(void)tag;
+ if(strstr(fmt,"Wi-Fi power save=NONE;"))ps_confirmed=true;
+ if(strstr(fmt,"Wi-Fi power save NONE unconfirmed:"))ps_warning=true;}
 int64_t esp_timer_get_time(void){return now;}
 unsigned uxTaskGetStackHighWaterMark(void *p){(void)p;return 6000;}
 void *xQueueCreate(unsigned count,size_t bytes){assert(count==1&&bytes==sizeof queued);return (void *)1;}
@@ -109,6 +117,7 @@ int xQueueReceive(void *q,void *out,unsigned wait){(void)q;now+=(int64_t)wait*10
   if(polls==23){assert(!s.rssi_valid);longjmp(completed,1);}
  }
  if(polls==1&&scenario==4){connected=false;wifi_event(NULL,WIFI_EVENT,WIFI_EVENT_STA_DISCONNECTED,NULL);}
+ if(polls==1&&scenario>=14)longjmp(completed,1);
  if((scenario<=3&&polls==1)||(scenario==4&&polls==14)||((scenario==5||scenario==6||scenario==7||scenario==9||scenario==11)&&polls==2)||(scenario==10&&polls==60))longjmp(completed,1);
  if(has_queued){*(streamoo_wifi_profiles_t *)out=queued;has_queued=false;return 1;}return 0;
 }
@@ -148,10 +157,17 @@ int esp_wifi_set_config(int iface,const wifi_config_t *c){
  if(iface==WIFI_IF_AP){assert(!radio_started&&c->ap.authmode==WIFI_AUTH_WPA2_PSK&&c->ap.ssid_len==15&&!strcmp((const char *)c->ap.password,"test-only-key"));ap_configured=true;}
  else {assert(c->sta.scan_method==WIFI_FAST_SCAN);memcpy(target,c->sta.ssid,32);target[32]=0;}return ESP_OK;}
 int esp_wifi_start(void){assert(ap_configured&&mode==WIFI_MODE_STA);radio_started=true;return ESP_OK;}
+int esp_wifi_set_ps(wifi_ps_type_t ps){assert(radio_started&&!attempts&&ps==WIFI_PS_NONE);++ps_sets;
+ if(scenario==14)return ESP_FAIL;
+ if(scenario!=16)ps_mode=ps;
+ return ESP_OK;}
+int esp_wifi_get_ps(wifi_ps_type_t *ps){assert(ps&&ps_sets==1);++ps_gets;
+ if(scenario==15)return ESP_FAIL;
+ *ps=ps_mode;return ESP_OK;}
 int esp_wifi_stop(void){radio_started=false;return ESP_OK;}
 int esp_wifi_disconnect(void){if(!connected){++idle_disconnects;return ESP_OK;}connected=false;wifi_event(NULL,WIFI_EVENT,WIFI_EVENT_STA_DISCONNECTED,NULL);return ESP_OK;}
-int esp_wifi_connect(void){assert(attempts<63);order[attempts++]=target[0];
- bool ok=scenario==0||scenario==12||scenario==13||((scenario>=5&&scenario<=9)&&scenario!=8)||scenario==4&&attempts==1||scenario==1&&target[0]=='B'||scenario==10&&target[0]=='C'||scenario==11&&target[0]=='C';
+int esp_wifi_connect(void){assert(attempts<63&&ps_sets==1&&ps_gets==1);order[attempts++]=target[0];
+ bool ok=scenario==0||scenario==12||scenario==13||scenario>=14||((scenario>=5&&scenario<=9)&&scenario!=8)||scenario==4&&attempts==1||scenario==1&&target[0]=='B'||scenario==10&&target[0]=='C'||scenario==11&&target[0]=='C';
  if(scenario==6&&target[0]=='C')ok=false;
  connected=ok;if(ok)ip_event(NULL,IP_EVENT,IP_EVENT_STA_GOT_IP,NULL);else wifi_event(NULL,WIFI_EVENT,WIFI_EVENT_STA_DISCONNECTED,NULL);return ESP_OK;}
 int esp_wifi_sta_get_ap_info(wifi_ap_record_t *p){if(!connected||(scenario==12&&polls>=20))return ESP_FAIL;memcpy(p->ssid,target,33);p->rssi=scenario==12?(polls>=10?3:polls>=1?-80:-65):-65;return ESP_OK;}
@@ -164,10 +180,14 @@ int main(int argc,char **argv){assert(argc==2);scenario=atoi(argv[1]);
  if(scenario!=3&&scenario!=11){persisted.count=2;strcpy(persisted.profiles[0].ssid,"A");strcpy(persisted.profiles[1].ssid,"B");strcpy(persisted.profiles[0].password,"test-pass");strcpy(persisted.profiles[1].password,"test-pass");}
  const streamoo_network_hooks_t hooks={ready,stopped,NULL};assert(streamoo_network_start(&hooks)==ESP_OK);
  if(!setjmp(completed))worker(NULL);
+ assert(ps_sets==1&&ps_gets==1);
+ if(scenario>=14){assert(ps_warning&&!ps_confirmed);}
+ else {assert(ps_mode==WIFI_PS_NONE&&ps_confirmed&&!ps_warning);}
  streamoo_network_state_t s;assert(streamoo_network_state(&s));streamoo_network_ap_display_t screen;
  assert(streamoo_network_ap_display(&screen)==s.ap_ready);
  if(scenario==8){assert(!s.ap_ready&&!radio_started&&stop_calls==1&&!ready_calls);return 0;}
  assert(ready_calls==1&&!stop_calls&&!idle_disconnects);
+ if(scenario>=14)assert(s.sta_connected&&!s.ap_ready&&!strcmp(order,"A"));
  if(!s.sta_connected)assert(!s.rssi_valid);
  if(scenario==0)assert(s.time_synced);
  if(scenario==0)assert(!strcmp(order,"A")&&s.sta_connected&&!s.ap_ready&&!ap_starts);
@@ -218,3 +238,7 @@ class NetworkStartupTests(unittest.TestCase):
  def test_rssi_updates_positive_clamp_and_query_failure(self):self.run_case(12)
 
  def test_clock_valid_only_after_plausible_sntp_callback(self):self.run_case(13)
+
+ def test_power_save_set_failure_keeps_network_available_and_warns(self):self.run_case(14)
+ def test_power_save_query_failure_does_not_claim_success(self):self.run_case(15)
+ def test_power_save_readback_mismatch_does_not_claim_success(self):self.run_case(16)

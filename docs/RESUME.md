@@ -1,5 +1,18 @@
 # Punkt wznowienia StreamOO
 
+## Najnowsze — test Wi-Fi bez modem sleep / ADR0090
+
+Załącznik3d8f1f16 potwierdza bf40138/dr,97 low,2 Recover, gen3 bez retry.
+HTTP read do674ms, log batch do82,8ms, CPU~43%/43%, FFT~2,85ms.
+OLED aktualizacje działają: około88% mniej payload. Odsłuch nieoceniony.
+W starym logu pm type1: aktywny domyślny modem sleep. Nowy krok ustawia
+WIFI_PS_NONE po starcie drivera/przed connect i potwierdza przez get_ps.
+Błąd/niezgodność ostrzega, bez zatrzymania sieci/AP. Reszta toru bez zmian,
+większy pobór energii Wi-Fi. Do odbioru3–5min tej samej stacji od resetu:
+wersja, power save=NONE, Delivery/Underrun/Recover/CPU/OLED UI.
+437 testów hostowych i native dr/ESP-IDF6.1 build PASS; agent nie flashował.
+Źródło złych bajtów CRC i stabilność nadal OPEN.
+
 ## Najnowsze — niedobory FLAC i pomiar HTTP/logów / ADR0089
 
 Załącznik5ad29183: napis „Brak danych”, bez możliwości odsłuchu. dr_flac,

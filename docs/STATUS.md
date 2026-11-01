@@ -1,5 +1,21 @@
 # Status implementacji
 
+## Najnowsze — Wi-Fi bez modem sleep, wynik pomiarów / ADR0090 / 2026-11-01
+
+Log3d8f1f16, bf40138/ELFdbb91c37/dr: 97 low,2 Recover, bez reconnect
+po udanym gen3. HTTP read max673,902ms, pakiet logów max82,763ms.
+CPU średnio43,19/43,31%, FFT avg~2,85ms. Źródło CRC nadal OPEN.
+OLED ADR0088 potwierdzone licznikami:7976 checked/3523 sent, około87,92%
+mniej payload niż pełne klatki. To nie nowa ocena obrazu ani odsłuchu.
+
+Log pm type1 i SDK potwierdzają WIFI_PS_MIN_MODEM. Po starcie Wi-Fi,
+przed connect, ustawiamy WIFI_PS_NONE z odczytem potwierdzającym. Błędy
+tylko ostrzegają, sieć/AP pozostają dostępne. Większy pobór energii za
+mniejsze opóźnienia RX. Bufory/TCP/dekoder/FFT/I2S i logi playera bez zmian.
+Eksperyment do odbioru S3; nie deklarujemy naprawy wszystkich niedoborów.
+437 testów hostowych PASS, w tym17 rzeczywistego ownera sieci;
+native dr/ESP-IDF6.1 build PASS. Agent nie flashował. Szczegóły ADR0090.
+
 ## Najnowsze — FLAC: „Brak danych”, pomiar dopływu / ADR0089 / 2026-11-01
 
 Log5ad29183: dr_flac, 82 Underrun w gen3, dwa Recover, bez Reject i bez

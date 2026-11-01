@@ -1,5 +1,11 @@
 # Porównanie dekoderów FLAC na ESP32-S3
 
+ADR0090: test bf40138/dr ma97 low, HTTP read do674ms, log batch do82,8ms;
+Wi-Fi raportuje pm type1. Kolejny build wyłącza modem sleep, bez zmiany
+buforów/TCP/dekodera. Sprawdź `Wi-Fi power save=NONE; low-latency RX`,
+potem3–5min tej samej stacji z Delivery/Underrun/Recover. Źródło CRC i wpływ
+nowego ustawienia OPEN; szczegółowe wyniki/ograniczenia w ADR0090.
+
 ADR0089: log5ad29183 nadal ma82 Underrun i2 Recover bez reconnect gen3.
 Użytkownik nie miał możliwości odsłuchu. Nowy build mierzy dopływ i czasy
 HTTP/body oraz okresowego logowania: `player: Delivery`. Ten sam dr i stacja,
