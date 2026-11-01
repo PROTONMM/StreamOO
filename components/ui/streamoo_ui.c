@@ -38,6 +38,7 @@ void streamoo_ui_set_playing(streamoo_ui_t *ui, uint64_t station_id)
     ui->home.title = ui->home.description = ui->home.codec = (streamoo_ui_text_t){0};
     ui->home.metadata_valid = ui->home.audio_info_valid = ui->home.visualization_valid = false;
     ui->home.bitrate_kbps = 0;
+    ui->home.bitrate_measured = false;
     ui->home.visualization = (streamoo_visualization_model_t){0};
     ui->visualization_valid_at_ms = 0;
     ui->visualization_update_at_ms = 0;

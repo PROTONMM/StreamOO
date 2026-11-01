@@ -14,7 +14,7 @@ typedef struct {
   uint64_t station_id, generation;
   uint8_t volume;
   uint32_t volume_revision, rate, bitrate_kbps;
-  bool ready, running;
+  bool ready, running, bitrate_measured;
   streamoo_player_phase_t phase;
   esp_err_t error;
   char title[257];

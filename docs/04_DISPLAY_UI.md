@@ -1,5 +1,10 @@
 # 04 — SSD1322, UI, wymienne widżety
 
+ADR0093: bez deklaracji bitrate serwera player mierzy compressed/decoded
+audio time. OLED oznacza tę estymację tyldą, np.~1839k, po>=2s danych.
+Renderer dostaje wartość i znacznik; nie oblicza bitrate ani nie używa
+tempa HTTP. Deklarowane icy-br/HLS nadal pierwsze, nieznane nadal --.
+
 **USTALONE:** SSD1322 256×64, grayscale 4bpp (16 jasności), framebuffer 8192 B, własny renderer bez LVGL. Wszystkie widgety dostają prostokąt `bounds`, źródło danych/model i obiekt canvas; nie zapisują się do sterownika bezpośrednio. Clipping i izolacja aktualizacji to obowiązek silnika. Docelowo testowalny renderer hostowy.
 
 ## Geometria głównego ekranu

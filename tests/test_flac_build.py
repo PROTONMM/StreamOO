@@ -14,6 +14,44 @@ spec.loader.exec_module(build)
 
 
 class FlacBuildTests(unittest.TestCase):
+    def test_software_crypto_selection_is_idempotent_and_preserves_other_settings(self):
+        original='CONFIG_MBEDTLS_HARDWARE_AES=y\nCONFIG_MBEDTLS_HARDWARE_SHA=y\nCONFIG_BOARD_PIN=6\n'
+        selected=build.select_software_crypto(original)
+        for symbol in ('AES','SHA'):
+            self.assertIn('# CONFIG_MBEDTLS_HARDWARE_'+symbol+' is not set\n',selected)
+        self.assertIn('CONFIG_BOARD_PIN=6\n',selected)
+        self.assertEqual(build.select_software_crypto(selected),selected)
+        self.assertIn('# CONFIG_MBEDTLS_HARDWARE_AES is not set',build.select_backend(selected,'dr'))
+
+    def test_software_crypto_requires_generated_header_to_match(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root=Path(temp);(root/'config').mkdir();(root/'streamoo.bin').write_bytes(b'dr_flac-0.13.4\0')
+            for symbol in ('AES','SHA'):
+                (root/'config/sdkconfig.h').write_text('#define CONFIG_STREAMOO_FLAC_DR 1\n#define CONFIG_MBEDTLS_HARDWARE_'+symbol+' 1\n')
+                with self.assertRaises(RuntimeError):build.verify(root,'dr',True)
+            (root/'config/sdkconfig.h').write_text('#define CONFIG_STREAMOO_FLAC_DR 1\n')
+            self.assertGreater(build.verify(root,'dr',True)[0],0)
+
+    def test_software_crypto_flag_stops_flash_if_sdk_reenables_hardware(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root=Path(temp);(root/'tools').mkdir();(root/'tools/idf.py').write_text('')
+            original='CONFIG_MBEDTLS_HARDWARE_AES=y\nCONFIG_MBEDTLS_HARDWARE_SHA=y\nCONFIG_BOARD_PIN=6\n'
+            (root/'sdkconfig').write_text(original)
+            def fake_run(command,**kwargs):
+                self.assertNotIn('flash',command)
+                config=(root/'sdkconfig.flac-dr').read_text()
+                self.assertEqual(build.select_software_crypto(config),config)
+                self.assertIn('CONFIG_BOARD_PIN=6',config)
+                artifact=root/'build/flac-dr';(artifact/'config').mkdir(parents=True)
+                (artifact/'config/sdkconfig.h').write_text('#define CONFIG_STREAMOO_FLAC_DR 1\n#define CONFIG_MBEDTLS_HARDWARE_SHA 1\n')
+                (artifact/'streamoo.bin').write_bytes(b'dr_flac-0.13.4\0')
+            with patch.object(build,'ROOT',root),patch.dict(build.os.environ,{'IDF_PATH':str(root)}), \
+                    patch.object(build,'idf_python',return_value=root/'idf-venv/bin/python'), \
+                    patch.object(build.subprocess,'run',side_effect=fake_run) as run,contextlib.redirect_stdout(io.StringIO()):
+                with self.assertRaises(RuntimeError):build.main(['dr','flash','--software-crypto','--port','/dev/unused'])
+                self.assertEqual(run.call_count,1)
+                self.assertEqual((root/'sdkconfig').read_text(),original)
+
     def test_choice_preserves_other_settings_and_is_idempotent(self):
         original = "CONFIG_STREAMOO_FLAC_MICRO=y\n# CONFIG_STREAMOO_FLAC_DR is not set\nCONFIG_BOARD_PIN=6\n"
         for backend, (symbol, _) in build.BACKENDS.items():

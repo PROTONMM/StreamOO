@@ -59,12 +59,22 @@ def select_backend(text, backend):
     return "\n".join(lines) + "\n"
 
 
-def verify(build_dir, backend):
+def select_software_crypto(text):
+    """Use the SDK software AES/SHA implementations; preserve TLS verification."""
+    symbols=("CONFIG_MBEDTLS_HARDWARE_AES", "CONFIG_MBEDTLS_HARDWARE_SHA")
+    lines=[line for line in text.splitlines() if not any(
+        line.startswith(symbol+"=") or line=="# "+symbol+" is not set" for symbol in symbols)]
+    return "\n".join(lines+["# "+symbol+" is not set" for symbol in symbols])+"\n"
+
+
+def verify(build_dir, backend, software_crypto=False):
     header = (build_dir / "config/sdkconfig.h").read_text()
     selected = [key for key, (symbol, _) in BACKENDS.items()
                 if re.search(r"^#define CONFIG_STREAMOO_FLAC_" + symbol + r"\s+1\s*$", header, re.M)]
     if selected != [backend]:
         raise RuntimeError(f"Generated configuration selects {selected}, expected {backend}")
+    if software_crypto and re.search(r"^#define CONFIG_MBEDTLS_HARDWARE_(AES|SHA)\b",header,re.M):
+        raise RuntimeError("Generated configuration still enables hardware AES/SHA; software crypto required")
     binary = (build_dir / "streamoo.bin").read_bytes()
     labels = [key for key, (_, label) in BACKENDS.items() if label in binary]
     if labels != [backend]:
@@ -77,6 +87,8 @@ def main(argv=None):
     parser.add_argument("backend", choices=BACKENDS)
     parser.add_argument("action", choices=("build", "flash"), nargs="?", default="build")
     parser.add_argument("--port", help="Serial port for flash, e.g. /dev/ttyUSB0")
+    parser.add_argument("--software-crypto", action="store_true",
+                        help="Persist SDK software AES/SHA and verify the generated config before flash")
     args = parser.parse_args(argv)
     idf_path = os.environ.get("IDF_PATH")
     idf = Path(idf_path) / "tools/idf.py" if idf_path else shutil.which("idf.py")
@@ -95,7 +107,10 @@ def main(argv=None):
     source = config if config.exists() else ROOT / "sdkconfig"
     if not source.exists():
         source = ROOT / "sdkconfig.defaults"
-    config.write_text(select_backend(source.read_text(), args.backend))
+    selected=select_backend(source.read_text(), args.backend)
+    if args.software_crypto:
+        selected=select_software_crypto(selected)
+    config.write_text(selected)
     build_dir = ROOT / "build" / f"flac-{args.backend}"
     command = [str(python), str(idf), "-C", str(ROOT), "-B", str(build_dir),
                "-D", "SDKCONFIG=" + str(config)]
@@ -114,7 +129,9 @@ def main(argv=None):
             build_dir.rename(backup)
             print(f"ESP-IDF Python changed; previous build preserved at {backup}", flush=True)
     subprocess.run(command + ["build"], cwd=ROOT, env=environment, check=True)
-    size, digest = verify(build_dir, args.backend)
+    size, digest = verify(build_dir, args.backend, args.software_crypto)
+    if args.software_crypto:
+        print("Verified TLS crypto: software AES/SHA (generated configuration)", flush=True)
     print(f"Verified FLAC backend={BACKENDS[args.backend][1].decode()} bytes={size} SHA256={digest}", flush=True)
     if args.action == "flash":
         port = ["-p", args.port] if args.port else []

@@ -88,6 +88,7 @@ bool streamoo_ui_update_home(streamoo_ui_t *ui, const streamoo_home_snapshot_t *
         ui->home.audio_info_valid = false;
         ui->home.codec = (streamoo_ui_text_t){0};
         ui->home.bitrate_kbps = 0;
+        ui->home.bitrate_measured = false;
     }
     if (!match || !s->visualization_valid) {
         if (retain_visualization) {
@@ -142,7 +143,9 @@ static bool info_panel(streamoo_canvas_t *c, const streamoo_home_snapshot_t *s)
         uint8_t unit = 'k';
         if (value >= 10000000) { value /= 1000000; unit = 'G'; }
         else if (value >= 10000) { value /= 1000; unit = 'M'; }
-        bytes = decimal(bitrate, value);
+        size_t prefix=s->bitrate_measured ? 1 : 0;
+        if(prefix)bitrate[0]='~';
+        bytes = prefix + decimal(bitrate + prefix, value);
         bitrate[bytes++] = unit;
     }
     if (!small(c, (streamoo_rect_t){0, 40, 44, 8}, bitrate, bytes, STREAMOO_TEXT_LEFT, 0, 10)) return false;

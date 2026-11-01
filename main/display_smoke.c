@@ -181,6 +181,7 @@ static void display_task(void *context)
 #endif
             char live_codec[8]={0};
             demo.bitrate_kbps=0;
+            demo.bitrate_measured=false;
             if(streamoo_network_boot_ap_enabled()) {
                 streamoo_player_spectrum_enabled(demo.ui.screen==STREAMOO_UI_HOME &&
                     demo.ui.visualization==STREAMOO_VIS_SPECTRUM);
@@ -190,6 +191,7 @@ static void display_task(void *context)
                     startup_player_ready=player.ready;
                     memcpy(live_codec,player.codec,sizeof live_codec);
                     demo.bitrate_kbps=player.bitrate_kbps;
+                    demo.bitrate_measured=player.bitrate_measured;
                     if(demo.station_id!=player.station_id||player_generation!=player.generation){
                         demo.station_id=player.station_id;++demo.generation;
                         streamoo_ui_set_playing(&demo.ui,demo.station_id);player_generation=player.generation;

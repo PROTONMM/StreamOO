@@ -1,5 +1,6 @@
 #include "streamoo_player.h"
 #include "streamoo_player_buffer.h"
+#include "streamoo_bitrate.h"
 #include "streamoo_flac_backend.h"
 #include "streamoo_settings.h"
 #include "esp_attr.h"
@@ -19,6 +20,7 @@
 #include "streamoo_spectrum.h"
 #include <inttypes.h>
 #include <string.h>
+#include <time.h>
 typedef enum { COMMAND_ENCODER,COMMAND_PLAYING,COMMAND_VOLUME } command_kind_t;
 typedef struct {
   command_kind_t kind;
@@ -119,6 +121,11 @@ static void station_label(char out[129],const streamoo_station_t *station){
   out[n]=0;
 }
 static void log_transport(const streamoo_http_stream_info_t *i,uint64_t generation){
+  streamoo_network_state_t network={0};
+  streamoo_network_state(&network);
+  ESP_LOGW("player","TLS gen=%" PRIu64 " error=%s(%d) code=%d flags=0x%x errno=%d utc=%lld synced=%u",
+    generation,esp_err_to_name(i->tls_error),i->tls_error,i->tls_code,(unsigned)i->tls_flags,
+    i->socket_errno,(long long)time(NULL),(unsigned)network.time_synced);
   const char *resource=i->resource[0]?i->resource:"none",*stage=i->stage[0]?i->stage:"none",*reason=i->reason[0]?i->reason:"none";
   ESP_LOGW("player","Reader gen=%" PRIu64 " ended=%u error=%s(%d) resource=%s stage=%s reason=%s"
     " HTTP=%d mime=\"%s\" read=%d rx=%" PRIu64 "/%" PRIu64 " redirects=%" PRIu32
@@ -141,6 +148,7 @@ typedef struct {
   uint32_t log_step_max_us;
   int64_t delivery_at;
   uint64_t delivery_bytes;
+  streamoo_bitrate_t bitrate;
   bool levels_seen,flac;
 } decode_profile_t;
 static void log_delivery(decode_profile_t *p, const streamoo_http_stream_info_t *i) {
@@ -490,7 +498,11 @@ static void task(void *context) {
         if(current.rate){
           const char *names[]={"MP3","AAC","FLAC","Vorbis","Opus","MPEG-TS"};
           strcpy(current.codec,info.codec<STREAMOO_CODEC_COUNT ? names[info.codec]:"?");
-          current.bitrate_kbps=info.bitrate_kbps;
+          uint32_t measured=streamoo_bitrate_update(&profile.bitrate,
+              pump->consumed_total,pump->produced_total,pump->format.rate,
+              pump->format.channels,pump->format.bits);
+          current.bitrate_kbps=info.bitrate_kbps ? info.bitrate_kbps : measured;
+          current.bitrate_measured=!info.bitrate_kbps && measured!=0;
         }
         portENTER_CRITICAL(&lock);
         streamoo_pcm_stats_t pcm = stats;
@@ -550,7 +562,7 @@ static void task(void *context) {
     if (!session && current.running && online && now < retry_at)
       current.phase = STREAMOO_PLAYER_RETRY;
   publish: {
-    if(retiring || !output || !online || !current.running){current.codec[0]=0;current.bitrate_kbps=0;}
+    if(retiring || !output || !online || !current.running){current.codec[0]=0;current.bitrate_kbps=0;current.bitrate_measured=false;}
     portENTER_CRITICAL(&lock);
     bool spectrum_on=spectrum_requested;
     portEXIT_CRITICAL(&lock);

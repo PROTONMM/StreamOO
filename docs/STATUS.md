@@ -1,5 +1,23 @@
 # Status implementacji
 
+## Najnowsze — bitrate LAN i wariant TLS software / ADR0093–0094 / 2026-11-01
+
+Logf02f1a01/90958c2: LAN headerless~145s low0/hard0/starts1,
+log_step_max~9,9ms. Potem14 błędów PSA-149 podpisu certyfikatu po I2S,
+1 brak root; później HLS/FLAC łączą. Publiczny gen22 ma12 low i1 Recover.
+Odsłuch oraz źródło CRC nadal OPEN.
+
+Bitrate bez icy-br/HLS: compressed/decoded audio time w oknach>=2s,
+OLED ~wartość. Deklaracja serwera priorytet, brak danych --. Nie jest to
+tempo HTTP. Bez zmian preroll/buforów/dekoderów/I2S. Krótki TLS/UTC log.
+Wrapper --software-crypto wyłącza AES/SHA hardware w wybranej prywatnej
+konfiguracji i sprawdza nagłówek przed flash. Startup raportuje profil.
+SDK globalne i walidacja TLS bez zmian. Hipoteza GDMA niepotwierdzona;
+odbiór S3 OPEN. 450 testów hostowych PASS; native dr/ESP-IDF6.1 software
+AES/SHA build PASS, wygenerowana konfiguracja sprawdzona przez wrapper.
+Po zmianie startupu powtórzony native build i testy wrappera PASS.
+Agent nie flashował.
+
 ## Najnowsze — LAN zawęża problem; diagnostyka rozłożona w czasie / ADR0092 / 2026-11-01
 
 Log2cc3711b/b2431e5/dr: LAN16~55s i LAN24~78s bez low, headerless~165s

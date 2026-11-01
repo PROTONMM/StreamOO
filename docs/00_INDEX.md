@@ -45,6 +45,9 @@ Kontrolowane długie próbki FLAC w LAN, także bez nagłówka pliku:
 `FLAC_LAN_TEST.md`, `adr/0091-controlled-lan-flac-fixtures.md`.
 Wyniki LAN i ograniczenie okresowych logów playera do jednej linii na iterację:
 `adr/0092-periodic-player-log-staging.md`.
+Bitrate mierzony czasem dekodowanego audio bez nagłówka serwera:
+`adr/0093-decoded-audio-bitrate-estimate.md`.
+TLS po I2S i test programowego AES/SHA: `adr/0094-software-tls-crypto-profile.md`.
 
 Etap 04b i canvas: `adr/0004-independent-4bpp-canvas.md`.
 

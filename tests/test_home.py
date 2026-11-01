@@ -273,10 +273,24 @@ class HomeTests(unittest.TestCase):
     def test_bitrate_and_rssi_extremes_stay_in_bounds(self):
         s = self.snapshot()
         s.bitrate_kbps = 0xffffffff
+        s.bitrate_measured = True
         s.rssi_dbm = -127
         s.clock = Clock(9999, 12, 31, 23, 59, 59)
         self.assertTrue(self.apply(s))
         self.draw()
+
+    def test_measured_bitrate_marker_only_changes_bitrate_row_and_clears_with_audio(self):
+        s=self.snapshot();s.bitrate_kbps=1839
+        self.assertTrue(self.apply(s));before=self.draw()
+        s.bitrate_measured=True
+        self.assertTrue(self.apply(s));after=self.draw()
+        changed=[(i%128,i//128) for i,(a,b) in enumerate(zip(before,after)) if a!=b]
+        self.assertTrue(changed)
+        self.assertTrue(all(x<22 and 40<=y<48 for x,y in changed))
+        self.assertTrue(self.ui.home.bitrate_measured)
+        s.audio_info_valid=False
+        self.assertTrue(self.apply(s))
+        self.assertFalse(self.ui.home.bitrate_measured)
 
     def test_diagnostic_stages_match_reviewed_frames(self):
         probe = UI()

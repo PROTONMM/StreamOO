@@ -1,5 +1,18 @@
 # Porównanie dekoderów FLAC na ESP32-S3
 
+ADR0093–0094: do odbioru bitrate bez nagłówka (OLED ~) i test TLS po
+PSA-149 występującym po I2S. Polecenie dla tego eksperymentu:
+
+```sh
+python3 tools/build_flac.py dr flash --port /dev/ttyUSB0 --software-crypto
+```
+
+Wrapper kontroluje backend i brak hardware AES/SHA w wygenerowanej
+konfiguracji przed flash. Startup ma pokazać AES=software SHA=software.
+Dotyczy wybranego sdkconfig.flac-dr; root i inne backendy bez zmian.
+Walidacja certyfikatów pozostaje. LAN→zewnętrzny FLAC→HLS→FLAC;
+wpływ na połączenia/CPU/CRC OPEN. Szczegóły ADR0094.
+
 ADR0092: kontrolowany LAN ma0 low dla16bit/~55s i24bit/~78s oraz1 low
 headerless/~165s przy pełnym źródle, bez CRC/empty. Nowy firmware rozkłada
 okresowe logi na pojedyncze linie między uzupełnianiem PCM. Odtworzona

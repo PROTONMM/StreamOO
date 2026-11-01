@@ -24,8 +24,9 @@ Recover/Reject, CPU i OLED UI. Jeżeli słuchanie nie jest możliwe, wystarczy
 log do porównania liczników; nie oznacza to jeszcze zaliczenia odsłuchu.
 Docelowo low/hard nie rosną po starcie, brak Recover/Reject, a PCM ma zapas.
 Pliki mają300s; EOF/retry przy ich końcu jest oczekiwany. HTTP nie deklaruje
-icy-br, więc OLED może pokazać bitrate nieznany. Manifest zawiera pomiary
-bitrate plików, a Delivery pokazuje faktyczny dopływ body HTTP.
+icy-br. Starszy firmware pokazuje bitrate nieznany; od ADR0093 po kilku
+sekundach pokazuje pomiar czasem audio z tyldą (~). Manifest zawiera
+bitrate plików, a Delivery osobno pokazuje dopływ body HTTP.
 
 Gdy potrzebna jest nowa playlista dla innego adresu komputera, wygeneruj
 nowy katalog, podając adres komputera widoczny dla radia, np.:

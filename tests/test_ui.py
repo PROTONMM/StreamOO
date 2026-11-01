@@ -35,7 +35,7 @@ class HomeSnapshot(C.Structure):
         (name, Text) for name in ('station_name', 'title', 'description', 'codec')] + [
         ('bitrate_kbps', C.c_uint32), ('rssi_dbm', C.c_int16)] + [
         (name, C.c_bool) for name in ('wifi_connected', 'rssi_valid', 'metadata_valid',
-                                     'audio_info_valid', 'clock_valid', 'visualization_valid')] + [
+                                     'audio_info_valid', 'clock_valid', 'visualization_valid', 'bitrate_measured')] + [
         ('clock', Clock), ('visualization', VisualizationModel)]
 
 

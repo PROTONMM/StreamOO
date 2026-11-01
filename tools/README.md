@@ -1,5 +1,9 @@
 # Narzędzia pomocnicze
 
+`build_flac.py ... --software-crypto` — profil diagnostyczny TLS z programowym
+AES/SHA; kontroluje wygenerowaną konfigurację przed flash. Dotyczy wybranego
+prywatnego sdkconfig.flac-*, zachowuje walidację TLS. Patrz ADR0094.
+
 `generate_flac_network_fixture.py` — trzy długie, oryginalne próbki FLAC
 16/24bit i24bit headerless oraz lokalna playlist.csv. Hostowy FFmpeg/ffprobe,
 bez zmiany firmware. Instrukcja: [FLAC_LAN_TEST](../docs/FLAC_LAN_TEST.md).

@@ -100,6 +100,7 @@ bool streamoo_encoder_demo_draw(streamoo_encoder_demo_t *d, uint8_t *frame,
     s.rssi_dbm=d->rssi_dbm;
     s.audio_info_valid=d->codec[0]!=0;
     s.bitrate_kbps=d->codec[0] ? d->bitrate_kbps:0;
+    s.bitrate_measured=d->codec[0] && d->bitrate_measured;
     s.codec=(streamoo_ui_text_t){(const uint8_t *)d->codec,strlen(d->codec)};
     for (unsigned i=0; i<24; ++i) {
         unsigned phase=(unsigned)(now%2000+i*61)%2000;

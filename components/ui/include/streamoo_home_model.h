@@ -19,7 +19,7 @@ typedef struct {
     uint32_t bitrate_kbps; /* 0 = unknown, even if codec is known. */
     int16_t rssi_dbm;
     bool wifi_connected, rssi_valid, metadata_valid, audio_info_valid;
-    bool clock_valid, visualization_valid;
+    bool clock_valid, visualization_valid, bitrate_measured;
     streamoo_ui_clock_t clock;
     streamoo_visualization_model_t visualization;
 } streamoo_home_snapshot_t;

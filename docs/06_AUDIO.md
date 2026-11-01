@@ -1,5 +1,10 @@
 # 06 — Audio, dekodery, I²S, player state
 
+ADR0093: fallback bitrate bez nagłówka z liczników compressed/PCM i czasu
+źródłowego audio, osobny od szybkości HTTP i sterowania buforami.
+ADR0094: do odbioru wariant software AES/SHA po PSA-149 przy przełączeniu
+z I2S na zewnętrzny TLS. Walidacja certyfikatów pozostaje, źródło CRC OPEN.
+
 ADR0086: potwierdzone frame_limit_no_boundary przy niezerowym CRC.
 Parser potrafi odzyskać następne poprawne ramki po CRC8+CRC16 przy
 dotychczasowym limicie/EOS; log Recover. Przyczyna uszkodzenia OPEN,

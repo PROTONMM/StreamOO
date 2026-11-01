@@ -43,6 +43,17 @@ void app_main(void)
     ESP_LOGI(TAG, "Encoder: A=%d B=%d BTN=%d",
              CONFIG_STREAMOO_ENCODER_GPIO_A, CONFIG_STREAMOO_ENCODER_GPIO_B,
              CONFIG_STREAMOO_ENCODER_GPIO_BUTTON);
+#ifdef CONFIG_MBEDTLS_HARDWARE_AES
+    const char *tls_aes="hardware";
+#else
+    const char *tls_aes="software";
+#endif
+#ifdef CONFIG_MBEDTLS_HARDWARE_SHA
+    const char *tls_sha="hardware";
+#else
+    const char *tls_sha="software";
+#endif
+    ESP_LOGI(TAG, "TLS crypto: AES=%s SHA=%s; certificate verification enabled",tls_aes,tls_sha);
 #if defined(CONFIG_STREAMOO_ENCODER_UI_TEST)
     const esp_err_t prefs_error = streamoo_preferences_start();
     if (prefs_error != ESP_OK)

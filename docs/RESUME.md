@@ -1,5 +1,20 @@
 # Punkt wznowienia StreamOO
 
+## Najnowsze — bitrate z PCM i TLS software AES/SHA / ADR0093–0094
+
+Logf02f1a01/90958c2: LAN headerless~145s bez low; po I2S14 PSA-149 przy
+podpisie certyfikatu i1 brak root. Później łączy, gen22 publicznego FLAC
+ma12 low/1 Recover. Odsłuch OPEN. Hipoteza crypto GDMA, nie potwierdzenie
+wady SDK. Zgłoszenie z tym objawem zamknięto z braku odpowiedzi.
+Nowy bitrate bez nagłówka: compressed/decoded audio time>=2s, OLED z~.
+Deklaracja icy-br/HLS nadal pierwsza. Krótszy osobny log TLS/UTC/flags.
+Odbiór: python3 tools/build_flac.py dr flash --port /dev/ttyUSB0
+--software-crypto (jedna komenda), startup AES=software SHA=software.
+Test LAN→zewnętrzny FLAC→HLS→FLAC, zachować TLS/CPU/Underrun/Recover.
+Walidacja certyfikatów pozostaje. 450 host tests i native dr/software AES/SHA
+build PASS; po zmianie startupu także ponowny build i testy wrappera PASS.
+Bez flash agenta.
+
 ## Najnowsze — jedna okresowa linia logu między uzupełnieniami PCM / ADR0092
 
 Log2cc3711b: b2431e5/dr, LAN16~55s low0, LAN24~78s low0,
