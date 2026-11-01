@@ -1,5 +1,23 @@
 # Punkt wznowienia StreamOO
 
+## Najnowsze — PCM przed HTTP/TLS / ADR0100 / 2026-11-01
+
+Log98f94c6a pochodzi z3834551/ELFb2e60f14 (sprzed cichego UART), dwa starty.
+Wi-Fi uzyskuje IP;28 błędów HTTP200/pcm_memory/NO_MEM, ring0 block1 scratch1.
+Brak ciągłego internal PCM61568B po otwarciu źródła, nie awaria Wi-Fi.
+Ring rezerwowany teraz przed readerem/HTTP/TLS; na open failure zwalniany,
+na STOP/przełączeniu po bezpiecznym zakończeniu starej sesji. Rozmiar,
+preroll, I2S/DSP/decoder/TCP bez zmian. Błąd rezerwacji loguje free/largest.
+484 testy hostowe,19 regresji aktora z ASan/UBSan i zwykły native build
+PASS. Odbiór tej kolejności alokacji na S3 OPEN.
+
+Wgrać standardowy build: `idf.py -p /dev/ttyUSB0 flash`, AAC Radio357,
+RNŚ AAC+, Antyradio MP3, następnie FLAC/HLS i przełączenia/STOP/PLAY.
+Nie kasować NVS ani playlisty. Nie włączać testów do zwykłego odbioru;
+UART pozostaje cichy zgodnie z ADR0099. Agent nie flashował urządzenia.
+Osobny FLAC final_frame_crc po TCP FIN w logu gen22 pozostaje OPEN.
+
+
 ## Najnowsze — przegląd kodu, testy opt-in i cichy UART / ADR0099 / 2026-11-01
 
 Normalne radio: testy sprzętowe i klipy wyłączone także w CMake, osobne

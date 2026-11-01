@@ -8,7 +8,7 @@ HEADERS={
  'esp_attr.h':'#pragma once\n#define IRAM_ATTR\n#define DRAM_ATTR\n',
  'esp_log.h':'#pragma once\nvoid fake_log(const char *,const char *,...) __attribute__((format(printf,2,3)));\n#define ESP_LOGI fake_log\n#define ESP_LOGW fake_log\n',
  'esp_timer.h':'#pragma once\n#include <stdint.h>\nint64_t esp_timer_get_time(void);\n',
- 'esp_heap_caps.h':'#pragma once\n#include <stddef.h>\n#define MALLOC_CAP_INTERNAL 1\n#define MALLOC_CAP_8BIT 2\n#define MALLOC_CAP_SPIRAM 4\nvoid *heap_caps_calloc(size_t,size_t,unsigned);\nvoid heap_caps_free(void *);\n',
+ 'esp_heap_caps.h':'#pragma once\n#include <stddef.h>\n#define MALLOC_CAP_INTERNAL 1\n#define MALLOC_CAP_8BIT 2\n#define MALLOC_CAP_SPIRAM 4\nvoid *heap_caps_calloc(size_t,size_t,unsigned);\nvoid heap_caps_free(void *);\nsize_t heap_caps_get_free_size(unsigned);\nsize_t heap_caps_get_largest_free_block(unsigned);\n',
  'sdkconfig.h':'#pragma once\n#ifndef STREAMOO_TEST_RELEASE\n#define CONFIG_STREAMOO_DIAGNOSTICS 1\n#endif\n#define CONFIG_STREAMOO_I2S_DOUT 48\n#define CONFIG_STREAMOO_I2S_BCLK 47\n#define CONFIG_STREAMOO_I2S_LRCLK 21\n',
  'freertos/FreeRTOS.h':'#pragma once\ntypedef int portMUX_TYPE;\n#define portMUX_INITIALIZER_UNLOCKED 0\n#define portENTER_CRITICAL(p) ((void)(p))\n#define portEXIT_CRITICAL(p) ((void)(p))\n#define portENTER_CRITICAL_ISR(p) ((void)(p))\n#define portEXIT_CRITICAL_ISR(p) ((void)(p))\n#define pdTRUE 1\n#define pdPASS 1\n#define pdMS_TO_TICKS(x) (x)\n',
  'freertos/queue.h':'#pragma once\n#include <stddef.h>\ntypedef void *QueueHandle_t;\nvoid *xQueueCreate(unsigned,size_t);\nvoid vQueueDelete(void *);\nint xQueueSend(void *,const void *,unsigned);\nint xQueueReceive(void *,void *,unsigned);\n',
@@ -20,6 +20,7 @@ HARNESS=r'''
 #include "streamoo_http_stream.h"
 #include "streamoo_live_decode.h"
 #include "streamoo_audio_output.h"
+#include "esp_heap_caps.h"
 #include "streamoo_network.h"
 #include <assert.h>
 #include <setjmp.h>
@@ -31,6 +32,8 @@ static char failure_log[1024],diagnostic_log[1024],perf_log[1024],buffers_log[10
 static char underrun_log[256],delivery_log[512];
 static unsigned station_changes;static bool transport_eof_test,reader_done;
 static bool release_test,release_fault,fault_reported;
+static bool fragmented_test,memory_retry_test,pending_cancel_test,reader_live;
+static unsigned ring_attempts,http_failures;static void *ring_storage;
 static bool profile_test,delivery_test,logging_test,bitrate_test,bitrate_header;static streamoo_stream_decode_fn measured_decode;static void *measured_context;static bool measured_once;
 static void advance_time(int64_t us);
 static int64_t next_audio_at;
@@ -66,8 +69,17 @@ void fake_log(const char *tag,const char *fmt,...){(void)tag;if(delivery_test&&!
  va_end(args);}
 const char *streamoo_live_failure_name(streamoo_live_failure_t f){return f==STREAMOO_LIVE_SOURCE_EOF?"source_eof":f==STREAMOO_LIVE_DECODER_NO_PROGRESS?"decoder_no_progress":"none";}
 int64_t esp_timer_get_time(void){return now;}
-void *heap_caps_calloc(size_t n,size_t size,unsigned caps){(void)caps;void *p=calloc(n,size);if(p){++allocations;if(n==32)++ring_epoch;}return p;}
-void heap_caps_free(void *p){if(p){assert(allocations);--allocations;free(p);}}
+void *heap_caps_calloc(size_t n,size_t size,unsigned caps){
+ if(n==32){
+  assert(caps==(MALLOC_CAP_INTERNAL|MALLOC_CAP_8BIT));++ring_attempts;
+  if(fragmented_test&&reader_live)return NULL; /* TLS fragments available RAM. */
+  if(memory_retry_test&&ring_attempts==1)return NULL;
+ }
+ void *p=calloc(n,size);if(p){++allocations;if(n==32){assert(!ring_storage);ring_storage=p;++ring_epoch;}}return p;
+}
+size_t heap_caps_get_free_size(unsigned caps){assert(caps==(MALLOC_CAP_INTERNAL|MALLOC_CAP_8BIT));return 100000;}
+size_t heap_caps_get_largest_free_block(unsigned caps){assert(caps==(MALLOC_CAP_INTERNAL|MALLOC_CAP_8BIT));return 32768;}
+void heap_caps_free(void *p){if(p){if(p==ring_storage){assert(!output_live);ring_storage=NULL;}assert(allocations);--allocations;free(p);}}
 void *xQueueCreate(unsigned n,size_t size){assert(n==16&&size<=128);command_bytes=size;return (void *)1;}
 void vQueueDelete(void *q){(void)q;}
 int xQueueSend(void *q,const void *data,unsigned wait){(void)q;(void)wait;if(count==16)return 0;memcpy(messages[tail++%16],data,command_bytes);++count;return 1;}
@@ -78,12 +90,12 @@ streamoo_catalog_snapshot_t *streamoo_config_catalog_acquire(void){++catalog->re
 streamoo_catalog_view_t streamoo_config_catalog_view(const streamoo_catalog_snapshot_t *s){return s?s->view:(streamoo_catalog_view_t){0};}
 void streamoo_config_catalog_release(streamoo_catalog_snapshot_t *s){if(s){assert(s->refs);--s->refs;}}
 bool streamoo_network_state(streamoo_network_state_t *s){*s=(streamoo_network_state_t){.sta_connected=online,.ap_ready=ap};return true;}
-esp_err_t streamoo_http_stream_open(const char *url,streamoo_http_stream_t **s){assert(!strcmp(url,(manual==1&&opens==2)?"http://b.invalid":"http://a.invalid"));assert(online&&!ap);++opens;force_fail=false;reader_done=false;*s=heap_caps_calloc(1,sizeof **s,0);return *s?ESP_OK:ESP_ERR_NO_MEM;}
-bool streamoo_http_stream_info(streamoo_http_stream_t *s,streamoo_http_stream_info_t *i){(void)s;*i=(streamoo_http_stream_info_t){.received_bytes=(uint64_t)now/1000*24+321000,.last_rx_us=now>=125000?now-125000:0,.read_max_us=250000,.push_wait_max_us=5000,.source_empty_waits=7,.source_busy_waits=3,.codec_known=true,.codec=flac_case?STREAMOO_CODEC_FLAC:STREAMOO_CODEC_MP3,.bitrate_kbps=bitrate_test?(bitrate_header?320:0):flac_case?1500:192,.ended=transport_eof_test?reader_done:force_fail,.error=transport_eof_test?(reader_done?ESP_ERR_NOT_SUPPORTED:ESP_OK):force_fail?ESP_FAIL:ESP_OK};if(reader_done){strcpy(i->resource,"hls_reload");strcpy(i->stage,"parse");strcpy(i->reason,"master_after_media");i->hls=true;i->hls_segments=3;i->hls_reloads=1;}return true;}
+esp_err_t streamoo_http_stream_open(const char *url,streamoo_http_stream_t **s){assert(!strcmp(url,(manual==1&&opens==2)?"http://b.invalid":"http://a.invalid"));assert(online&&!ap);if(fragmented_test||memory_retry_test||pending_cancel_test)assert(ring_storage&&!reader_live);++opens;if(memory_retry_test&&!http_failures){++http_failures;*s=NULL;return ESP_FAIL;}reader_live=true;force_fail=false;reader_done=false;*s=heap_caps_calloc(1,sizeof **s,0);return *s?ESP_OK:ESP_ERR_NO_MEM;}
+bool streamoo_http_stream_info(streamoo_http_stream_t *s,streamoo_http_stream_info_t *i){(void)s;*i=(streamoo_http_stream_info_t){.received_bytes=(uint64_t)now/1000*24+321000,.last_rx_us=now>=125000?now-125000:0,.read_max_us=250000,.push_wait_max_us=5000,.source_empty_waits=7,.source_busy_waits=3,.codec_known=!pending_cancel_test,.codec=flac_case?STREAMOO_CODEC_FLAC:STREAMOO_CODEC_MP3,.bitrate_kbps=bitrate_test?(bitrate_header?320:0):flac_case?1500:192,.ended=transport_eof_test?reader_done:force_fail,.error=transport_eof_test?(reader_done?ESP_ERR_NOT_SUPPORTED:ESP_OK):force_fail?ESP_FAIL:ESP_OK};if(reader_done){strcpy(i->resource,"hls_reload");strcpy(i->stage,"parse");strcpy(i->reason,"master_after_media");i->hls=true;i->hls_segments=3;i->hls_reloads=1;}return true;}
 streamoo_byte_source_t streamoo_http_stream_source(streamoo_http_stream_t *s){(void)s;return (streamoo_byte_source_t){0};}
 size_t streamoo_http_stream_queued(streamoo_http_stream_t *s){(void)s;return flac_case?flac_queued:force_fail?0:8192;}
 void streamoo_http_stream_stop(streamoo_http_stream_t *s){if(!s->closing){s->closing=true;s->stopped=tick;}}
-bool streamoo_http_stream_dispose(streamoo_http_stream_t *s){assert(s->closing);if(tick-s->stopped<40)return false;assert(!output_live);heap_caps_free(s);return true;}
+bool streamoo_http_stream_dispose(streamoo_http_stream_t *s){assert(s->closing);if(tick-s->stopped<40)return false;assert(!output_live);reader_live=false;heap_caps_free(s);return true;}
 esp_err_t streamoo_decoder_open(streamoo_codec_t codec,streamoo_decoder_t **d){assert(codec==(flac_case?STREAMOO_CODEC_FLAC:STREAMOO_CODEC_MP3)&&ring_epoch>decoder_epoch);decoder_epoch=ring_epoch;*d=heap_caps_calloc(1,sizeof **d,0);return ESP_OK;}
 void streamoo_decoder_close(streamoo_decoder_t *d){heap_caps_free(d);}
 esp_err_t streamoo_decoder_process(streamoo_decoder_t *d,uint8_t *in,size_t n,bool eos,uint8_t *pcm,size_t cap,streamoo_decode_result_t *r){(void)d;(void)in;(void)n;(void)eos;(void)pcm;(void)cap;(void)r;if(profile_test){now+=125000;*r=(streamoo_decode_result_t){.consumed=n,.produced=16384};}return ESP_OK;}
@@ -140,6 +152,23 @@ void vTaskDelay(unsigned ms){
  if(s.metering.spectrum_valid)assert(s.metering.generation==s.generation&&s.metering.bands[0]==12345);
  if(s.metering.levels.valid){assert(s.metering.generation==s.generation);assert(s.metering.levels.rms[0]==1234);}
 
+ if(memory_retry_test){
+  if(tick==1){online=true;ap=false;assert(streamoo_player_select(NULL,&(streamoo_ui_select_command_t){11,1}));}
+  if(tick==2)assert(s.phase==STREAMOO_PLAYER_RETRY&&!opens&&!allocations&&!ring_storage&&ring_attempts==1);
+  if(tick==100)assert(!opens&&!allocations);
+  if(tick==210)assert(s.phase==STREAMOO_PLAYER_RETRY&&opens==1&&http_failures==1&&!allocations&&!ring_storage);
+  if(tick==650){assert(s.phase==STREAMOO_PLAYER_PLAYING&&output_live&&opens==2&&ring_attempts==3);assert(streamoo_player_set_playing(false));}
+  if(tick==720){assert(!output_live&&!reader_live&&!allocations&&!ring_storage&&closes==1);longjmp(completed,1);}
+  return;
+ }
+ if(pending_cancel_test){
+  if(tick==1){online=true;ap=false;assert(streamoo_player_select(NULL,&(streamoo_ui_select_command_t){11,1}));}
+  if(tick==9){assert(reader_live&&ring_storage&&!output_live&&!decoder_epoch);assert(streamoo_player_set_playing(false));}
+  if(tick==70){assert(!reader_live&&!ring_storage&&!allocations);assert(streamoo_player_set_playing(true));}
+  if(tick==80){assert(reader_live&&ring_storage&&!output_live);online=false;}
+  if(tick==150){assert(!reader_live&&!ring_storage&&!allocations&&!decoder_epoch);longjmp(completed,1);}
+  return;
+ }
  if(logging_test||bitrate_test){
   if(tick==1){online=true;ap=false;assert(streamoo_player_select(NULL,&(streamoo_ui_select_command_t){11,1}));}
   if(tick==1600){
@@ -214,7 +243,7 @@ void vTaskDelay(unsigned ms){
  if(tick==340)catalog=&second;
  if(tick==420){if(delivery_test)assert(strstr(delivery_log,"body_kbps=192 rx_age_ms=125 read_max_us=250000 push_wait_max_us=5000 log_step_max_us=123000 wait_empty=7 wait_busy=3"));if(profile_test)assert(strstr(perf_log,"codec_max=125000us")&&strstr(perf_log,"block_max=125000us")&&strstr(buffers_log,"pcm_at_max=16384")&&strstr(perf_log,"backend="));assert(!s.running&&!s.station_id&&!output_live&&opens==3&&closes==3&&!allocations&&first.refs==0&&reordered.refs==0);longjmp(completed,1);}
 }
-int main(int argc,char **argv){assert(streamoo_player_reserve(false,1500)==8192);assert(streamoo_player_reserve(true,1500)==93750);assert(streamoo_player_reserve(true,0)==65536);assert(streamoo_player_reserve(true,1)==32768);assert(streamoo_player_reserve(true,UINT32_MAX)==196608);manual=argc>1?atoi(argv[1]):0;flac_case=manual==10;profile_test=manual==11;delivery_test=manual==13;release_test=manual==17||manual==18;release_fault=manual==18;logging_test=manual==14||release_test;bitrate_test=manual==15||manual==16;bitrate_header=manual==16;transport_eof_test=manual==12;disable_meter=manual==3;wrong_meter_generation=manual==4;web_commands=manual==5;web_retry=manual==6;if(manual>=7&&manual<=9){boot=manual;fixture_last=manual==9?99:11;fixture_autoplay=manual==8;}if(manual>=3)manual=0;assert(streamoo_player_start(50)==ESP_OK);assert(!streamoo_player_select(NULL,&(streamoo_ui_select_command_t){11,99}));assert(first.refs==0);if(!setjmp(completed))actor(NULL);return 0;}
+int main(int argc,char **argv){assert(streamoo_player_reserve(false,1500)==8192);assert(streamoo_player_reserve(true,1500)==93750);assert(streamoo_player_reserve(true,0)==65536);assert(streamoo_player_reserve(true,1)==32768);assert(streamoo_player_reserve(true,UINT32_MAX)==196608);manual=argc>1?atoi(argv[1]):0;fragmented_test=manual==19;memory_retry_test=manual==20;pending_cancel_test=manual==21;flac_case=manual==10;profile_test=manual==11;delivery_test=manual==13;release_test=manual==17||manual==18;release_fault=manual==18;logging_test=manual==14||release_test;bitrate_test=manual==15||manual==16;bitrate_header=manual==16;transport_eof_test=manual==12;disable_meter=manual==3;wrong_meter_generation=manual==4;web_commands=manual==5;web_retry=manual==6;if(manual>=7&&manual<=9){boot=manual;fixture_last=manual==9?99:11;fixture_autoplay=manual==8;}if(manual>=3)manual=0;assert(streamoo_player_start(50)==ESP_OK);assert(!streamoo_player_select(NULL,&(streamoo_ui_select_command_t){11,99}));assert(first.refs==0);if(!setjmp(completed))actor(NULL);return 0;}
 '''
 class NetworkPlayerTests(unittest.TestCase):
  def run_case(self,mode):
@@ -226,7 +255,7 @@ class NetworkPlayerTests(unittest.TestCase):
     (base/name).write_text(body)
    (base/'test.c').write_text(HARNESS)
    includes=['-I'+str(base)]+['-Icomponents/'+n+'/include' for n in ('spectrum','metering','levels','player','configuration','stations','network','streaming','decoder','compressed_source','pcm_adapter','pcm','audio_gain','audio_output','ui','ui_widgets','input','graphics','text')]
-   subprocess.run(['cc','-std=c11','-Wall','-Wextra','-Werror',*(['-DSTREAMOO_TEST_RELEASE'] if mode in (17,18) else []),*os.environ.get('STREAMOO_PLAYER_SANITIZE','').split(),*includes,str(base/'test.c'),'components/player/streamoo_player.c','components/pcm/streamoo_pcm.c','components/audio_gain/streamoo_audio_gain.c','-o',str(base/'player')],cwd=ROOT,check=True)
+   subprocess.run(['cc','-std=c11','-Wall','-Wextra','-Werror',*(['-DSTREAMOO_TEST_RELEASE'] if mode in (17,18,20,21) else []),*os.environ.get('STREAMOO_PLAYER_SANITIZE','').split(),*includes,str(base/'test.c'),'components/player/streamoo_player.c','components/pcm/streamoo_pcm.c','components/audio_gain/streamoo_audio_gain.c','-o',str(base/'player')],cwd=ROOT,check=True)
    subprocess.run([str(base/'player'),str(mode)],check=True,timeout=10)
 
  def test_actor_ap_gate_generation_switch_cancel_retry_and_removed_station(self):self.run_case(0)
@@ -259,3 +288,7 @@ class NetworkPlayerTests(unittest.TestCase):
 
  def test_release_has_no_periodic_uart_and_preserves_pcm(self):self.run_case(17)
  def test_release_i2s_fault_detection_is_independent_of_uart(self):self.run_case(18)
+
+ def test_pcm_ring_reserved_before_fragmenting_reader_across_station_changes(self):self.run_case(19)
+ def test_pcm_reservation_failure_and_http_open_failure_retry_without_leaks(self):self.run_case(20)
+ def test_reserved_pcm_freed_on_stop_and_network_loss_before_codec_headers(self):self.run_case(21)

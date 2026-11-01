@@ -231,3 +231,6 @@ Przegląd kodu, normalny cichy profil i testy sprzętowe opt-in:
 `RELEASE_REVIEW.md`, `adr/0099-release-diagnostics-tests-and-license-review.md`.
 Możliwość nadania MIT, ograniczenia zależności i prawa do fontu PL:
 `LICENSING_REVIEW.md`.
+
+Błąd alokacji ciągłego PCM po HTTP200 i rezerwacja przed readerem/TLS:
+`adr/0100-reserve-contiguous-pcm-before-http.md`.

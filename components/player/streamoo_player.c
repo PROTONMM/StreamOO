@@ -390,14 +390,29 @@ static void task(void *context) {
       current.rate = 0;
       current.title[0] = 0;
       ++current.generation;
-      current.error =
-          station
-              ? streamoo_http_stream_open((const char *)station->url, &session)
-              : ESP_ERR_INVALID_STATE;
+      const char *connect_stage="http_open";
+      current.error=ESP_ERR_INVALID_STATE;
+      if(station) {
+        /* Reserve the ISR's contiguous internal ring before the reader can
+         * allocate TLS/Wi-Fi buffers. Total free RAM does not guarantee that
+         * a 61568-byte contiguous block will still exist after HTTP headers. */
+        storage=heap_caps_calloc(32,sizeof *storage,MALLOC_CAP_INTERNAL|MALLOC_CAP_8BIT);
+        if(storage)current.error=streamoo_http_stream_open((const char *)station->url,&session);
+        else {
+          connect_stage="pcm_memory";
+          current.error=ESP_ERR_NO_MEM;
+          ESP_LOGW("player","PCM ring allocation failed: bytes=%zu internal_free=%zu largest=%zu",
+            32*sizeof *storage,heap_caps_get_free_size(MALLOC_CAP_INTERNAL|MALLOC_CAP_8BIT),
+            heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL|MALLOC_CAP_8BIT));
+        }
+      }
       if (current.error != ESP_OK) {
+        /* No session owns this reservation when open fails. */
+        heap_caps_free(storage);
+        storage=NULL;
         ESP_LOGW("player",
-                 "Connect failed gen=%" PRIu64 " station=%016" PRIx64 " name=\"%s\" stage=http_open error=%s(%d)",
-                 current.generation,current.station_id,name,esp_err_to_name(current.error),current.error);
+                 "Connect failed gen=%" PRIu64 " station=%016" PRIx64 " name=\"%s\" stage=%s error=%s(%d)",
+                 current.generation,current.station_id,name,connect_stage,esp_err_to_name(current.error),current.error);
         current.phase = STREAMOO_PLAYER_RETRY;
         retry_at = now + (int64_t)backoff * 1000000;
         backoff = backoff < 8 ? backoff * 2 : 15;
@@ -414,10 +429,9 @@ static void task(void *context) {
           (queued >= reserve || (info.ended && queued))) {
         flac_refill=false;profile=(decode_profile_t){.flac=info.codec==STREAMOO_CODEC_FLAC};logged_underflows=0;
         profile.delivery_at=esp_timer_get_time();profile.delivery_bytes=info.received_bytes;
-        /* Reserve the contiguous DMA/ISR ring before codec allocations can
-         * fragment internal RAM. Large decode scratch belongs in PSRAM. */
+        /* The ring is already reserved before HTTP/TLS. Large decode scratch
+         * belongs in PSRAM; neither allocation happens in the ISR. */
         failure_stage = "pcm_memory";
-        storage = heap_caps_calloc(32,sizeof *storage,MALLOC_CAP_INTERNAL|MALLOC_CAP_8BIT);
         block = heap_caps_calloc(1,sizeof *block,MALLOC_CAP_INTERNAL|MALLOC_CAP_8BIT);
         pump = heap_caps_calloc(1,sizeof *pump,MALLOC_CAP_SPIRAM|MALLOC_CAP_8BIT);
         if(!pump||!storage||!block){
