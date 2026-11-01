@@ -43,6 +43,8 @@ Wynik pomiarów HTTP/OLED i Wi-Fi bez modem sleep dla radia:
 `adr/0090-wifi-awake-for-live-audio.md`.
 Kontrolowane długie próbki FLAC w LAN, także bez nagłówka pliku:
 `FLAC_LAN_TEST.md`, `adr/0091-controlled-lan-flac-fixtures.md`.
+Wyniki LAN i ograniczenie okresowych logów playera do jednej linii na iterację:
+`adr/0092-periodic-player-log-staging.md`.
 
 Etap 04b i canvas: `adr/0004-independent-4bpp-canvas.md`.
 

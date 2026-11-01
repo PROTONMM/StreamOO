@@ -1,6 +1,11 @@
 # ADR0091 — po teście modem sleep: kontrolowane próbki FLAC w LAN
 
-Data: 2026-11-01. Status: narzędzie hostowe gotowe; odbiór S3 OPEN.
+Data: 2026-11-01. Status: narzędzie i krótkie próby S3 wykonane; dłuższy odbiór OPEN.
+
+Aktualizacja: log2cc3711b/b2431e5 obejmuje3 stacje LAN, bez Recover/Reject.
+LAN16 i zwykły24bit low0, headerless jeden low przy pełnym źródle po logach.
+Próby~55/78/165s, bez nowego potwierdzenia odsłuchu. Analiza i dalsza
+poprawka diagnostyki w ADR0092; nie uznawać testu za zaliczenie całego radia.
 
 ## Nowy log
 

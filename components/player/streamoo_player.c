@@ -138,7 +138,7 @@ typedef struct {
   size_t pcm_max_bytes,pcm_at_max;
   size_t compressed_min,compressed_max;
   uint32_t pcm_min,pcm_max;
-  uint32_t log_max_us;
+  uint32_t log_step_max_us;
   int64_t delivery_at;
   uint64_t delivery_bytes;
   bool levels_seen,flac;
@@ -153,9 +153,9 @@ static void log_delivery(decode_profile_t *p, const streamoo_http_stream_info_t 
    * delay the next HTTP read, so interpret rx_age alongside push_wait_max. */
   ESP_LOGI("player","Delivery: interval_ms=%" PRIu64 " rx_delta=%" PRIu64
     " body_kbps=%" PRIu64 " rx_age_ms=%" PRId64 " read_max_us=%" PRIu64
-    " push_wait_max_us=%" PRIu64 " log_max_us=%" PRIu32 " wait_empty=%" PRIu32 " wait_busy=%" PRIu32,
+    " push_wait_max_us=%" PRIu64 " log_step_max_us=%" PRIu32 " wait_empty=%" PRIu32 " wait_busy=%" PRIu32,
     interval/1000,bytes,interval?bytes*8000/interval:0,age,i->read_max_us,
-    i->push_wait_max_us,p->log_max_us,i->source_empty_waits,i->source_busy_waits);
+    i->push_wait_max_us,p->log_step_max_us,i->source_empty_waits,i->source_busy_waits);
   p->delivery_at=now;p->delivery_bytes=i->received_bytes;
 }
 static uint32_t duration_us(int64_t start){
@@ -173,23 +173,32 @@ static esp_err_t decode(void *context,uint8_t *in,size_t n,bool eos,uint8_t *pcm
     p->pcm_after_max=streamoo_pcm_count(p->ring);p->pcm_at_max=r->produced;}
   return error;
 }
-static void log_decode_profile(decode_profile_t *p,const streamoo_live_decode_t *s,bool refill,bool flow){
-  if(!s)return;
+static void log_decode_perf(const decode_profile_t *p){
   ESP_LOGI("player","Decode perf: codec_max=%" PRIu32 "us block_max=%" PRIu32
     "us codec_total=%" PRIu64 "us calls=%" PRIu64 " backend=%s avg_call=%" PRIu64 "us",
     p->codec_max_us,p->block_max_us,p->codec_us,p->codec_calls,
     p->flac?streamoo_flac_backend_name():"espressif",p->codec_calls?p->codec_us/p->codec_calls:0);
+}
+static void log_decode_buffers(const decode_profile_t *p,const streamoo_live_decode_t *s){
   ESP_LOGI("player","Decode buffers: pcm_at_max=%zu pcm_max=%zu ring_at_max=%" PRIu32 "/%" PRIu32
     " src_wait=%" PRIu64 " budget_yield=%" PRIu64 " reads=%" PRIu64,
     p->pcm_at_max,p->pcm_max_bytes,
     p->pcm_before_max,p->pcm_after_max,s->source_waits,s->work_yields,s->source_calls);
-  if(flow)ESP_LOGI("player","Decode flow: fetched=%" PRIu64 " produced=%" PRIu64 " cache=%zu input=%zu refill=%u",
-    s->fetched_total,s->produced_total,s->pcm_bytes-s->pcm_cursor,sizeof s->input,(unsigned)refill);
+}
+static void log_buffer_interval(decode_profile_t *p){
   if(p->levels_seen){
     ESP_LOGI("player","Buffer interval: compressed_min=%zu compressed_max=%zu PCM_min=%" PRIu32 " PCM_max=%" PRIu32,
       p->compressed_min,p->compressed_max,p->pcm_min,p->pcm_max);
     p->levels_seen=false;
   }
+}
+static void log_decode_profile(decode_profile_t *p,const streamoo_live_decode_t *s,bool refill){
+  if(!s)return;
+  log_decode_perf(p);
+  log_decode_buffers(p,s);
+  ESP_LOGI("player","Decode flow: fetched=%" PRIu64 " produced=%" PRIu64 " cache=%zu input=%zu refill=%u",
+    s->fetched_total,s->produced_total,s->pcm_bytes-s->pcm_cursor,sizeof s->input,(unsigned)refill);
+  log_buffer_interval(p);
 }
 static void task(void *context) {
   (void)context;
@@ -209,6 +218,8 @@ static void task(void *context) {
   bool retiring = false, flac_refill=false;
   uint32_t sequence = 0, reader_hwm = 0, logged_underflows = 0;
   int64_t retry_at = 0, log_at = 0, fade_until = 0;
+  uint64_t log_generation=UINT64_MAX;
+  unsigned log_step=0;
   unsigned backoff = 1;
   const char *failure_stage = "none";
   streamoo_player_state_t current;
@@ -523,7 +534,7 @@ static void task(void *context) {
                  pump ? (unsigned)pump->observed.channels : 0,
                  pump ? (unsigned)pump->observed.bits : 0,current.station_id,name);
         log_transport(&info,current.generation);
-        log_decode_profile(&profile,pump,flac_refill,true);
+        log_decode_profile(&profile,pump,flac_refill);
         if (pump)
           ESP_LOGW("player",
                    "Decode diag gen=%" PRIu64
@@ -559,66 +570,88 @@ static void task(void *context) {
     target_gain = gain;
     portEXIT_CRITICAL(&lock);
   }
-    if (now - log_at >= 5000000) {
+    /* Periodic UART output is synchronous. Service PCM between individual
+     * lines rather than blocking its producer for the whole report. Never
+     * carry a partially printed report into another stream generation. */
+    if(log_generation!=current.generation){log_generation=current.generation;log_step=0;}
+    if (log_step || now - log_at >= 5000000) {
       int64_t log_started=esp_timer_get_time();
-      streamoo_audio_stats_t audio = {0};
-      if (output)
-        streamoo_audio_output_stats(output, &audio);
       portENTER_CRITICAL(&lock);
       streamoo_pcm_stats_t pcm = stats;
       portEXIT_CRITICAL(&lock);
-      ESP_LOGI("player",
-               "phase=%u gen=%" PRIu64 " rate=%" PRIu32
-               " compressed=%u PCM=%u max_fill=%" PRIu32 "us invalid=%" PRIu32
-               " low=%" PRIu32 " hard=%" PRIu32 " starts=%" PRIu32
-               " stack_hwm=%u reader_hwm=%u",
-               (unsigned)current.phase, current.generation, current.rate,
-               session ? (unsigned)streamoo_http_stream_queued(session) : 0,
-               output ? (unsigned)streamoo_pcm_count(&ring) : 0,
-               audio.max_fill_us, audio.invalid_buffers, pcm.underflows,
-               pcm.hard_underflows, pcm.restarts,
-               (unsigned)uxTaskGetStackHighWaterMark(NULL),
-               (unsigned)reader_hwm);
-      /* Delivery replaces the periodic flow line rather than adding another
-       * UART line while the PCM producer is not being serviced. */
-      log_decode_profile(&profile,pump,flac_refill,false);
-      if(session && pump) {
-        streamoo_http_stream_info_t delivery={0};
-        if(streamoo_http_stream_info(session,&delivery))log_delivery(&profile,&delivery);
+      switch(log_step){
+      case 0: {
+        log_at=now;
+        streamoo_audio_stats_t audio = {0};
+        if (output)
+          streamoo_audio_output_stats(output, &audio);
+        ESP_LOGI("player",
+                 "phase=%u gen=%" PRIu64 " rate=%" PRIu32
+                 " compressed=%u PCM=%u max_fill=%" PRIu32 "us invalid=%" PRIu32
+                 " low=%" PRIu32 " hard=%" PRIu32 " starts=%" PRIu32
+                 " stack_hwm=%u reader_hwm=%u",
+                 (unsigned)current.phase, current.generation, current.rate,
+                 session ? (unsigned)streamoo_http_stream_queued(session) : 0,
+                 output ? (unsigned)streamoo_pcm_count(&ring) : 0,
+                 audio.max_fill_us, audio.invalid_buffers, pcm.underflows,
+                 pcm.hard_underflows, pcm.restarts,
+                 (unsigned)uxTaskGetStackHighWaterMark(NULL),
+                 (unsigned)reader_hwm);
+        if (output && (audio.invalid_buffers || audio.max_fill_us >= 5000)) {
+          failure_stage = "i2s_stats";
+          current.error = ESP_FAIL;
+        }
+        break;
       }
-      if (meter) {
-        streamoo_metering_state_t measurement = {0};
-        streamoo_metering_state(meter, &measurement);
-        ESP_LOGI("player", "meters valid=%u windows=%" PRIu64
-                 " gaps=%" PRIu32 " drop=%" PRIu32 " max_work=%" PRIu32
-                 "us stack_hwm=%" PRIu32 " core_samples=%" PRIu32 "/%" PRIu32
-                 " rms=%u/%u peak=%u/%u",
-                 (unsigned)measurement.levels.valid, measurement.levels.windows,
-                 measurement.levels.discontinuities, pcm.tap_drops,
-                 measurement.max_work_us, measurement.stack_hwm,
-                 measurement.core_samples[0], measurement.core_samples[1],
-                 (unsigned)measurement.levels.rms[0], (unsigned)measurement.levels.rms[1],
-                 (unsigned)measurement.levels.peak[0], (unsigned)measurement.levels.peak[1]);
+      case 1:
+        if(pump)log_decode_perf(&profile);
+        break;
+      case 2:
+        if(pump)log_decode_buffers(&profile,pump);
+        break;
+      case 3:
+        log_buffer_interval(&profile);
+        break;
+      case 4:
+        if(session && pump) {
+          streamoo_http_stream_info_t delivery={0};
+          if(streamoo_http_stream_info(session,&delivery))log_delivery(&profile,&delivery);
+        }
+        break;
+      case 5:
+        if (meter) {
+          streamoo_metering_state_t measurement = {0};
+          streamoo_metering_state(meter, &measurement);
+          ESP_LOGI("player", "meters valid=%u windows=%" PRIu64
+                   " gaps=%" PRIu32 " drop=%" PRIu32 " max_work=%" PRIu32
+                   "us stack_hwm=%" PRIu32 " core_samples=%" PRIu32 "/%" PRIu32
+                   " rms=%u/%u peak=%u/%u",
+                   (unsigned)measurement.levels.valid, measurement.levels.windows,
+                   measurement.levels.discontinuities, pcm.tap_drops,
+                   measurement.max_work_us, measurement.stack_hwm,
+                   measurement.core_samples[0], measurement.core_samples[1],
+                   (unsigned)measurement.levels.rms[0], (unsigned)measurement.levels.rms[1],
+                   (unsigned)measurement.levels.peak[0], (unsigned)measurement.levels.peak[1]);
+        }
+        break;
+      case 6:
+        if(meter) {
+          streamoo_metering_state_t spectrum={0};streamoo_metering_state(meter,&spectrum);
+          ESP_LOGI("player","FFT backend=%s available=%u valid=%u frames=%" PRIu32
+                   " skipped=%" PRIu32 " gaps=%" PRIu32 " last_fft=%" PRIu32
+                   "us avg_fft=%" PRIu64 "us max_fft=%" PRIu32 "us",
+                   streamoo_spectrum_backend(),
+                   (unsigned)spectrum.spectrum_available,(unsigned)spectrum.spectrum_valid,
+                   spectrum.fft_windows,spectrum.fft_skipped,spectrum.fft_gaps,
+                   spectrum.last_fft_us,
+                   spectrum.fft_windows?spectrum.total_fft_us/spectrum.fft_windows:0,
+                   spectrum.max_fft_us);
+        }
+        break;
       }
-      if(meter) {
-        streamoo_metering_state_t spectrum={0};streamoo_metering_state(meter,&spectrum);
-        ESP_LOGI("player","FFT backend=%s available=%u valid=%u frames=%" PRIu32
-                 " skipped=%" PRIu32 " gaps=%" PRIu32 " last_fft=%" PRIu32
-                 "us avg_fft=%" PRIu64 "us max_fft=%" PRIu32 "us",
-                 streamoo_spectrum_backend(),
-                 (unsigned)spectrum.spectrum_available,(unsigned)spectrum.spectrum_valid,
-                 spectrum.fft_windows,spectrum.fft_skipped,spectrum.fft_gaps,
-                 spectrum.last_fft_us,
-                 spectrum.fft_windows?spectrum.total_fft_us/spectrum.fft_windows:0,
-                 spectrum.max_fft_us);
-      }
-      if (output && (audio.invalid_buffers || audio.max_fill_us >= 5000)) {
-        failure_stage = "i2s_stats";
-        current.error = ESP_FAIL;
-      }
-      log_at = now;
+      log_step=(log_step+1)%7;
       uint32_t log_us=duration_us(log_started);
-      if(log_us>profile.log_max_us)profile.log_max_us=log_us;
+      if(log_us>profile.log_step_max_us)profile.log_step_max_us=log_us;
     }
     vTaskDelay(pdMS_TO_TICKS(5) ? pdMS_TO_TICKS(5) : 1);
   }

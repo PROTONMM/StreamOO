@@ -1,5 +1,19 @@
 # Punkt wznowienia StreamOO
 
+## Najnowsze — jedna okresowa linia logu między uzupełnieniami PCM / ADR0092
+
+Log2cc3711b: b2431e5/dr, LAN16~55s low0, LAN24~78s low0,
+LAN24 headerless~165s low1; bez Recover/Reject, wait_empty0. Publiczny
+live w tym logu10 low/~50s. Jedyny low LAN przy prawie pełnym ring/cache,
+po okresowym pakiecie logów. Odsłuch OPEN, próby krótsze niż300s.
+Model prawdziwego aktora/fill co5ms, decode1ms i UART20ms/linia odtwarza
+stary niedobór; po rozdzieleniu logów low0/hard0/starts1. Teraz jedna
+okresowa linia na iterację z obsługą PCM pomiędzy, raport nadal co~5s.
+Nowe log_step_max_us mierzy jeden krok; Wi-Fi/bufory/dekoder/FFT/I2S bez zmian.
+Odbiór: LAN24 i headerless po3min, potem publiczny FLAC z UART.
+441 testów hostowych, ASan/UBSan regresji UART i native dr build PASS.
+Agent nie flashował; źródło CRC/WAN/TLS/ICY nadal OPEN.
+
 ## Najnowsze — kontrolowany FLAC LAN, bez zmiany firmware / ADR0091
 
 Log45424bc0 potwierdza b2431e5/dr/PS_NONE, lecz50 low w~3min i1 Recover.

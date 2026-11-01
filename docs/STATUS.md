@@ -1,5 +1,23 @@
 # Status implementacji
 
+## Najnowsze — LAN zawęża problem; diagnostyka rozłożona w czasie / ADR0092 / 2026-11-01
+
+Log2cc3711b/b2431e5/dr: LAN16~55s i LAN24~78s bez low, headerless~165s
+z1 low. Brak Recover/Reject, wait_empty0, odczyty HTTP do23,346ms.
+Publiczny live w tym samym logu10 low/~50s. To krótkie próby, bez nowego
+potwierdzenia odsłuchu. Sam bootstrap i ciężki FLAC działają na tych danych.
+Jedyny low LAN po pakiecie logów przy compressed257024/cache23576.
+
+Kontrolowany test prawdziwego ownera/fill z I2S5ms, decode1ms/blok i
+log20ms/linia odtwarza niedobory starego pakietu7 linii. Zmiana: najwyżej
+jedna okresowa linia na iterację, PCM obsługiwany pomiędzy. Bez nowego
+taska/alokacji, bez zmian Wi-Fi/buforów/dekodera/I2S. Delivery pokazuje
+log_step_max_us zamiast starego maksimum całego pakietu.
+Ten sam test po zmianie low0/hard0/starts1; odbiór na S3 OPEN.
+441 testów hostowych, ASan/UBSan regresji UART i native dr/ESP-IDF6.1
+build PASS. Agent nie flashował. Przyczyna problemów WAN/TLS/ICY
+i wcześniejszych CRC nadal OPEN; szczegóły/procedura ADR0092.
+
 ## Najnowsze — Wi-Fi NONE nie usunęło niedoborów; test LAN / ADR0091 / 2026-11-01
 
 Log45424bc0, b2431e5/ELFf76a8ebd/dr, potwierdza PS_NONE/pm0, ale50 low,

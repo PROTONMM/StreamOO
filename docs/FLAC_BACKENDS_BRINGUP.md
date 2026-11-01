@@ -1,5 +1,12 @@
 # Porównanie dekoderów FLAC na ESP32-S3
 
+ADR0092: kontrolowany LAN ma0 low dla16bit/~55s i24bit/~78s oraz1 low
+headerless/~165s przy pełnym źródle, bez CRC/empty. Nowy firmware rozkłada
+okresowe logi na pojedyncze linie między uzupełnianiem PCM. Odtworzona
+regresja w modelu UART20ms/linia poprawiona; to nie deklaracja naprawy
+publicznego live. Odbiór: LAN24/headerless po3min, potem publiczny FLAC.
+Delivery ma teraz log_step_max_us, nie max czasu całego pakietu.
+
 ADR0091: PS_NONE potwierdzony na b2431e5, ale50 low/1 Recover w~3min.
 Kolejny test używa znanych plików LAN, bez zmiany firmware. Gotowe media
 i CSV w build/flac-lan-20261101, procedura [FLAC_LAN_TEST](FLAC_LAN_TEST.md).
