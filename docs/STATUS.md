@@ -1,5 +1,25 @@
 # Status implementacji
 
+## Najnowsze — TCP23040 bez niedoborów przez prawie12min / 2026-11-01
+
+Log0dcbb56c/dcd5279/ELF742f9352 potwierdza hardware AES/SHA, early probe
+PASS, TCP23040/mailbox18. Publiczny FLAC gen4 od pierwszego PLAYING15,969s
+do728,169s: low0/hard0/starts1, invalid0, wait_empty0; brak Underrun,
+Recover/Reject i retry po starcie odtwarzania.143 snapshoty/około11min52s.
+Po pierwszym interwale PCM_min>=22, compressed_min>=48794B; ring zwykle
+pełny256KiB. To pozytywny odbiór liczników, nie odsłuch (użytkownik nie
+może teraz słuchać) ani potwierdzenie TLS po zamknięciu I2S.
+
+CPU średnio38,38%/44,85%, maksima47,6%/53,9%, fill max91us. RAM internal
+podczas grania23423..51891B, historyczne minimum11344B, largest minimum
+12800B. PSRAM minimum wolnego6732956B. Nie zwiększamy dalej TCP w obecnym
+układzie pamięci; zachowujemy działający profil23040. Większe warianty
+wymagają osobnego budżetu pamięci, również przy WWW/HLS/przełączaniu.
+3 początkowe TLS -0x2700, wszystkie synced0; później gra bez retry.
+Końcowy samotny ESP-ROM bez przyczyny resetu — nie diagnozujemy awarii.
+Dokumentacja/ADR0095–0096 uzupełnione, kod firmware bez zmian; diff check PASS.
+Nie powtarzano build/testów kodu przy zapisie wyniku sprzętowego.
+
 ## Najnowsze — wynik early init; kolejna próba hardware + TCP23040 / 2026-11-01
 
 Loge76bbcb5/39b1c2b/ELFe908f17b:3 osobne starty, każdy potwierdza early

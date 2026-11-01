@@ -134,7 +134,7 @@ Inne okna/metadata uniemożliwiają dokładne odejmowanie, lecz utrzymujący
 się deficyt z rosnącym wait_empty uzasadnia próbę zwiększenia okna TCP.
 CPU pierwszej sesji średnio46,73%/46,03%; maksymalny odczyt HTTP146196us,
 max pojedynczego logu17772us (w trzeciej sesji21351us). Brak dowodu stałego
-nasycenia CPU. Zapas internal: minimum40324B, największy obserwowany blok
+nasycenia CPU. Zapas internal: minimum40024B, największy obserwowany blok
 pod obciążeniem31744B; zwiększenie TCP nadal wymaga obserwacji pamięci.
 
 5 początkowych błędów TLS -0x2700/code9984/flags0:4 przed SNTP,1 w drugiej
@@ -159,3 +159,8 @@ Native ESP-IDF6.1/dr hardware + early init + TCP23040/mailbox18 build PASS,
 binarka1573504B. Wrapper sprawdził wygenerowany nagłówek i backend;
 20 testów wrappera PASS, git diff --check PASS. Pełnej suity462 nie
 powtarzano przy zmianie dokumentacji/istniejącego profilu kompilacji.
+
+Wynik następnej próby0dcbb56c/TCP23040: hardware i early probe potwierdzone,
+około11min52s PLAYING bez low/hard/Recover/Reject, wait_empty0. Internal
+minimum11344B — zachowujemy23040 bez dalszego zwiększania. Szczegóły
+odbioru liczników w ADR0095; odsłuch i TLS po zamknięciu I2S nadal OPEN.

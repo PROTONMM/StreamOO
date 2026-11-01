@@ -1,5 +1,11 @@
 # Porównanie dekoderów FLAC na ESP32-S3
 
+Wynik0dcbb56c (dcd5279/hardware crypto/early init/TCP23040):~11min52s
+publicznego FLAC bez low/hard/Recover/Reject, wait_empty0, starts1.
+Zachowaj ten profil; kolejne logi/soak, WWW i zmiany źródła bez nowej
+kompilacji. Odsłuch chwilowo niedostępny, nie zaliczony. Internal minimum
+11344B/largest minimum12800B — nie zwiększaj teraz TCP. Szczegóły ADR0095.
+
 Najnowszy wynik e76bbcb5: early init/hardware crypto działa przy starcie,
 użytkownik potwierdza szybsze łączenie; niedobory pozostają (body~1,4Mbps,
 audio~1,5..1,7Mbps). Teraz zachowaj hardware i zwiększ tylko okno TCP:

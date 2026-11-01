@@ -97,3 +97,52 @@ długości sesji i utworów. Jeśli brak poprawy, hipotezy TCP nie uznawać za
 potwierdzoną. Osobno powtórzyć LAN24/headerless oraz LAN→TLS/HLS po I2S.
 Rollback eksperymentu: ten sam wrapper z `--tcp-window 5760` przywraca
 mailbox6 dla MSS1440; nie wymaga kasowania NVS ani playlisty.
+
+## Wynik na S3: hardware/early init + TCP23040
+
+Załącznik0dcbb56c-2b34-4e29-b36c-0ffd02db6b51, SHA256
+`2f7e1f1b3f16a760f658a1363bac2cd3312213bf7d00d4e1bc6f29b72c9473d8`.
+Firmware dcd5279/ELF742f9352: hardware AES/SHA, early probe PASS z ADR0096,
+TCP23040/mailbox18/MSS1440. Jedna stacja TEST FLAC native lossless,
+dr_flac0.13.4; brak zmiany dekodera/ring/PCM/preroll względem e76bbcb5.
+
+Gen1..3 kończą TLS -0x2700/code9984/flags0 przy UTC3/5/7 i synced0.
+Gen4 łączy12,929s, STREAMINFO15,439s;143 snapshoty PLAYING15,969..728,169s
+(712,200s,11min52,2s). Każdy ma low0/hard0/starts1 i invalid0. Zero
+ostrzeżeń Underrun, Recover, Reject i błędów sesji po udanym gen4;
+wait_empty pozostaje0. Nie ma wyraźnego dowodu badanej poprzednio korupcji
+w tym logu, ale brak Recover nie ustala przyczyny wcześniejszych CRC.
+
+Buffer interval: pierwszy zawiera PCM_min0 podczas startu; po nim PCM_min
+co najmniej22/32 bloków (110ms), compressed_min co najmniej48794B.
+compressed_max osiąga262144B w każdym interwale, ostatnie min249081B.
+Delivery body274..3213kbps, audio_kbps do1788, pod koniec1631. Przepływ
+body jest ograniczany przez pełny ring: średnia ani chwilowa wartość body
+nie mierzy wtedy maksymalnej przepustowości sieci. push_wait_max2,618375s
+i wait_busy577 przy pełnym wejściu nie oznaczają braku danych od serwera.
+HTTP read max1,163848s; bufor wystarczył do braku rebuffer w tym fragmencie.
+
+CPU71 interwałów: średnio38,38%/44,85%, maksima47,6%/53,9%. http_reader
+w70 raportach średnio13,17%/max19,1% jednego rdzenia, player38,69%/max44,9%.
+Fill max91us, codec_max41290us/block_max50406us. To nie pełne wykorzystanie
+CPU; podkreśla znaczenie dopływu/buforów w poprzednich niedoborach.
+
+RAM internal podczas grania23423..51891B, historyczne minimum11344B,
+najmniejszy raportowany largest12800B. Ostatni heap wolne48339B,
+minimum11344B/largest14336B. PSRAM minimum6732956B (~6,42MiB), largest
+6684672B. Nie sumować wolnego PSRAM z internal jako zamiennego budżetu
+TCP. Wzrost okna poprawił liczniki, lecz zapas internal jest już mały.
+Pozostawiamy23040B; nie eskalujemy bezpośrednio do32/64KiB. Większy
+profil wymaga osobnego pomiaru alokacji/PSRAM i ruchu WWW/TLS/HLS.
+
+W porównaniu z e76bbcb5 (hardware/early init/TCP5760,17/3/7 niedoborów
+w krótkich sesjach) wynik zdecydowanie wspiera hipotezę zbyt małego okna
+dla tej stacji/łącza. Live zawiera inne utwory, nie ma kontroli RTT ani
+naprzemiennego A/B na tym samym pliku, dlatego nie podajemy procentowego
+wzrostu przepustowości ani gwarancji dla wszystkich serwerów.
+
+Użytkownik wcześniej wykluczył teraz odsłuch: zaliczamy tylko obserwowane
+liczniki. Odsłuch, dłuższy soak, równoczesne WWW, zmiany stacji/STOP/PLAY
+i TLS po zamykaniu I2S nadal OPEN. Końcowy samotny ESP-ROM bez dalszego
+boot reason/backtrace nie pozwala ustalić przyczyny resetu. Kod bez zmian,
+nie wykonywano nowego build/testów firmware ani flash; diff check PASS.

@@ -1,5 +1,21 @@
 # Punkt wznowienia StreamOO
 
+## Najnowsze — hardware/early init/TCP23040: liczniki stabilne ~12min
+
+Log0dcbb56c,dcd5279/ELF742f9352: publiczny FLAC gen4 przez~11min52s
+PLAYING bez Underrun/Recover/Reject, low0/hard0/starts1, wait_empty0,
+invalid0. Ring zwykle256KiB, PCM_min>=22 po pierwszym interwale. Hardware
+AES/SHA i early probe PASS potwierdzone, TCP23040/mailbox18. Odsłuch
+nieoceniony — użytkownik teraz nie ma możliwości słuchania.
+
+Zachować profil, nie zwiększać dalej TCP bez osobnego planu pamięci:
+internal minimum11344B, largest minimum12800B, PSRAM min~6,42MiB.
+3 początkowe TLS -0x2700 przed SNTP pozostają, potem brak retry.
+Brak testu STOP/PLAY/zmian stacji i TLS po I2S. Następny odbiór: dalszy
+log/soak, WWW i zmiany źródła przy obserwacji internal minimum/largest;
+odsłuch dopiero gdy użytkownik będzie mógł. Nie wymaga nowej kompilacji.
+Wynik i szczegóły ADR0095; zapis dokumentacji, bez zmian kodu/build/flash.
+
 ## Najnowsze — early init szybciej łączy, niedobory pozostają
 
 Loge76bbcb5,39b1c2b/ELFe908f17b:3 starty z hardware AES/SHA, early probe
