@@ -142,7 +142,7 @@ bool streamoo_encoder_demo_draw(streamoo_encoder_demo_t *d, uint8_t *frame,
     s.visualization.peak[1]=s.visualization.rms[1];
 #endif
     if (d->imported_catalog && d->levels_valid &&
-        (d->ui.visualization != STREAMOO_VIS_SPECTRUM || d->levels.band_count)) {
+        (!streamoo_visualization_is_spectrum(d->ui.visualization) || d->levels.band_count)) {
         s.visualization = d->levels;
         s.visualization_valid = true;
     }
@@ -233,7 +233,7 @@ bool streamoo_encoder_demo_levels(streamoo_encoder_demo_t *d,
     if (model) {
         if(model->band_count>STREAMOO_VIS_MAX_BANDS)return false;
         for(unsigned b=0;b<model->band_count;++b)
-            if(model->bands[b]>32767)return false;
+            if(model->bands[b]>32767 || (b<STREAMOO_VIS_PEAK_BANDS && model->band_peaks[b]>32767))return false;
         for (unsigned ch=0; ch<2; ++ch)
             if (model->rms[ch]>32767 || model->peak[ch]>32767) return false;
     }

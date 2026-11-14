@@ -31,7 +31,7 @@ static bool levels_valid(const streamoo_visualization_model_t *model)
     for (unsigned ch = 0; ch < 2; ++ch)
         if (model->rms[ch] > 32767 || model->peak[ch] > 32767) return false;
     for (unsigned i = 0; i < model->band_count; ++i)
-        if (model->bands[i] > 32767) return false;
+        if (model->bands[i] > 32767 || (i<STREAMOO_VIS_PEAK_BANDS && model->band_peaks[i] > 32767)) return false;
     return true;
 }
 
@@ -45,8 +45,14 @@ static void decay_visualization(streamoo_visualization_model_t *model, uint64_t 
         model->rms[channel] = model->rms[channel] > fall ? model->rms[channel] - fall : 0;
         model->peak[channel] = model->peak[channel] > fall ? model->peak[channel] - fall : 0;
     }
-    for (unsigned band = 0; band < model->band_count; ++band)
+    const uint32_t peak_fall=(uint32_t)((elapsed_ms*32767u+1999u)/2000u);
+    for (unsigned band = 0; band < model->band_count; ++band) {
         model->bands[band] = model->bands[band] > fall ? model->bands[band] - fall : 0;
+        if(band<STREAMOO_VIS_PEAK_BANDS) {
+            uint16_t peak=model->band_peaks[band]>peak_fall ? model->band_peaks[band]-peak_fall:0;
+            model->band_peaks[band]=peak>model->bands[band] ? peak:model->bands[band];
+        }
+    }
 }
 
 bool streamoo_ui_update_home(streamoo_ui_t *ui, const streamoo_home_snapshot_t *s, uint64_t now)

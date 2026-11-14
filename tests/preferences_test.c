@@ -11,7 +11,7 @@ int main(int argc, char **argv)
     streamoo_preferences_value_t base={50,0}, a={51,0}, b={51,2};
     assert(streamoo_preferences_policy_init(&p,base));
     if (scenario==0) {
-        for (unsigned v=0;v<=100;++v) for (unsigned w=0;w<3;++w) {
+        for (unsigned v=0;v<=100;++v) for (unsigned w=0;w<4;++w) {
             uint8_t blob[8]; streamoo_preferences_value_t out;
             streamoo_preferences_value_t in={v,w};
             assert(streamoo_preferences_encode(in,blob,8));
@@ -60,7 +60,7 @@ int main(int argc, char **argv)
         assert(streamoo_preferences_due(&p,now+5000));
     } else {
         streamoo_preferences_policy_t old=p;
-        assert(!streamoo_preferences_observe(&p,(streamoo_preferences_value_t){50,3},100));
+        assert(!streamoo_preferences_observe(&p,(streamoo_preferences_value_t){50,4},100));
         assert(!memcmp(&old,&p,sizeof p));
         assert(!streamoo_preferences_policy_init(NULL,base));
         assert(!streamoo_preferences_due(NULL,0));

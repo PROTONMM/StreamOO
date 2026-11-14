@@ -16,5 +16,5 @@ bool streamoo_spectrum_stream_init(streamoo_spectrum_stream_t *);
 void streamoo_spectrum_stream_reset(streamoo_spectrum_stream_t *);
 bool streamoo_spectrum_stream_feed(streamoo_spectrum_stream_t *, const int32_t *,
                                    size_t frames, uint32_t sequence, bool calculate);
-/* Presentation -60..0dBFS (tone peak amplitude), not RMS/VU. */
+/* Shared presentation: -45..0dBFS, gamma2, tone peak amplitude reference. */
 uint16_t streamoo_spectrum_display_level(uint16_t linear_q15);

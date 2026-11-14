@@ -39,16 +39,19 @@ int main(int argc,char **argv){
   assert(streamoo_spectrum_stream_feed(s,samples+10*480,240,10,true));
   assert(!streamoo_spectrum_stream_feed(s,samples+11*480,240,11,true));
   assert(s->windows==1&&s->skipped==3);
- }else if(test==4){
+ }else if(test==4 || test==6){
   uint16_t previous=0;
-  for(unsigned value=0;value<=32767;++value){
+  for(unsigned value=0;value<=65535;++value){
    uint16_t current=streamoo_spectrum_display_level((uint16_t)value);
    assert(current>=previous&&current<=32767);previous=current;
   }
-  assert(!streamoo_spectrum_display_level(0)&&!streamoo_spectrum_display_level(32));
-  assert(abs((int)streamoo_spectrum_display_level(3277)-17836)<=2);
-  assert(streamoo_spectrum_display_level(3277)<21845);
+  assert(!streamoo_spectrum_display_level(0));
+  assert(!streamoo_spectrum_display_level(184));
   assert(streamoo_spectrum_display_level(32767)==32767);
+  const unsigned values[]={328,1036,3277,10362};
+  const unsigned pixels[]={0,3,9,18};
+  for(unsigned i=0;i<4;++i)
+   assert(streamoo_spectrum_display_level(values[i])*31u/32767u==pixels[i]);
  }else if(test==5){
   assert(!streamoo_spectrum_stream_feed(s,samples,240,UINT32_MAX,true));
   assert(!streamoo_spectrum_stream_feed(s,samples,240,0,true));assert(!s->gaps&&s->filled==480);

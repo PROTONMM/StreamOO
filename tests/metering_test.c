@@ -4,6 +4,7 @@
 #include <stdatomic.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 static pthread_mutex_t scheduler=PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t changed=PTHREAD_COND_INITIALIZER;
@@ -96,6 +97,20 @@ int main(int argc,char **argv){
         assert(streamoo_metering_state(m,&state));
         assert(state.generation==18&&!state.levels.valid&&!state.levels.windows);
         close_meter(m);
+    }else if(test==9){
+        streamoo_metering_set_spectrum(m,true);
+        for(unsigned seq=8;seq<13;++seq){
+            for(unsigned i=0;i<240;++i){
+                unsigned frame=(seq-8)*240+i;
+                lr[2*i]=lr[2*i+1]=(int32_t)lround(0.1*sin(2*3.14159265358979323846*3*frame/1024)*2147483647.0);
+            }
+            push(m,seq);step();
+        }
+        assert(streamoo_metering_state(m,&state)&&state.spectrum_valid);
+        /* Shared bar height in both modes, with independent held markers. */
+        assert(state.bands[2]*31u/32767u==9);
+        assert(state.band_peaks[2]==state.bands[2]);
+        close_meter(m);
     }else if(test==7 || test==8){
         assert(!state.spectrum_valid&&!state.spectrum_available&&!state.fft_windows);
         fail_psram=test==8;
@@ -109,9 +124,10 @@ int main(int argc,char **argv){
         else {
             assert(state.spectrum_available&&state.spectrum_valid&&state.fft_windows==1);
             assert(state.bands[23]>10000&&allocations==2);
+            assert(state.band_peaks[23]==state.bands[23]);
             atomic_fetch_add(&now,200001);
             assert(streamoo_metering_state(m,&state));
-            assert(!state.spectrum_valid&&!state.bands[23]);
+            assert(!state.spectrum_valid&&!state.bands[23]&&!state.band_peaks[23]);
             streamoo_metering_set_spectrum(m,false);
             assert(streamoo_metering_state(m,&state));assert(!state.spectrum_valid);
             step();unsigned windows=state.fft_windows;

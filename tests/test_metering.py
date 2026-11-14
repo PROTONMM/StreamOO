@@ -45,3 +45,5 @@ typedef pthread_mutex_t portMUX_TYPE;
 
     def test_spectrum_selected_only_and_reenable_resets(self): self.case(7)
     def test_psram_failure_keeps_rms_working(self): self.case(8)
+
+    def test_shared_spectrum_scale_and_peak_markers_in_live_snapshot(self): self.case(9)

@@ -14,3 +14,4 @@ class SpectrumStreamTests(unittest.TestCase):
  def test_skip_preserves_overlap_without_fft(self):self.case(3)
  def test_db_scale_monotonic_and_reference_points(self):self.case(4)
  def test_sequence_rollover_and_selection_reset(self):self.case(5)
+ def test_shared_scale_is_monotonic_bounded_and_less_sensitive(self):self.case(6)

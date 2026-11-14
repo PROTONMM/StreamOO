@@ -111,7 +111,7 @@ bool streamoo_ui_confirm(streamoo_ui_t *ui)
 
 bool streamoo_ui_set_visualization(streamoo_ui_t *ui, streamoo_visualization_kind_t kind)
 {
-    if (!ui || !ui->post || kind < STREAMOO_VIS_SPECTRUM || kind > STREAMOO_VIS_ANALOG) return false;
+    if (!ui || !ui->post || kind < STREAMOO_VIS_SPECTRUM || kind >= STREAMOO_VIS_COUNT) return false;
     ui->visualization = kind;
     return true;
 }

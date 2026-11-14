@@ -238,3 +238,13 @@ Błąd alokacji ciągłego PCM po HTTP200 i rezerwacja przed readerem/TLS:
 MIT: warianty zakresu, wymiany bibliotek/kodeków i wszystkie moduły:
 `MIT_MIGRATION_ANALYSIS.md`, `MIT_MODULE_INVENTORY.csv`,
 `adr/0101-mit-migration-scope-analysis.md`.
+
+Podmiana małego fontu ASCII/PL: `adr/0102-public-domain-small-font.md`.
+
+Czwarta wizualizacja, widmo RMS pasm: `adr/0103-rms-spectrum-visualization.md`.
+
+Czułość czwartego widma RMS po odbiorze: `adr/0104-rms-spectrum-display-scale.md`.
+
+Dwa widma maksimum, wspólna skala, peak hold i szachownica: `adr/0105-spectrum-peak-hold-and-checkerboard.md`.
+
+Znacznik peak wskazówek2px: `adr/0106-analog-two-pixel-peak-marker.md`.

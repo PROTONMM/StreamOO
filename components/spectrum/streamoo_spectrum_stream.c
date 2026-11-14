@@ -31,13 +31,12 @@ bool streamoo_spectrum_stream_feed(streamoo_spectrum_stream_t *s,const int32_t *
     }
     return produced;
 }
-uint16_t streamoo_spectrum_display_level(uint16_t value){
-    if(value<=32)return 0;
+uint16_t streamoo_spectrum_display_level(uint16_t value) {
     if(value>=32767)return 32767;
+    if(!value)return 0;
+    /* Shared -45..0dBFS, gamma2 display scale for both maximum-bin spectra. */
     float db=20.0f*log10f((float)value/32767.0f);
-    float level=(db+60.0f)/60.0f;
+    float level=(db+45.0f)/45.0f;
     if(level<=0)return 0;
-    /* Keep the -60..0 dBFS calibration, but suppress the low-level carpet
-     * so genuinely dominant bands are readable on the small OLED. */
-    return (uint16_t)lroundf(level*sqrtf(level)*32767.0f);
+    return (uint16_t)lroundf(level*level*32767.0f);
 }

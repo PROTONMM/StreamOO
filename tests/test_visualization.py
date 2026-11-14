@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 class Model(C.Structure):
     _fields_ = [('rms', C.c_uint16 * 2), ('peak', C.c_uint16 * 2),
-                ('bands', C.c_uint16 * 64), ('band_count', C.c_uint8)]
+                ('bands', C.c_uint16 * 64), ('band_peaks', C.c_uint16 * 24), ('band_count', C.c_uint8)]
 
 
 class VisualizationTests(unittest.TestCase):
@@ -59,7 +59,7 @@ class VisualizationTests(unittest.TestCase):
                     self.assertEqual(self.pixel(x, y), 5 if x & 1 else 10)
 
     def test_all_modes_respect_bounds_and_do_not_mutate_snapshot(self):
-        for kind in range(3):
+        for kind in range(4):
             self.setUp()
             before = bytes(self.model)
             self.assertTrue(self.draw(kind))
@@ -69,21 +69,21 @@ class VisualizationTests(unittest.TestCase):
 
     def test_parent_clip_is_inherited(self):
         clip = Rect(80, 40, 20, 10)
-        for kind in range(3):
+        for kind in range(4):
             self.setUp()
             self.lib.streamoo_canvas_clip(C.byref(self.canvas), clip)
             self.assertTrue(self.draw(kind))
             self.assert_outside_unchanged(clip)
 
     def test_invalid_inputs_fail_before_writes(self):
-        for kind, bounds, field in ((-1, self.bounds, None), (3, self.bounds, None),
+        for kind, bounds, field in ((-1, self.bounds, None), (4, self.bounds, None),
                                     (0, Rect(-1, 32, 132, 32), None),
                                     (0, Rect(200, 32, 132, 32), None),
                                     (0, Rect(44, 32, 7, 32), None),
                                     (0, self.bounds, 'rms'), (0, self.bounds, 'peak'),
-                                    (0, self.bounds, 'bands'), (0, self.bounds, 'count')):
+                                    (0, self.bounds, 'bands'), (0, self.bounds, 'band_peaks'), (0, self.bounds, 'count')):
             self.setUp()
-            if field in ('rms', 'peak', 'bands'):
+            if field in ('rms', 'peak', 'bands', 'band_peaks'):
                 getattr(self.model, field)[0] = 65535
             if field == 'count':
                 self.model.band_count = 65
@@ -96,8 +96,9 @@ class VisualizationTests(unittest.TestCase):
         self.model.band_count = 24
         self.model.bands[0] = 32767
         self.assertTrue(self.draw(0))
-        self.assertEqual(self.pixel(45, 32), 15)
-        self.assertEqual(self.pixel(45, 33), 8)
+        self.assertEqual(self.pixel(44, 32), 10)
+        self.assertEqual(self.pixel(45, 32), 0)
+        self.assertEqual(self.pixel(45, 33), 10)
         self.assertEqual(self.pixel(60, 32), 0)
         self.assertEqual(self.pixel(45, 63), 4)
         self.model.band_count = 0
@@ -137,7 +138,7 @@ class VisualizationTests(unittest.TestCase):
 
     def test_minimum_odd_and_full_size_bounds(self):
         for bounds in (Rect(0, 0, 8, 8), Rect(1, 1, 133, 33), Rect(0, 0, 256, 64)):
-            for kind in range(3):
+            for kind in range(4):
                 self.setUp()
                 self.bounds = bounds
                 self.model.band_count = 64
@@ -145,3 +146,26 @@ class VisualizationTests(unittest.TestCase):
                     self.model.bands[i] = 32767
                 self.assertTrue(self.draw(kind))
                 self.assert_outside_unchanged(bounds)
+
+    def test_hold_marker_is_separate_and_bars_are_identical_checkerboards(self):
+        self.model = Model()
+        self.model.band_count = 24
+        self.model.bands[0] = 16384
+        self.model.band_peaks[0] = 32767
+        self.assertTrue(self.draw(0))
+        plain=bytes(self.guard[1:-1])
+        self.assertEqual(self.pixel(44,32),0)
+        self.assertEqual(self.pixel(44,48),10)
+        self.assertEqual(self.pixel(45,48),0)
+        self.assertEqual(self.pixel(44,49),0)
+        self.assertEqual(self.pixel(45,49),10)
+        self.assertTrue(self.draw(3))
+        self.assertEqual(self.pixel(44,32),15)
+        self.assertEqual(self.pixel(47,32),15)
+        held=bytes(self.guard[1:-1])
+        # Only the detached cap changes; bodies and the other UI pixels match.
+        self.assertEqual(plain[33*128:],held[33*128:])
+        self.model.bands[0]=0
+        self.assertTrue(self.draw(3))
+        self.assertEqual(self.pixel(44,32),15)
+        self.assertEqual(self.pixel(44,48),0)

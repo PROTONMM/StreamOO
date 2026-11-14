@@ -29,8 +29,8 @@ static bool handle_input(streamoo_ui_t *ui, streamoo_input_event_t e,
     }
     if (ui->screen != STREAMOO_UI_HOME) return false;
     if (e.kind == STREAMOO_INPUT_PRESSED_ROTATE) {
-        int next = (int)(((int64_t)ui->visualization + e.delta) % 3);
-        if (next < 0) next += 3;
+        int next = (int)(((int64_t)ui->visualization + e.delta) % STREAMOO_VIS_COUNT);
+        if (next < 0) next += STREAMOO_VIS_COUNT;
         return streamoo_ui_set_visualization(ui, next);
     }
     streamoo_control_command_t cmd = {0};

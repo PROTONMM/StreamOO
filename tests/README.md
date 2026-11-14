@@ -58,7 +58,7 @@ Tekst: 6 kolejnych testów, łącznie 32. Walidacja Unicode/UTF-8, długości,
 bit7 glifu, clippingu i fallbacku z oryginalnym syntetycznym providerem.
 Testy nie dołączają bitmap z ZIP i nie potwierdzają fontu na OLED.
 
-Font PL: 4 nowe testy, łącznie 36. Obejmują wszystkie 113 bitmap przez digest źródła, mapping, ogonki i pełną scenę tekstową. Zobacz `THIRD_PARTY_NOTICES.md` dla statusu importowanych bitmap.
+Font PL (ADR0102): Misc Fixed Unicode5x8, public domain. Testy obejmują113 bitmap przez zamrożony digest, niezależne porównanie pikseli z BDF, odtwarzalną regenerację C, mapping Unicode, ogonki, granice bufora i pełną scenę tekstową. Źródło/deklaracja: `licenses/Misc-Fixed-NOTICE.md`.
 
 Layout: 6 nowych testów, łącznie 42. Fazy i granice marquee, wyrównanie, długi offset, reset/pominięte klatki i izolacja wierszy.
 
@@ -198,3 +198,14 @@ ASAN_OPTIONS=detect_leaks=0 /tmp/streamoo-pcm-adapter-sanitizer
 ASan/UBSan konwersji i pętli PASS; LeakSanitizer wyłączony pod ptrace, bez
 testu wycieków. FFmpeg służy do generowania/referencji własnego klipu,
 nie jest linkowany do firmware. Licencje vendor sprawdzone, binaria ESP-only.
+
+ADR0103: czwarta wizualizacja (RMS amplitud prążków pasma), zgodność starych
+preferencji0..2 i nowego ID3. Oracle NumPy dla obu FFT1024/2048, porównanie
+sc16/float, pojedyncze prążki/szerokie pasma/cisza, expiry obu snapshotów,
+przełączanie i clipping czterech trybów. Bez dodatkowej FFT w I2S.
+
+ADR0105 zastępuje spektralne RMS z ADR0103/0104: obie wizualizacje widma
+używają maksimum i skali−45..0dBFS/gamma2. Testspectrum_envelope sprawdza
+hold500ms, release2000ms, nowe szczyty, niezależne pasma, ciszę, reset
+i cofnięty czas; renderer sprawdza identyczne słupki/szachownicę i osobne
+znaczniki w trybie3. RMS stereo w bargraphie/wskazówkach pozostaje.

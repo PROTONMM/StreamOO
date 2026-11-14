@@ -1,5 +1,9 @@
 # 13 — Rejestr decyzji i otwartych kwestii
 
+## Aktualizacja fontu — ADR0102 / 2026-11-14
+
+D14 zamknięte dla bieżącego firmware przez zastąpienie fontu public-domain Misc Fixed Unicode5x8 oraz regenerację sześciu klatek. Nie ustalono praw do historycznego ZIP; nie jest już źródłem bieżących bitmap. D22: nowy wygląd na OLED zaakceptowany2026-11-14; użytkownik ocenia font jako drobniejszy i mniej czytelny, ale dopuszczalny.
+
 | ID | Status | Treść |
 |---|---|---|
 | D01 | USTALONE | Projekt StreamOO, bazowe zachowanie analizowane z yoRadio, nowa implementacja ESP-IDF. |

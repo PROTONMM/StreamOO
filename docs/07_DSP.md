@@ -1,5 +1,49 @@
 # 07 — FFT, Hann, SIMD/DSP, wskaźniki
 
+## Dwa widma maksimum i peak hold — ADR0105 / 2026-11-14
+
+Na polecenie użytkownika porzucono widmo RMS. Tryby0 i3 liczą teraz to samo
+maksimum prążków w24 pasmach FFT, oba mają skalę−45..0dBFS/gamma2.
+Tryb0 pokazuje same słupki; tryb3 dodaje jasne poziome znaczniki peak hold:
+zatrzymanie500ms po nowym szczycie, potem opadanie pełnej skali w2000ms.
+Znacznik nigdy nie spada poniżej słupka. Słupki w obu trybach to stała
+szachownica1x1 (GS10/czerń), znaczniki GS15. Szybkość opadania słupków320ms
+pozostaje. Tryby bargraph/wskazówki i ich RMS/peak stereo bez zmian.
+
+Zachowano cztery pozycje enkodera i ID NVS0/1/2/3; zapisane3 wybiera teraz
+widmo z holdem. Usunięto spektralne RMS i drugą funkcję skali. Jedna FFT,
+bez nowych zależności i zmian I2S. Szczyty mają jawny snapshot24 pasm,
+zerowanie/expiry razem z widmem, bez ożywiania starych metadanych.
+Parametry500ms/2000ms przyjęto jako początkowe strojenie do oceny OLED.
+
+## Mniejsza czułość widma RMS — ADR0104 / 2026-11-14
+
+Użytkownik ocenił czwarty tryb jako wizualnie nieróżniący się od zwykłego
+widma. W kodzie RMS jest podłączony osobno; eksperyment wykazał9 pierwszych
+pasm jednoprążkowych przy48kHz/N1024, gdzie RMS amplitud=max. Wspólna
+skala−60..0dBFS/gamma1,5 dodatkowo zmniejszała różnicę na32px OLED.
+
+Tylko czwarty tryb ma teraz skalę−45..0dBFS/gamma2. Agregacja RMS,
+FFT, Hann, envelope320ms, odświeżanie, inne trzy tryby i zapis ID bez zmian.
+Przy tym samym poziomie−40/−30/−20/−10dB słupki zajmują0/3/9/18px,
+wobec5/10/16/23px poprzednio (zakres wysokości31px). Jest to celowe
+strojenie prezentacji, nie zmiana fizycznej definicji RMS.
+
+## Czwarte widmo — RMS pasm / ADR0103 / 2026-11-14
+
+Dostępne są cztery tryby w kolejności: widmo maksimum, bargraph L/R,
+wskazówki L/R, widmo RMS. Przytrzymanie enkodera i obrót przełącza cyklicznie
+w obie strony; wybór jest zapisywany po5s w NVS. Identyfikatory0/1/2
+zachowano, RMS ma3, format blobu pozostaje zgodny ze starymi ustawieniami.
+
+Nowe widmo liczy `sqrt(sum(A[k]^2)/liczba_prążków)` w każdym z24 pasm,
+po dotychczasowym połączeniu mocy L/R. To RMS amplitud prążków, nie RMS
+całego sygnału ani całkowita energia pasma. Pojedynczy ton w szerokim
+paśmie będzie niższy; dla pasma z jednym prążkiem wynik jest taki sam.
+Zachowano skalę−60..0dBFS/gamma1,5 i envelope320ms dla porównania z
+poprzednim widmem. Nie dodano drugiej FFT ani pracy w callbacku I2S.
+Wspólny FFT dostarcza oba zbiory; wyświetlany jest tylko wybrany.
+
 Aktualne scheduling07k/ADR0075: po pomiarach audio_levels jawnie core0,
 priority4, ponad reader3. Log potwierdził automatyczne przypinanie przez FPU,
 FFT2–4ms i sporadyczne czasy ścienne do514ms przy ciągłym PCM. Pomiary CPU

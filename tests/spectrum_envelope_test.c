@@ -19,6 +19,27 @@ int main(void){
  streamoo_spectrum_envelope_init(&s,500000);assert(!s.bands[4]);
  streamoo_spectrum_envelope_feed(&s,target,400000);assert(!s.bands[4]);
  streamoo_spectrum_envelope_feed(&s,target,500000);assert(s.bands[4]==24000);
+ /* Independent500ms hold, then2s full-range fall; zero input keeps valid FFTs. */
+ streamoo_spectrum_envelope_init(&s,0);memset(target,0,sizeof target);
+ target[0]=32767;streamoo_spectrum_envelope_feed(&s,target,0);
+ assert(s.peaks[0]==32767&&s.hold_until_us[0]==500000);
+ memset(target,0,sizeof target);
+ streamoo_spectrum_envelope_feed(&s,target,500000);
+ assert(!s.bands[0]&&s.peaks[0]==32767);
+ streamoo_spectrum_envelope_feed(&s,target,1500000);
+ assert(s.peaks[0]>=16382&&s.peaks[0]<=16384);
+ target[0]=30000;streamoo_spectrum_envelope_feed(&s,target,1600000);
+ assert(s.peaks[0]==30000&&s.hold_until_us[0]==2100000);
+ memset(target,0,sizeof target);
+ streamoo_spectrum_envelope_feed(&s,target,2100000);
+ assert(s.peaks[0]==30000&&!s.bands[0]);
+ streamoo_spectrum_envelope_t before=s;
+ streamoo_spectrum_envelope_feed(&s,target,2000000);assert(!memcmp(&before,&s,sizeof s));
+ streamoo_spectrum_envelope_feed(&s,target,4100000);assert(!s.peaks[0]);
+ target[1]=32767;streamoo_spectrum_envelope_feed(&s,target,4200000);
+ assert(!s.peaks[0]&&s.peaks[1]==32767); /* Independent bands. */
+ streamoo_spectrum_envelope_init(&s,4300000);
+ assert(!s.peaks[1]&&!s.bands[1]&&!s.hold_until_us[1]);
  streamoo_spectrum_envelope_feed(NULL,target,600000);
  streamoo_spectrum_envelope_feed(&s,NULL,600000);
  return 0;

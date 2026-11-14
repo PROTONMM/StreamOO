@@ -2,7 +2,7 @@
 
 Current release-license assessment: [MIT feasibility review](docs/LICENSING_REVIEW.md).
 Original application licensing does not replace the licenses below.
-The small Polish font remains a public-release blocker until resolved.
+The small font was replaced with public-domain Misc Fixed Unicode 5x8 in ADR0102.
 
 ## ESP-DSP 1.8.2 — vector FFT on ESP32-S3
 
@@ -17,37 +17,23 @@ The FFT adapter calls the AES3 sc16 kernel explicitly; host tests use the
 same version's ANSI sc16 implementation as a numerical oracle. They do not
 execute or benchmark the ESP32-S3 instructions.
 
-## Small bitmap font — LICENSE REVIEW OPEN
+## Small bitmap font — Misc Fixed Unicode 5x8 (public domain)
 
-Imported on **2026-10-24 on the user's explicit instruction** to copy it now
-and document the license check as outstanding. The instruction authorizes
-this project change; it is not evidence of a license from the font authors.
+Source: Markus Kuhn's X11 Unicode font archive, `5x8.bdf` revision1.32
+(2006-01-05). Retained unmodified at `assets/fonts/misc-fixed/5x8.bdf`.
+Source SHA-256: `a126e263c6ee843e8725fa3ad630879e74d3294493ce7a00f9a9a21ae10fc2f3`.
+Source declaration: public domain; provenance and upstream URLs are retained
+in [Misc Fixed notice](licenses/Misc-Fixed-NOTICE.md).
 
-Source: user-provided yoRadio Polish-language ZIP, `glcdfont.c`.
-Source file SHA-256:
-`b837c600bebad57c18de4f5f6b2f1da6874a206a3b225d4b63e0e73e6729c7da`.
+Included:95 printable ASCII and18 Polish glyphs, five column bytes each,
+in `components/text/streamoo_font5x8.c`. Converter and lookup are original
+StreamOO code. No Arduino/X11 runtime implementation is imported. The six
+font-bearing framebuffer fixtures were regenerated and reviewed for ADR0102.
 
-Included: 95 printable ASCII glyphs and 18 Polish glyphs, five column bytes
-each, in `components/text/streamoo_font5x8.c`. Its generated lookup code is
-original StreamOO code. The reference image `tests/fixtures/polish_text.4bpp`
-also contains these bitmap shapes. No Arduino implementation, source
-UTF-8 converter, icons or remaining extended glyphs were imported.
-
-The source package identifies its base as Adafruit GFX. Base attribution:
-Copyright (c) 2012 Adafruit Industries. The BSD notice retrieved from the
-official Adafruit GFX repository is retained in
-[licenses/Adafruit-GFX-BSD.txt](licenses/Adafruit-GFX-BSD.txt).
-Source of that notice:
-https://raw.githubusercontent.com/adafruit/Adafruit-GFX-Library/master/license.txt
-
-The supplied ZIP does not identify the author or license of its Polish
-modifications. These terms remain **UNKNOWN / TO VERIFY**. The retained BSD
-notice does not establish that the Polish modifications are BSD-licensed.
-The user will look for the source; update this entry when evidence is available.
-No GPL/BSD/OFL license has been assigned to the unknown modifications.
-
-Decision and exact mapping: `docs/adr/0006-provisional-polish-font-import.md`
-and `docs/adr/0005-font-reference-and-utf8.md`.
+This replaces the provisional user-provided font from ADR0006. Unknown
+rights to its Polish modifications no longer apply to the current font
+subset or regenerated fixtures. Historical Git revisions and reference
+materials retain their previous status; they are not relicensed here.
 
 ## StreamOO UI16 — derived from Monaspace Krypton
 
@@ -59,14 +45,14 @@ The full notice, including reserved font names, is retained in
 The source OTF is unmodified. The rasterized ASCII/Polish subset has the
 separate primary name **StreamOO UI16**, retaining source attribution. Font
 data and their converted subset remain OFL-1.1; this does not change the
-license of the original renderer code or resolve the small PL font's status.
+license of the original renderer code.
 
 Files: `assets/fonts/MonaspaceKrypton-Regular.otf`, source manifest,
 `components/text/generated/streamoo_ui_16.h`, and the reference image
 `tests/fixtures/home_*.4bpp`. Source hash, release URL and exact
 regeneration process are documented in `assets/fonts/README.md`.
 
-The station-list reference `tests/fixtures/station_list.4bpp` contains the same font shapes described above: StreamOO UI16 (OFL-1.1) and the user-authorized small PL font with modification license still under review.
+The station-list reference `tests/fixtures/station_list.4bpp` contains the same font shapes described above: StreamOO UI16 (OFL-1.1) and public-domain Misc Fixed Unicode 5x8.
 
 ## Espressif audio codec 2.6.2 — MP3/AAC-LC PoC
 

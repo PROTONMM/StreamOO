@@ -6,6 +6,7 @@
 #define STREAMOO_PREFERENCES_BYTES 8
 #define STREAMOO_PREFERENCES_DELAY_MS 5000
 
+/* visualization IDs: 0 peak spectrum, 1 bars, 2 needles, 3 spectrum with peak hold. */
 typedef struct { uint8_t volume, visualization; } streamoo_preferences_value_t;
 typedef struct {
     streamoo_preferences_value_t current, saved;

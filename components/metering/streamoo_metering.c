@@ -51,6 +51,7 @@ static void analyze(void *context) {
             request_seen = request;
             current.spectrum_valid = false;
             memset(current.bands,0,sizeof current.bands);
+            memset(current.band_peaks,0,sizeof current.band_peaks);
             current.spectrum_request = request;
             fft_at = 0;
             streamoo_spectrum_envelope_init(&spectrum_envelope,start);
@@ -85,6 +86,7 @@ static void analyze(void *context) {
                         target[b]=streamoo_spectrum_display_level(spectrum->fft.bands[b]);
                     streamoo_spectrum_envelope_feed(&spectrum_envelope,target,current.spectrum_completed_us);
                     memcpy(current.bands,spectrum_envelope.bands,sizeof current.bands);
+                    memcpy(current.band_peaks,spectrum_envelope.peaks,sizeof current.band_peaks);
                     current.spectrum_valid=true;
                 }
                 current.fft_windows=spectrum->windows;
@@ -159,6 +161,7 @@ bool streamoo_metering_state(streamoo_metering_t *m, streamoo_metering_state_t *
        now<out->spectrum_completed_us || now-out->spectrum_completed_us>200000) {
         out->spectrum_valid=false;
         memset(out->bands,0,sizeof out->bands);
+        memset(out->band_peaks,0,sizeof out->band_peaks);
     }
     return true;
 }

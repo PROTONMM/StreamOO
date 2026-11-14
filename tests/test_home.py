@@ -301,3 +301,19 @@ class HomeTests(unittest.TestCase):
             self.assertEqual(bytes(frame), (ROOT / f'tests/fixtures/home_{name}.4bpp').read_bytes())
         self.assertFalse(probe.home.metadata_valid)
         self.assertFalse(probe.home.clock_valid)
+
+    def test_hold_spectrum_switch_does_not_retain_other_mode_on_missing_data(self):
+        s=self.snapshot()
+        self.assertTrue(self.apply(s,1000))
+        self.assertTrue(self.ui.home.visualization_valid)
+        self.assertTrue(self.lib.streamoo_ui_set_visualization(C.byref(self.ui),3))
+        s.visualization_valid=False
+        self.assertTrue(self.apply(s,1100))
+        self.assertFalse(self.ui.home.visualization_valid)
+        s.visualization_valid=True
+        self.assertTrue(self.apply(s,1200))
+        self.assertTrue(self.ui.home.visualization_valid)
+        self.assertTrue(self.lib.streamoo_ui_set_visualization(C.byref(self.ui),0))
+        s.visualization_valid=False
+        self.assertTrue(self.apply(s,1300))
+        self.assertFalse(self.ui.home.visualization_valid)

@@ -34,3 +34,6 @@ Testy: `python3 -m unittest discover -s tests -v`. Regeneracja/pokrycie cmap
 wymaga zależności hostowych; testy runtime fontu wykonują skompilowany C
 niezależnie od nich. Preview PNG atlasu to narzędzie analizy, a końcowy wzór
 4bpp sceny jest w `tests/fixtures/home_connected.4bpp`.
+
+Mały font5x8: `bdf_to_font5x8.py`; przypięte źródło, deklaracja public domain
+i polecenie regeneracji w `../../assets/fonts/README.md`. Nie wymaga Pillow.

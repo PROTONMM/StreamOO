@@ -70,6 +70,7 @@ bool streamoo_player_state(streamoo_player_state_t *out) {
      now-out->metering.spectrum_completed_us>200000) {
     out->metering.spectrum_valid=false;
     memset(out->metering.bands,0,sizeof out->metering.bands);
+    memset(out->metering.band_peaks,0,sizeof out->metering.band_peaks);
   }
   return true;
 }

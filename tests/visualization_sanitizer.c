@@ -18,10 +18,13 @@ int main(void)
                 model.rms[0] = level;
                 model.rms[1] = 32767 - level;
                 model.peak[0] = model.peak[1] = 32767;
-                for (unsigned i = 0; i < 64; ++i) model.bands[i] = (level + i * 400) % 32768;
+                for (unsigned i = 0; i < 64; ++i) {
+                    model.bands[i] = (level + i * 400) % 32768;
+                    if(i<STREAMOO_VIS_PEAK_BANDS)model.band_peaks[i]=32767;
+                }
                 uint8_t before[sizeof(model)];
                 memcpy(before, &model, sizeof(model));
-                for (unsigned kind = 0; kind < 3; ++kind) {
+                for (unsigned kind = 0; kind < STREAMOO_VIS_COUNT; ++kind) {
                     assert(streamoo_visualization_draw(&canvas, bounds, kind, &model));
                     assert(memcmp(&model, before, sizeof(model)) == 0);
                     assert(guarded[0] == 0xa5 && guarded[8193] == 0xa5);

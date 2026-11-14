@@ -1,5 +1,103 @@
 # Status implementacji
 
+## Znacznik peak wskazówek2px — ADR0106 / 2026-11-14
+
+Na polecenie użytkownika znacznik peak obu mierników wskazówkowych ma
+teraz2 piksele w pionie:dotychczasowy na skali i dodatkowy bezpośrednio
+poniżej. Jasność15, położenie na łuku i obliczenia RMS/peak bez zmian.
+
+50 istniejących testów visualization/home/ui/controls PASS. Ręczna kontrola
+pikseli obu kanałów oraz stress renderera ASan/UBSan PASS (LSan off).
+Native ESP-IDF6.1 build PASS, obraz0x173680B,90% app wolne; diff check PASS.
+Bez nowych testów jednostkowych i flash agenta. Czytelność na OLED OPEN.
+
+## Dwa widma maksimum, peak hold i szachownica — ADR0105 / 2026-11-14
+
+Na polecenie użytkownika usunięto RMS widma. Tryby0 i3 pokazują teraz to
+samo maksimum prążków pasma ze wspólną skalą−45..0dBFS/gamma2. Tryb3
+zamiast RMS dodaje niezależne kreski peak hold (GS15):hold500ms,
+potem spadek pełnej wysokości w2000ms. Parametry do oceny na OLED.
+Oba widma mają słupki szachownicowe1x1 GS10/czerń, zakotwiczone do ekranu,
+bez ciągłego białego wierzchołka w zwykłym trybie. Znacznik nie spada
+poniżej słupka. Korpus nadal opada320ms. RMS stereo bargraphu/wskazówek
+pozostaje. Cztery tryby i zapis NVS zgodne; dotychczasowe ID3 wybiera hold.
+
+490 testów hostowych PASS bez skipów. ASan/UBSan:envelope,10 metering,
+15 controls oraz renderer4 trybów PASS; LSan off. Walidator platform/GPIO,
+native ESP-IDF6.1/esp32s3 build i diff check PASS. Obraz0x173660B,
+90% app wolne. Zmienione klatki HOME obejrzano i zregenerowano; podgląd
+syntetyczny obu widgetów w ignorowanym build/spectrum-hold-preview.png.
+Usunięto dodatkowy wynik spektralnego RMS; nadal jedna FFT poza I2S.
+
+Bez flash agenta. OPEN:ocena szachownicy/hold na OLED, runtime zapasu
+stosu display/audio_levels i ciągłości audio. Nie zmniejszano stosów.
+Odbiór:porównać tryby0 i3 na tej samej audycji, cisza/STOP/PLAY/zmiana
+stacji, wybór3 po5s i reboot. Historyczne ADR0103/0104 zastąpione.
+
+## Widmo RMS po uwadze „nie ma różnicy” — ADR0104 / 2026-11-14
+
+Użytkownik nie dostrzega różnicy po dodaniu RMS; wersji wgranego obrazu
+nie podano. Kod wybiera osobne RMS, ale pierwsze9 pasm FFT1024/48kHz ma
+po1 prążku, gdzie RMS=max, a oba tryby miały wspólną skalę. Eksperyment
+potwierdził identyczne dolne pasma na kontrolowanym wielotonie.
+Teraz wyłącznie RMS ma−45..0dBFS/gamma2 zamiast−60..0dBFS/gamma1,5.
+Przy−20dB zmiana16→9px została sprawdzona także w rzeczywistym workerze
+meteringu. Pozostałe trzy tryby, FFT, agregacja, envelope i I2S bez zmian.
+
+490 testów hostowych PASS, bez skipów;7 spectrum_stream i10 metering
+z ASan/UBSan PASS (LSan off). Walidator platform/GPIO, native ESP-IDF6.1
+build i diff check PASS. Obraz0x173590B,90% app wolne. Bez flash agenta.
+Odbiór wyglądu nowej skali na OLED pozostaje OPEN:porównać pierwszy
+z czwartym trybem po wskazówkach na tej samej audycji.
+
+## Czwarta wizualizacja — widmo RMS / ADR0103 / 2026-11-14
+
+Dodano widmo RMS amplitud prążków jako czwarty tryb po wskazówkach.
+Kolejność: widmo maksimum → bargraph L/R → wskazówki L/R → widmo RMS.
+Przełączanie przytrzymaniem+obrotem w obie strony; ID3 zapisuje się w NVS
+po5s, stare ID0/1/2 i format blobu zachowane. Oba widma korzystają z jednej
+FFT i mają tę samą skalę−60..0dBFS/gamma1,5 oraz envelope320ms.
+RMS=sqrt(mean(A[k]^2)) w paśmie; to średnia amplitud prążków, nie RMS
+czasowy całego sygnału. Szerokie pasma obniżają pojedyncze tony.
+Nowe snapshoty resetują się/wygasają razem z dotychczasowym widmem;
+bargraph/wskazówki nie włączają FFT. Bez nowych zależności i zmian I2S.
+
+488 testów hostowych PASS (bez skipów), NumPy i sc16/float PASS.
+ASan/UBSan:11 testów spectrum,9 metering,15 controls i renderer4 trybów
+PASS; LeakSanitizer wyłączony. Walidator platform/GPIO i diff check PASS.
+Native ESP-IDF6.1/esp32s3 build PASS, obraz0x173500B,90% app wolne.
+Nie flashowano. OPEN: ocena na OLED przy tych samych audycjach, płynność
+audio i runtime CPU/stosów po rozszerzeniu snapshotu. Brak obietnicy
+stałego spadku wysokości każdego pasma (jednoprążkowe pasma są identyczne).
+
+## Odbiór fontu na OLED — ADR0102 / 2026-11-14
+
+Użytkownik wgrał firmware i zaakceptował nową czcionkę: jest drobniejsza
+oraz mniej czytelna od poprzedniej, ale może pozostać. Odbiór wyglądu
+na OLED zaakceptowany z tym zastrzeżeniem; bez kolejnej zmiany bitmap.
+Nie podano identyfikatora firmware ani szczegółowych wyników dla każdego
+polskiego znaku, scrolla i poszczególnych pól — nie zaliczamy tych prób
+osobno na podstawie ogólnej akceptacji. Bez zmian kodu, builda i flash agenta;
+weryfikacja tej aktualizacji dokumentacji: `git diff --check` PASS.
+
+## Mały font public domain — ADR0102 / 2026-11-14
+
+Zastąpiono wszystkie113 bitmap małego fontu przez Misc Fixed Unicode5x8
+z archiwum Markusa Kuhna (BDF rev1.32/2006-01-05, deklaracja public domain).
+95 ASCII i18 liter PL, pełne8 wierszy; provider, komórka6x8, layout,
+Krypton i tor audio bez zmian. Wersjonowane źródło BDF z SHA-256, nota
+pochodzenia i odtwarzalny generator bez bibliotek hostowych. Usunięto stary
+importer prywatnego ZIP, zregenerowano i obejrzano sześć klatek wzorcowych.
+Bieżące bitmapy i te klatki nie korzystają z wcześniejszych nieustalonych
+modyfikacji PL. Historyczne rewizje/referencje nie są przelicencjonowane.
+
+Weryfikacja:486 testów hostowych PASS (w tym pikselowy oracle BDF i
+regeneracja C), ASan/UBSan fontu PASS (LeakSanitizer wyłączony), walidator
+sdkconfig --platform PASS, native ESP-IDF6.1/esp32s3 build PASS.
+Obraz0x173480B,90% partycji aplikacji wolne. git diff --check PASS.
+Bez flash/erase; wygląd nowego fontu na fizycznym OLED pozostaje OPEN.
+Odbiór: tytuł PL „Zażółć gęślą jaźń”, IP/VOL, data, bitrate oraz scroll.
+
 ## Analiza MIT — wszystkie moduły / ADR0101 / 2026-11-01
 
 Gotowe MIT_MIGRATION_ANALYSIS.md oraz MIT_MODULE_INVENTORY.csv:

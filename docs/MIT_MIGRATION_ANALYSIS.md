@@ -1,5 +1,9 @@
 # MIT: analiza wymian i pełna lista modułów
 
+## Aktualizacja fontu — ADR0102 / 2026-11-14
+
+Bieżący mały font to public-domain Misc Fixed Unicode5x8; zastąpiono też jego sześć klatek wzorcowych. Poniższe zalecenia wymiany fontu UNKNOWN są historyczne i dla bieżących bitmap zostały wykonane przez wybór public domain. Inwentarz CSV uaktualniono w tych dwóch pozycjach; nie wykonano migracji pozostałych zależności ani nadania MIT.
+
 Data: 2026-11-01. Analiza na żądanie użytkownika, bez zmiany firmware/licencji.
 Stan kodu: poprawka PCM47e44c5, następnie dokumentacyjny27ad8d0.
 

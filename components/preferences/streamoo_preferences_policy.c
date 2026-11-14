@@ -1,7 +1,7 @@
 #include "streamoo_preferences_policy.h"
 
 bool streamoo_preferences_value_valid(streamoo_preferences_value_t v)
-{ return v.volume <= 100 && v.visualization <= 2; }
+{ return v.volume <= 100 && v.visualization <= 3; }
 bool streamoo_preferences_equal(streamoo_preferences_value_t a, streamoo_preferences_value_t b)
 { return a.volume == b.volume && a.visualization == b.visualization; }
 bool streamoo_preferences_encode(streamoo_preferences_value_t v, uint8_t *out, size_t bytes)

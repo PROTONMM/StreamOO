@@ -9,7 +9,7 @@ visually reviewed. No fonts, external artwork or device data.
 `test_canvas.py` compares the entire result with this frozen file. Updating
 it requires reviewing the intended visual change; tests do not overwrite it.
 
-`polish_text.4bpp`: 256×64, stride 128 B, scena `main/text_smoke.c`. Zawiera importowane bitmapy fontu — pochodzenie, polecenie użytkownika i nierozstrzygnięta licencja zmian PL są opisane w `THIRD_PARTY_NOTICES.md`. Wzorzec obejrzano jako PNG przed zapisaniem.
+`polish_text.4bpp`: 256×64, stride 128 B, scena `main/text_smoke.c`. Zawiera public-domain Misc Fixed Unicode5x8; źródło i deklaracja są opisane w `licenses/Misc-Fixed-NOTICE.md`. Wzorzec obejrzano jako PNG przed zapisaniem.
 
 
 
@@ -22,3 +22,12 @@ fonty i ich licencje opisuje THIRD_PARTY_NOTICES.md. Zastępują dawną scenę
 tekstu/widżetów usuniętą w 04i; test nie odtwarza sam wzorców.
 Od ADR0071 korpus widma ma jasność 8, a bieżące szczyty jasność 15; klatki
 odświeżono po obejrzeniu tej celowej zmiany kontrastu.
+
+ADR0102 (2026-11-14): wszystkie sześć klatek zawierających mały font
+zregenerowano po zastąpieniu jego bitmap przez Misc Fixed Unicode5x8
+(public domain). Obejrzano PNG tekstu PL, listy i czterech stanów HOME.
+Geometria6x8, układ ekranu i duży font StreamOO UI16 pozostają bez zmian.
+
+ADR0105: klatki HOME odświeżono i obejrzano po celowej zmianie widma na
+szachownicę1x1 GS10/czerń. Pozostałe elementy UI bez zmian. Syntetyczny
+podgląd obu widm wykonano na tych samych słupkach z osobnymi znacznikami.

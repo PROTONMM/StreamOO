@@ -27,13 +27,36 @@ class FontTests(unittest.TestCase):
         cls.lib.streamoo_text_smoke.restype = C.c_bool
 
     def test_all_ascii_and_polish_bitmaps_match_source_subset_digest(self):
-        # Digest independently computed from the reviewed ZIP: Unicode LE32 + 5 columns.
+        # Frozen Misc Fixed subset: Unicode LE32 + five top-to-bottom columns.
         digest = hashlib.sha256()
         for code in sorted(list(range(32, 127)) + list(map(ord, POLISH))):
             columns = (C.c_uint8 * 5)()
             self.assertTrue(self.lib.streamoo_font5x8(None, code, columns))
             digest.update(code.to_bytes(4, 'little') + bytes(columns))
-        self.assertEqual(digest.hexdigest(), '8cf10b08809d64d31b93ef9b179355256ae50b2d686c399f87666af880e3ae53')
+        self.assertEqual(digest.hexdigest(), '42dae06e759b2b251b4e2baa9255d454095b7400866940637082c9da24e22d35')
+
+    def test_columns_match_source_bdf_pixels(self):
+        # Independent row/pixel oracle catches transpose, bit order and baseline errors.
+        source = (ROOT / 'assets/fonts/misc-fixed/5x8.bdf').read_text()
+        wanted = set(range(32, 127)) | set(map(ord, POLISH))
+        for block in source.split('STARTCHAR ')[1:]:
+            lines = block.splitlines()
+            cp = int(next(line.split()[1] for line in lines if line.startswith('ENCODING ')))
+            if cp not in wanted:
+                continue
+            rows = lines[lines.index('BITMAP') + 1:lines.index('ENDCHAR')]
+            columns = (C.c_uint8 * 5)()
+            self.assertTrue(self.lib.streamoo_font5x8(None, cp, columns))
+            for y, row in enumerate(rows):
+                for x in range(5):
+                    self.assertEqual((columns[x] >> y) & 1,
+                                     (int(row, 16) >> (7 - x)) & 1, (cp, x, y))
+
+    def test_generated_source_is_reproducible(self):
+        output = Path(self.temp.name) / 'font.c'
+        subprocess.run(['python3', 'tools/font_generator/bdf_to_font5x8.py',
+                        'assets/fonts/misc-fixed/5x8.bdf', str(output)], cwd=ROOT, check=True)
+        self.assertEqual(output.read_bytes(), (ROOT / 'components/text/streamoo_font5x8.c').read_bytes())
 
     def test_unknown_unicode_is_not_legacy_byte_index(self):
         columns = (C.c_uint8 * 5)(*[0xa5] * 5)

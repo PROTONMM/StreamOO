@@ -188,7 +188,7 @@ static void display_task(void *context)
             demo.bitrate_measured=false;
             if(streamoo_network_boot_ap_enabled()) {
                 streamoo_player_spectrum_enabled(demo.ui.screen==STREAMOO_UI_HOME &&
-                    demo.ui.visualization==STREAMOO_VIS_SPECTRUM);
+                    streamoo_visualization_is_spectrum(demo.ui.visualization));
                 streamoo_player_state_t player;
                 if(streamoo_player_state(&player)) {
                     startup_phase=player.phase;
@@ -210,8 +210,9 @@ static void display_task(void *context)
                     if(player.metering.spectrum_valid) {
                         levels.band_count=24;
                         memcpy(levels.bands,player.metering.bands,sizeof player.metering.bands);
+                        memcpy(levels.band_peaks,player.metering.band_peaks,sizeof player.metering.band_peaks);
                     }
-                    bool visualization_valid=demo.ui.visualization==STREAMOO_VIS_SPECTRUM ?
+                    bool visualization_valid=streamoo_visualization_is_spectrum(demo.ui.visualization) ?
                         player.metering.spectrum_valid : player.metering.levels.valid;
                     streamoo_encoder_demo_levels(&demo,
                         player.phase==STREAMOO_PLAYER_PLAYING &&

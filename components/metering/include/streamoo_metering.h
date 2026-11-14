@@ -10,7 +10,7 @@ typedef struct {
     int64_t completed_us;
     uint32_t max_work_us, stack_hwm;
     bool spectrum_valid, spectrum_available;
-    uint16_t bands[24];
+    uint16_t bands[24], band_peaks[24];
     uint32_t spectrum_request, fft_windows, fft_skipped, fft_gaps;
     /* Wall time of feed calls producing a complete stereo spectrum, including
      * preemption. Not kernel-only time or CPU utilization. Session totals. */

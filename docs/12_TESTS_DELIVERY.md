@@ -28,5 +28,5 @@ native C harness; ctypes/NumPy porównania pozostają bez instrumentacji.
 Normalny profil nie kompiluje źródeł testów sprzętowych/fixture i nie prowadzi
 okresowych raportów UART. Testy hostowe pozostają w `tests/`, poza firmware.
 Opcje DIAGNOSTICS, HARDWARE_TESTS, macierz buildów i wyniki przeglądu:
-[RELEASE_REVIEW](RELEASE_REVIEW.md), ADR0099. Ocena licencji i blokada
-fontu PL: [LICENSING_REVIEW](LICENSING_REVIEW.md).
+[RELEASE_REVIEW](RELEASE_REVIEW.md), ADR0099. Ocena licencji (historyczna blokada
+fontu PL usunięta dla bieżących bitmap w ADR0102): [LICENSING_REVIEW](LICENSING_REVIEW.md).

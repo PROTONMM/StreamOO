@@ -1,5 +1,9 @@
 # StreamOO — ESP32-S3 Internet Radio
 
+## Aktualizacja fontu — ADR0102 / 2026-11-14
+
+Mały font ASCII/PL zastąpiono public-domain Misc Fixed Unicode5x8 (ADR0102). Źródło, deklaracja i regeneracja: assets/fonts/README.md. Historyczne opisy nieustalonych praw do poprzednich bitmap nie dotyczą bieżącego fontu; użytkownik zaakceptował wygląd na OLED2026-11-14, z uwagą o drobniejszej i mniej czytelnej czcionce.
+
 **Status:** zaimplementowano radio HTTP/HTTPS, MP3/AAC/HE-AAC, alternatywne dekodery FLAC,
 Ogg, HLS, konfiguracja WWW i rzeczywiste wizualizacje. Odbiór poszczególnych
 formatów i ograniczenia: [STATUS](docs/STATUS.md), wznowienie: [RESUME](docs/RESUME.md).
@@ -28,7 +32,7 @@ w menuconfig. Szczegóły: [ADR0097](docs/adr/0097-default-radio-profile-and-htt
 ## Decyzje
 - ESP32-S3-WROOM-1-N16R8, ESP-IDF bez Arduino, PCM5102A, SSD1322 256×64 4bpp, jeden enkoder.
 - Renderer własny; Monaspace Krypton dla dużych tekstów, bitmapa 5×7/wiersz 8px z polskimi znakami dla mniejszych.
-- Tryby wizualizacji: spectrum FFT/Hann, L/R bargraph, 2 mierniki wskazówkowe; gest przytrzymanie + obrót.
+- Cztery tryby wizualizacji: spectrum FFT/Hann (maksimum, −45…0dBFS), L/R bargraph, 2 mierniki wskazówkowe i spectrum z peak hold; gest przytrzymanie + obrót.
 - Import/eksport list stacji zgodny z **formatem yoRadio**; REST API i interfejs WWW nowe.
 - Po 5 sekundach bez zmian zapis ustawień do NVS.
 

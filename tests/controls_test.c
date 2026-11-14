@@ -47,10 +47,10 @@ int main(int argc, char **argv)
         assert(send(&ui,STREAMOO_INPUT_SHORT,0,1)); assert(command.kind==STREAMOO_CONTROL_TOGGLE);
         assert(send(&ui,STREAMOO_INPUT_LONG,0,1)); assert(ui.screen==STREAMOO_UI_STATIONS);
     } else if (scenario==2) {
-        assert(send(&ui,STREAMOO_INPUT_PRESSED_ROTATE,-1,0)); assert(ui.visualization==2);
+        assert(send(&ui,STREAMOO_INPUT_PRESSED_ROTATE,-1,0)); assert(ui.visualization==STREAMOO_VIS_SPECTRUM_HOLD);
         assert(send(&ui,STREAMOO_INPUT_PRESSED_ROTATE,1,0)); assert(ui.visualization==0);
         assert(send(&ui,STREAMOO_INPUT_PRESSED_ROTATE,INT_MIN,0));
-        assert(ui.visualization>=0 && ui.visualization<=2 && commands==0);
+        assert(ui.visualization>=0 && ui.visualization<STREAMOO_VIS_COUNT && commands==0);
     } else if (scenario==3) {
         for (int mode=0;mode<2;++mode) {
             assert(streamoo_ui_open_stations(&ui,0));
@@ -181,18 +181,23 @@ int main(int argc, char **argv)
         uint8_t frame[8192];
         streamoo_visualization_model_t levels={.rms={1000,15000},.peak={2000,25000}};
         assert(streamoo_encoder_demo_levels(&d,&levels));
-        for(unsigned kind=0;kind<3;++kind){
+        for(unsigned kind=0;kind<STREAMOO_VIS_COUNT;++kind){
             d.ui.visualization=kind;
             assert(streamoo_encoder_demo_draw(&d,frame,sizeof frame,40*kind));
-            assert(d.ui.home.visualization_valid==(kind!=STREAMOO_VIS_SPECTRUM));
-            if(kind){assert(d.ui.home.visualization.rms[1]==15000);assert(!d.ui.home.visualization.band_count);}
+            assert(d.ui.home.visualization_valid==(!streamoo_visualization_is_spectrum(kind)));
+            if(!streamoo_visualization_is_spectrum(kind)){assert(d.ui.home.visualization.rms[1]==15000);assert(!d.ui.home.visualization.band_count);}
         }
         levels.band_count=24;levels.bands[5]=24000;
         assert(streamoo_encoder_demo_levels(&d,&levels));
+        for(unsigned kind=0;kind<STREAMOO_VIS_COUNT;++kind) {
+            if(!streamoo_visualization_is_spectrum(kind))continue;
+            d.ui.visualization=kind;
+            assert(streamoo_encoder_demo_draw(&d,frame,sizeof frame,150));
+            assert(d.ui.home.visualization_valid&&d.ui.home.visualization.band_count==24);
+            assert(d.ui.home.visualization.bands[5]==24000);
+        }
         d.ui.visualization=STREAMOO_VIS_SPECTRUM;
         assert(streamoo_encoder_demo_draw(&d,frame,sizeof frame,150));
-        assert(d.ui.home.visualization_valid&&d.ui.home.visualization.band_count==24);
-        assert(d.ui.home.visualization.bands[5]==24000);
         levels.rms[0]=40000;
         assert(!streamoo_encoder_demo_levels(&d,&levels));
         assert(d.levels.rms[0]==1000);

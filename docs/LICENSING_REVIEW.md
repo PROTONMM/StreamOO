@@ -1,5 +1,9 @@
 # Przegląd możliwości wydania na MIT — 2026-11-01
 
+## Aktualizacja fontu — ADR0102 / 2026-11-14
+
+Mały font PL zastąpiono public-domain Misc Fixed Unicode5x8, a sześć klatek wzorcowych zregenerowano. Blokada praw do poprzednich bitmap nie dotyczy już bieżącego fontu ani tych klatek. Historyczne rewizje i materiały referencyjne nie zostały przelicencjonowane. Pozostałe ograniczenia zależności i brak nadanej licencji własnego kodu pozostają; poniższa ocena z2026-11-01 opisuje stan sprzed podmiany.
+
 Szczegółowa analiza wymian wszystkich modułów: [MIT_MIGRATION_ANALYSIS](MIT_MIGRATION_ANALYSIS.md).
 Pełny inwentarz bieżącego obrazu i zasobów: [CSV](MIT_MODULE_INVENTORY.csv).
 

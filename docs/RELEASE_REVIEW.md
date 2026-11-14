@@ -1,5 +1,9 @@
 # Przegląd kodu i rozdzielenie testów — 2026-11-01
 
+## Aktualizacja fontu — ADR0102 / 2026-11-14
+
+Font PL zastąpiono public-domain Misc Fixed Unicode5x8 i odświeżono klatki wzorcowe. Wzmianki o blokadzie fontu w przeglądzie z2026-11-01 dotyczą poprzedniego zasobu. Pozostałe punkty odbioru zachowują aktualność.
+
 ## Wynik przeglądu
 
 Przejrzano własne moduły aplikacji, ich styki, CMake/Kconfig, ścieżki
