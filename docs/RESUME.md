@@ -1,5 +1,23 @@
 # Punkt wznowienia StreamOO
 
+## Odtwarzacz WWW — przewijana pełna lista / ADR0107 / 2026-11-14
+
+Poprzednie zmiany fontu/wizualizacji zapisano na polecenie użytkownika
+w commicie2abfb31 (bez trailerów AI i bez prywatnych playlist).
+Następnie odtwarzacz WWW dostał jedno przewijane okno wszystkich stacji,
+bez paginacji50-elementowej. Wyszukiwanie filtruje cały katalog i zeruje
+przewinięcie; odświeżenie zachowuje pozycję, zmiana aktywnej stacji aktualizuje
+wyłącznie zaznaczenie bez odtwarzania DOM listy. Licznik podaje liczbę stacji
+lub wyniki/wszystkie. Okno do60vh/32rem, dostęp z klawiatury i zawijanie
+nazw. Edytor playlisty nadal ma swoją osobną paginację25 wierszy.
+
+17 istniejących testów portalu PASS, node --check PASS. Ręczny harness DOM
+Node:2048 pozycji, wybór ostatniej, filtr, pusta lista, zaznaczenie i zachowanie
+scrollTop PASS. Native ESP-IDF6.1 build PASS, obraz0x173750B,90% app wolne.
+Diff check PASS. Bez nowych zależności, zmian API/katalogu/audio i flash.
+Wygląd/scroll na fizycznym panelu WWW w przeglądarce pozostaje OPEN.
+Zmianę WWW zapisano w osobnym commicie po2abfb31.
+
 ## Znacznik peak wskazówek2px — ADR0106 / 2026-11-14
 
 Na polecenie użytkownika znacznik peak obu mierników wskazówkowych ma

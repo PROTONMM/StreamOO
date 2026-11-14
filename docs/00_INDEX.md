@@ -248,3 +248,5 @@ Czułość czwartego widma RMS po odbiorze: `adr/0104-rms-spectrum-display-scale
 Dwa widma maksimum, wspólna skala, peak hold i szachownica: `adr/0105-spectrum-peak-hold-and-checkerboard.md`.
 
 Znacznik peak wskazówek2px: `adr/0106-analog-two-pixel-peak-marker.md`.
+
+Pełna przewijana lista stacji w odtwarzaczu WWW: `adr/0107-scrollable-web-player-stations.md`.

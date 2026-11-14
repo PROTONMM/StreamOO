@@ -233,7 +233,7 @@ function setupPlayer() {
 function setupLibrary() {
   if(!document.getElementById('station-add-form')?.addEventListener)return;
   let catalog=[],draft=[],generation='',loaded=false,dirty=false,writing=false,loadSerial=0,editRevision=0;
-  let stationPage=0,editorPage=0,selected='0000000000000000';
+  let editorPage=0,selected='0000000000000000';
   const copy=rows=>rows.map(row=>({...row}));
   const button=(label,click)=>{const b=document.createElement('button');b.type='button';b.className='secondary';b.textContent=label;b.onclick=click;return b;};
   const message=(id,error)=>text(id,error.message||String(error));
@@ -242,12 +242,17 @@ function setupLibrary() {
     for(const id of ['editor-clear','editor-export','editor-reload','stations-refresh'])document.getElementById(id).disabled=!loaded||writing;
     for(const field of document.querySelectorAll('#editor-rows input,#editor-rows button,#station-add-form input,#station-add-form button'))field.disabled=!loaded||writing;
   }
-  function renderStations(){
+  function updateStationSelection(){
+    for(const button of document.getElementById('station-list').children)
+      button.setAttribute('aria-pressed',String(button.getAttribute('data-station-id')===selected));
+    text('current-station',catalog.find(row=>row.id===selected)?.name||'Wybierz stację z listy.');
+  }
+  function renderStations(resetScroll=false){
     const filter=document.getElementById('station-search').value.toLocaleLowerCase();
     const rows=catalog.filter(row=>row.name.toLocaleLowerCase().includes(filter));
-    const pages=Math.max(1,Math.ceil(rows.length/50));stationPage=Math.min(stationPage,pages-1);
-    const container=document.getElementById('station-list');container.replaceChildren();
-    for(const row of rows.slice(stationPage*50,(stationPage+1)*50)){
+    const container=document.getElementById('station-list'),scrollTop=container.scrollTop;
+    const buttons=[];
+    for(const row of rows){
       const b=button(row.name,async()=>{
         if(!webPlayerMode||!playerAvailable){text('station-result','Brak połączenia z odtwarzaczem.');return;}
         b.disabled=true;
@@ -257,12 +262,13 @@ function setupLibrary() {
         }catch(error){message('station-result',error);}
         finally{b.disabled=false;}
       });
-      b.setAttribute('aria-pressed',String(row.id===selected));container.appendChild(b);
+      b.setAttribute('data-station-id',row.id);
+      b.setAttribute('aria-pressed',String(row.id===selected));buttons.push(b);
     }
-    text('station-page',`${rows.length ? stationPage+1:0} / ${rows.length ? pages:0} · ${rows.length} stacji`);
-    document.getElementById('station-prev').disabled=!stationPage;
-    document.getElementById('station-next').disabled=stationPage>=pages-1;
-    text('current-station',catalog.find(row=>row.id===selected)?.name||'Wybierz stację z listy.');
+    container.replaceChildren(...buttons);
+    container.scrollTop=resetScroll ? 0:scrollTop;
+    text('station-count',filter ? `${rows.length} / ${catalog.length} stacji`:`${catalog.length} stacji`);
+    updateStationSelection();
     const emptyNotice='Lista jest pusta. Dodaj stacje lub wgraj plik w zakładce Playlista.';
     if(!catalog.length)text('station-result',emptyNotice);
     else if(document.getElementById('station-result').textContent===emptyNotice)text('station-result','');
@@ -328,9 +334,7 @@ function setupLibrary() {
   document.getElementById('editor-clear').onclick=()=>{if(confirm('Usunąć całą listę z urządzenia? Odtwarzanie zostanie zatrzymane.'))save([],true);};
   const reload=()=>{if(!dirty||confirm('Odrzucić niezapisane zmiany i odczytać listę?'))load();};
   document.getElementById('editor-reload').onclick=reload;document.getElementById('stations-refresh').onclick=reload;
-  document.getElementById('station-search').oninput=()=>{stationPage=0;renderStations();};
-  document.getElementById('station-prev').onclick=()=>{--stationPage;renderStations();};
-  document.getElementById('station-next').onclick=()=>{++stationPage;renderStations();};
+  document.getElementById('station-search').oninput=()=>renderStations(true);
   document.getElementById('editor-prev').onclick=()=>{--editorPage;renderEditor();};
   document.getElementById('editor-next').onclick=()=>{++editorPage;renderEditor();};
   document.getElementById('editor-export').onclick=async()=>{
@@ -344,7 +348,7 @@ function setupLibrary() {
       link.href=url;link.download='playlist.csv';document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
     }catch(error){message('editor-result',error);}finally{clearTimeout(timeout);}
   };
-  stationStateChanged=id=>{if(selected!==id){selected=id;renderStations();}};
+  stationStateChanged=id=>{if(selected!==id){selected=id;updateStationSelection();}};
   libraryModeChanged=enabled=>{
     ++loadSerial;
     if(enabled){if(!dirty)load();else{renderStations();renderEditor();text('editor-result','Niezapisane zmiany zachowane. Przed zapisem sprawdzimy wersję listy.');}}

@@ -1,5 +1,12 @@
 # 10 — Nowe WWW i REST API StreamOO
 
+## Odtwarzacz — lista przewijana / ADR0107 / 2026-11-14
+
+Wszystkie stacje są dostępne w jednym przewijanym oknie bez stron,
+z wyszukiwaniem w całym katalogu i licznikiem wyników. Zmiana aktywnej
+stacji nie odtwarza DOM ani nie resetuje przewinięcia. Edytor zachowuje
+odrębną paginację. REST i zawartość zapisanej listy bez zmian.
+
 Stan implementacji 2026-10-31: Formularze sieci i playlisty działają bez dodatkowego logowania na polecenie użytkownika (ADR0032, zastępuje auth ADR0031). Automatyczny odczyt ustawień po otwarciu strony. Kontrakt/limity ADR0031; polityka przyszłego API osobno; OTA wyłączone decyzją użytkownika (ADR0055).
 
 **USTALONE:** całkowicie własny serwer WWW/API, bez kompatybilności endpointów z yoRadio. ESP-IDF `esp_http_server` + pliki frontendu. Dostęp przez AP przy pierwszym uruchomieniu i przez unikalny mDNS/IP po połączeniu do LAN.
