@@ -1,5 +1,104 @@
 menu "StreamOO Configuration"
+    config STREAMOO_DIAGNOSTICS
+        bool "Compile detailed UART diagnostics and runtime profiling"
+        default n
+        select FREERTOS_GENERATE_RUN_TIME_STATS
+        help
+            Includes periodic CPU/heap, PCM/decoder/FFT, OLED and encoder
+            reports. Disabled for the normal radio. Select a 64-bit runtime
+            counter for long diagnostic sessions. No diagnostics run in I2S.
+    config STREAMOO_HARDWARE_TESTS
+        bool "Compile hardware test sources and synthetic screens"
+        default n
+        select STREAMOO_DIAGNOSTICS
+        help
+            Enables optional audio fixtures, finite display tests and OLED
+            timing experiments. Host tests remain independent in tests/.
+    config STREAMOO_CRYPTO_EARLY_INIT
+        bool "Prepare hardware AES/SHA before I2S"
+        depends on IDF_TARGET_ESP32S3 && MBEDTLS_HARDWARE_AES && MBEDTLS_HARDWARE_SHA
+        default y
+        help
+            Run checked SHA-256 and 1024-byte AES-CBC operations at boot before
+            audio/network tasks. The SDK reserves shared crypto GDMA channels
+            before I2S can use them. Application workaround for TLS failures
+            after I2S teardown, not an SDK fix. Stops startup on check failure.
+            No change to certificate verification. See ADR0096.
+    config STREAMOO_NETWORK_ENABLED
+        bool "Enable network radio and Wi-Fi configuration"
+        default y
+        select I2S_ISR_IRAM_SAFE
+        help
+            Starts saved Wi-Fi profiles or the StreamOO-XXXXXX WPA2 setup AP.
+            Uses the private external JSON file for the shared AP key.
+            Missing secret leaves Wi-Fi disabled.
+            Run tools/configure_network.py locally, then idf.py reconfigure build.
+
+    config STREAMOO_ENCODER_ENABLED
+        bool "Enable encoder input"
+        default y
+        help
+            Capture both edges of A/B/button with GPIO interrupts and a bounded
+            queue. Overflow resets the decoder and is reported. UART edge
+            counts and gesture traces require detailed diagnostics.
+    config STREAMOO_UI_ENABLED
+        bool "Enable interactive radio UI"
+        depends on STREAMOO_ENCODER_ENABLED && STREAMOO_DISPLAY_ENABLED
+        default y
+        help
+            Radio HOME, station selection and live audio widgets. Volume/widget
+            saved after 5s idle. Synthetic content requires hardware tests.
+    config STREAMOO_RESERVE_USB
+        bool "Reserve GPIO19/20 for USB debugging"
+        default y
+        help
+            Disable only when USB is disconnected and is not used for console,
+            USB devices or JTAG. Flash/PSRAM and strapping pins are always rejected.
     menu "Hardware: SSD1322"
+        config STREAMOO_LCD_TIMING_PROBE
+            bool "OLED pulsation experiment after playback starts (40 seconds)"
+            depends on STREAMOO_HARDWARE_TESTS && STREAMOO_UI_ENABLED && STREAMOO_NETWORK_ENABLED
+            default n
+            help
+                One sequence per reset, after network player reaches PLAYING:
+                8s static frame without SPI, 8s identical frame at 25 FPS,
+                8s changing lit area at 25 FPS, 8s same animation at 10 FPS,
+                8s moving bars with constant lit area at 25 FPS.
+                Fixed upper text and GS6/8/10/15 fields are brightness references.
+                UART logs phases and measured present times. Any encoder event
+                exits the probe (that event is consumed). Audio/web continue.
+                No changes to panel analog timings, brightness, NVS or codec.
+        config STREAMOO_DISPLAY_ENABLED
+            bool "Enable SSD1322 display"
+            default y
+            help
+                Starts the OLED driver and boot logo. Enable interactive UI
+                for the radio. Finite synthetic tests are a separate option.
+                User module is configured with R5/R8: BS1=0 and BS0=0.
+                Cold power-on/reset must be provided by the board if RESET=-1.
+        config STREAMOO_DISPLAY_TEST
+            bool "Run finite display test instead of radio UI"
+            depends on STREAMOO_HARDWARE_TESTS && STREAMOO_DISPLAY_ENABLED && !STREAMOO_UI_ENABLED
+            default n
+        config STREAMOO_LCD_COLUMN_OFFSET
+            int "Experimental panel column offset (four-pixel units)"
+            range 0 56
+            default 28
+            help
+                Centered 256-pixel window in 480-pixel controller RAM.
+                Must be verified against the image on the actual panel.
+        config STREAMOO_LCD_REMAP
+            int "Experimental A0 remap byte (decimal)"
+            range 0 22
+            default 20
+            help
+                20 = 0x14: nibble remap and reversed COM scan. Only bits
+                1, 2 and 4 are accepted. Dual COM and horizontal increment
+                are fixed for this 256x64 test profile. Verify orientation.
+        config STREAMOO_LCD_SPI_HOST
+            int "SPI host (2=SPI2, 3=SPI3)"
+            range 2 3
+            default 2
         config STREAMOO_LCD_MOSI
             int "MOSI GPIO"
             range 0 48
@@ -22,10 +121,61 @@ menu "StreamOO Configuration"
             default -1
         config STREAMOO_LCD_SPI_CLOCK_MHZ
             int "SPI clock (MHz)"
-            range 1 40
+            range 1 10
             default 10
     endmenu
     menu "Hardware: PCM5102A (I2S)"
+        config STREAMOO_AUDIO_CONTROL_TEST
+            bool "PCM source controlled by encoder VOL/PLAY TEST"
+            depends on STREAMOO_HARDWARE_TESTS && STREAMOO_UI_ENABLED
+            default n
+            select I2S_ISR_IRAM_SAFE
+            help
+                Starts in STOP with restored volume. PLAY sends the selected
+                synthetic file or sine source through 50ms gain ramps.
+                Overrides the finite I2S smoke sequence.
+                Widgets remain synthetic. Not a network stream player.
+        choice STREAMOO_AUDIO_TEST_SOURCE
+            prompt "Controlled audio TEST source"
+            depends on STREAMOO_AUDIO_CONTROL_TEST
+            default STREAMOO_AAC_FIXTURE_TEST
+            config STREAMOO_AAC_FIXTURE_TEST
+                bool "AAC-LC/ADTS file decoded during playback"
+            config STREAMOO_MP3_FIXTURE_TEST
+                bool "MP3 file decoded during playback"
+            config STREAMOO_SINE_FIXTURE_TEST
+                bool "Continuous 1kHz sine"
+        endchoice
+        config STREAMOO_CODEC_FIXTURE_TEST
+            bool
+            default y if STREAMOO_MP3_FIXTURE_TEST || STREAMOO_AAC_FIXTURE_TEST
+            default n
+        config STREAMOO_PCM_STALL_TEST
+            bool "TEST: pause PCM producer 400ms once after first PLAY"
+            depends on STREAMOO_AUDIO_CONTROL_TEST
+            default n
+            help
+                Three seconds after first PLAY, starve the PCM FIFO deliberately.
+                Exercise reserve fade, buffering and smooth recovery.
+        config STREAMOO_PCM_TAP_DELAY_MS
+            int "TEST: extra delay of pre-gain PCM tap consumer (ms)"
+            depends on STREAMOO_AUDIO_CONTROL_TEST
+            range 0 1000
+            default 0
+            help
+                0 processes every RTOS tick. Larger values force tap drops;
+                analysis must never block the PCM audio consumer.
+        config STREAMOO_I2S_SMOKE_TEST
+            bool "Run finite left/right I2S tone TEST at startup"
+            default n
+            depends on STREAMOO_HARDWARE_TESTS
+            select I2S_ISR_IRAM_SAFE
+            help
+                Ignored while continuous audio control TEST is enabled.
+                About 10 seconds: silence, left 1kHz, right 2kHz, both 1kHz.
+                Fixed approximately -30dBFS peak, independent of UI volume.
+                48kHz/32-bit Philips I2S, no MCLK. Requires DAC configured
+                for I2S and unmuted. Not a stream player or audio pipeline.
         config STREAMOO_I2S_DOUT
             int "I2S DATA OUT GPIO"
             range 0 48
@@ -47,7 +197,7 @@ menu "StreamOO Configuration"
         config STREAMOO_ENCODER_GPIO_B
             int "Encoder B GPIO"
             range 0 48
-            default 16
+            default 6
         config STREAMOO_ENCODER_GPIO_BUTTON
             int "Encoder button GPIO"
             range 0 48
@@ -57,7 +207,7 @@ menu "StreamOO Configuration"
             default n
         config STREAMOO_ENCODER_REVERSED
             bool "Invert encoder direction"
-            default n
+            default y
         config STREAMOO_ENCODER_HALF_QUADRATURE
             bool "Use half-quadrature detents"
             default y
@@ -71,6 +221,16 @@ menu "StreamOO Configuration"
         endchoice
     endmenu
     menu "Audio and DSP"
+        choice STREAMOO_FLAC_BACKEND
+            prompt "FLAC decoder"
+            default STREAMOO_FLAC_DR
+            config STREAMOO_FLAC_ESPRESSIF
+                bool "Espressif 2.6.2 with incremental frame parser"
+            config STREAMOO_FLAC_MICRO
+                bool "micro-flac 0.3.0 (incremental, Xtensa LPC assembly)"
+            config STREAMOO_FLAC_DR
+                bool "dr_flac 0.13.4 (complete-frame feed, scalar S3)"
+        endchoice
         config STREAMOO_STREAM_BUFFER_KIB
             int "Compressed stream ring size (KiB)"
             range 64 2048
@@ -84,7 +244,11 @@ menu "StreamOO Configuration"
                 bool "2048"
         endchoice
         config STREAMOO_DSP_ENABLE_SIMD
-            bool "Prefer optimized ESP32-S3 DSP routines"
+            bool "Use ESP-DSP sc16 SIMD FFT on ESP32-S3"
             default y
+            depends on IDF_TARGET_ESP32S3
+            help
+                Select the vectorized AES3 fixed-point FFT. Windowing and
+                band aggregation remain outside the I2S path.
     endmenu
 endmenu

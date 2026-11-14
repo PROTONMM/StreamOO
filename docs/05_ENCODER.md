@@ -1,16 +1,21 @@
 # 05 — Enkoder, gesty, lista stacji
 
+Bieżąca instrukcja użytkownika: [USER_GUIDE.md — enkoder](USER_GUIDE.md#enkoder).
+Obecny próg długiego kliknięcia wynosi 600 ms, akcja jest przy zwolnieniu;
+lista OLED zatrzymuje się na granicach. Są cztery wizualizacje. Dawne opisy
+syntetycznych testów niżej nie opisują zwykłego profilu radia.
+
 **USTALONE:** jeden enkoder z przyciskiem, dwa warianty A/B wybierane przez menuconfig.
 
 | Gest | A (domyślny) | B |
 |---|---|---|
 | Obrót w ekranie głównym | głośność | głośność |
-| Krótki klik | lista stacji | play/stop |
-| Długi klik | play/stop | lista stacji |
+| Krótki klik | STOP→PLAY i OLED on; podczas PLAY lista | play/stop |
+| Długi klik | STOP, OLED off | lista stacji |
 | Wciśnięcie + obrót | zmień FFT/bargraph/analog | zmień FFT/bargraph/analog |
 | Obrót na liście stacji | płynne przewijanie | jw. |
 | Krótki klik na liście | zatwierdź środkową | jw. |
-| Długi klik na liście | wyjdź bez zmiany | jw. |
+| Długi klik na liście | STOP i powrót HOME | wyjdź bez zmiany |
 
 **PROPONOWANE**: debounce 20ms, długi ≥600ms, akcja długiego przy zwolnieniu; po obrocie z przyciskiem zwolnienie nie emituje kliknięcia. Definiuj gest jako abstrakcyjne zdarzenia `ROTATE`, `SHORT`, `LONG`, `PRESSED_ROTATE` z delta.
 
@@ -22,3 +27,76 @@
 
 ## Trwałość
 Zmiany głośności i wizualizacji: debounce zapisu NVS 5 sekund od **ostatniej** zmiany, tylko przy różnicy; kontrolowany shutdown/restart flush. Obrót przy naciśniętym przycisku zmienia wizualizację bez regulacji głośności.
+
+## Przygotowany interfejs UI
+
+Etap 04h dostarcza `streamoo_ui_open_stations/move/confirm/cancel`.
+Przyszły adapter gestów ma wywoływać je w jednym zadaniu UI; callback GPIO
+nie może rysować ani mutować UI bezpośrednio. Kursor i animacja są oddzielone
+(Q16 zamiast float). Sam ten interfejs nie jest implementacją enkodera,
+debounce ani mapowania A/B. W teście granice są clamped; finalny wrap to D19.
+
+## Część 05a — dekoder i charakterystyka sprzętu
+
+Komponent `input` implementuje przejścia A/B oraz abstrakcyjne gesty.
+[ADR 0013](adr/0013-encoder-decoder-characterization.md) opisuje semantykę.
+Domyślnie włączony `STREAMOO_ENCODER_GESTURE_TEST` wypisuje w konsoli TEST
+ROTATE/SHORT/LONG/PRESSED_ROTATE i delta. Obecny adapter próbkuje co tick,
+więc należy testować wolne ruchy; szybkie mogą gubić zbocza. Nie steruje UI.
+Półkrok, kierunek, pull-up i timing wymagają odbioru. Etap 05 pozostaje częściowy.
+
+## Część 05b — oba kanały przez IRQ
+
+Po zgłoszeniu braku zmian B w pollingowym teście 05a adapter zastąpiono
+przechwytywaniem zboczy ANYEDGE, kolejką i diagnostyką strat.
+[ADR 0014](adr/0014-encoder-irq-diagnostics.md). Starszy opis ograniczeń
+pollingu powyżej dotyczy 05a. Półkrok potwierdzony przez użytkownika;
+odczyt B i kierunek nadal wymagają testu sprzętowego. UI bez zmian.
+
+## Część 05c — gesty sterują UI
+
+`streamoo_ui_handle_input` realizuje tabelę A/B przez jawny callback komend
+volume/toggle i istniejący callback wyboru stacji. Nie posiada stanu playera.
+Na liście pressed-rotate jest ignorowany. [ADR 0016](adr/0016-encoder-ui-command-adapter.md).
+
+Nowa opcja `STREAMOO_ENCODER_UI_TEST` domyślnie uruchamia od razu
+interaktywny HOME z testową głośnością/odtwarzaniem oraz katalogiem pięciu
+stacji. Stan widoczny w wierszu TEST; ekran działa do resetu. Wyłączenie
+tej opcji przywraca skończoną sekwencję OLED. Wejścia trafiają do zadania UI
+przez kolejkę gestów; overflow jest logowany. Integracja rzeczywistego
+playera i NVS nie została wykonana. Odbiór nowej interakcji na sprzęcie OPEN.
+
+## Kierunek po odbiorze 05c
+
+Użytkownik zgłosił odwrócony kierunek volume i listy. Domyślnie
+`STREAMOO_ENCODER_REVERSED=y`: prawo zwiększa volume/indeks stacji,
+lewo zmniejsza. Ta sama korekta dotyczy cyklu widżetów. Przy istniejącym
+sdkconfig sprawdź `Invert encoder direction` w menuconfig — zmiana defaults
+nie zastępuje zapisanych ustawień. Uzupełnienie ADR 0015.
+
+## Część 05d — trwałość głośności i widżetu
+
+Interaktywny test odczytuje preferencje volume/wizualizacji z NVS na starcie.
+Zmiany trafiają przez nieblokującą skrzynkę do osobnego zadania preferences:
+zapis po 5s bez zmian, tylko przy różnicy. [ADR 0017](adr/0017-deferred-ui-preferences.md).
+Testowy katalog i PLAY/STOP nie są zapisywane. Reset przed zapisem może
+utracić zmianę; flush kontrolowanego shutdown pozostaje do integracji.
+
+## Przyszły pilot RC5
+
+Użytkownik dodał RC5 do zakresu docelowego. Pozostaje jeden enkoder;
+pilot jest dodatkowym źródłem komend. Własny adapter wejścia kieruje je do
+wspólnego ownera playera/UI przez jawne interfejsy, bez dostępu do I2S.
+GPIO/odbiornik, mapa klawiszy, powtarzanie i obsługa menu pozostają OPEN;
+nie wybierać pinów z dawnych definicji Arduino. ADR0029.
+
+## Bieżące zachowanie A — ADR0059
+
+Pauza oznacza istniejący STOP źródła, bez timeshiftu i sleep CPU. OLED
+wyłącza się komendą SSD1322 display-off po STOP; krótki klik PLAY pokazuje
+HOME i łączy tę samą stację. WWW PLAY/STOP ma taki sam skutek dla OLED.
+Ekran konfiguracji AP i HOME bez wybranej stacji pozostają widoczne.
+Lista: domyślnie5s bezczynności i zatwierdzenie, przez WWW1..120s oraz
+zatwierdzenie/powrót. Obrót/klik odnawia timer; odrzucone polecenie nie
+zamyka listy. Wybrany grający ID zamyka listę bez komendy restartu.
+Procedura: [PLAYER_SETTINGS_BRINGUP](PLAYER_SETTINGS_BRINGUP.md).

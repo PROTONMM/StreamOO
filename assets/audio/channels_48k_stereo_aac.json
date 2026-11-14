@@ -1,0 +1,17 @@
+{
+  "source": "same original mathematical cues as MP3; no external recording",
+  "codec": "AAC-LC",
+  "container": "ADTS",
+  "sample_rate": 48000,
+  "channels": 2,
+  "bits": 16,
+  "source_frames": 192000,
+  "reference_frames": 193536,
+  "reference_pcm_sha256": "865033d36d2497301ad0c3fcbf69fbec77777207832c162fc24ae5372185c053",
+  "aac_bytes": 37039,
+  "aac_sha256": "408f7bf7cb7fa2ea5eb7f7f7026795930f41b26d48d863e6bc540f876670f748",
+  "ffmpeg": "ffmpeg version 6.1.1-3ubuntu5+esm15 Copyright (c) 2000-2023 the FFmpeg developers",
+  "encoding": "native AAC encoder, aac_low, target128k, ADTS, no metadata",
+  "peak_source_s16": 1036,
+  "edge_ramp_frames": 2400
+}

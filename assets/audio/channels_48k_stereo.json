@@ -1,0 +1,16 @@
+{
+  "source": "original mathematical signals; no external recording",
+  "sample_rate": 48000,
+  "channels": 2,
+  "bits": 16,
+  "source_frames": 192000,
+  "reference_frames": 193536,
+  "reference_pcm_sha256": "7e6bac6402448f3770d11935719975834a0632145ba990b50abe46b57a4008d0",
+  "mp3_bytes": 64512,
+  "mp3_sha256": "4c82da9c814f4172500e4aa6cfeb91ebd3960b4583f94de8b90f3211ab6b0a19",
+  "ffmpeg": "ffmpeg version 6.1.1-3ubuntu5+esm15 Copyright (c) 2000-2023 the FFmpeg developers",
+  "encoding": "libmp3lame 128k CBR, write_xing=0, id3v2_version=0, no metadata",
+  "sequence_seconds": "0-.5 zero; .5-1.5 L1k; 1.5-2 zero; 2-3 R2k; 3-3.5 both1k; 3.5-4 zero",
+  "peak_source_s16": 1036,
+  "edge_ramp_frames": 2400
+}

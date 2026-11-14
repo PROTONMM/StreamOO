@@ -1,0 +1,1315 @@
+# Punkt wznowienia StreamOO
+
+## Możliwości audio i akceleracja w README — ADR0115 / 2026-11-14
+
+README PL/EN mają tabele kodeków/bitrate i akceleracji, opis HTTP/HTTPS,
+SIMD FFT/części Opus oraz sprzętowego AES/SHA. Rozdziały EN audio/DSP/sieć
+uzupełnione. Maksymalny stabilny bitrate dla poszczególnych kodeków nadal
+OPEN; liczby z generatorów próbek i filtr HLS nie są limitami całego radia.
+
+Build, N16R8, 503 testy bez SKIP, kontrola dokumentacji i bieżących symboli
+SIMD PASS. Bez flash, commita i push. Szczegóły i źródła:
+[ADR0115](adr/0115-readme-codecs-bitrate-and-acceleration.md).
+
+## Angielska dokumentacja końcowa — ADR0114 / 2026-11-14
+
+Dodano [README_EN.md](../README_EN.md) z dotychczasowym logo i katalog
+[docs/en](en/00_INDEX.md): 22 dokumenty obejmujące obsługę, menuconfig/build,
+14 rozdziałów technicznych, testowanie formatów, licencje i zasady rozwoju.
+README.md zaczyna się od odsyłacza do EN; indeks i instrukcje mają linki
+między językami. Na wyraźne doprecyzowanie użytkownika nie tłumaczono
+archiwum, starych raportów ani całego zbioru ADR. Interfejs WWW nadal PL.
+
+Build ESP-IDF 6.1, walidator N16R8 oraz 503 testy hostowe PASS bez SKIP.
+Odsyłacze/kotwice, składnia komend i przykładów JSON, symbole Kconfig
+oraz 15 par metoda/trasa API sprawdzone. Diff check PASS. Bez zmian kodu,
+konfiguracji i sekretów; bez flash. [Decyzja i zakres](adr/0114-english-current-documentation.md).
+
+## Instrukcje obsługi i budowania — ADR0113 / 2026-11-14
+
+Dodano [USER_GUIDE.md](USER_GUIDE.md) oraz [BUILD_GUIDE.md](BUILD_GUIDE.md).
+README opisuje teraz bieżące radio i kieruje do instrukcji; dawne etapy
+pozostają w dokumentach projektowych. Uaktualniono indeks i odsyłacze,
+wyjaśniono import dopisujący, listę bez stron i edytor po 25 pozycji,
+autoplay wersji 2 oraz różnicę GPIO6/GPIO16 w profilach enkodera.
+
+Instrukcje sprawdzono z kodem, Kconfig/defaults i oficjalną dokumentacją
+ESP-IDF 6.1. Walidator GPIO/platformy i native build PASS; 503 testy hostowe
+PASS bez SKIP. Kontrola odsyłaczy, symboli i składni komend oraz diff check
+PASS. Bez zmian implementacji, konfiguracji i sekretów; bez flash urządzenia.
+Szczegóły: [ADR0113](adr/0113-user-and-build-guides.md).
+
+## MIT dla własnej aplikacji — ADR0112 / 2026-11-14
+
+Na polecenie użytkownika dodano LICENSE: standardowa MIT, Copyright (c) 2026
+Mariusz Księżak (podpis podany przez użytkownika). LICENSING.md określa zakres
+i wyjątki; README oraz THIRD_PARTY_NOTICES odsyłają do nich wprost.
+Zależności, fonty, CA i materiały referencyjne zachowują własne warunki.
+Dołączono 9 tekstów/not SDK/runtime/dr_flac, indeks i rejestr pochodzenia
+SHA-256. Uaktualniono 29 pozycji własnego kodu/grafiki w inwentarzu.
+
+Treść MIT, hash-e/kopie upstream, zachowane third_party i odsyłacze PASS.
+Native ESP-IDF 6.1 build PASS: 0x177400 B, 90% app wolne. Diff check PASS dla
+zmian śledzonych; kopie upstream zachowują oryginalne formatowanie.
+Bez zmian kodu i wersji bibliotek; bez powtarzania testów funkcjonalnych.
+Pełny zakres i dowody: ADR0112, LICENSE, LICENSING.md, licenses/README.md.
+
+## Głośność podczas przesuwania — ADR0111 / 2026-11-14
+
+Suwak WWW wysyła komendy już na input, bez czekania na puszczenie.
+Najwyżej10 żądań/s, tylko jedno w toku; oczekuje wyłącznie najnowsza
+wartość. Change/blur/cancel kończą edycję bez gubienia końcowej wartości
+ani duplikowania przyjętej. Suwak pozostaje aktywny w czasie HTTP,
+polling nie przestawia go podczas przeciągania. Błąd/offline usuwa kolejkę.
+
+27 testów portalu PASS, w tym4 nowe testy timingu/wolnego HTTP/błędów.
+Chromium potwierdził zmianę stanu serwera przed puszczeniem suwaka oraz
+pozostałe przepływy AP/LAN PASS. Node/diff PASS. Native ESP-IDF6.1 build
+PASS:0x177400B,90% app wolne. Bez flash agenta. Odsłuch i fizyczny dotyk
+Androida pozostają OPEN. Backend/rampa/NVS/I2S bez zmian.
+
+## Zwarty odtwarzacz WWW i nawigacja stacji — ADR0110 / 2026-11-14
+
+Usunięto kartę sieci i zwykły komunikat połączenia. Zakładki telefonu28px,
+sterowanie36px w jednym rzędzie: poprzednia/PLAY/STOP/następna jako SVG,
+suwak i wartość volume. Lista zajmuje około2/3 ekranu telefonu; pasek
+wyszukiwania/licznika ma jeden wiersz. Etykiety edytora są ukryte wizualnie,
+zachowane dla czytnika ekranu; pola i przycisk usuwania są bardziej zwarte.
+Nawigacja po pełnym katalogu z zawijaniem, niezależna od filtra. Wspólny
+wybór/CAS, blokada żądań równoległych oraz obsługa pustej/jednej stacji.
+
+23 testy portalu PASS, Chromium: pełne przepływy i nowe przyciski PASS;
+6 podglądów/układów320..1280px PASS, w tym edytor oraz pomiar listy>=66%
+wysokości pionowego okna telefonu. Node/diff PASS. Native ESP-IDF6.1
+build PASS:0x176a80B,90% app wolne. Bez flash agenta; fizyczny Android
+oraz sterowanie rzeczywistym radiem OPEN. Szczegóły: ADR0110.
+
+## Zwarty panel WWW, motywy i format audio — ADR0109 / 2026-11-14
+
+Usunięto duży nagłówek „Twoje radio”. Sterowanie, kodek/bitrate/próbkowanie
+oraz IP od razu dostępne; PC ma dwie kolumny, telefon jedną. Lista wszystkich
+stacji bez stron wypełnia dostępną wysokość. Ustawienia i import rozwijane.
+Motywy jasny/ciemny/systemowy, wybór zapamiętany lokalnie w przeglądarce.
+Przy wykrytej zmienności panel pokazuje tylko „Zmienny”; estymacja liczby
+ma≈, brak formatu/STOP/offline — kreski. API rozszerzone o jawny snapshot
+formatu. Detektor bazuje na trzech istotnych zmianach okien>=2s audio,
+nie na tempie sieci; ograniczenia i progi opisane w ADR0109.
+
+499 testów hostowych PASS, bez skipów. Native ESP-IDF6.1/esp32s3 build
+PASS:0x175f60B,90% partycji app wolne. Node syntax, GPIO/platform i diff
+PASS. Szczegóły i polecenia odtworzenia: ADR0109.
+
+Chromium: przepływy AP/LAN i pięć układów/motywów320..1280px PASS,
+2048 stacji, wyszukiwanie, zachowanie przewijania, tryb systemowy i blokada
+localStorage PASS. Podglądy obejrzano. Bez flash agenta; fizyczny Android
+oraz bitrate na rzeczywistym radiu pozostają OPEN.
+
+## Nowe logo OLED i WWW — ADR0108 / 2026-11-14
+
+Większy autorski napis Stream z połączonymi pętlami OO, zaokrąglone kreski,
+wygładzenie4bpp i rozstrzelony podpis INTERNET RADIO. Jeden zestaw ścieżek
+zasila SVG w panelu WWW i statyczną maskę OLED224×40 (4480B flash).
+Bez fontu ani grafiki z zewnątrz; istniejący Misc Fixed dla podpisu.
+Bez dodatkowego framebuffer/heap i zmian timingu startu/audio.
+Generator pycairo1.25.1 wyłącznie hostowy; zwykły build go nie uruchamia.
+
+54 istniejące testy hostowe PASS; podgląd renderera z guard bytes PASS,
+SVG/maska/HTML odtwarzalne bajtowo. Native ESP-IDF6.1 build PASS:
+0x174a10B,90% app wolne. GPIO/node/diff PASS. Bez flash agenta.
+Ocena na OLED i wygląd nagłówka w przeglądarce pozostają OPEN (ADR0108).
+
+## Odtwarzacz WWW — przewijana pełna lista / ADR0107 / 2026-11-14
+
+Poprzednie zmiany fontu/wizualizacji zapisano na polecenie użytkownika
+w commicie2abfb31 (bez trailerów AI i bez prywatnych playlist).
+Następnie odtwarzacz WWW dostał jedno przewijane okno wszystkich stacji,
+bez paginacji50-elementowej. Wyszukiwanie filtruje cały katalog i zeruje
+przewinięcie; odświeżenie zachowuje pozycję, zmiana aktywnej stacji aktualizuje
+wyłącznie zaznaczenie bez odtwarzania DOM listy. Licznik podaje liczbę stacji
+lub wyniki/wszystkie. Okno do60vh/32rem, dostęp z klawiatury i zawijanie
+nazw. Edytor playlisty nadal ma swoją osobną paginację25 wierszy.
+
+17 istniejących testów portalu PASS, node --check PASS. Ręczny harness DOM
+Node:2048 pozycji, wybór ostatniej, filtr, pusta lista, zaznaczenie i zachowanie
+scrollTop PASS. Native ESP-IDF6.1 build PASS, obraz0x173750B,90% app wolne.
+Diff check PASS. Bez nowych zależności, zmian API/katalogu/audio i flash.
+Wygląd/scroll na fizycznym panelu WWW w przeglądarce pozostaje OPEN.
+Zmianę WWW zapisano w osobnym commicie po2abfb31.
+
+## Znacznik peak wskazówek2px — ADR0106 / 2026-11-14
+
+Na polecenie użytkownika znacznik peak obu mierników wskazówkowych ma
+teraz2 piksele w pionie:dotychczasowy na skali i dodatkowy bezpośrednio
+poniżej. Jasność15, położenie na łuku i obliczenia RMS/peak bez zmian.
+
+50 istniejących testów visualization/home/ui/controls PASS. Ręczna kontrola
+pikseli obu kanałów oraz stress renderera ASan/UBSan PASS (LSan off).
+Native ESP-IDF6.1 build PASS, obraz0x173680B,90% app wolne; diff check PASS.
+Bez nowych testów jednostkowych i flash agenta. Czytelność na OLED OPEN.
+
+## Dwa widma maksimum, peak hold i szachownica — ADR0105 / 2026-11-14
+
+Na polecenie użytkownika usunięto RMS widma. Tryby0 i3 pokazują teraz to
+samo maksimum prążków pasma ze wspólną skalą−45..0dBFS/gamma2. Tryb3
+zamiast RMS dodaje niezależne kreski peak hold (GS15):hold500ms,
+potem spadek pełnej wysokości w2000ms. Parametry do oceny na OLED.
+Oba widma mają słupki szachownicowe1x1 GS10/czerń, zakotwiczone do ekranu,
+bez ciągłego białego wierzchołka w zwykłym trybie. Znacznik nie spada
+poniżej słupka. Korpus nadal opada320ms. RMS stereo bargraphu/wskazówek
+pozostaje. Cztery tryby i zapis NVS zgodne; dotychczasowe ID3 wybiera hold.
+
+490 testów hostowych PASS bez skipów. ASan/UBSan:envelope,10 metering,
+15 controls oraz renderer4 trybów PASS; LSan off. Walidator platform/GPIO,
+native ESP-IDF6.1/esp32s3 build i diff check PASS. Obraz0x173660B,
+90% app wolne. Zmienione klatki HOME obejrzano i zregenerowano; podgląd
+syntetyczny obu widgetów w ignorowanym build/spectrum-hold-preview.png.
+Usunięto dodatkowy wynik spektralnego RMS; nadal jedna FFT poza I2S.
+
+Bez flash agenta. OPEN:ocena szachownicy/hold na OLED, runtime zapasu
+stosu display/audio_levels i ciągłości audio. Nie zmniejszano stosów.
+Odbiór:porównać tryby0 i3 na tej samej audycji, cisza/STOP/PLAY/zmiana
+stacji, wybór3 po5s i reboot. Historyczne ADR0103/0104 zastąpione.
+
+## Widmo RMS po uwadze „nie ma różnicy” — ADR0104 / 2026-11-14
+
+Użytkownik nie dostrzega różnicy po dodaniu RMS; wersji wgranego obrazu
+nie podano. Kod wybiera osobne RMS, ale pierwsze9 pasm FFT1024/48kHz ma
+po1 prążku, gdzie RMS=max, a oba tryby miały wspólną skalę. Eksperyment
+potwierdził identyczne dolne pasma na kontrolowanym wielotonie.
+Teraz wyłącznie RMS ma−45..0dBFS/gamma2 zamiast−60..0dBFS/gamma1,5.
+Przy−20dB zmiana16→9px została sprawdzona także w rzeczywistym workerze
+meteringu. Pozostałe trzy tryby, FFT, agregacja, envelope i I2S bez zmian.
+
+490 testów hostowych PASS, bez skipów;7 spectrum_stream i10 metering
+z ASan/UBSan PASS (LSan off). Walidator platform/GPIO, native ESP-IDF6.1
+build i diff check PASS. Obraz0x173590B,90% app wolne. Bez flash agenta.
+Odbiór wyglądu nowej skali na OLED pozostaje OPEN:porównać pierwszy
+z czwartym trybem po wskazówkach na tej samej audycji.
+
+## Czwarta wizualizacja — widmo RMS / ADR0103 / 2026-11-14
+
+Dodano widmo RMS amplitud prążków jako czwarty tryb po wskazówkach.
+Kolejność: widmo maksimum → bargraph L/R → wskazówki L/R → widmo RMS.
+Przełączanie przytrzymaniem+obrotem w obie strony; ID3 zapisuje się w NVS
+po5s, stare ID0/1/2 i format blobu zachowane. Oba widma korzystają z jednej
+FFT i mają tę samą skalę−60..0dBFS/gamma1,5 oraz envelope320ms.
+RMS=sqrt(mean(A[k]^2)) w paśmie; to średnia amplitud prążków, nie RMS
+czasowy całego sygnału. Szerokie pasma obniżają pojedyncze tony.
+Nowe snapshoty resetują się/wygasają razem z dotychczasowym widmem;
+bargraph/wskazówki nie włączają FFT. Bez nowych zależności i zmian I2S.
+
+488 testów hostowych PASS (bez skipów), NumPy i sc16/float PASS.
+ASan/UBSan:11 testów spectrum,9 metering,15 controls i renderer4 trybów
+PASS; LeakSanitizer wyłączony. Walidator platform/GPIO i diff check PASS.
+Native ESP-IDF6.1/esp32s3 build PASS, obraz0x173500B,90% app wolne.
+Nie flashowano. OPEN: ocena na OLED przy tych samych audycjach, płynność
+audio i runtime CPU/stosów po rozszerzeniu snapshotu. Brak obietnicy
+stałego spadku wysokości każdego pasma (jednoprążkowe pasma są identyczne).
+
+## Odbiór fontu na OLED — ADR0102 / 2026-11-14
+
+Użytkownik wgrał firmware i zaakceptował nową czcionkę: jest drobniejsza
+oraz mniej czytelna od poprzedniej, ale może pozostać. Odbiór wyglądu
+na OLED zaakceptowany z tym zastrzeżeniem; bez kolejnej zmiany bitmap.
+Nie podano identyfikatora firmware ani szczegółowych wyników dla każdego
+polskiego znaku, scrolla i poszczególnych pól — nie zaliczamy tych prób
+osobno na podstawie ogólnej akceptacji. Bez zmian kodu, builda i flash agenta;
+weryfikacja tej aktualizacji dokumentacji: `git diff --check` PASS.
+
+## Mały font public domain — ADR0102 / 2026-11-14
+
+Zastąpiono wszystkie113 bitmap małego fontu przez Misc Fixed Unicode5x8
+z archiwum Markusa Kuhna (BDF rev1.32/2006-01-05, deklaracja public domain).
+95 ASCII i18 liter PL, pełne8 wierszy; provider, komórka6x8, layout,
+Krypton i tor audio bez zmian. Wersjonowane źródło BDF z SHA-256, nota
+pochodzenia i odtwarzalny generator bez bibliotek hostowych. Usunięto stary
+importer prywatnego ZIP, zregenerowano i obejrzano sześć klatek wzorcowych.
+Bieżące bitmapy i te klatki nie korzystają z wcześniejszych nieustalonych
+modyfikacji PL. Historyczne rewizje/referencje nie są przelicencjonowane.
+
+Weryfikacja:486 testów hostowych PASS (w tym pikselowy oracle BDF i
+regeneracja C), ASan/UBSan fontu PASS (LeakSanitizer wyłączony), walidator
+sdkconfig --platform PASS, native ESP-IDF6.1/esp32s3 build PASS.
+Obraz0x173480B,90% partycji aplikacji wolne. git diff --check PASS.
+Bez flash/erase; wygląd nowego fontu na fizycznym OLED pozostaje OPEN.
+Odbiór: tytuł PL „Zażółć gęślą jaźń”, IP/VOL, data, bitrate oraz scroll.
+
+## Analiza MIT — wszystkie moduły / ADR0101 / 2026-11-01
+
+Gotowe MIT_MIGRATION_ANALYSIS.md oraz MIT_MODULE_INVENTORY.csv:
+27 komponentów + main,103 archiwa wnoszące sekcje do obrazu,114 rekordów
+z zasobami/opcjonalnymi źródłami/narzędziami. Cele: własna aplikacja MIT
+z odrębnymi zależnościami; usunięcie ograniczenia kodeków do Espressif;
+wyłącznie MIT dla każdego składnika. To trzy różne zakresy.
+Pełna wymiana esp_audio_codec obejmuje MP3/AAC/HE-AAC/Vorbis/Opus/Ogg/TS,
+FLAC już domyślnie dr/MIT-0. Font PL nadal wymaga ustalenia praw/wymiany.
+Uzupełniono noty o runtime GCC z wyjątkiem oraz Picolibc.
+Analiza bez migracji/licencjonowania kodu; rekomendacje nie są decyzją
+o wymianie bibliotek. Firmware47e44c5 pozostaje bez zmian i jest testowany
+przez użytkownika. Zgodność inwentarza i diff check PASS, bez build/flash.
+
+
+## Najnowsze — pozytywny odbiór PCM i przełączania / ADR0100 / 2026-11-01
+
+Firmware47e44c5/ELF5fa63ece, log minicom13:29:28: start Antyradio i8 zmian
+stacji przez~178s od boot. W podanym fragmencie brak pcm_memory/NO_MEM,
+Connect/Stream failed i Underrun. Nazwy obejmują HLS HE-AACv2, AAC-LC,
+Ogg Vorbis, Ogg Opus, FLAC, Antyradio MP3/AAC i Radio357.
+Użytkownik potwierdził odsłuch: wszystkie wybrane stacje grały poprawnie,
+również FLAC i po kolejnych przełączeniach. Krótki odbiór poprawki PCM
+pozytywny. Cichy UART działa zgodnie z ADR0099, bez okresowej diagnostyki.
+
+Kod bez kolejnych zmian; tylko zapis dowodu w dokumentacji/diff check.
+Dłuższy soak, presja WWW/przełączania, Wi-Fi flap i runtime heap/largest
+pozostają do sprawdzenia; przy potrzebie liczników użyć osobnego builda
+DIAGNOSTICS. Osobny final_frame_crc z poprzedniego logu nadal OPEN.
+Nie powtarzać ponownie flash tylko z powodu tego wpisu dokumentacji.
+
+
+## Najnowsze — PCM przed HTTP/TLS / ADR0100 / 2026-11-01
+
+Log98f94c6a pochodzi z3834551/ELFb2e60f14 (sprzed cichego UART), dwa starty.
+Wi-Fi uzyskuje IP;28 błędów HTTP200/pcm_memory/NO_MEM, ring0 block1 scratch1.
+Brak ciągłego internal PCM61568B po otwarciu źródła, nie awaria Wi-Fi.
+Ring rezerwowany teraz przed readerem/HTTP/TLS; na open failure zwalniany,
+na STOP/przełączeniu po bezpiecznym zakończeniu starej sesji. Rozmiar,
+preroll, I2S/DSP/decoder/TCP bez zmian. Błąd rezerwacji loguje free/largest.
+484 testy hostowe,19 regresji aktora z ASan/UBSan i zwykły native build
+PASS. Odbiór tej kolejności alokacji na S3 OPEN.
+
+Wgrać standardowy build: `idf.py -p /dev/ttyUSB0 flash`, AAC Radio357,
+RNŚ AAC+, Antyradio MP3, następnie FLAC/HLS i przełączenia/STOP/PLAY.
+Nie kasować NVS ani playlisty. Nie włączać testów do zwykłego odbioru;
+UART pozostaje cichy zgodnie z ADR0099. Agent nie flashował urządzenia.
+Osobny FLAC final_frame_crc po TCP FIN w logu gen22 pozostaje OPEN.
+
+
+## Najnowsze — przegląd kodu, testy opt-in i cichy UART / ADR0099 / 2026-11-01
+
+Normalne radio: testy sprzętowe i klipy wyłączone także w CMake, osobne
+DIAGNOSTICS/HARDWARE_TESTS. Funkcjonalne flagi sieci/enkodera/UI/ekranu
+przemianowane na ENABLED, stare ustawienia migruje main/sdkconfig.rename.
+Syntetyczne stacje/tytuły/słupki i lokalny testowy owner poza zwykłym S3.
+Testy hostowe zachowane poza firmware. Brak health taska i cyklicznego
+UART CPU/heap/PCM/FFT/OLED/IRQ; WARN oraz identyfikacja firmware/nazwa
+zmienianej stacji pozostają. Underrun pierwszy, potem najwyżej co5s.
+Kontrola błędów I2S osobno od logów; crypto early init zachowane.
+Raport zakresu, ustaleń i instrukcje: RELEASE_REVIEW.md.
+
+481 testów hostowych PASS. Native ESP-IDF6.1: zwykłe radio, diagnostyczne
+radio, kontrolowany AAC i skończony OLED/I2S PASS. Rozmiary i potwierdzenie
+konfiguracji/ELF w ADR0099. Bez zmian TCP/PCM/dekodera/DSP/stosów pozostałych
+zadań, brak flash/erase przez agenta. Nowy runtime/odsłuch OPEN.
+
+MIT: własny kod może otrzymać tę licencję po ustaleniu praw/właściciela;
+kompletny firmware zawiera odrębne warunki Modified MIT Espressif,
+Apache/BSD/OFL/MPL. Niewyjaśnione bitmapy fontu PL blokują publiczną
+redystrybucję tej zawartości. Nie nadano licencji ani nie wymieniono fontów.
+Pełny wynik: LICENSING_REVIEW.md i THIRD_PARTY_NOTICES.md.
+
+Następny odbiór: zwykły `idf.py -p /dev/ttyUSB0 flash`, logo/autoplay,
+wybór stacji, STOP/wygaszenie/PLAY, WWW oraz kilka minut FLAC/HLS.
+W normalnym buildzie okresowe raporty nie są dostępne; do dalszych
+pomiarów użyć osobnego builda DIAGNOSTICS według RELEASE_REVIEW.md.
+
+
+## Najnowsze — audyt RAM i usunięcie nieużywanej diagnostyki / ADR0098
+
+Raport MEMORY_AUDIT gotowy. Wyłączenie domyślnych AUDIO_CONTROL_TEST oraz
+I2S_SMOKE_TEST usuwa ich statyczne bufory; były nadal w ELF mimo braku
+startu zadań przy sieci. IRAM-safe I2S zachowane osobnym select sieci i defaults.
+Pomiar ELF:9792B mniej DRAM,80B mniej IRAM,42512B mniej firmware.
+PCM/TCP/preroll/dekoder/DSP/stosy bez zmian. 474 testy i zwykły build PASS.
+
+Standardowy flash `idf.py -p /dev/ttyUSB0 flash`, potem kilka minut FLAC
+z logiem heap/minimum/largest. Nowy runtime heap OPEN; odsłuch nie jest
+obecnie dostępny. Nie zwiększać TCP. Następny osobny krok: presja WWW /
+przełączanie i inne kodeki, dopiero potem dalsze przeniesienia/cięcie stosów.
+Display miał tylko572B zapasu, więc jego stos nie zmniejszany.
+
+## Najnowsze — zwykły build i bramka czasu HTTPS / ADR0097
+
+Normalny profil: dr_flac/hardware AES/SHA/early init/TCP23040/mailbox18.
+Prywatny sdkconfig w tym workspace już uaktualniony; nie trzeba wrappera.
+NTP: trzy kolejne fallbacki0/1/2.pool.ntp.org, wyłączona losowa zwłoka0..5s.
+Bez trzech równoległych zapytań — ograniczenie natywnego klienta; timeout
+pojedynczej odpowiedzi15s. Pierwsza synchronizacja DNS/UDP na S3 OPEN.
+
+```sh
+idf.py -p /dev/ttyUSB0 flash
+```
+
+HTTP nie czeka na czas. Reader przed każdym HTTPS, także redirect/playlist/
+HLS, czeka na UTC2020..2099; zachowany RTC w tym zakresie może być użyty
+od razu. Po30s brak czasu→clock_timeout bez TLS, STOP anuluje co50ms.
+Log HTTPS waiting for UTC / UTC ready after ...ms, SNTP started:3 fallback
+servers. Certyfikaty i dotychczasowy tor audio bez zmian. Odbiór: HTTPS
+po resecie, HTTP bez NTP, STOP podczas czekania i wybór HTTP; potem dalszy
+soak FLAC i pamięć przy WWW. Odsłuch nadal niedostępny, niezaliczony.
+472 host tests,33 regresje readera ASan/UBSan i zwykły native build PASS.
+Konfiguracja i backend binarki sprawdzone. Agent nie flashował.
+
+## Najnowsze — hardware/early init/TCP23040: liczniki stabilne ~12min
+
+Log0dcbb56c,dcd5279/ELF742f9352: publiczny FLAC gen4 przez~11min52s
+PLAYING bez Underrun/Recover/Reject, low0/hard0/starts1, wait_empty0,
+invalid0. Ring zwykle256KiB, PCM_min>=22 po pierwszym interwale. Hardware
+AES/SHA i early probe PASS potwierdzone, TCP23040/mailbox18. Odsłuch
+nieoceniony — użytkownik teraz nie ma możliwości słuchania.
+
+Zachować profil, nie zwiększać dalej TCP bez osobnego planu pamięci:
+internal minimum11344B, largest minimum12800B, PSRAM min~6,42MiB.
+3 początkowe TLS -0x2700 przed SNTP pozostają, potem brak retry.
+Brak testu STOP/PLAY/zmian stacji i TLS po I2S. Następny odbiór: dalszy
+log/soak, WWW i zmiany źródła przy obserwacji internal minimum/largest;
+odsłuch dopiero gdy użytkownik będzie mógł. Nie wymaga nowej kompilacji.
+Wynik i szczegóły ADR0095; zapis dokumentacji, bez zmian kodu/build/flash.
+
+## Najnowsze — early init szybciej łączy, niedobory pozostają
+
+Loge76bbcb5,39b1c2b/ELFe908f17b:3 starty z hardware AES/SHA, early probe
+PASS, TCP5760/mailbox6. Użytkownik: poprawa, szybciej się łączy. Nie zalicza
+to odsłuchu/soak ani TLS po I2S. Sesje50/28/28s mają17/3/7 Underrun,
+bez PSA-149/Recover/Reject. Body~1,4Mbps < audio~1,5..1,7Mbps przy rosnącym
+wait_empty; CPU ma zapas.5 początkowych -0x2700, w tym1 już po SNTP.
+Szczegóły i ograniczenia dopisane do ADR0096.
+
+Następny test zmienia tylko TCP, pozostawia sprzętowe crypto/early init:
+
+```sh
+python3 tools/build_flac.py dr flash --port /dev/ttyUSB0 --hardware-crypto --tcp-window 23040
+```
+
+Startup: hardware AES/SHA, early PASS, TCP23040/mailbox18/MSS1440.
+Publiczny TEST FLAC native lossless3min z odsłuchem i logiem; zebrać
+audio_kbps/Delivery, low/starts, Recover/Reject, CPU oraz internal heap
+minimum/largest. Potem STOP/PLAY i LAN→FLAC HTTPS/HLS po I2S. Odbiór OPEN.
+Native build połączonego profilu oraz20 testów wrappera PASS; wygenerowane
+opcje hardware/early init/TCP23040/18 sprawdzone. Bez zmian kodu i flash agenta.
+
+## Najnowsze — hardware AES/SHA przed I2S / ADR0096
+
+Użytkownik: software crypto łączy szybko, ale rwie; wcześniejszy hardware
+po połączeniu grał dobrze. Gotowy eksperyment early init: SHA-256/AES-CBC
+1024B, znany pełny wynik, rezerwacja kanałów crypto SDK przed audio/siecią.
+Nie resetujemy GDMA/globalnego SDK, walidacja TLS pozostaje. Probe domyślnie
+n, błąd zatrzymuje startup. --software-crypto wyłącza też early init.
+
+```sh
+python3 tools/build_flac.py dr flash --port /dev/ttyUSB0 --hardware-crypto --tcp-window 5760
+```
+
+Oczekuj Early crypto known-answer PASS before I2S oraz TLS AES/SHA hardware.
+TCP5760/mailbox6 dla porównania z przetestowanym software; większe okno
+ADR0095 nadal nieodebrane. Publiczny FLAC3min z odsłuchem/logiem, kilka
+STOP/PLAY, potem LAN24/headerless→FLAC HTTPS→HLS→FLAC. Zachować TLS/UTC,
+audio_kbps/Delivery, low/starts, Recover/Reject, CPU/heap. Odbiór S3 OPEN.
+462 host tests oraz native dr/hardware AES/SHA/early init/TCP5760 build
+PASS; konfiguracja sprawdzona przez wrapper, bez flash agenta.
+
+## Najnowsze — profil TCP23040/mailbox18 / ADR0095
+
+Logb129d3af: b53faff/dr/software AES/SHA,42 Underrun/1 Recover w~1min,
+odsłuch użytkownika: bardzo rwie. Większość low przy pustym wejściu,
+wait_empty632/busy8, HTTP~1155kbps, CPU~58%/38%. Źródło CRC/TLS OPEN.
+Do sprawdzenia małe okno TCP5760B: nowy wrapper dobiera23040B i mailbox18,
+sprawdza wygenerowany nagłówek przed flash. Bez zmiany PCM/ring/preroll.
+Decode buffers ma audio_kbps do porównania z Delivery body_kbps.
+
+```sh
+python3 tools/build_flac.py dr flash --port /dev/ttyUSB0 --software-crypto --tcp-window 23040
+```
+
+Startup: TCP RX window23040/mailbox18/MSS1440 oraz software AES/SHA.
+Publiczny TEST FLAC native lossless3min z odsłuchem i UART; zebrać low/starts,
+audio_kbps, Delivery, Recover, CPU oraz heap minimum/largest (TCP zużywa
+pamięć wewnętrzną). Potem LAN24/headerless i LAN→TLS/HLS po I2S.
+454 testy hostowe i native build PASS, agent nie flashował; wpływ na płytce OPEN.
+Rollback samego TCP: `--tcp-window 5760`, mailbox6.
+
+## Najnowsze — bitrate z PCM i TLS software AES/SHA / ADR0093–0094
+
+Logf02f1a01/90958c2: LAN headerless~145s bez low; po I2S14 PSA-149 przy
+podpisie certyfikatu i1 brak root. Później łączy, gen22 publicznego FLAC
+ma12 low/1 Recover. Odsłuch OPEN. Hipoteza crypto GDMA, nie potwierdzenie
+wady SDK. Zgłoszenie z tym objawem zamknięto z braku odpowiedzi.
+Nowy bitrate bez nagłówka: compressed/decoded audio time>=2s, OLED z~.
+Deklaracja icy-br/HLS nadal pierwsza. Krótszy osobny log TLS/UTC/flags.
+Odbiór: python3 tools/build_flac.py dr flash --port /dev/ttyUSB0
+--software-crypto (jedna komenda), startup AES=software SHA=software.
+Test LAN→zewnętrzny FLAC→HLS→FLAC, zachować TLS/CPU/Underrun/Recover.
+Walidacja certyfikatów pozostaje. 450 host tests i native dr/software AES/SHA
+build PASS; po zmianie startupu także ponowny build i testy wrappera PASS.
+Bez flash agenta.
+
+## Najnowsze — jedna okresowa linia logu między uzupełnieniami PCM / ADR0092
+
+Log2cc3711b: b2431e5/dr, LAN16~55s low0, LAN24~78s low0,
+LAN24 headerless~165s low1; bez Recover/Reject, wait_empty0. Publiczny
+live w tym logu10 low/~50s. Jedyny low LAN przy prawie pełnym ring/cache,
+po okresowym pakiecie logów. Odsłuch OPEN, próby krótsze niż300s.
+Model prawdziwego aktora/fill co5ms, decode1ms i UART20ms/linia odtwarza
+stary niedobór; po rozdzieleniu logów low0/hard0/starts1. Teraz jedna
+okresowa linia na iterację z obsługą PCM pomiędzy, raport nadal co~5s.
+Nowe log_step_max_us mierzy jeden krok; Wi-Fi/bufory/dekoder/FFT/I2S bez zmian.
+Odbiór: LAN24 i headerless po3min, potem publiczny FLAC z UART.
+441 testów hostowych, ASan/UBSan regresji UART i native dr build PASS.
+Agent nie flashował; źródło CRC/WAN/TLS/ICY nadal OPEN.
+
+## Najnowsze — kontrolowany FLAC LAN, bez zmiany firmware / ADR0091
+
+Log45424bc0 potwierdza b2431e5/dr/PS_NONE, lecz50 low w~3min i1 Recover.
+CPU średnio40,6/42,1%, HTTP read max1,141s, log95,9ms. Odsłuch OPEN.
+Nie stroimy kolejnego parametru na innym utworze live. Gotowe3 pliki300s
+i playlist.csv w ignorowanym build/flac-lan-20261101; instrukcja FLAC_LAN_TEST.
+FLAC16~213kbps,24bit~1839kbps i ten sam24bit bez nagłówka. Uruchomić
+python http.server8000 w tym katalogu i zaimportować CSV przez WWW.
+Test po3min każdej stacji z UART; koniec300s/EOF jest oczekiwany.
+440 testów hostowych, HTTP/SHA i realny dr/FFmpeg PCM32 dwa pełne cykle/reset PASS.
+Firmware na płytce b2431e5 pozostaje; źródło CRC i niedoborów nadal OPEN.
+
+## Najnowsze — test Wi-Fi bez modem sleep / ADR0090
+
+Załącznik3d8f1f16 potwierdza bf40138/dr,97 low,2 Recover, gen3 bez retry.
+HTTP read do674ms, log batch do82,8ms, CPU~43%/43%, FFT~2,85ms.
+OLED aktualizacje działają: około88% mniej payload. Odsłuch nieoceniony.
+W starym logu pm type1: aktywny domyślny modem sleep. Nowy krok ustawia
+WIFI_PS_NONE po starcie drivera/przed connect i potwierdza przez get_ps.
+Błąd/niezgodność ostrzega, bez zatrzymania sieci/AP. Reszta toru bez zmian,
+większy pobór energii Wi-Fi. Do odbioru3–5min tej samej stacji od resetu:
+wersja, power save=NONE, Delivery/Underrun/Recover/CPU/OLED UI.
+437 testów hostowych i native dr/ESP-IDF6.1 build PASS; agent nie flashował.
+Źródło złych bajtów CRC i stabilność nadal OPEN.
+
+## Najnowsze — niedobory FLAC i pomiar HTTP/logów / ADR0089
+
+Załącznik5ad29183: napis „Brak danych”, bez możliwości odsłuchu. dr_flac,
+82 low,2 Recover, gen3 bez reconnect; FIFO i wejście okresowo puste.
+CPU średnio42,7/43,4%, FFT~2,84ms, gaps/drop1. Nie jest to odbiór audio.
+Brak wersji i OLED UI nie potwierdza wgrania6b90399.
+Nowy Delivery zastępuje okresowy flow: HTTP body delta/kbps/age, read max,
+push wait max i poprzedni max czasu pakietu logów. Underrun z RX age.
+Bufory/progi/FFT/I2S bez zmian. Test tego samego dr/FLAC3–5min od resetu,
+z wersją, Delivery/Underrun/Recover/CPU/OLED UI; odsłuch gdy dostępny.
+434 testy hostowe i native dr/ESP-IDF6.1 PASS; agent nie flashował.
+Źródło uszkodzonych bajtów nadal OPEN.
+
+## Najnowsze — OLED rozwiązany, optymalizacja SPI / ADR0088
+
+Użytkownik potwierdził usunięcie problemu ekranu po ostatnim buildzie;
+nie podał nowego identyfikatora. W nowym kroku wysyłki zależą od pikseli:
+identyczny framebuffer bez SPI, zmieniony tylko zakres wierszy. UI40ms
+zachowane dla animacji; dodatkowe8KiB PSRAM, bez alokacji w present.
+Pierwszy/wake pełne, nieudany transfer unieważnia cache. Nowy tryb do
+odbioru: scroll, lista, STOP/PLAY oraz log OLED UI checked/sent/payload.
+Potwierdzenie poprzedniego buildu nie jest odbiorem nowych transferów.
+432 testy hostowe, stress ASan/UBSan i native dr build PASS; agent bez flash.
+
+## OLED B3/B1 — poprawa potwierdzona / ADR0087
+
+Inny firmware na tym sprzęcie OK, przygasa tylko tekst w wierszach słupków.
+Profil panelu zamiast resetowych timingów: B3 0x50→0x91, B1 0x74→0xE2.
+Bez zwiększania prądu/napięć, bez zmiany szachownicy/FPS.9 testów i build dr
+PASS; użytkownik potwierdził usunięcie problemu w późniejszej wiadomości.
+Przyczyna fizyczna niezmierzona. W tym samym firmware resync FLAC ADR0086.
+
+## Najnowsze — FLAC resync po potwierdzonym CRC / ADR0086
+
+Nowy log ae2a00bd/218ecb2: przerwy słyszalne,72 Underrun i dwa odrzucenia
+frame_limit_no_boundary przy128KiB. Źródło błędnych bajtów/CRC OPEN.
+Fallback przy limicie/EOS tylko po CRC8+CRC16 następnej dobrej ramki,
+log Recover, bez powiększania buforów. Naprawiono cache drain dr na EOS.
+427 host tests/ASan/UBSan i native dr PASS; potrzebny odbiór S3.
+Komputer:80s capture,956 pełnych ramek, prawdziwy ICY i3 backendy PCM PASS.
+Użytkownik: OLED przygasa tylko w tych samych wierszach co bargraph,
+na innym firmware OK. Prąd nie jest główną hipotezą; profil timingów ADR0087.
+
+## Najnowsze — wynik dr_flac i dokładna diagnostyka parsera / ADR0085
+
+Log85dc8a81 z firmware73fa94e potwierdza dr_flac-0.13.4 na S3.121 ostrzeżeń
+Underrun,3 błędy -1001 przed właściwym dr decode; Reader aktywny/ESP_OK.
+CPU0/1 średnio41,36/43,98%, odsłuch niepełny, stabilność FAIL.
+Dodano error-only flac_parse Reject: reason/status, bytes/scan/CRC,
+BOS/EOS/metadane i maksymalnie16 bajtów prefiksu. Bez zmiany buforów
+i dekodera. Kolejny log ze stacji TEST FLAC native lossless ma zawęzić
+przyczynę -1001. Sama wymiana biblioteki nie rozwiązała niedoborów.
+Z tego logu nie ocenimy szachownicy bargraphu (starszy firmware).
+Aktualny serwer sprawdzony z komputera:302→200, obie domeny TLS PASS
+z CAfile SDK. HTTPS w firmware startuje przed potwierdzeniem SNTP;
+do wyjaśnienia początkowego -0x2700 potrzebny UTC i pełne tls_flags.
+
+## Najnowsze — szachownica bargraphu / ADR0084
+
+Logo wygląda poprawnie, wskazówki nie pulsują (potwierdzenie użytkownika).
+Bargraph na jego polecenie: szachownica1×1 GS10/czerń, ciągła ramka GS10,
+peak GS15. 423 host tests, ASan/UBSan, build dr PASS. Do wgrania i oceny
+wyglądu oraz pulsowania; przyczyna nadal OPEN. Bez zmian spectrum/audio.
+
+## Najnowsze — pulsowanie OLED / ADR0083
+
+Gołym okiem dół pulsuje w rytm słupków; wyżej czasem przygasa tekst.
+Brak pustej klatki wysyłanej przed obrazem. Opcjonalny test
+STREAMOO_LCD_TIMING_PROBE (domyślnie n): HOLD/REPEAT/LOAD25/LOAD10/MOVE,
+5x8 s po PLAYING, audio działa dalej. Enkoder przerywa; potem zwykły UI.
+Procedura OLED_TIMING_BRINGUP.md; wyniki obserwacji i przyczyna OPEN.
+Nie zmieniono profilu OLED ani audio. Porównanie dr_FLAC nadal osobnym
+otwartym odbiorem; do diagnostyki OLED wybrać stabilną stację MP3.
+
+## Najnowsze — poprawiony Python dla build_flac.py / ADR0081
+
+Po rich_click wrapper nie używa już bezwarunkowo sys.executable. Wybiera
+IDF_PYTHON_ENV_PATH/bin/python lub canonical venv zgodny z wersją SDK,
+ustawia środowisko potomne i nie rozwiązuje symlinku do /usr/bin/python3.
+Zmiana interpretera zachowuje stary build jako previous-python-N i tworzy
+świeży katalog; sdkconfig.flac-* oraz managed_components pozostają.
+418 host tests i native dr build z rodzicem /usr/bin/python3 PASS.
+
+Użytkownik: aktywować SDK przez . "$IDF_PATH/export.sh", następnie
+python3 tools/build_flac.py dr flash --port /dev/ttyUSB0. Oczekiwany log
+backend=dr_flac-0.13.4; nadal czekamy na właściwy odsłuch dr. Agent nie flashuje.
+
+## Najnowsze — pewny wybór dr i pomyłka poprzedniego polecenia / ADR0080
+
+Logc7f8d36f i ELF2262539b9 w build/flac-dr nadal micro. Samo -B w instrukcji
+agenta nie wymuszało właściwego SDKCONFIG po zmianach/czyszczeniu. Stary
+build/flac_dr.sdkconfig zniknął; porównanie dr na S3 nadal nieprzeprowadzone.
+Nowy tools/build_flac.py micro|dr|esp build|flash --port PORT trzyma
+sdkconfig.flac-* poza build/, podaje go jawnie w obu etapach i sprawdza
+nagłówek oraz binarkę przed flash. Nazwane katalogi mają też guard CMake.
+
+Następny test: python3 tools/build_flac.py dr flash --port /dev/ttyUSB0
+(w aktywnym IDF6.1). Oczekiwany backend=dr_flac-0.13.4. Nie korzystać
+z wcześniejszego skrótu samego -B. Bez zmian NVS/playlist i bez erase.
+Agent wykonał tylko buildy.414 host tests,3 sprawdzone buildy i negatywny
+test CMake PASS. Firmware micro1516.33KiB,dr1529.83KiB,Esp1530.52KiB;
+nie oznacza to jeszcze rankingu CPU/RAM runtime. W najnowszym logu micro
+tylko5 Underrun do21.4s, potem stabilne low5 do182s, bez błędu decode.
+
+## Najnowsze — micro-flac S3 niestabilny, następny dr / ADR0079 / 2026-11-01
+
+Log5c378192: CPU0~44%,CPU1~36%,player~29%, decode max13.1ms, blok28ms;
+micro zwraca-13 BAD_LPC_PARAMS i-3 CRC_MISMATCH przy aktywnym ReaderESP_OK.
+45 raportów Underrun, źródło często empty. Pierwsze dwie próby boot TLS
+mają-0x2700, potem połączenie działa; nie mieszać ich z późniejszymi decode
+fail. Konkretna przyczyna błędów i niedoborów nadal OPEN, micro nieodebrany.
+
+Testy rozszerzone: 32-bitowy bitreader/CLZ na64-bitowym hoście przez kopie
+tymczasowe, porcje zmienne, ponownie używane/zatruwane wejście.409 testów,
+backend6 ASan/UBSan i178 ramek wcześniejszego capture PASS. Nie jest to
+emulacja32-bitowego ABI/ASM. Oryginalne źródła i firmware bez zmian.
+
+Teraz test dr_flac z takim samym transportem/progami/buforami/widgetem.
+Przygotowany katalog build/flac-dr (SDKCONFIG build/flac_dr.sdkconfig);
+alternatywnie wybór dr w menuconfig. Potwierdzić log backend=dr_flac-0.13.4.
+Zebrać CPU/perf/buffers/Underrun i błędy od startu, minimum5min/zmiana utworu.
+Agent nie flashował, nie zmieniał NVS ani prywatnych playlist.
+
+## Najnowsze — trzy backendy FLAC / ADR0078 / 2026-11-01
+
+W Kconfig StreamOO/Audio and DSP wybór Espressif/micro-flac/dr_flac;
+domyślnie micro-flac. Mikro przyrostowy, dr trwały handle i własny cache
+pełnych ramek PSRAM, oba PCM32. Transport/progi/bufory/I2S bez zmian.
+Źródła/licencje/hashes przypięte w components/decoder/third_party.
+Krótka końcowa ramka7 próbek już obsługiwana przez reader granic.
+Log3ee4ad16 wskazuje błąd dekodowania-7 przy ReaderESP_OK, nie dowodzi
+pierwotnej utraty Wi-Fi. Odsłuch po nowych backendach nadal OPEN.
+
+409 host tests i ASan/UBSan nowych backendów6/actor11 PASS. Realny capture
+178 ramek daje PCM identyczny z FFmpeg w obu alternatywach. Native3 buildy
+PASS: build/simd-check=micro0x17b150, build/flac-dr=dr0x17e750,
+build/flac-esp=Espressif0x17ea10. micro ASM LPC skalarny, dr C skalarny;
+FFT nadal SIMD. Nie mylić pozornych ee.* w tablicach danych z SIMD.
+
+Następny krok: flash micro, ten sam FLAC minimum5min/zmiana utworu,
+FFT/bargraph; potem wybór dr i analogiczny test. Zachować logi/ELF.
+Najlepszy benchmark CPU: ten sam plik lokalny, nie różne utwory live.
+Zbierać CPU interval/task, phase, Decode perf/buffers/flow, Buffer interval,
+Underrun i błędy Reader/Stream failed. Protokół FLAC_BACKENDS_BRINGUP.md.
+Nie wykonano flash/erase; NVS/LittleFS/prywatne playlisty zachowane.
+
+## Najnowsze — przyrostowy parser FLAC / ADR0077 / 2026-11-01
+
+Poprzedni1MiB scratch też okazał się niewystarczający: log6e9a0e50 ma
+needed1050624, empty139/busy2, codec_max264ms, CPU około46%/40%.
+Teraz własny parser przez publiczne esp_audio_simple_dec_register:
+CRC8/CRC16, pierwsza granica, REPARSE po nadejściu danych. Nadal SDK cache,
+decoder i STREAMINFO, use_frame_dec=false. Nie przywrócono raw ADR0061,
+nie zwiększono buforów/progów. Przyczyna wszystkich przerw nadal OPEN.
+
+403 host tests, header/parser14 i adapter2 ASan/UBSan PASS;178 pełnych
+ramek starego capture zgodnych z FFprobe. Native IDF6.1 build/simd-check
+PASS0x17e810; GPIO/diff PASS. Agent nie flashował.
+
+Następny krok: zwykły flash bez erase/NVS/playlist, ten sam TEST FLAC native
+lossless5min/zmiana utworu. Oczekiwany log `incremental CRC frame parser`.
+Zebrać Decode perf/diag, Underrun, phase/CPU; sprawdzić needed1050624,
+pcm_max, codec_max i low/starts. Potem MP3/AAC, powrót FLAC, STOP/PLAY/reset.
+Kontrakt binarnego SDK/cache/rejestracji/reset i odsłuch S3 nadal OPEN.
+
+## Najnowsze — FLAC: pojemność i WAIT / ADR0076 / 2026-11-01
+
+Po loguda70514: FFT stabilny3.1ms, CPU ma zapas; FLAC low/starts rosną,
+a needed525312 przekracza512KiB i restartuje sesję. Live scratch teraz1MiB
+PSRAM, przed I2S, bez realloc. Prebuffer/fade/parser i priorytety bez zmian.
+Nowy Underrun przed uzupełnianiem PCM: compressed/cache/pending oraz
+wait_empty/wait_busy (osobne nieblokujące liczniki źródła, kumulacyjne).
+
+397 testów hostowych, live/HTTP/actor ASan/UBSan i konfiguracje PASS.
+Native IDF6.1 build PASS0x17e4a0 w build/simd-check.
+
+Po flashu FLAC3–5min/zmiana utworu, log Underrun/phase/Decode perf/diag/CPU.
+Brak restartu na525312 do odbioru, pozostałe przerwy nadal OPEN; src_wait
+nie utożsamiać już wyłącznie z siecią. Bez erase/NVS/zmian playlist.
+
+## Uzupełnienie — audyt SIMD i czas FFT / 2026-11-01
+
+[CODEC_SIMD_AUDIT](CODEC_SIMD_AUDIT.md) dokumentuje częściowy SIMD Opus/SILK
+i brak wykrytego SIMD w zbadanych MP3/AAC/HE-AAC/FLAC/Vorbis. Zawiera też
+pochodzenie pomiarów i orientacyjny iloraz FFT1.5–1.8×: jedna stara próbka
+4.104ms kontra wybrane nowe2.3–2.7ms. Nie podawać tej liczby jako potwierdzonego
+speedupu A/B lub średnich. Następny krok nadal odbiór da70514 na S3;
+brak nowego firmware w tym uzupełnieniu.
+
+## Najnowsze — harmonogram RMS/FFT / ADR0075 / 2026-11-01
+
+Pomiary6f27c8b: SIMD2–4ms, HLS sporadycznie513.6ms czasu ściennego przy
+ciągłym PCM; CPU0~36%,CPU1~59%, metering7.5%. FPU przypinało zadanie do
+pierwszego rdzenia użycia. Teraz audio_levels jawnie core0 priority4 ponad
+reader3, dekoder nadal core1. Profiler dopasowuje handle+xTaskNumber,
+chroni reset runtime po ponownym wykorzystaniu adresu TCB przy zmianie stacji.
+
+396 testów hostowych, metering/profiler ASan/UBSan i konfiguracje PASS;
+native IDF6.1 build PASS0x17e2c0 (build/simd-check).
+Po build/flash HLS64 HE-AACv2 minimum60s FFT/30s bargraph/powrót,
+dalej bezpośredni HE-AAC i FLAC. Oczekuj core0 priority4, affinity0x1,
+core_samples=N/0; porównać przyrosty drop/gaps i czasy FFT oraz low/hard/starts.
+Poprawa na S3 OPEN; bez zmian I2S, ringów, SIMD i maskowania UI.
+Agent nie flashował, nie kasować NVS/LittleFS.
+
+## Najnowsze — FFT SIMD i pomiary / ADR0074 / 2026-11-01
+
+FFT domyślnie używa ESP-DSP1.8.2/sc16 AES3, potwierdzone instrukcje SIMD
+w ELF native build IDF6.1 PASS0x17e240. Log: backend + last_fft/avg_fft/max_fft.
+Hann N-1, stereo power, DC, pasma, takt10Hz i task affinity zachowane.
+Skalowanie blokowe odwracane do dBFS,16B-aligned PSRAM, statyczna tabela4KiB.
+392 testy hostowe, sc16/float/NumPy, native sc16 ASan/UBSan i walidatory
+PASS; hardware/time/CPU OPEN.
+
+Wgrać normalnie bez erase/NVS; TEST HLS64 HE-AACv2 oraz FLAC po60s FFT,
+30s bargraph i powrót FFT. Zbierać CPU/player/Decode perf/meters/FFT/heap.
+Przed flashem53e7e2b można zebrać baseline; alternatywnie wyłączyć flagę
+StreamOO SIMD i porównać `portable-float-radix2` na bieżącym kodzie.
+Agent nie flashował. Build agenta jest w build/simd-check, venv w /tmp;
+standardowy lokalny venv6.1 nadal wymaga naprawy przez właściciela środowiska.
+Procedura i interpretacja: DSP_BRINGUP. Poniższe wznowienia są historyczne.
+
+## Najnowsze — profil CPU i punkt odniesienia FFT / ADR0073 / 2026-10-31
+
+Firmware ma teraz profiler runtime FreeRTOS: po około22s od startu log
+`platform` pokaże `CPU interval`, core0/core1 i do sześciu tasków wraz z
+maską affinity. `meters` zawiera dodatkowo `core_samples=0/1` dla
+nieprzypiętego `audio_levels`. Nie zmieniono przypisań `http_reader` core0 i
+`player` core1 ani ścieżki PCM/I2S. Po zwykłym flashu potrzebne są dwa bloki
+CPU + player/meters/FFT dla HLS64 HE-AACv2 oraz FLAC. Nie zmieniaj jeszcze
+struktur FFT: obiekt GCC15.2.0/-Os jest skalarny FPU, bez SIMD/ESP-DSP; o
+optymalizacji zdecydują wyniki pomiaru.
+
+## Najnowsze — krótkie luki widma HLS / ADR0072 / 2026-10-31
+
+TEST HLS64k HE-AACv2 ma ciągłe PCM (`low=0`, `hard=0`), lecz droppable tap
+ma luki, więc FFT wygasał po200ms i HOME migał „Brak danych”. HOME wygasza
+ostatnią poprawną klatkę maksymalnie800ms wyłącznie dla tego samego streamu
+i widżetu, zamiast ją zamrażać. Liczniki meteringu nadal ujawniają luki, a
+STOP/zmiana stacji lub przekroczenie limitu czyści ekran. 382 testy hostowe i walidator GPIO PASS;
+native build ESP-IDF6.1 nadal blokuje brak lokalnego virtualenv. Po flashu
+sprawdzić ten HLS i inne widżety; dźwięk nie może się zmienić.
+
+## Najnowsze — kontrast widma OLED / ADR0071 / 2026-10-31
+
+Pasmo częstotliwości pozostaje logarytmiczne. Po skali -60..0dBFS ekran
+używa gamma1,5: `level * sqrt(level)`, więc ciche pasma zajmują mniej
+wysokości, a głośne są wyraźniejsze. Korpus słupka ma jasność8, jego
+bieżący szczyt jasność15; nie jest to peak-hold. 381 testów hostowych i
+walidator GPIO PASS. Natywny build ESP-IDF6.1 nie został wykonany, bo
+lokalny export wskazuje brakujący virtualenv. Bez zmian FFT, envelope,
+audio/I2S, NVS lub flash. Po flashu sprawdzić wygląd przy mowie i muzyce
+oraz brak wpływu na dźwięk.
+
+## Najnowsze — import playlisty dopisujący stacje / ADR0070 / 2026-10-31
+
+Upload playlist.csv przez WWW atomowo dodaje rekordy do katalogu, nie usuwa
+istniejących. Stare stable ID pozostają, nowe wpisy mają nowe ID; duplikaty
+URL dozwolone/raportowane. Clear i zapis edytora nadal jawnie czyszczą lub
+zastępują katalog. Test magazynu, portal/frontend,381 testów i native build
+PASS0x17bf70. Odbiór sprzętowy: mały import, suma/stare stacje oraz reboot;
+bez erase/importu poprzedniej listy przez agenta.
+
+## Najnowsze — FLAC: rozdzielenie HTTP i dekodera / ADR0069 / 2026-10-31
+
+Log `TEST FLAC native lossless` łączy krótkie fade/rebuffer z `src_wait`, a
+nie z pełnym opróżnieniem PCM (`hard=0`). `http_reader` jest teraz core0 wraz
+z Wi-Fi, player/dekoder core1. Brak zmian ringów, I2S, NVS, partycji i
+playlist. Odbiór: zwykły flash bez erase/importu, logo task placement core0/1,
+FLAC kilka minut i zmiana utworu; porównać `low`/`starts`, hard ma pozostać0.
+Użytkownik odebrał TEST FLAC native lossless: czysto bez przerw; log116–151s
+low0/hard0/starts1/PCM30..32 mimo src_wait2→6. Nie jest to soak/wszystkie
+FLAC. 381 testów, targeted player11+HTTP23 i native build0x17bd40 PASS.
+
+## Najnowsze — logo do startu odtwarzania / ADR0068 / 2026-10-31
+
+Na polecenie użytkownika boot: logo minimum1,5s, potem pozostaje podczas
+prób Wi-Fi i startu ostatniej zapisanej stacji. Bez przejściowej strony STA
+ani wygaszonego STOP. Po PLAYING przejście HOME, AP od razu pokazuje
+konfigurację. RETRY lub30s od pierwszego IPv4 odsłania diagnostykę zamiast
+bezterminowego logo. Po IPv4 minimum500ms na synchronizację ownera/katalogu.
+Obsłużony gest kończy logo; po PLAY/STOP/reconnect logo nie wraca.
+
+Autoplay domyślnie true. Stary blob ustawieńv1 czytany z autoplay=true,
+pozostałe pola i ID zachowane; zapisv2 pozwala nadal wybrać STOP przez WWW.
+Migracja bez kasowania NVS i bez zapisu flash na ścieżce UI/audio. Brak
+zapamiętanej, istniejącej stacji pozostawia HOME do wyboru, bez losowego fallback.
+
+381 testów hostowych PASS (granice logo/AP/timeout i v1/v2/default settings),
+native ESP-IDF6.1 build PASS0x17bc90,90% app wolne; GPIO/diff PASS.
+Zwykły flash bez erase/importu. Odbiór sekwencji OLED/audio na S3 OPEN.
+Nie wykonywano flash. Stabilność HLS/FLAC nadal osobno OPEN.
+
+
+
+## Najnowsze — bitrate HLS / ADR0067 / 2026-10-31
+
+HLS używa bitrate wybranego wariantu: poprawne AVERAGE-BANDWIDTH, inaczej
+BANDWIDTH, bit/s→kb/s. Media reload/segmenty nie zerują deklaracji; oddzielny
+audio rendition bez własnego bitrate nie dziedziczy obcego. Fallback icy-br
+pozostaje możliwy przy braku wartości. Bez wiarygodnej deklaracji nadal --.
+To deklaracja nadawcy (peak/średnia), nie pomiar VBR ani sample rate.
+
+380 host tests i HLS/HTTP ASanUBSan (LSan off), native ESP-IDF6.1 build
+PASS0x17ba90 (90% app), GPIO/diff PASS. Teraz zwykły flash bez erase/importu:
+na HLS128k/64k sprawdzić bitrate OLED także po kilku reload. Odbiór OLED
+OPEN. Diagnostyka/LSIDfix/logo/bufory bez zmian; brak nowych zależności,
+NVS/partycje i prywatne playlisty nietknięte. HLS/FLAC stabilność nadal
+osobno OPEN, ROOT CA/FFT/RMS/WWW odłożone, OTA wyłączone. Agent nie flashował.
+Starsze sekcje są historią.
+
+
+## Najnowsze — nazwa stacji i diagnostyka błędów / ADR0066 / 2026-10-31
+
+User: HLS64k-heaacv2-stereo też przerywa; log bf6f3367 kończy295413B
+po low0/starts1 i HTTP200/NOT_SUPPORTED, wzorzec ADR0065. Nie potwierdza
+aktualizacji (brak Decode perf); nie deklarować kolejnego błędu dekodera.
+
+Dodano Station changed z ID/nazwąPL i generation; Connect/Stream failed
+również z ID/nazwą. No-op grającego ID nie loguje zmiany i nie restartuje.
+Boot: firmware/IDF/krótki ELFhash z metadanych oraz diagnostics=2. Reader
+na awarii: resource/stage/reason, HTTP/MIME, read/rx, HLS sekwencje/liczniki,
+errno/TLS kody i flags. Końcowy snapshot przed EOF i refresh przy awarii
+zachowują pierwotną przyczynę, nawet gdy pipeline raportuje source_eof.
+HWM mierzony także w HLS. Nazwy/kontrolne znaki bounded/sanitized;
+bez nowych logów URL/query/haseł. Długie Reader tylko na awarii po fade,
+bez zwiększenia okresowego UART w aktywnej ścieżce. I2S/bufory bez zmian.
+
+377 host tests, HTTP/player ASanUBSan (LSan off), native ESP-IDF6.1 build
+PASS0x17b990,90% app wolne, GPIO/diff PASS. Test obejmuje nazwęPL/ESC/no-op,
+root HLS error po późnym EOF, TLS/errno przed cleanup i HLS counters.
+Teraz zwykły flash bez erase/importu. Z logu potrzebne firmware z boot,
+Station changed/Connect oraz Stream failed + Reader + Decode perf/diag dla
+tej samej gen. Odbiór logów i stabilności HLS/FLAC S3 nadal OPEN. Queryfix
+ADR0065 oraz profilowanieADR0064 pozostają w firmware; logo/ustawienia
+bez zmian. ROOT CA/FFT/RMS/WWW odłożone, OTA wyłączone, agent nie flashował.
+Starsze sekcje poniżej to historia.
+
+
+## Najnowsze — HLS128k MP3 / ADR0065 / 2026-10-31
+
+Użytkownik wskazał HLS MP3, nie FLAC: początek phase4/44100/PCM32/low0/
+starts1, potem HTTP200/NOT_SUPPORTED po~3 segmentach. Przyczyna odtworzona:
+SDK6.1 get_url pomija query; po master znikał lsid media URL, reload bez
+niego dostawał nowy MASTER, celowo odrzucany podczas grania. Publiczny
+serwer potwierdza MEDIA zlsid i MASTER bez;5 segmentów MP3/44100/stereo
+sprawdzonych hostowo. Nie dodawać ich audio do repo.
+
+Poprawka: własny pełny request_url i Location, zachowanie query/escaping,
+redirect także query-only przez dotychczasowy resolver. Brak SDKget_url/
+set_redirection w readerze. LimityURI/redirect i TLS/no-downgrade zachowane,
+około4KiB dodatkowo w PSRAM, bez zmian PCM/decoder/ISR/NVS/partycji/playlist.
+Stary reader odtwarza błąd na shimie SDK, nowy przechodzi wielokrotne
+reload i podpisane redirecty; test obejmuje dwa ID3 jak w realnym źródle.
+
+374 testy hostowe, HTTP ASanUBSan (LSan off), native ESP-IDF6.1 build
+PASS0x17aa40 (90% app), GPIO/diff PASS. Teraz zwykły flash bez erase/FS/
+reimport: ten sam HLS przez>=3min, jedna gen/starts1/low0 i brak ponownego
+MASTER/NOT_SUPPORTED po~37s. Odbiór poprawki na S3 OPEN. FLAC nadal osobno
+niedokończony: czekamy na phase + Decode perf z ADR0064; ten log nie dowodzi
+naprawy FLAC. Logo/ustawienia bez zmian, ROOT CA/FFT/RMS/wyglądWWW odłożone,
+OTA wyłączone. Agent nie flashował. Starsze sekcje poniżej to historia.
+
+
+## Bieżący problem — FLAC nadal przerywa / ADR0064 / 2026-10-31
+
+Użytkownik: po ADR0062 nadal źle. Nowy log31..51s: gen2, low5→11/starts5→11,
+PCM0 mimo dodatnich snapshotów compressed35..138KiB; brak decoder/OOM w tym
+fragmencie. Nie przypisywać zrzutów5s dokładnie do chwili niedoboru. FFT0,
+max_fill~90us. Nie oznaczać ADR0062 jako naprawione odsłuchem.
+
+Produkcja: input257B→4096B PSRAM, zachowana obsługa1B/partial. Packet work
+max256calls/około64KiB, osobne source_waits/work_yields. Backend parsera,
+scratch512KiB/ring/PCM/prebuffer bez zmian. Nowa linia Decode perf co5s i
+przy awarii: codec_max/block_max, ring przed/po najwolniejszym decode,
+rozmiar PCM, źródłowe WAIT/yield oraz postęp wejścia/wyjścia i refill.
+To czas ścienny, nie czystyCPU; kod tylko w tasku, bez zmian I2S callbacku.
+
+372 testy hostowe i live/actor ASanUBSan (LSan off) PASS. Shim125000us
+potwierdza wrapper/log/reset; porcje4KiB i rozdzielenie WAIT/yield sprawdzone.
+Native ESP-IDF6.1 build PASS0x17aba0 (90% app), GPIO/diff PASS. Następny
+krok: zwykły flash bez erase/FS/reimport, ten sam FLAC; po przerwach2–3
+kolejne pary phase=.../Decode perf... dla tej samej gen. Odsłuch/stabilność
+nowej wersji i dokładna przyczyna wciąż OPEN, nie obiecywać naprawy na bazie
+host fakes. Agent nie flashował. Logo/ustawienia/HLS bez zmian, ROOT CA i
+strojenie FFT/RMS/WWW odłożone, OTA wyłączone. Starsze sekcje są historią.
+
+
+## Bieżące — 2026-10-31 / FLAC recovery ADR0062 i logo ADR0063
+
+Użytkownik: po ADR0061 gra gorzej. Log bca642b2: memory/NO_MEM,
+compressed1, low/starts około2/s, potem raw adapter INVALID_RESPONSE/vendor0.
+ADR0061 odrzucone: surowy backend i CRC scanner wycofane; wraca parser SDK
+ze STREAMINFO. Hostowe testy CRC nie potwierdziły kontraktu binarnego SDK.
+PCM scratch512KiB PSRAM obejmuje138240B i maksymalny blok524280B;
+wewnętrzny ring PCM rezerwowany przed codec_open. FLAC start/refill~500ms
+z icy-br, fallback64KiB, clamp32..192KiB w istniejącym ring256KiB; bez
+restartu TCP/generation. MP3/AAC próg8KiB bez zmian. Odbiór S3 OPEN.
+
+Logo propozycja: dwa O/fale + StreamOO + linia sygnału, native256×64/4bpp,
+assets/branding/startup-256x64.png. Pokazywane1,5s tylko po power/reset,
+nie na wybudzenie STOP, reconnect ani zmianę stacji; Wi-Fi łączy równolegle.
+Renderer bez heap/drugiego framebuffer; tools/preview_boot_logo.py odtwarza
+natywny obraz i powiększenie. Ocena wyglądu/timingu OLED OPEN.
+
+370 testów hostowych PASS, live/actor ASanUBSan (LSan off), renderer guards/
+podgląd, GPIO/diff i native ESP-IDF6.1 PASS0x17a8a0,90% app wolne.
+Teraz zwykły flash bez erase/FS/reimport; nowy log FLAC live frame: supplied
+validated STREAMINFO, bez CRC-checked single frames. Sprawdzić FLAC kilka
+minut i zmianę utworu: low/hard/starts, compressed/PCM, heap/min/largest.
+Nie obiecywać rozwiązania za wolnej sieci samym rebufferem. Odbiór nowych
+ustawień/HLS i RNŚTLS nadal osobno OPEN. ROOT CA/FFT/RMS/wyglądWWW odłożone,
+OTA wyłączone. Agent nie flashował. Starsze wpisy poniżej są historią.
+
+
+## Bieżąca dostawa — ADR0059/0060 / 2026-10-31
+
+Punkty2/3/4/8 wdrożone: ostatnia stacja/start STOP lub autoplay, ID trwałe
+przy rename/URL, własna nazwa mDNS WWW/NVS i HLS audio. Długi STOP/OLED-off,
+krótki PLAY lub lista, konfigurowalne5s/auto-wybór (1..120s lub powrót),
+bez restartu tej samej grającej stacji. Commit obsługi: ee1bdbc.
+
+HLS: nieszyfrowane live/VOD/master, packed AAC/MP3 i MPEG-TS; AES/fMP4/
+BYTERANGE/LL-HLS jawnie poza zakresem. Live sequence bez replay, osobny
+manifest około84KiB PSRAM, HTTP reader16KiB stack. Nie zmieniono partycji,
+NVSoffsetów, prywatnej playlisty ani zasad TLS. Odbiór PCB nowych funkcji
+OPEN: PLAYER_SETTINGS_BRINGUP oraz HLS_BRINGUP. Zwykły flash bez erase/FS,
+Ctrl+F5. `playlist.hls.csv`6 publicznych wpisów i raport ignorowaneGit;
+manifesty/segmenty/ffprobe hostPASS. Generator ma3 oryginalne HLSVOD.
+
+368 testów hostowych PASS, targeted ASan/UBSan (LSan off), Chromium390px,
+node syntax, GPIO validator i native ESP-IDF6.1 PASS. Obraz0x17a440,
+90% app wolne. Bez flash/erase/eFuse przez agenta. Hardware OLED/NVS/mDNS/
+TS/HLS/heap i długi soak nadal OPEN; host fakes tego nie dowodzą. FLAC128KiB
+oraz RNŚTLS wciąż do potwierdzenia. ROOT CA, FFT/RMS i wyglądWWW odłożone,
+OTA wyłączone. Starsze sekcje poniżej są historią, ta jest nadrzędna.
+
+
+## Najnowszy krok — 2026-10-31 / ADR0059
+
+Zrobione: długi STOP i OLED-off (bez sleep), krótki PLAY przy STOP/lista
+przy PLAY, bezczynność listy5s domyślnie, WWW1..120s/auto-wybór lub powrót.
+Ten sam grający ID to no-op również w ownerze player/WWW. NVS: ostatni ID
+po5s, start STOP/autoplay oraz własna nazwa mDNS. Edytor i LittleFS v2
+zachowują ID przy rename/URL, aktywna sesja nie restartuje. Stary katalog
+czytany, CSV import/eksport3pola. AP panel bez nowych kontrolek.
+
+Build ESP-IDF6.1, host controls/store/settings/player/discovery/REST oraz
+Chromium390px PASS. STOP/autoplay/brak ID, no-op sesji, rename/URL/odczyt
+po restarcie i błąd NVS sprawdzone hostowo; fizyczny odbiór OPEN.
+Teraz zwykły flash bez erase/FS, Ctrl+F5 i PLAYER_SETTINGS_BRINGUP.
+Punkt8 HLS zrealizowany w ADR0060. FLAC128KiB i RNŚTLS wciąż do
+osobnego potwierdzenia użytkownika. ROOT CA, FFT/RMS i wyglądWWW odłożone.
+OTA wyłączone; bez flash/erase/eFuse przez agenta. Starsze wpisy poniżej
+są historią, bieżące zachowanie określa ta sekcja i ADR0059.
+
+Aktualizacja: **2026-10-31 — AP setup-only, LAN odtwarzacz i edytor playlisty gotowe do odbioru**.
+Gałąź feature/streamoo-implementation. ADR0034–0035, STATUS i HTTP_PLAYER_BRINGUP.
+
+## Potwierdzone przez użytkownika
+
+OLED/PL font i scroll w lewo, encoder półkrok A5/B6/BTN7/reverse=y, preferencje
+NVS, lokalny PCM/MP3/AAC i stress odsłuchem. Sieć STA/IP/AP-off potwierdzona
+logiem, nowy HOME z IP w trzeciej linii potwierdzony, lista z wgranej playlisty
+i wybór potwierdzone („Działa fajnie”). Nie diagnozować ponownie znaków UART:
+wcześniej potwierdzono poruszanie przewodami. Reboot/live-import katalogu
+pozostają bez osobnego wyniku sprzętowego.
+
+## Odbiór 06i
+
+Użytkownik potwierdził dobry odsłuch kilku stacji. Log 740c327: PLAYING44100
+oraz48000, PCM32, invalid/low/hard0, starts1 per sesja, max_fill111–112us.
+HWM player min8704 B, reader6404 B. Heap internal61139–61599 B, min39844 B,
+largest31744 B; PSRAM min8031908 B. Nie wnioskować wielogodzinnej stabilności
+ani konkretnego kodeka/protokołu z samego rate.
+
+Pojedyncza nieudana próba gen7: HTTP200/ESP_FAIL/decoder0/vendor0,
+format22050/2/16; retry gen8 wrócił do PLAYING44100. Przyczyna nadal OPEN. 06j dodaje stage/cause, previous/format i osobną linię
+Decode diag z licznikami/in/used/out/needed. Zbierz obie linie dla tej samej
+gen przy następnym retry; nie zgaduj HE-AAC ani braku obsługi22,05kHz.
+Osobne MP3/AAC-LC, HTTPS/ICY, STOP/zaniki/rebuffer i dłuższy soak jeszcze OPEN.
+
+## Player 06i — architektura
+
+Owner player priority4: komendy ID/generation i volume/toggle, stan snapshot,
+nowa sesja dla wyboru, retry tej samej stacji, bez fallback do innej. Otwiera
+HTTP dopiero po STA/AP-off i wyborze użytkownika, nie po samym boot.
+STOP/brak sieci/AP-active: fade, zamknięcie I2S, async stop i ACK readera,
+dopiero potem zwolnienie/reset; UI nie czeka na blokujący DNS/TCP/TLS.
+Najnowszy wybór wygrywa podczas zamykania starej sesji. Reorder zachowuje ID
+bez restartu źródła; usunięcie pozycji zatrzymuje. Trwałość wyboru w NVS OPEN.
+
+Własne streaming: HTTP/HTTPS/ICY, compressed256KiB PSRAM, start8KiB, ICY
+demux i metadane związane z pozycją audio, bounded queue64 markerów.
+Live decoder: MP3/AAC-LC ADTS, mono/stereo16bit8..48kHz →48kHz stereo32,
+liniowy task-only resampler z fazą między fragmentami/WAIT, EOF bez pętli.
+HE-AAC/AAC+, HLS/M3U/PLS, FLAC/Ogg/Opus oraz docelowy SRC/DSP nadal przyszłe.
+Wspólne sprawdzone PCM/gain/I2S (32×240, fade50ms) bez alokacji/I/O/FFT w IRQ.
+Stary nieużywany FIFO testu przeniesiony z BSS do internal heap przy starcie
+testu, aby profil sieciowy nie rezerwował drugiego około60KiB bufora.
+
+HTTPS: pełny SDK bundle, hostname/cert verification, brak downgrade/insecure.
+SNTP pool.ntp.org po STA; NTP/certyfikaty wymagają sprawdzenia na urządzeniu.
+TLS alokuje w PSRAM. API/licencje przypiętego IDF6.1 przejrzane; Mbed TLS4.1.0
+pod wybraną Apache2, parser2.7.0 MIT, Mozilla CA MPL2 z source PEM dołączonym.
+Źródła i licencje: licenses/ESP-HTTP-TLS-NOTICE.md. Nie kopiowano GPL/yoRadio kodu.
+
+248 testów hostowych PASS; nowa diagnostyka live/actor ASan/UBSan PASS (LSan off,
+bez TSan). Transport/RTOS/decoder/I2S w testach są atrapami; nie dowodzą realnego
+TCP/TLS, wydajności kodeka i DMA/SMP. Native ESP-IDF6.1 build PASS, 7% wolnego
+app. Fill/pcm_fill w IRAM i pipeline/ring w DRAM sprawdzone w ELF.
+Agent nie wykonywał flash/erase/eFuse ani połączeń do prywatnych stacji z hosta.
+
+## 06j i następny punkt
+
+Kod diagnostyki gotowy: pierwsza przyczyna pumpa zatrzaskuje się do nowej sesji,
+WAIT nie jest błędem, format22050 jest obsługiwany. Guardy rozdzielone, bez
+naprawy na domysł i bez zmiany formatu/resamplera/ISR. UART po komendzie fade,
+100ms liczone od aktualnego czasu. 15 wektorów błędów i formatowanie logów rzeczywistego kodu actor
+sprawdzone na hoście. ADR0035. Brak nowych zależności i nowych alokacji.
+
+Użytkownik zaakceptował09e: „jest dobrze”. Nie wymaga powtarzania zwykłego
+odbioru IP/VOL. Scenariusze RF i dokładne czasy osobno w NETWORK_BRINGUP.
+07b uruchamia levels w osobnym tasku metering przez tap4 bloków.
+Rzeczywiste RMS/peak w bargraph/analog, FFT nadal „Brak danych”. ADR0038.
+Teraz zwykły flash i odbiór DSP_BRINGUP: ruch mierników także przy VOL0,
+STOP/PLAY/szybka zmiana bez starych poziomów, heap/stack/max_fill oraz meters.
+Po odbiorze: smoothing/peak-hold/skala dB/VU i FFT/Hann/ESP-DSP.
+Nowy log potwierdza również PLAYING22050; timeouty HTTP0 przed dekoderem
+nie wyjaśniają dawnego gen7. Przy retry nadal analizuj stage/cause i Decode diag.
+
+## Uzupełnienie odbioru
+
+Zwykły idf.py -p PORT flash; zachować NVS/LittleFS, bez erase i obrazu FS.
+Po podstawowym odsłuchu pozostały STOP/PLAY/szybkie zmiany,
+potem AAC-LC/HTTPS/ICY i zaniki. Logi player: phase/rate/compressed/PCM,
+max_fill/invalid/low/hard/starts/stack_hwm/reader_hwm; platform heap internal
+free/min/largest i PSRAM po uruchomieniu dekodera. Podstawowy odsłuch już zaliczony; nie powtarzać go bez potrzeby.
+Pozostałe scenariusze oznaczać oddzielnie. Dokładna procedura HTTP_PLAYER_BRINGUP.md.
+
+## Stałe zasady i dalszy zakres
+
+Lokalny WWW AP/LAN bez dodatkowego logowania — jawna decyzja użytkownika
+zastępuje wcześniejsze auth. Hasło sieci AP nadal stałe/prywatny build,
+SSID/hasło tylko na OLED w AP. Zachować istniejący prywatny plik buildu,
+nie pytać ponownie o sekret i nie wypisywać go. Origin/custom header/limity
+zostają, hasła STA nie są zwracane. AP bez odtwarzania pozostaje wymaganiem.
+
+Prywatny /playlist.csv ignorowany/nieśledzony, nie kopiować do repo/build/fixture
+ani logów. 267 rekordów/11 normalizacji U+200B/3 zachowane duplikaty, oryginał
+niezmieniony; ID name/URL/wystąpienie, ograniczenia rename/edit w ADR0033.
+Nie zmieniać NVS/PHY/app/storage offsetów; obecny krok nie zmienia partycji.
+
+Dalsze: pomiary/odbiór06i, SRC/kodeki, DSP i rzeczywiste widgety, last ID NVS,
+edycja trwałych ID, mDNS, OTA, sterowanie WWW i telefon przez API, RC5 i MicroSD.
+RC5/GPIO/mapy i platforma mobilna OPEN; nie wymyślać pinów. Licencja modyfikacji
+małego fontu PL nadal OPEN na wcześniejszą jawną decyzję użytkownika.
+Nie dodawać AI-Model/AI-Tokens do commitów; metryki wyłącznie ze zweryfikowanych danych.
+
+Weryfikacja07a:275 testów PASS, levels ASan/UBSan PASS (LSan off),
+native build PASS (0x15b530, 7% wolne); kod analizatora jeszcze nieuruchamiany.
+
+Weryfikacja07b:284 testy PASS, metering/actor/controls ASan/UBSan PASS
+(LSan off). Native ESP-IDF6.1 build PASS (0x15bcd0, 7% wolne).
+Metering około10KiB internal +4096B stos/TCB na sesję; brak pamięci wyłącza
+metry bez zatrzymania audio. Lifecycle: I2S-close, STOP worker, ACK, free;
+wyniki tylko PLAYING z aktualną generation i wiekiem<=200ms.
+Do sprawdzenia heap i deadline na sprzęcie; agent nie wykonywał flash.
+
+Najnowszy krok07c (ADR0039): użytkownik potwierdził działanie07b, ale ruch
+za szybki i krótkie „Brak danych”. Log wskazuje gaps23/drop28 przy PCM32
+i invalid/low/hard0. Wprowadzono10Hz, attack160/release500ms i peak hold400/
+release800ms. Podtrzymanie ostatniego kompletnego wyniku po luce do200ms,
+bez zmiany zasad STOP/generation. 286 testów i targeted ASan/UBSan PASS.
+Teraz zwykły flash i ocena spokojniejszego ruchu/braku migania na OLED.
+
+Native ESP-IDF6.1 build PASS, obraz0x15bf20 (7% wolne);
+check_config --platform i diff --check PASS. Bez flash/erase/eFuse.
+
+Najnowsze strojenie07c-2 / ADR0040: użytkownik uznał07c za zbyt mocno
+uśrednione. RMS attack30/release150ms, peak hold150/release300ms;10Hz
+i podtrzymanie przy krótkiej luce bez zmian. Teraz ocena żywszej reakcji
+na OLED po zwykłym flash bez erase/NVS.
+
+Weryfikacja:286 testów PASS, ballistics/metering ASan/UBSan PASS (LSan off).
+Native ESP-IDF6.1 build PASS,0x15bf20 (7% wolne).
+check_config --platform i diff --check PASS.
+
+Najnowszy krok07d: użytkownik zostawia RMS/peak do późniejszego dopracowania.
+Nie zmieniać teraz ich parametrów. Dodany spectrum, własny referencyjny
+floatFFT1024/2048/Hann N-1/24 pasma; NumPy oracle oraz realny PCM tap
+volume0/50/100. Jeszcze niewywoływany, bez nowego obrazu UI, bez potrzeby
+wgrywania firmware. ADR0041 opisuje kontrakt/normalizację i audyt
+ESP-DSP1.8.2 Apache2/IDF>=4.2/API. Zależności jeszcze nie dodano.
+Następnie: adapter ESP-DSP, kolektor50% overlap z resetem luk, policzyć
+FFT tylko dla aktywnego widżetu, publikacja generation/timestamp, pomiary
+CPU/pamięci/max_fill na S3. Porównanie float/sc16 nadal OPEN.
+
+Weryfikacja07d:295 testów hostowych PASS (oracle NumPy wykonany, bez skip).
+Native C FFT/PCM harness ASan/UBSan PASS, LSan off. Native ESP-IDF6.1 build
+PASS, obraz0x15bf20 (7% wolne); spectrum kompilowany, nieużywany kod
+usunięty przez linker. check_config --platform i diff --check PASS.
+Bez flash/erase/eFuse i zmian partycji.
+
+Najnowszy krok07e (ADR0042): FFT live1024/50% overlap,24 pasma -60..0dBFS
+max10Hz. Tylko wybrane FFT/HOME/PLAYING, osobny istniejący task metering.
+Workspace około45KiB PSRAM, alloc przy pierwszej aktywacji, free przed ACK
+przy końcu sesji. Brak PSRAM nie blokuje audio/RMS; brak FFT na innym
+widżecie/liście. Reset okna i natychmiastowe maskowanie po zmianie żądania,
+generation/timestamps/expiry200ms. Nie zmieniono strojenia mierników.
+Referencyjny backend float, bez deklaracji SIMD; ESP-DSP/sc16 po pomiarach.
+303 testy, NumPy, targeted ASan/UBSan i native build PASS (0x15f2d0,6% app).
+Teraz zwykły flash bez erase/NVS i DSP_BRINGUP: słupki, VOL0, STOP/zmiany,
+czystość dźwięku; logi FFT max_fft/frames/skipped/gaps i meters/heap/max_fill.
+Agent nie wykonywał flash/erase/eFuse.
+
+Najnowszy07f / ADR0043: użytkownik zgłosił szerokie i migające FFT przy
+mowie; pusty wykres bez „Brak danych”. Test Hann/off-bin ujawnił artefakt
+dolnych binów zwykłej średniej. DC teraz ważone Hann (różnice względem
+pierwszej próbki dla dokładnego zera DC), NumPy oracle PASS. Sam Hann
+był i pozostaje. FFT envelope: atak natychmiast, opadanie pełnej skali320ms,
+bez zmiany RMS/peak, taktu10Hz i freshness200ms/resetu sesji.
+305 testów, targeted ASan/UBSan i build PASS (0x15f3e0,6% wolne).
+Teraz zwykły flash i ocena słupków na mowie/muzyce oraz log FFT max_fft/
+gaps i meters drop/PCM/heap. Nie uznawać szerokości na log osi za dowód
+przecieku. Czasy S3 nadal OPEN bez nowego logu.
+
+Najnowsze: użytkownik potwierdził07f: dźwięk OK, słupki lepsze, zostawić
+do późniejszego strojenia. Nie zmieniać teraz parametrów FFT/RMS.
+ADR0044 dodaje MP3/AAC po poprawnym PCM i RSSI/ikonę Wi-Fi w dolnym lewym
+panelu. RSSI snapshot ownera co1s, bez I/O w UI. Codec czyści się na STOP/
+retry/offline; bitrate nadal --. Geometria bez zmian.
+307 testów i targeted ASan/UBSan PASS; native ESP-IDF6.1 build PASS,
+0x15f690 (6% wolne). Teraz zwykły flash i odbiór MP3/AAC/RSSI na OLED.
+Bez erase/NVS/obrazu FS. Czasy S3/max_fft i długi soak nadal OPEN bez logu.
+Zegar/data/strefa, bitrate, backend ESP-DSP/sc16/SIMD i reszta roadmapy
+pozostają dalsze; nie zakładać wyboru strefy/DST bez decyzji użytkownika.
+
+Najnowszy krok: narzędzie hostowe tools/probe_playlist.py (ADR0045),
+na prośbę użytkownika o test dostępności, codec/profile/bitrate i usunięcie
+nieaktywnych. Oryginał nietknięty, nowe playlist.active.csv/report.json,
+zachowane duplikaty/order/ovol. CLI wymaga ffprobe (lokalnie6.1.1),
+bez importu GPL do firmware.314 testów i incremental build PASS;
+realne lokalne HTTP MP3/AAC/404 PASS. Prywatnych267 stacji nie odpytano.
+Instrukcja PLAYLIST_PROBE.md. Firmware nie zmieniony, nie trzeba flashować.
+
+Najnowsza drobna poprawka ADR0046: RSSI o6px w lewo i węższa ikona Wi-Fi, odstęp od wizualizacji. Native build PASS, nowy widok do odbioru OLED. Audio/FFT bez zmian.
+
+Najnowsze ADR0047: użytkownik wybrał konfigurację strefy przez WWW
+(Konfiguracja), DST automatyczne.8 opcji UTC/europejskich, defaultWarsaw,
+NVS string streamoo_clock/zone; zmiana live i po reboot. GET/POST clock
+z dotychczasowym Origin/header, bez loginu. Panel ma tabs Status/
+Konfiguracja i formularz Data i czas. OLED prawdziwe SNTP → data/godzina,
+przed callbackiem kreski, czas systemowy UTC/TLS nietknięty. Zegar działa
+bez stacji/STOP, nie resetuje marquee. Nie zmieniono FFT/RMS.
+328 testów, targeted ASan/UBSan, Chromium390px i native build PASS
+(0x160ff0,6% wolne). Teraz zwykły flash, Ctrl+F5 WWW i CLOCK_BRINGUP.
+Brak flash/erase/eFuse przez agenta. Pozostałe strefy/pełna baza IANA,
+pomiary dryfu i odbiór realnego NTP/reboot nadal OPEN.
+
+Najnowsze ADR0048: użytkownik potwierdził zegar i zmianę strefy. Zażądał
+daty dzień/miesiąc/rok i strefy w NVM. Data teraz DD.MM.YYYY, placeholder
+--.--.----. Zapis NVS streamoo_clock/zone był już w ADR0047; bez zmiany
+produkcji dodano test zapisu i odczytu w świeżym procesie z plikowym NVS.
+Test i ASan/UBSan PASS. Wgrać standardowo bez erase/NVS; sprawdzić
+nową datę i strefę po power-cycle. Zegar SNTP po boocie może potrzebować
+chwili, ale wybór strefy pozostaje nieulotny.
+
+Weryfikacja:329 testów hostowych PASS, clock-settings ASan/UBSan PASS
+(LSan off), native ESP-IDF6.1 build PASS,0x160ff0 (6% wolne),
+check_config --platform i diff --check PASS. Bez flash/erase/eFuse.
+
+Najnowsze ADR0049: użytkownik nie blokuje pracy na fizycznym teście strefy,
+sprawdzi go w międzyczasie. Nie uznawać tego testu za zaliczony.
+Dodano bitrate nominalny z icy-br do dolnego panelu. Brak/błąd nagłówka
+daje --, bez estymacji z sample rate/bufora. Reset na redirect/sesję/STOP/
+retry/offline; wyświetlenie dopiero przy znanym PCM.332 testy i HTTP/actor
+ASan/UBSan PASS. Wgrać standardowo bez erase/NVS, sprawdzić np.128k/192k
+na stacjach z nagłówkiem. FFT/RMS/clock settings bez zmian.
+
+Native ESP-IDF6.1 build PASS,0x161080 (6% wolne), GPIO validator
+i diff --check PASS. Bez nowych zależności, flash/erase/eFuse i zmian partycji.
+
+Najnowsze ADR0050: użytkownik potwierdza bieżący firmware. Dodano do
+Status WWW PLAY/STOP/volume i POST /api/v1/player/control. Wspólny owner
+z encoderem, explicit idempotent PLAY/STOP, absolute volume0..100,
+PLAY przy retry nie toggle; brak AP/offline i brak zastępczej stacji.
+Najpierw wybór stacji enkoderem; wybór WWW to kolejny mały krok.
+334 testy/actor ASan/UBSan/Chromium390px/native build PASS,0x161f00,6% app.
+Teraz zwykły flash, Ctrl+F5 i WEB_PLAYER_BRINGUP: UI/audio/enkoder/suwak.
+Nie powtarzać strojenia FFT/RMS. NVS strefy po fizycznym power-cycle
+użytkownik sprawdza osobno; nie ogłaszać tego odbioru jako zaliczonego.
+
+Najnowsze ADR0051: użytkownik wymaga AP tylkoWi-Fi/import/strefa, LAN
+domyślnie player + klikane stacje. Zrobione z serwerowym gate nowych
+endpointów. Playlista: add/edit/delete/save/export/import/clear. CAS
+generation string, snapshoty, pusty katalog trwały; aktywna usunięta
+stacja stop bez fallback. Rename/URL zmienia ID v1 i może zatrzymać
+stację (UI ostrzega). Prywatny playlist.csv i wyniki hostowe nietknięte.
+334 testy, targeted ASan/UBSan, Chromium390px i build PASS
+(0x165fa0,5% app wolne). Teraz zwykły flash/Ctrl+F5 i WEB_LIBRARY_BRINGUP.
+Bez flash/erase/eFuse przez agenta. Nie uznawać fizycznego NVS power-cycle
+strefy za zaliczony — użytkownik sprawdza osobno.
+
+Najnowsze ADR0052: użytkownik odebrał WWW/edytor, wygląd później.
+Dodano mDNS LAN `http://streamoo-xxxxxx.local/` (sufiks AP małymi literami),
+HTTP80 DNS-SD. Nazwa i ewentualny konflikt w logu discovery. TylkoSTA/AP-off,
+owner sieci, free/restart po utracie/odzyskaniu Wi-Fi, retry błędu30s.
+Nowy managed espressif/mdns1.14.0 Apache2, dokładny hash dependencies.lock.
+Wyłączone browse/CLI/AP/Ethernet, danePSRAM/stosinternal4096 priority1.
+Maxinterfaces2, ponieważ upstream nie kompiluje się przy1; bez vendorpatch.
+335 testów i discovery ASan/UBSan PASS; native build PASS0x16dd00,
+37632B/2% app wolne. Partitions bez zmian. Teraz zwykły flash i
+MDNS_BRINGUP: .local, audio, reconnect/reboot, heap. Odbiór multicast na
+płytce OPEN. Własna nazwa WWW/NVS następny mały krok, jeszcze OPEN.
+Nie stroić FFT/RMS ani wyglądu WWW teraz. NVS timezone power-cycle
+użytkownik sprawdza osobno. Bez flash/erase/eFuse przez agenta.
+
+Najnowsze ADR0053: użytkownik zgłosił zbyt ciche VOL0..33. Krzywa
+teraz kwadratowa amplitudowo `(VOL/100)^2`, zamiast-60..0dB. VOL33
+około-19dB,50-12dB; mute/unity/rampa50ms zachowane. Wspólne WWW/enkoder.
+Zapisana liczba VOL bez migracji, więc po flash gra głośniej: rozpocząć
+odsłuch od niskiego poziomu.335 testów i native build PASS, rozmiar
+0x16dd00,2% app wolne. Teraz odbiór odsłuchowy zakresu10/20/33/50.
+Odbiór mDNS z ADR0052 nadal OPEN, nie zakładać go z tego zgłoszenia.
+FFT/RMS/wygląd WWW odłożone. Bez flash/erase/eFuse przez agenta.
+
+Potwierdzenie 2026-10-31: użytkownik otworzył stronę pod nazwą mDNS
+swojego radia i zgłosił „działa”. Podstawowy dostęp .local/HTTP odebrany
+na płytce (ADR0052). Reconnect/konflikty/DNS-SD/heap nadal OPEN. Odsłuch
+krzywej głośności ADR0053 pozostaje OPEN; wiadomość dotyczyła adresu WWW.
+
+Odbiór ADR0053 (2026-10-31): użytkownik potwierdził, że nowa
+charakterystyka głośności jest dobra. Odsłuch krzywej zakończony
+pozytywnie; pozostawiamy `(VOL/100)^2` i rampę50ms.
+
+Najnowsze ADR0054/06k: użytkownik zlecił pozostałe kodeki i M3U/PLS,
+ewentualnie HLS. Podłączono HE-AAC/v2 w ADTS, native FLAC, Ogg Vorbis i
+Ogg Opus z istniejącego esp_audio_codec2.6.2. API/licencje przejrzane,
+retained XiphBSD i notice. LivePCM16/24/32-bit mono/stereo8..48kHz,
+scratch64KiB/pump PSRAM, player stack24KiB (vendor zaleca20KiB+caller).
+M3U/PLS rozwiązuje reader:16KiB/3 dokumenty/5 redirect, względne URL,
+bez HTTPS→HTTP; HLS #EXT-X- jawnie NOT_SUPPORTED, osobny etap OPEN.
+Katalog/importCSV/stableID nie zmienione, URL playlisty zachowany.
+
+Build -Os + silent assertions (kontrole pozostają; ELF do backtrace).
+Factory powiększona WYŁĄCZNIE do pustej luki:0x10000/0x180000. Storage
+nadal0x190000/0x100000, NVS/PHY bez zmian. Standardowy pełny flash z
+nową tablicą, bez erase/obrazuFS. Obraz0x176230,40400B/3% wolne.
+346 host tests, targeted ASan/UBSan i native build PASS; PCM/gain IRAM.
+Generator tools/generate_extended_fixtures.py sprawdzony:7 oryginalnych
+plików i M3U/PLS plus playlisttest. Nie importować automatycznie do radia.
+
+Teraz EXTENDED_FORMATS_BRINGUP: najpierw publiczne KissFM HE-AAC/RNŚAAC+,
+potem FLAC16/24/Vorbis/Opus i M3U/PLS z serwera na komputerze. Każdy
+binarny dekoder wymaga odsłuchu S3 i heap/CPU/HWM; nie ogłaszać odbioru
+na podstawie hostfakes. HE-AACv2 osobno niepotwierdzone. Ogg-FLAC/chained,
+rawOpus/RTP,>48kHz/multichannel/ramki>64KiB nie deklarowane. FFT/RMS i
+wyglądWWW odłożone, krzywaVOL oraz podstawowe mDNS wcześniej odebrane.
+Bez flash/erase/eFuse przez agenta. HLS opcjonalny, wymaga osobnego readera
+segmentów oraz planu miejsca; jeszcze niezaimplementowany.
+
+Najnowsze ADR0055: użytkownik REZYGNUJE Z OTA, chce jedną dużą aplikację,
+zgadza się ponownie zaimportować stacje. Factory0x10000/0xEF0000,
+LittleFS1MiB przeniesiony na0xF00000. NVS/PHY pozostają (Wi-Fi/volume/
+widget/timezone). Starego katalogu nie migrować. Pełny flash z tablicą,
+bez erase-flash. Master/plan zmienione, OTA nie jest już zadaniem.
+
+Marker FS inicjalizacji per adres sfs_00f00000/init, aby zachowane NVS
+phase2 starego FS nie blokowało formatowania nowej blank partycji. Nadal
+bez autoformatowania nierozpoznanego niepustego FS. Conditional ręczne
+czyszczenie tylko nowego storage w LARGE_FLASH_BRINGUP, agent nie wykonał.
+347 host tests/store ASan/UBSan/native build PASS. Obraz0x176250,
+14 130 608B/90% wolnego slotu. GPIO validator/diff PASS.
+
+Gotowa lista do importu: root playlist.codecs.csv,13 wpisów; details.csv
+z kodekami i JSONraport, wszystkie ignorowaneGit. MP3stereo/mono,AAC-LC,
+HE-AACv1/v2,Vorbis,Opus,nativeFLAC z RadioMast; KissFM/RNŚ/Radio357;
+M3URadioMast i PLSRNŚ. RealneHTTPSpróbki/ffprobe i naszresolver hostPASS,
+SomaFM403 odrzucone. Nie zmieniono prywatnego playlist.csv.
+
+Teraz user flash/reimport, odbiór nowychkodeków i heap/stack/underrun S3.
+Nie deklarować odbioru na podstawie hostpróbek. OTA zamknięte przez
+rezygnację, HLS nadal osobnoOPEN. FFT/RMS/wyglądWWW odłożone.
+
+Najnowsze ADR0056: user zgłosił FLAC/RNŚAAC+ nie gra. Dostarczony log
+potwierdzony jako TEST FLAC native lossless: TLSvalid/HTTP200, parser
+NOT_SUPPORT/vendor-7 na pierwszych257B. Przyczyna: live stream rozpoczyna
+ramką0xFFF8 bez fLaC/STREAMINFO, a SimpleDecoder wymaga fileheader.
+Dodano własny bounded bootstrapnagłówka RFC9639:16B/CRC8/codednumber,
+STREAMINFO42B tylko z jawnych parametrów, niezmienione ramki. Flacfile
+passthrough,1Bfragment/reset/bounds przetestowane; bez I2S/DSPchanges.
+355 tests, adapter/header ASanUBsan, niezależny FFmpegPCM oracle także
+midstream, native build PASS0x1767c0,90%app wolne. GPIO/diffPASS.
+
+Teraz userzwykłyflash i test tego samego FLAC; log nowy
+FLAC live frame: supplied validated STREAMINFO, potem oczekiwanePCM.
+Odbiór poprawki S3 OPEN. Brak zmian playlisty/partycji/NVS. RNŚAAC+
+pozostaje osobnoOPEN: użytkownik nie podał jeszcze logu tej stacji.
+Nie zakładać, że ma ten sam błąd. Stream failed dodaje codec enum
+0MP3/1AAC/2FLAC/3Vorbis/4Opus, by logi były jednoznaczne.
+Agent nie flashował/erase/eFuse. OTA nadal wyłączone decyzją użytkownika.
+
+Najnowsze ADR0057: log RNŚAAC+ wskazał TLSrootnotfound przedHTTP/decode.
+Origin podaje GTSRootR4 cross-signed przez nieobecny staryGlobalSignRootCA,
+ale zaufanysamopodpisanyGTSRootR4 już w pinnedFULLbundle. Włączono natywne
+CROSS_SIGNED_VERIFY + TRUSTED_CERT_CALLBACK (defaults/bieżącysdkconfig).
+Bez dokładaniaCA/deprecatedroots/leaftrust/wyłączania hostname/podpisów
+lub HTTPfallback. Audyt wykazał HAVE_TIME_DATE=n (SDKdefault); teraz y,
+UTCzSNTP. Przed sync HTTPS może chwilowo retry. Wcześniejsza deklaracja
+sprawdzania dat była nieprecyzyjna. SDKniezmieniony; CA source/license bez zmian.
+
+Hostopenssl naDOKŁADNYM SDKCAfile potwierdza chain/hostname, odrzuca
+wronghostname/expiredleaf. KolejnehostyRevma teżchainOK.17testHTTPPASS,
+nativebuildPASS0x176800,90%wolne,GPIO/diffPASS. Brak nowych unitów
+udających test callbackaSDK; handshakeS3 nadalOPEN. Teraz user zwykłyflash
+bez erase/reimportu, sprawdzić RNŚAAC+ i poprzedniąFLACfixADR0056.
+WeryfikacjaFLACS3 też nadalOPEN. Nie twierdzić żeAACdekoderodebrany:
+tenlogdotyczyłwyłącznieTLS. Bez flash/erase/eFuse przez agenta.
+
+Najnowsze ADR0058: FLAC po bootstrap ruszył, potem przerywał. Logparsera
+maxframe20480, neededPCM82944>65536; HTTP200/pełnycompressed, nie brak
+sieci. Host3MiB/179pakietów:24bitstereo44100,4608próbek/frame,max25839B.
+Ustawiono maxframesize bootstrap128KiB (limit obsługi, nie pomiar całego
+strumienia), PCM scratch128KiB PSRAM. Nie zostawiamy0, bo SDK wybiera20KiB.
+I2S/ring/gain/playlist/partycje bez zmian, bezreallocwdecode.
+357testów, header/liveASanUBsan, FFmpegoracle noise24bit>20KiB/frame,
+dużyPCM82944 regression i nativebuild PASS0x176810,90%wolne.
+Teraz zwykłyflash i ten samFLACkilkaminut/zmianautworu; oczekiwanylog
+max_frame131072. OdbiórS3/heapOPEN, brakflash/erase/eFuseprzezagenta.
+RNŚTLSfixADR0057 nadal osobno do potwierdzenia. ImportROOTCA przyszłość,
+OTA wyłączone. FFT/RMS/wyglądWWW odłożone.

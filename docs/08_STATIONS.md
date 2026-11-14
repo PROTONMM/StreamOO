@@ -1,5 +1,12 @@
 # 08 — Stacje, ICY, import/eksport
 
+Instrukcja edycji, eksportu i dopisującego importu:
+[USER_GUIDE.md](USER_GUIDE.md#playlista-edycja-i-kopia-zapasowa).
+Bieżący edytor WWW udostępnia nazwę, URL, dodawanie i usuwanie; nie ma
+przycisków zmiany kolejności stacji. Zmiana URL grającej pozycji zachowuje
+jej ID i zaczyna obowiązywać przy następnym połączeniu, bez restartu przy
+samym zapisie. Wymagania/propozycje niżej należy czytać w tym kontekście.
+
 **USTALONE:** jedna lista na początek; kompatybilność importu/eksportu z rzeczywistym formatem pliku stacji **yoRadio**, bez kopiowania starego HTTP API. Przechowywanie LittleFS, UI/WWW edytuje listę bez restartu.
 
 ## Model
@@ -7,9 +14,11 @@
 
 ## Import
 - Upload→ parser zgodny ze **sprawdzonym na rzeczywistych plikach** formatem yoRadio→ walidacja pól/UTF-8/długości/url/duplikatów→ podgląd→ commit atomowy.
-- Tryby: replace lub merge (proponowane); duplikaty raportować, bez cichego nadpisania.
+- Import WWW dopisuje pozycje do istniejącego katalogu; pełne zastąpienie
+  pozostaje operacją edytora, a wyczyszczenie listy wymaga osobnego przycisku.
+  Duplikaty raportować, bez cichego nadpisania.
 - Zapis przez staging + walidacja CRC/checksum + atomowe przełączenie pliku/manifestu; przerwany import pozostawia poprzednią listę.
-- Eksport zgodny z tym samym formatem (weryfikować testem round-trip). **OTWARTE:** dokładna gramatyka importu; plik źródłowy musi zostać dostarczony/wyodrębniony z archiwum yoRadio, a parser dopiero potem zaimplementowany.
+- Eksport zgodny z tym samym formatem (weryfikować testem round-trip). **FORMAT SPRAWDZONY2026-10-31:** lokalny playlist.csv to UTF-8 i3 literalne pola TAB: nazwa/URL/ovol, bez nagłówka. Parser/preview/atomowy zapis zaimplementowane (ADR0031), publikacja i lista OLED gotowe do odbioru (ADR0033).
 
 ## Zarządzanie
 - WWW: dodaj/usuń/edytuj nazwę+URL/zmień kolejność, import/export.
@@ -19,3 +28,59 @@
 
 ## Testy
 Importer na prawdziwych plikach, round-trip import/export, polskie znaki, długie URL, duplikaty, przerwany zapis, zanik zasilania, zmiana kolejności podczas PLAYING i szybki wybór stacji.
+
+## Prywatny plik referencyjny i audyt
+
+Użytkownik dostarczył playlist.csv w katalogu głównym. Plik jest ignorowany
+przez Git i nie może trafić do fixture/build. 267 rekordów;11 URL zawiera
+U+200B,3 URL się powtarzają. Nie poprawiono oryginału. Własny audyt:
+
+```sh
+python3 tools/check_playlist.py playlist.csv
+```
+
+Raportuje numery wierszy i kody bez treści stacji/URL. Exit1 oznacza problemy
+walidacji (tu11 wierszy z niewidocznym znakiem), nie błąd działania programu.
+Duplikaty tylko jako ostrzeżenia. Podgląd przyszłego importu ma jasno pokazać
+korekty/duplikaty przed zatwierdzeniem. Pole ovol zachowane, mapowanie na DSP
+jeszcze nieustalone. Gramatyka i źródło licencyjne w ADR0030; kod upstream
+nie został skopiowany. Narzędzie nie zastępuje uploadu, parsera firmware,
+LittleFS, stabilnych ID ani atomowej podmiany katalogu.
+
+## Implementacja 08a
+
+Zapisany katalog jest źródłem listy OLED w profilu sieciowym; snapshoty PSRAM
+z refcount i aktualizacja do 1 s po commit bez restartu. ID v1 niezależne od
+pozycji dla unikalnych par name/URL, duplikaty zachowane. Reorder zachowuje
+wybór, usunięcie czyści go bez losowego fallback. Edycja nazwy/URL/ID oraz
+player HTTP i zapamiętanie ostatniego wyboru nadal OPEN. Granice ID w ADR0033.
+Odsłuch nie jest częścią odbioru katalogu: wybór na HOME nie uruchamia streamu.
+
+06i: wybór OLED wysyła ID/generację do playera HTTP/ICY, brak optymistycznego PLAY. Reorder utrzymuje sesję tej samej stacji, usunięcie zatrzymuje bez fallback. Testy hostowe PASS, odsłuch sprzętowy OPEN. ADR0034.
+
+ADR0051: edytor WWW i eksport3pól TAB, ręczne dodawanie/usuwanie, celowe
+czyszczenie do trwałego pustego katalogu. CAS generation przed zapisem;
+normalny atomic pipeline walidacja/temp/fsync/rename/snapshot. Eksport
+strumieniowany z utrzymanego snapshotu, bez odczytu flash. Import pustego
+pliku nadal odrzucony, clear osobnym przyciskiem. ID v1 przy rename/URL
+nadal się zmienia; UI uprzedza o możliwym zatrzymaniu aktywnej pozycji.
+
+ADR0070: import playlist.csv przez WWW atomowo dopisuje rekordy do katalogu,
+zamiast go zastępować. Istniejące ID pozostają, nowe wpisy mają nowe ID.
+Preview sprawdza sam plik; commit łączy go z aktualnym snapshotem i odrzuca
+kolizję równoczesnego zapisu. Nadal wolno zachować powtarzające się URL;
+clear i edytor zachowują jawne operacje zastąpienia/usunięcia.
+
+## Trwałe ID v2 — ADR0059
+
+Edytor WWW wysyła ID razem z nazwą/URL/ovol. Rename i zmiana URL zachowują
+ID oraz aktywne połączenie; nowy URL obowiązuje przy następnym połączeniu.
+Nowe rekordy dostają losowy niezerowy64-bit ID z kontrolą kolizji.
+LittleFS zachowuje pojedynczy atomowy plik: `SOOCAT2\n` i wiersze
+`16hex<TAB>name<TAB>url<TAB>ovol`. Stary3-polowy katalog nadal czytany,
+jego dotychczasowe ID zachowane przy pierwszym zapisie. Publiczny import/
+eksport CSV nadal3pola; import kojarzy istniejące pary nazwa+URL, nie może
+odgadnąć tożsamości po jednoczesnej zmianie obu pól. CAS generation nadal
+chroni edycję. Usunięcie aktywnego ID zatrzymuje bez fallback. NVS pamięta
+ostatni wybrany ID po5s bez zmian, także przy STOP. Te zasady zastępują
+ograniczenie v1 opisane historycznie wyżej.

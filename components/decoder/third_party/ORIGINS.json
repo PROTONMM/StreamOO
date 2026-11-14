@@ -1,0 +1,41 @@
+{
+  "micro-flac": {
+    "version": "0.3.0",
+    "commit": "f9c27d4d0166021db977d7fc37d205b21d81e9f2",
+    "url": "https://github.com/esphome-libs/micro-flac",
+    "license": "Apache-2.0",
+    "subset": "decoder only; native FLAC; Ogg/encoder excluded"
+  },
+  "dr_flac": {
+    "version": "0.13.4",
+    "commit": "35b5c392cc15456736c440a68dbe073178bbffe0",
+    "url": "https://github.com/mackron/dr_libs",
+    "license": "MIT-0 (selected alternative)"
+  },
+  "sha256": {
+    "dr_flac/dr_flac.h": "b8078eeb5d523502eb7964508cd7ec8450bc79d383bec90aa17fd9e2fefd9c24",
+    "micro-flac/LICENSE": "37deff111f8786efe200466bc2901fad9040b6e1b3e4ff2e57b5a1a4e461bf75",
+    "micro-flac/idf_component.yml": "03542aa0e13739a67b5e54c42482d2942c88ed82511f842f16a332a4c9d31f50",
+    "micro-flac/include/micro_flac/flac_decoder.h": "12d724be1953c5e195ecd326e6ef978e5eaa093187724868a7259d09eaddd671",
+    "micro-flac/include/micro_flac/pcm_format.h": "e496506a2c28e7f5dffdd127de6caa707ffd43544a2e671239f911153f7017f2",
+    "micro-flac/src/alloc.h": "6dfd33e3b91d0413eec2b5788cd0b971faa538e5560c44c53b83d571ea2e54f7",
+    "micro-flac/src/bit_reader.h": "4cfd2ce7ae8c4cd78fe84dbad5c9e1bf9695963579743f4a51c0df1b962cc535",
+    "micro-flac/src/compiler.h": "8111f3f3ecf73d5481da4a817ac8dd14f5ebfdc5ab9d894b5ab7ffd1e3b19255",
+    "micro-flac/src/crc.cpp": "feade84c686ff702f12b04b2cfbfc0fd25aab9a095cd86da10f3bb9f34526021",
+    "micro-flac/src/crc.h": "cd6e20bdd469594c32bb77352de8d34c34b5a33caa293db822b6dbf9fd70e8ed",
+    "micro-flac/src/decorrelation.cpp": "ad9f4bad82f76d9e73175e85f2adef5f5fdaf61889ae7430c5ec1907466d475f",
+    "micro-flac/src/decorrelation.h": "86ae679e5afa8884e4432f0a0abce1874651e6df669bd2cdd975cda2a157391d",
+    "micro-flac/src/flac_decoder.cpp": "da8d09393c14ab66f262584a3dadaa183e765bcbda03c2f72e4b5762f98a7fce",
+    "micro-flac/src/flac_format.h": "04e155b131c54358df7024fea349a43fbc0db112d1be146d279e425e78b5a53d",
+    "micro-flac/src/frame_header.cpp": "50f508b75db915b4de7252ef754b5f8e896f0399e51d75769349b7b86b7cdfcc",
+    "micro-flac/src/frame_header.h": "c01e10d956e5e02df6fb962cd03dba65a6a55d5f14f740ca000b085c5e891544",
+    "micro-flac/src/lpc.cpp": "a9da21fdcc28eb61ffbb951730d752eaa33d2c3a02d01712d84ccf2683a822b3",
+    "micro-flac/src/lpc.h": "d036f4754c88608c8a25f4677d0e3f5e86c7479a79d5eb44ab6b2b8987cbc819",
+    "micro-flac/src/pcm_packing.cpp": "f291fe585576a2d565a9282ce204a703aeb1d680a8174de1697dcf87ab507a38",
+    "micro-flac/src/pcm_packing.h": "465d8cc837af644b422f50b29219496faf53874e7183984957158934df7044d4",
+    "micro-flac/src/wrapping_arithmetic.h": "dcbfbeb9b8e9e1f288cb8caa84229196c4352a284630e3ec0b989c77fb476b96",
+    "micro-flac/src/xtensa/lpc_32_xtensa.S": "4f63436029ba441be5a86ae2dc782f4e5855d423d7a375c1cc345206b72e7475",
+    "micro-flac/src/xtensa/lpc_64_xtensa.S": "c2cc833826f68fb82c30b118b132d3c9a6c1aa71afe1c909212b0982b0badae1",
+    "micro-flac/src/xtensa/lpc_xtensa.h": "73e963090c7cd2364d394527ed4204e73ffa6868dcf29e9517655082e883de13"
+  }
+}
