@@ -10,6 +10,8 @@ typedef struct {
     uint32_t rate, kbps;
     uint8_t channels, bits;
     bool primed;
+    uint8_t changes;
+    bool variable;
 } streamoo_bitrate_t;
 
 static inline uint32_t streamoo_bitrate_update(streamoo_bitrate_t *s,
@@ -39,7 +41,17 @@ static inline uint32_t streamoo_bitrate_update(streamoo_bitrate_t *s,
         value = numerator / denominator;
         if (numerator % denominator >= (denominator + 1) / 2) ++value;
     }
-    s->kbps = value > 0 && value <= 4096 ? (uint32_t)value : 0;
+    uint32_t next = value > 0 && value <= 4096 ? (uint32_t)value : 0;
+    /* Observe decoded-duration windows, not HTTP throughput or UI polls.
+     * Three substantial changes filter rounding/padding and a single outlier.
+     * This is evidence of variation, not a bitstream CBR/VBR declaration. */
+    if (s->kbps && next) {
+        uint32_t high = next > s->kbps ? next : s->kbps;
+        uint32_t delta = next > s->kbps ? next - s->kbps : s->kbps - next;
+        if (delta > 8 && delta > high / 20 && s->changes < 3) ++s->changes;
+        if (s->changes >= 3) s->variable = true;
+    }
+    s->kbps = next;
     s->consumed=consumed; s->produced=produced;
     return s->kbps;
 }

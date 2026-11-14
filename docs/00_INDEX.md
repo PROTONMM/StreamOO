@@ -250,3 +250,11 @@ Dwa widma maksimum, wspólna skala, peak hold i szachownica: `adr/0105-spectrum-
 Znacznik peak wskazówek2px: `adr/0106-analog-two-pixel-peak-marker.md`.
 
 Pełna przewijana lista stacji w odtwarzaczu WWW: `adr/0107-scrollable-web-player-stations.md`.
+
+Nowy wspólny znak OLED/WWW: `adr/0108-streamoo-wordmark.md`.
+
+Zwarty panel PC/telefon, motywy i format audio: `adr/0109-compact-responsive-web-player.md`.
+
+Mniejsze sterowanie WWW i poprzednia/następna stacja: `adr/0110-compact-web-transport-and-station-navigation.md`.
+
+Regulacja głośności WWW podczas przesuwania: `adr/0111-live-web-volume-slider.md`.

@@ -1,5 +1,69 @@
 # Punkt wznowienia StreamOO
 
+## Głośność podczas przesuwania — ADR0111 / 2026-11-14
+
+Suwak WWW wysyła komendy już na input, bez czekania na puszczenie.
+Najwyżej10 żądań/s, tylko jedno w toku; oczekuje wyłącznie najnowsza
+wartość. Change/blur/cancel kończą edycję bez gubienia końcowej wartości
+ani duplikowania przyjętej. Suwak pozostaje aktywny w czasie HTTP,
+polling nie przestawia go podczas przeciągania. Błąd/offline usuwa kolejkę.
+
+27 testów portalu PASS, w tym4 nowe testy timingu/wolnego HTTP/błędów.
+Chromium potwierdził zmianę stanu serwera przed puszczeniem suwaka oraz
+pozostałe przepływy AP/LAN PASS. Node/diff PASS. Native ESP-IDF6.1 build
+PASS:0x177400B,90% app wolne. Bez flash agenta. Odsłuch i fizyczny dotyk
+Androida pozostają OPEN. Backend/rampa/NVS/I2S bez zmian.
+
+## Zwarty odtwarzacz WWW i nawigacja stacji — ADR0110 / 2026-11-14
+
+Usunięto kartę sieci i zwykły komunikat połączenia. Zakładki telefonu28px,
+sterowanie36px w jednym rzędzie: poprzednia/PLAY/STOP/następna jako SVG,
+suwak i wartość volume. Lista zajmuje około2/3 ekranu telefonu; pasek
+wyszukiwania/licznika ma jeden wiersz. Etykiety edytora są ukryte wizualnie,
+zachowane dla czytnika ekranu; pola i przycisk usuwania są bardziej zwarte.
+Nawigacja po pełnym katalogu z zawijaniem, niezależna od filtra. Wspólny
+wybór/CAS, blokada żądań równoległych oraz obsługa pustej/jednej stacji.
+
+23 testy portalu PASS, Chromium: pełne przepływy i nowe przyciski PASS;
+6 podglądów/układów320..1280px PASS, w tym edytor oraz pomiar listy>=66%
+wysokości pionowego okna telefonu. Node/diff PASS. Native ESP-IDF6.1
+build PASS:0x176a80B,90% app wolne. Bez flash agenta; fizyczny Android
+oraz sterowanie rzeczywistym radiem OPEN. Szczegóły: ADR0110.
+
+## Zwarty panel WWW, motywy i format audio — ADR0109 / 2026-11-14
+
+Usunięto duży nagłówek „Twoje radio”. Sterowanie, kodek/bitrate/próbkowanie
+oraz IP od razu dostępne; PC ma dwie kolumny, telefon jedną. Lista wszystkich
+stacji bez stron wypełnia dostępną wysokość. Ustawienia i import rozwijane.
+Motywy jasny/ciemny/systemowy, wybór zapamiętany lokalnie w przeglądarce.
+Przy wykrytej zmienności panel pokazuje tylko „Zmienny”; estymacja liczby
+ma≈, brak formatu/STOP/offline — kreski. API rozszerzone o jawny snapshot
+formatu. Detektor bazuje na trzech istotnych zmianach okien>=2s audio,
+nie na tempie sieci; ograniczenia i progi opisane w ADR0109.
+
+499 testów hostowych PASS, bez skipów. Native ESP-IDF6.1/esp32s3 build
+PASS:0x175f60B,90% partycji app wolne. Node syntax, GPIO/platform i diff
+PASS. Szczegóły i polecenia odtworzenia: ADR0109.
+
+Chromium: przepływy AP/LAN i pięć układów/motywów320..1280px PASS,
+2048 stacji, wyszukiwanie, zachowanie przewijania, tryb systemowy i blokada
+localStorage PASS. Podglądy obejrzano. Bez flash agenta; fizyczny Android
+oraz bitrate na rzeczywistym radiu pozostają OPEN.
+
+## Nowe logo OLED i WWW — ADR0108 / 2026-11-14
+
+Większy autorski napis Stream z połączonymi pętlami OO, zaokrąglone kreski,
+wygładzenie4bpp i rozstrzelony podpis INTERNET RADIO. Jeden zestaw ścieżek
+zasila SVG w panelu WWW i statyczną maskę OLED224×40 (4480B flash).
+Bez fontu ani grafiki z zewnątrz; istniejący Misc Fixed dla podpisu.
+Bez dodatkowego framebuffer/heap i zmian timingu startu/audio.
+Generator pycairo1.25.1 wyłącznie hostowy; zwykły build go nie uruchamia.
+
+54 istniejące testy hostowe PASS; podgląd renderera z guard bytes PASS,
+SVG/maska/HTML odtwarzalne bajtowo. Native ESP-IDF6.1 build PASS:
+0x174a10B,90% app wolne. GPIO/node/diff PASS. Bez flash agenta.
+Ocena na OLED i wygląd nagłówka w przeglądarce pozostają OPEN (ADR0108).
+
 ## Odtwarzacz WWW — przewijana pełna lista / ADR0107 / 2026-11-14
 
 Poprzednie zmiany fontu/wizualizacji zapisano na polecenie użytkownika

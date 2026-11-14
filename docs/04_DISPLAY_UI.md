@@ -1,5 +1,7 @@
 # 04 — SSD1322, UI, wymienne widżety
 
+Nowe logo StreamOO: wspólna geometria SVG/4bpp, [ADR0108](adr/0108-streamoo-wordmark.md).
+
 ## Znacznik peak wskazówek2px — ADR0106 / 2026-11-14
 
 Na polecenie użytkownika znacznik peak obu mierników wskazówkowych ma

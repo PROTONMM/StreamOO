@@ -44,6 +44,7 @@ static unsigned tick,opens,closes,head,tail,count,allocations;static size_t comm
 static uint8_t messages[16][128];static int64_t now;
 static bool flac_case;static size_t flac_queued=8192;static unsigned flac_reads,reads_before;
 static int boot;
+static bool variable_bitrate_test;
 uint64_t fixture_last;bool fixture_autoplay;
 static bool online,ap=true,output_live,force_fail,disable_meter,wrong_meter_generation,web_commands,web_retry;static uint64_t stop_gen,play_gen;static int manual;
 static streamoo_audio_fill_fn output_fill;static void *output_context;
@@ -100,7 +101,7 @@ esp_err_t streamoo_decoder_open(streamoo_codec_t codec,streamoo_decoder_t **d){a
 void streamoo_decoder_close(streamoo_decoder_t *d){heap_caps_free(d);}
 esp_err_t streamoo_decoder_process(streamoo_decoder_t *d,uint8_t *in,size_t n,bool eos,uint8_t *pcm,size_t cap,streamoo_decode_result_t *r){(void)d;(void)in;(void)n;(void)eos;(void)pcm;(void)cap;(void)r;if(profile_test){now+=125000;*r=(streamoo_decode_result_t){.consumed=n,.produced=16384};}return ESP_OK;}
 bool streamoo_live_decode_init(streamoo_live_decode_t *p,streamoo_byte_source_t s,void *d,streamoo_stream_decode_fn f){(void)s;measured_once=false;measured_context=d;measured_decode=f;p->format=bitrate_test?(streamoo_pcm_format_t){48000,2,32}:(streamoo_pcm_format_t){44100,2,16};return true;}
-streamoo_stream_result_t streamoo_live_decode_read(streamoo_live_decode_t *p,int32_t *out){(void)p;if(logging_test)advance_time(1000);if(bitrate_test){p->consumed_total+=120;p->produced_total+=1920;}if(profile_test&&!measured_once){uint8_t in=0,pcm=0;streamoo_decode_result_t result={0};assert(measured_decode(measured_context,&in,1,false,&pcm,1,&result)==ESP_OK);measured_once=true;}if(flac_case){++flac_reads;if(flac_queued==1)return STREAMOO_STREAM_WAIT;}if(force_fail){if(transport_eof_test)reader_done=true;p->failure=transport_eof_test?STREAMOO_LIVE_SOURCE_EOF:STREAMOO_LIVE_DECODER_NO_PROGRESS;p->last_input=19;return STREAMOO_STREAM_FAILED;}for(unsigned i=0;i<480;++i)out[i]=65536;return STREAMOO_STREAM_READY;}
+streamoo_stream_result_t streamoo_live_decode_read(streamoo_live_decode_t *p,int32_t *out){(void)p;if(logging_test)advance_time(1000);if(bitrate_test){static const unsigned rates[]={120,200,90,240};p->consumed_total+=variable_bitrate_test?rates[(p->produced_total/1920/400)%4]:120;p->produced_total+=1920;}if(profile_test&&!measured_once){uint8_t in=0,pcm=0;streamoo_decode_result_t result={0};assert(measured_decode(measured_context,&in,1,false,&pcm,1,&result)==ESP_OK);measured_once=true;}if(flac_case){++flac_reads;if(flac_queued==1)return STREAMOO_STREAM_WAIT;}if(force_fail){if(transport_eof_test)reader_done=true;p->failure=transport_eof_test?STREAMOO_LIVE_SOURCE_EOF:STREAMOO_LIVE_DECODER_NO_PROGRESS;p->last_input=19;return STREAMOO_STREAM_FAILED;}for(unsigned i=0;i<480;++i)out[i]=65536;return STREAMOO_STREAM_READY;}
 esp_err_t streamoo_audio_output_open(streamoo_audio_pins_t p,streamoo_audio_fill_fn fn,void *ctx,streamoo_audio_output_t **out){(void)p;assert(!output_live&&online&&!ap);output_live=true;output_fill=fn;output_context=ctx;next_audio_at=now+5000;*out=(void *)1;return ESP_OK;}
 esp_err_t streamoo_audio_output_close(streamoo_audio_output_t *out){assert(out&&output_live);output_live=false;++closes;return ESP_OK;}
 bool streamoo_audio_output_stats(streamoo_audio_output_t *s,streamoo_audio_stats_t *out){(void)s;*out=(streamoo_audio_stats_t){tick,10,0};if(release_fault&&!fault_reported&&now>=5000000){out->invalid_buffers=1;fault_reported=true;}return true;}
@@ -147,7 +148,7 @@ void vTaskDelay(unsigned ms){
  if(active_meter){int32_t raw[480];while(streamoo_pcm_pop(&active_meter->tap,raw,NULL)){} }
  streamoo_player_state_t s;assert(streamoo_player_state(&s));
  if(s.phase==STREAMOO_PLAYER_PLAYING&&!bitrate_test)assert(!strcmp(s.codec,flac_case?"FLAC":"MP3")&&s.bitrate_kbps==(flac_case?1500u:192u));
- if(!s.running||s.phase==STREAMOO_PLAYER_WAIT_NETWORK||s.phase==STREAMOO_PLAYER_RETRY)assert(!s.codec[0]&&!s.bitrate_kbps&&!s.bitrate_measured);
+ if(!s.running||s.phase==STREAMOO_PLAYER_WAIT_NETWORK||s.phase==STREAMOO_PLAYER_RETRY)assert(!s.codec[0]&&!s.bitrate_kbps&&!s.bitrate_measured&&!s.bitrate_variable);
  if(s.phase!=STREAMOO_PLAYER_PLAYING||disable_meter||wrong_meter_generation){assert(!s.metering.levels.valid);assert(!s.metering.spectrum_valid);}
  if(s.metering.spectrum_valid)assert(s.metering.generation==s.generation&&s.metering.bands[0]==12345);
  if(s.metering.levels.valid){assert(s.metering.generation==s.generation);assert(s.metering.levels.rms[0]==1234);}
@@ -176,8 +177,8 @@ void vTaskDelay(unsigned ms){
    assert(output_live&&s.phase==STREAMOO_PLAYER_PLAYING);
    if(logging_test&&!release_test)assert(log_lines>=7);
    if(release_test)assert(!log_lines&&!buffers_log[0]&&!perf_log[0]);
-   if(bitrate_test)assert(s.bitrate_kbps==(bitrate_header?320u:192u)&&s.bitrate_measured==!bitrate_header);
-   if(bitrate_test)assert(strstr(buffers_log,"audio_kbps=192"));
+   if(bitrate_test){assert(s.bitrate_measured==!bitrate_header);assert(s.bitrate_variable==variable_bitrate_test);if(!variable_bitrate_test||bitrate_header)assert(s.bitrate_kbps==(bitrate_header?320u:192u));}
+   if(bitrate_test&&!variable_bitrate_test)assert(strstr(buffers_log,"audio_kbps=192"));
    streamoo_pcm_pipeline_t *pcm=output_context;
    assert(pcm->stats.underflows==0&&pcm->stats.hard_underflows==0&&pcm->stats.restarts==1);
    if(logging_test)assert(max_lines_per_turn==(release_test?0u:1u));
@@ -243,7 +244,7 @@ void vTaskDelay(unsigned ms){
  if(tick==340)catalog=&second;
  if(tick==420){if(delivery_test)assert(strstr(delivery_log,"body_kbps=192 rx_age_ms=125 read_max_us=250000 push_wait_max_us=5000 log_step_max_us=123000 wait_empty=7 wait_busy=3"));if(profile_test)assert(strstr(perf_log,"codec_max=125000us")&&strstr(perf_log,"block_max=125000us")&&strstr(buffers_log,"pcm_at_max=16384")&&strstr(perf_log,"backend="));assert(!s.running&&!s.station_id&&!output_live&&opens==3&&closes==3&&!allocations&&first.refs==0&&reordered.refs==0);longjmp(completed,1);}
 }
-int main(int argc,char **argv){assert(streamoo_player_reserve(false,1500)==8192);assert(streamoo_player_reserve(true,1500)==93750);assert(streamoo_player_reserve(true,0)==65536);assert(streamoo_player_reserve(true,1)==32768);assert(streamoo_player_reserve(true,UINT32_MAX)==196608);manual=argc>1?atoi(argv[1]):0;fragmented_test=manual==19;memory_retry_test=manual==20;pending_cancel_test=manual==21;flac_case=manual==10;profile_test=manual==11;delivery_test=manual==13;release_test=manual==17||manual==18;release_fault=manual==18;logging_test=manual==14||release_test;bitrate_test=manual==15||manual==16;bitrate_header=manual==16;transport_eof_test=manual==12;disable_meter=manual==3;wrong_meter_generation=manual==4;web_commands=manual==5;web_retry=manual==6;if(manual>=7&&manual<=9){boot=manual;fixture_last=manual==9?99:11;fixture_autoplay=manual==8;}if(manual>=3)manual=0;assert(streamoo_player_start(50)==ESP_OK);assert(!streamoo_player_select(NULL,&(streamoo_ui_select_command_t){11,99}));assert(first.refs==0);if(!setjmp(completed))actor(NULL);return 0;}
+int main(int argc,char **argv){assert(streamoo_player_reserve(false,1500)==8192);assert(streamoo_player_reserve(true,1500)==93750);assert(streamoo_player_reserve(true,0)==65536);assert(streamoo_player_reserve(true,1)==32768);assert(streamoo_player_reserve(true,UINT32_MAX)==196608);manual=argc>1?atoi(argv[1]):0;fragmented_test=manual==19;memory_retry_test=manual==20;pending_cancel_test=manual==21;flac_case=manual==10;profile_test=manual==11;delivery_test=manual==13;release_test=manual==17||manual==18;release_fault=manual==18;logging_test=manual==14||release_test;variable_bitrate_test=manual==22||manual==23;bitrate_test=manual==15||manual==16||variable_bitrate_test;bitrate_header=manual==16||manual==23;transport_eof_test=manual==12;disable_meter=manual==3;wrong_meter_generation=manual==4;web_commands=manual==5;web_retry=manual==6;if(manual>=7&&manual<=9){boot=manual;fixture_last=manual==9?99:11;fixture_autoplay=manual==8;}if(manual>=3)manual=0;assert(streamoo_player_start(50)==ESP_OK);assert(!streamoo_player_select(NULL,&(streamoo_ui_select_command_t){11,99}));assert(first.refs==0);if(!setjmp(completed))actor(NULL);return 0;}
 '''
 class NetworkPlayerTests(unittest.TestCase):
  def run_case(self,mode):
@@ -292,3 +293,7 @@ class NetworkPlayerTests(unittest.TestCase):
  def test_pcm_ring_reserved_before_fragmenting_reader_across_station_changes(self):self.run_case(19)
  def test_pcm_reservation_failure_and_http_open_failure_retry_without_leaks(self):self.run_case(20)
  def test_reserved_pcm_freed_on_stop_and_network_loss_before_codec_headers(self):self.run_case(21)
+
+ def test_variable_bitrate_published_even_with_declared_header_and_cleared_on_stop(self):
+  for mode in (22,23):
+   with self.subTest(mode=mode):self.run_case(mode)

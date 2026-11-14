@@ -37,7 +37,7 @@ static esp_err_t js(httpd_req_t *r)
 }
 static esp_err_t status(httpd_req_t *r)
 {
-    streamoo_portal_status_t snapshot={0}; char json[512];
+    streamoo_portal_status_t snapshot={0}; char json[768];
     if (headers(r,"application/json; charset=utf-8")!=ESP_OK) return ESP_FAIL;
     if (!read_status(status_context,&snapshot) || !streamoo_portal_status_json(&snapshot,json,sizeof json)) {
         httpd_resp_set_status(r,"503 Service Unavailable");

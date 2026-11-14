@@ -526,6 +526,7 @@ static void task(void *context) {
               pump->format.channels,pump->format.bits);
           current.bitrate_kbps=info.bitrate_kbps ? info.bitrate_kbps : measured;
           current.bitrate_measured=!info.bitrate_kbps && measured!=0;
+          current.bitrate_variable=profile.bitrate.variable;
         }
         portENTER_CRITICAL(&lock);
         streamoo_pcm_stats_t pcm = stats;
@@ -585,7 +586,7 @@ static void task(void *context) {
     if (!session && current.running && online && now < retry_at)
       current.phase = STREAMOO_PLAYER_RETRY;
   publish: {
-    if(retiring || !output || !online || !current.running){current.codec[0]=0;current.bitrate_kbps=0;current.bitrate_measured=false;}
+    if(retiring || !output || !online || !current.running){current.codec[0]=0;current.bitrate_kbps=0;current.bitrate_measured=false;current.bitrate_variable=false;}
     portENTER_CRITICAL(&lock);
     bool spectrum_on=spectrum_requested;
     portEXIT_CRITICAL(&lock);

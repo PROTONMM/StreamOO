@@ -9,7 +9,7 @@ ROOT=Path(__file__).resolve().parents[1]
 
 class State(C.Structure):
     _fields_=[('consumed',C.c_uint64),('produced',C.c_uint64),('rate',C.c_uint32),
-              ('kbps',C.c_uint32),('channels',C.c_uint8),('bits',C.c_uint8),('primed',C.c_bool)]
+              ('kbps',C.c_uint32),('channels',C.c_uint8),('bits',C.c_uint8),('primed',C.c_bool),('changes',C.c_uint8),('variable',C.c_bool)]
 
 
 class BitrateTests(unittest.TestCase):
@@ -57,3 +57,28 @@ class BitrateTests(unittest.TestCase):
         s=State();self.assertEqual(self.update(s,9000,0),0);self.assertFalse(s.primed)
         self.update(s,10000,36864)
         self.assertEqual(self.update(s,2**64-1,2**64-1),0)
+
+    def window(self,s,kbps):
+        return self.update(s,s.consumed+kbps*250,s.produced+44100*8*2)
+
+    def test_variation_latches_after_three_significant_changes_and_resets(self):
+        s=State();self.update(s,1000,36864)
+        for value in (128,192,256):
+            self.window(s,value);self.assertFalse(s.variable)
+        self.window(s,192);self.assertTrue(s.variable)
+        self.window(s,256);self.assertTrue(s.variable)
+        self.update(s,s.consumed,s.produced,48000);self.assertFalse(s.variable)
+        self.assertEqual(s.changes,0)
+
+    def test_rounding_padding_waits_and_constant_estimate_are_not_vbr(self):
+        s=State();self.update(s,1000,36864)
+        for value in (192,193,191,192,192,192):
+            self.window(s,value);self.assertFalse(s.variable)
+        for _ in range(10):self.update(s,s.consumed,s.produced)
+        self.assertEqual(s.changes,0)
+        self.window(s,256)  # One observation alone is insufficient.
+        self.assertFalse(s.variable)
+        self.window(s,192)  # Return from the outlier is still insufficient.
+        self.assertFalse(s.variable)
+        for _ in range(10):self.update(s,s.consumed,s.produced)
+        self.assertFalse(s.variable)

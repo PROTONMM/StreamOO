@@ -13,6 +13,9 @@ typedef struct {
     uint32_t network_error;
     bool network_source;
     uint64_t station_id;
+    char codec[8];
+    uint32_t bitrate_kbps, sample_rate;
+    bool bitrate_measured, bitrate_variable;
 } streamoo_portal_status_t;
 /* Public read-only DTO. Rejects invalid SSID/values; never send a failed render. */
 bool streamoo_portal_status_json(const streamoo_portal_status_t *,char *,size_t);

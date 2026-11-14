@@ -27,6 +27,12 @@ static bool status(void *context,streamoo_portal_status_t *out)
             out->audio_available=player.ready&&network.sta_connected&&!network.ap_ready;
             out->running=player.running;out->buffering=player.phase!=STREAMOO_PLAYER_PLAYING;
             out->volume=player.volume;out->station_id=player.station_id;
+            if(out->audio_available && player.codec[0]) {
+                memcpy(out->codec,player.codec,sizeof out->codec);
+                out->bitrate_kbps=player.bitrate_kbps;out->sample_rate=player.rate;
+                out->bitrate_measured=player.bitrate_measured;
+                out->bitrate_variable=player.bitrate_variable;
+            }
         }
         return true;
     }

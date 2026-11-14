@@ -25,16 +25,18 @@ script=r'''
  await wait(()=>$('settings-result').textContent.includes('odczytane')&&!$('save-clock').disabled);
  assert($('panel-navigation').hidden&&$('status-panel').hidden&&$('editor-panel').hidden&&!$('config-panel').hidden,'AP setup only');
  assert($('import-panel').parentElement.id==='config-panel','AP import');
+ assert($('player-prev').disabled&&$('player-next').disabled,'AP navigation disabled');
  $('show-status').click();assert($('status-panel').hidden,'AP cannot show player');
  $('timezone').value='Europe/London';$('clock-form').requestSubmit();await wait(()=>$('clock-result').textContent.includes('Zapisano'));
  const rows=$('wifi-rows');rows.children[0].querySelector('.wifi-ssid').value='Synthetic';rows.children[0].querySelector('.wifi-password').value='synthetic-pass';
  $('wifi-form').requestSubmit();await wait(()=>$('wifi-result').textContent.includes('Przyjęto'));
  async function upload(csv,cancelFirst=false){
+  $('import-panel').open=true;
   const data=new DataTransfer();data.items.add(new File([csv],'playlist.csv',{type:'text/plain'}));
   $('playlist-file').files=data.files;$('playlist-file').dispatchEvent(new Event('change'));$('playlist-form').requestSubmit();
   await wait(()=>!$('commit-playlist').disabled);
   if(cancelFirst){let asked=false;window.confirm=()=>{asked=true;return false;};$('commit-playlist').click();assert(asked&&!$('commit-playlist').disabled,'cancel import preserves draft');window.confirm=()=>true;}
-  $('commit-playlist').click();await wait(()=>$('playlist-result').textContent.includes('Zapisano'));
+  $('commit-playlist').click();await wait(()=>$('playlist-result').textContent.includes('Dodano stacje'));
  }
  await upload('A\thttp://radio.invalid/a\t0\nB\thttp://radio.invalid/b\t-5');
  await fetch('/test-lan');await wait(()=>!$('status-panel').hidden&&$('station-list').children.length===2);
@@ -42,15 +44,27 @@ script=r'''
  assert($('import-panel').parentElement.id==='editor-panel','LAN import in editor');
  $('station-list').children[0].click();await wait(()=>$('current-station').textContent==='A');
  $('station-list').children[1].click();await wait(()=>$('current-station').textContent==='B');
- $('player-volume').value='63';$('player-volume').dispatchEvent(new Event('input'));$('player-volume').dispatchEvent(new Event('change'));
- await wait(()=>$('volume').textContent==='63 / 100');$('player-stop').click();await wait(()=>$('playback').textContent==='Zatrzymane');
+ $('station-search').value='B';$('station-search').dispatchEvent(new Event('input'));
+ for(const [id,name] of [['player-next','A'],['player-prev','B'],['player-prev','A'],['player-next','B']]){
+  $(id).click();assert($(id).disabled,'disable navigation during request');$(id).click();
+  await wait(()=>$('current-station').textContent===name&&!$(id).disabled);
+  assert($('station-list').children.length===1,'navigation preserves filter');
+ }
+ $('station-search').value='';$('station-search').dispatchEvent(new Event('input'));
+
+ $('player-volume').value='63';$('player-volume').dispatchEvent(new Event('input'));
+ assert(!$('player-volume').disabled,'volume remains draggable during request');
+ await wait(()=>!$('player-stop').disabled);
+ assert((await (await fetch('/api/v1/status')).json()).audio.volume===63,'volume applied before release');
+ $('player-volume').dispatchEvent(new Event('change'));
+ await wait(()=>$('volume').textContent==='63'&&!$('player-stop').disabled);$('player-stop').click();await wait(()=>$('playback').textContent==='Zatrzymane');
  $('player-play').click();await wait(()=>$('playback').textContent==='Odtwarzanie');
- $('show-config').click();await wait(()=>!$('system-panel').hidden&&!$('save-system').disabled);
+ $('show-config').click();$('system-panel').open=true;await wait(()=>!$('system-panel').hidden&&!$('save-system').disabled);
  $('list-timeout').value='9';$('list-action').value='cancel';$('boot-action').value='play';$('hostname').value='kitchen-radio';
  $('system-form').requestSubmit();await wait(()=>$('system-result').textContent.includes('Zapisano'));
  const settings=await (await fetch('/api/v1/settings')).json();assert(settings.list_timeout_s===9&&!settings.list_autoselect&&settings.autoplay&&settings.hostname==='kitchen-radio','system settings save');
  $('show-editor').click();assert(!$('editor-panel').hidden,'editor tab');
- $('new-station-name').value='C';$('new-station-url').value='http://radio.invalid/c';$('station-add-form').requestSubmit();
+ document.querySelector('.add-station').open=true;$('new-station-name').value='C';$('new-station-url').value='http://radio.invalid/c';$('station-add-form').requestSubmit();
  assert($('editor-rows').children.length===3,'add draft');$('editor-save').click();await wait(()=>$('editor-result').textContent.includes('Zapisano 3'));
  const first=$('editor-rows').children[0].querySelector('input');first.value='A poprawione';first.dispatchEvent(new Event('input'));
  $('editor-save').click();await wait(()=>$('station-list').children[0].textContent==='A poprawione');
@@ -60,13 +74,20 @@ script=r'''
  $('editor-export').click();await wait(()=>downloaded);HTMLAnchorElement.prototype.click=originalClick;
  $('editor-rows').children[0].querySelector('input').dispatchEvent(new Event('input'));
  await upload('D\thttp://radio.invalid/d\t12',true);await wait(()=>$('station-list').children.length===1&&$('station-list').children[0].textContent==='D');
+ assert($('player-prev').disabled&&$('player-next').disabled,'single station navigation disabled');
  $('editor-clear').click();await wait(()=>$('editor-result').textContent.includes('Zapisano 0'));
+ assert($('player-prev').disabled&&$('player-next').disabled,'empty catalog navigation disabled');
  $('new-station-name').value='Draft';$('new-station-url').value='http://radio.invalid/draft';$('station-add-form').requestSubmit();
  await fetch('/test-bump');$('editor-save').click();await wait(()=>$('editor-result').textContent.includes('Lista została zmieniona'));
  assert($('editor-rows').children.length===1,'conflict keeps draft');$('editor-reload').click();await wait(()=>$('editor-rows').children.length===0);
  await fetch('/test-ap');await wait(()=>$('panel-navigation').hidden&&$('status-panel').hidden&&$('editor-panel').hidden);
  assert($('import-panel').parentElement.id==='config-panel','return AP setup');
- assert(!localStorage.length&&!sessionStorage.length,'no browser credentials');
+ assert(!sessionStorage.length,'no session credentials');
+ for(const theme of ['dark','light','auto']){
+  $('theme-select').value=theme;$('theme-select').dispatchEvent(new Event('change'));
+  assert(document.documentElement.dataset.theme===theme&&localStorage.getItem('streamoo.theme')===theme,'theme choice persisted');
+ }
+ assert(localStorage.length===1,'only theme stored');
  assert(document.documentElement.scrollWidth<=window.innerWidth,'mobile overflow');
  document.body.dataset.test='PASS';
  }catch(e){document.body.dataset.test='FAIL '+e.message;}})();
@@ -123,10 +144,12 @@ if __name__ == '__main__':
  server=ThreadingHTTPServer(('127.0.0.1',0),Handler);threading.Thread(target=server.serve_forever,daemon=True).start()
  result=subprocess.run(['/usr/bin/google-chrome','--headless','--no-sandbox','--disable-gpu','--disable-background-networking','--no-first-run','--disable-sync','--hide-scrollbars','--window-size=390,1600','--virtual-time-budget=40000','--screenshot=/tmp/streamoo-config-mobile.png','--dump-dom',f'http://127.0.0.1:{server.server_port}/'],capture_output=True,text=True,timeout=40)
  Path('/tmp/streamoo-config-browser.log').write_text(result.stderr)
+ Path('/tmp/streamoo-config-browser.html').write_text(result.stdout)
  assert result.returncode==0,'browser failed'
- assert 'data-test="PASS"' in result.stdout, result.stdout[-1800:]
+ assert 'data-test="PASS"' in result.stdout, result.stdout[result.stdout.find('<body'):result.stdout.find('<body')+180]
  assert not catalog and exports==1 and zone=="Europe/London"
  selections=[json.loads(data) for path,data in requests if path.endswith('/select')]
- assert len(selections)==2 and selections[0]!=selections[1]
- print('Chromium390px: AP setup only, LAN player/select/volume/stop/play, editor add/edit/delete/export/import/clear/conflict, timezone and Wi-Fi: PASS')
+ assert len(selections)==6 and selections[0]!=selections[1]
+ assert selections==[selections[0],selections[1],selections[0],selections[1],selections[0],selections[1]]
+ print('Chromium390px: AP setup only, LAN player/select/prev/next/wrap/filter/volume/stop/play, editor add/edit/delete/export/import/clear/conflict, timezone and Wi-Fi: PASS')
  server.shutdown()

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 224 40" role="img" aria-label="StreamOO">
+  <g fill="none" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+    <path stroke="#182b31" d="M 26 10 C 20 3 5 5 5 14 C 5 23 26 17 26 27 C 26 36 10 38 4 31 M 38 9 L 38 28 C 38 34 41 35 46 32 M 32 16 L 46 16 M 54 34 L 54 17 M 54 23 C 57 17 61 16 65 17 M 72 24 L 88 24 C 88 12 71 12 71 25 C 71 35 81 38 87 32 M 113 17 L 113 34 M 113 25 C 113 13 96 13 96 25 C 96 37 113 37 113 25 M 123 34 L 123 17 M 123 23 C 123 14 137 14 137 23 L 137 34 M 137 23 C 137 14 151 14 151 23 L 151 34"/>
+    <path stroke="#2e654b" d="M 192 21 C 181 4 164 4 164 21 C 164 38 181 38 192 21 C 203 4 220 4 220 21 C 220 38 203 38 192 21"/>
+  </g>
+</svg>
