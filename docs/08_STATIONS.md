@@ -1,5 +1,12 @@
 # 08 — Stacje, ICY, import/eksport
 
+Instrukcja edycji, eksportu i dopisującego importu:
+[USER_GUIDE.md](USER_GUIDE.md#playlista-edycja-i-kopia-zapasowa).
+Bieżący edytor WWW udostępnia nazwę, URL, dodawanie i usuwanie; nie ma
+przycisków zmiany kolejności stacji. Zmiana URL grającej pozycji zachowuje
+jej ID i zaczyna obowiązywać przy następnym połączeniu, bez restartu przy
+samym zapisie. Wymagania/propozycje niżej należy czytać w tym kontekście.
+
 **USTALONE:** jedna lista na początek; kompatybilność importu/eksportu z rzeczywistym formatem pliku stacji **yoRadio**, bez kopiowania starego HTTP API. Przechowywanie LittleFS, UI/WWW edytuje listę bez restartu.
 
 ## Model

@@ -1,0 +1,65 @@
+[
+  {
+    "file": "GCC-GPL-3.0.txt",
+    "package": "xtensa-esp-elf esp-15.2.0_20251204",
+    "source_path": "share/licenses/gcc/COPYING3",
+    "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903",
+    "copy": "verbatim"
+  },
+  {
+    "file": "GCC-Runtime-Exception-3.1.txt",
+    "package": "xtensa-esp-elf esp-15.2.0_20251204",
+    "source_path": "share/licenses/gcc/COPYING.RUNTIME",
+    "sha256": "9d6b43ce4d8de0c878bf16b54d8e7a10d9bd42b75178153e3af6a815bdc90f74",
+    "copy": "verbatim"
+  },
+  {
+    "file": "Picolibc-COPYING.txt",
+    "package": "xtensa-esp-elf esp-15.2.0_20251204",
+    "source_path": "share/licenses/picolibc/COPYING.picolibc",
+    "sha256": "1e427387b690483dad761268beb0f09a824ecba6132c4dfee78d1fb21a6e75b5",
+    "copy": "verbatim"
+  },
+  {
+    "file": "Newlib-COPYING.txt",
+    "package": "xtensa-esp-elf esp-15.2.0_20251204",
+    "source_path": "share/licenses/picolibc/COPYING.NEWLIB",
+    "sha256": "fcfb5ec69b6ab52676dcc4dab7cf4338c8000ef97812dadd35b8592a640a8419",
+    "copy": "verbatim"
+  },
+  {
+    "file": "ESP-IDF-COPYRIGHT.rst",
+    "package": "ESP-IDF fff9895c82d744c7237be8847347bdd1b07c6643",
+    "source_path": "docs/en/COPYRIGHT.rst",
+    "sha256": "16651aef77120d3337d94c99891b25906ab86f15dd6840df3eed999ee113f1da",
+    "copy": "verbatim"
+  },
+  {
+    "file": "FreeRTOS-MIT.txt",
+    "package": "ESP-IDF fff9895c82d744c7237be8847347bdd1b07c6643",
+    "source_path": "components/freertos/FreeRTOS-Kernel/LICENSE.md",
+    "sha256": "508a77d2e7b51d98adeed32648ad124b7b30241a8e70b2e72c99f92d8e5874d1",
+    "copy": "verbatim"
+  },
+  {
+    "file": "lwIP-COPYING.txt",
+    "package": "ESP-IDF fff9895c82d744c7237be8847347bdd1b07c6643",
+    "source_path": "components/lwip/lwip/COPYING",
+    "sha256": "ef4aac92e05e87cd1cdc140870ed52206ba03d4a7fe46c1e11d7ffa6c87d252b",
+    "copy": "verbatim"
+  },
+  {
+    "file": "wpa_supplicant-COPYING.txt",
+    "package": "ESP-IDF fff9895c82d744c7237be8847347bdd1b07c6643",
+    "source_path": "components/wpa_supplicant/COPYING",
+    "sha256": "a87ac4e333d0f120408a9d814e40c3672cd27f365af89b4f2f6631f7a9338953",
+    "copy": "verbatim"
+  },
+  {
+    "file": "dr_flac-MIT-0.txt",
+    "package": "dr_flac 0.13.4; 35b5c392cc15456736c440a68dbe073178bbffe0",
+    "source_path": "components/decoder/third_party/dr_flac/dr_flac.h",
+    "sha256": "b3f433b0d3bdf0a781642a892a7aac2a15939490d0fadaa4797f46e1de36e130",
+    "copy": "verbatim text of selected MIT No Attribution alternative, excluding C comment delimiter"
+  }
+]

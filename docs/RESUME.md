@@ -1,5 +1,59 @@
 # Punkt wznowienia StreamOO
 
+## Możliwości audio i akceleracja w README — ADR0115 / 2026-11-14
+
+README PL/EN mają tabele kodeków/bitrate i akceleracji, opis HTTP/HTTPS,
+SIMD FFT/części Opus oraz sprzętowego AES/SHA. Rozdziały EN audio/DSP/sieć
+uzupełnione. Maksymalny stabilny bitrate dla poszczególnych kodeków nadal
+OPEN; liczby z generatorów próbek i filtr HLS nie są limitami całego radia.
+
+Build, N16R8, 503 testy bez SKIP, kontrola dokumentacji i bieżących symboli
+SIMD PASS. Bez flash, commita i push. Szczegóły i źródła:
+[ADR0115](adr/0115-readme-codecs-bitrate-and-acceleration.md).
+
+## Angielska dokumentacja końcowa — ADR0114 / 2026-11-14
+
+Dodano [README_EN.md](../README_EN.md) z dotychczasowym logo i katalog
+[docs/en](en/00_INDEX.md): 22 dokumenty obejmujące obsługę, menuconfig/build,
+14 rozdziałów technicznych, testowanie formatów, licencje i zasady rozwoju.
+README.md zaczyna się od odsyłacza do EN; indeks i instrukcje mają linki
+między językami. Na wyraźne doprecyzowanie użytkownika nie tłumaczono
+archiwum, starych raportów ani całego zbioru ADR. Interfejs WWW nadal PL.
+
+Build ESP-IDF 6.1, walidator N16R8 oraz 503 testy hostowe PASS bez SKIP.
+Odsyłacze/kotwice, składnia komend i przykładów JSON, symbole Kconfig
+oraz 15 par metoda/trasa API sprawdzone. Diff check PASS. Bez zmian kodu,
+konfiguracji i sekretów; bez flash. [Decyzja i zakres](adr/0114-english-current-documentation.md).
+
+## Instrukcje obsługi i budowania — ADR0113 / 2026-11-14
+
+Dodano [USER_GUIDE.md](USER_GUIDE.md) oraz [BUILD_GUIDE.md](BUILD_GUIDE.md).
+README opisuje teraz bieżące radio i kieruje do instrukcji; dawne etapy
+pozostają w dokumentach projektowych. Uaktualniono indeks i odsyłacze,
+wyjaśniono import dopisujący, listę bez stron i edytor po 25 pozycji,
+autoplay wersji 2 oraz różnicę GPIO6/GPIO16 w profilach enkodera.
+
+Instrukcje sprawdzono z kodem, Kconfig/defaults i oficjalną dokumentacją
+ESP-IDF 6.1. Walidator GPIO/platformy i native build PASS; 503 testy hostowe
+PASS bez SKIP. Kontrola odsyłaczy, symboli i składni komend oraz diff check
+PASS. Bez zmian implementacji, konfiguracji i sekretów; bez flash urządzenia.
+Szczegóły: [ADR0113](adr/0113-user-and-build-guides.md).
+
+## MIT dla własnej aplikacji — ADR0112 / 2026-11-14
+
+Na polecenie użytkownika dodano LICENSE: standardowa MIT, Copyright (c) 2026
+Mariusz Księżak (podpis podany przez użytkownika). LICENSING.md określa zakres
+i wyjątki; README oraz THIRD_PARTY_NOTICES odsyłają do nich wprost.
+Zależności, fonty, CA i materiały referencyjne zachowują własne warunki.
+Dołączono 9 tekstów/not SDK/runtime/dr_flac, indeks i rejestr pochodzenia
+SHA-256. Uaktualniono 29 pozycji własnego kodu/grafiki w inwentarzu.
+
+Treść MIT, hash-e/kopie upstream, zachowane third_party i odsyłacze PASS.
+Native ESP-IDF 6.1 build PASS: 0x177400 B, 90% app wolne. Diff check PASS dla
+zmian śledzonych; kopie upstream zachowują oryginalne formatowanie.
+Bez zmian kodu i wersji bibliotek; bez powtarzania testów funkcjonalnych.
+Pełny zakres i dowody: ADR0112, LICENSE, LICENSING.md, licenses/README.md.
+
 ## Głośność podczas przesuwania — ADR0111 / 2026-11-14
 
 Suwak WWW wysyła komendy już na input, bez czekania na puszczenie.

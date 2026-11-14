@@ -11,8 +11,9 @@ sprawdzone własnym parserem oraz ffprobe na komputerze; to nie odbiór S3.
 https://www.radiomast.io/docs/streaming-network/hls.html .
 Raport `playlist.hls.report.json` zawiera faktyczny profil próbki, który
 może się różnić od nominalnej nazwy stacji. Pliki ignorowaneGit; prywatnego
-playlist.csv nie zmieniono. Import pliku w WWW zastępuje listę, więc eksportuj
-ją przed próbą, albo dodaj wybrane adresy ręcznie w edytorze.
+playlist.csv nie zmieniono. Bieżący import WWW dopisuje stacje (ADR0070).
+Wyeksportuj listę przed próbą, aby mieć kopię; możesz też dodać wybrane
+adresy ręcznie. Instrukcja: [USER_GUIDE.md](USER_GUIDE.md#import-pliku).
 
 1. Zacznij od HLS MP3 stereo i AAC-LC, potem HE-AAC/v2 i mono. Słuchaj
    co najmniej3minut: po12s granicach segmentów i kolejnych reloadach bez

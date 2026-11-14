@@ -1,5 +1,11 @@
 # 11 — Przechowywanie, OTA, bezpieczeństwo
 
+Bieżąca obsługa zapisu: [USER_GUIDE.md](USER_GUIDE.md#ustawienia-i-zapamiętywanie).
+Aktualizacja z zachowaniem danych: [BUILD_GUIDE.md](BUILD_GUIDE.md#wgrywanie-i-aktualizacja).
+Stan 2026-11-14: ustawienia systemowe mają wersję 2, domyślne autoplay jest
+włączone. Własny zapisany wybór STOP pozostaje respektowany. Opis wersji 1
+i domyślnego STOP na końcu dokumentu jest historyczny; zastępuje go ADR0068.
+
 Stan implementacji 2026-10-31: Implementacja 09c: wersjonowany blob profili NVS i atomowa podmiana playlisty LittleFS, nowa storage 1 MiB. Lokalna konfiguracja WWW bez dodatkowego logowania na polecenie użytkownika (ADR0032), zapisane hasła nie są zwracane. Polityka przyszłej aplikacji OPEN. OTA wyłączone decyzją użytkownika (ADR0055). Trwałość i ograniczenia: ADR0031.
 
 ## NVS (USTALONE)

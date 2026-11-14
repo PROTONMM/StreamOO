@@ -1,5 +1,10 @@
 # Odbiór WWW AP/LAN i playlisty
 
+Bieżąca instrukcja użytkowa: [USER_GUIDE.md](USER_GUIDE.md).
+Aktualizacja 2026-11-14: panel ma zakładkę Ustawienia; w LAN import jest
+w Playlista, a w AP na stronie konfiguracji. Import dopisuje stacje
+(ADR0070), zamiast zastępować katalog.
+
 1. Zwykły flash bez erase/NVS/obrazu FS. WWW Ctrl+F5. W AP oczekuj tylko
    Wi-Fi/importu/strefy czasu, bez playera i edytora. Po STA/AP-off domyślnie
    Odtwarzacz, z listą stacji i PLAY/STOP/volume. Konfiguracja nadal dostępna
@@ -22,8 +27,9 @@
    Można odtworzyć eksport przez import. Pusty eksport to0B; do celowego
    czyszczenia użyj przycisku, nie importu pustego pliku.
 
-Zmiana nazwy/adresu aktualnej stacji może ją zatrzymać; niezmienione ID
-podczas edycji innych pozycji ma zachować odtwarzanie. Limit2048 stacji,
-256KiB CSV; player50/stronę, edytor25.
+Zmiana nazwy/adresu aktualnej stacji zachowuje ID i odtwarzanie; nowy adres
+obowiązuje przy następnym połączeniu (ADR0059). Limit 2048 stacji,
+256 KiB CSV; odtwarzacz ma pełną przewijaną listę bez stron (ADR0107),
+edytor nadal pokazuje po 25 stacji.
 Agent nie uruchamiał tych operacji na urządzeniu ani prywatnej playliście.
 NVS strefy po fizycznym power-cycle użytkownik sprawdza osobno.

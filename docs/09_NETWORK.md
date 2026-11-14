@@ -1,5 +1,10 @@
 # 09 — Wi-Fi provisioning i mDNS
 
+Pierwsze uruchomienie i codzienna konfiguracja:
+[USER_GUIDE.md](USER_GUIDE.md#pierwsze-uruchomienie).
+Przygotowanie prywatnego hasła AP przed buildem:
+[BUILD_GUIDE.md](BUILD_GUIDE.md#prywatne-hasło-ap).
+
 ADR0097: normalny profil SNTP ma trzy serwery0/1/2.pool.ntp.org i nie ma
 losowej zwłoki startowej0..5s. To fallbacki sekwencyjne, nie trzy zapytania
 jednocześnie; lokalny timeout odpowiedzi15s. HTTP nie czeka na zegar,

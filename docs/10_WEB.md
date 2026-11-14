@@ -1,5 +1,9 @@
 # 10 — Nowe WWW i REST API StreamOO
 
+Instrukcja bieżącego panelu dla użytkownika:
+[USER_GUIDE.md](USER_GUIDE.md#dostęp-do-panelu-www).
+W LAN import jest w zakładce Playlista; w AP na stronie konfiguracji.
+
 ## Głośność podczas przesuwania — ADR0111 / 2026-11-14
 
 Suwak WWW wysyła komendy już na input, bez czekania na puszczenie.

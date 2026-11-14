@@ -1,5 +1,8 @@
 # 02 — PCB i konfiguracja menuconfig
 
+Praktyczna instrukcja ustawiania GPIO i pozostałych opcji:
+[BUILD_GUIDE.md](BUILD_GUIDE.md#pierwsza-konfiguracja-i-menuconfig).
+
 **USTALONE:** moduł ESP32-S3 N16R8 (16 MB flash, 8 MB PSRAM), wyświetlacz SSD1322 256×64, PCM5102A przez I²S, jeden enkoder. Źródłem połączeń jest `references/YR.kicad_sch`; to konfiguracja PCB YR_0.3.1. Dane z późniejszej analizy schematu mają pierwszeństwo przed starszymi tabelami i definicjami Arduino. Wyjątek potwierdzony na sprzęcie przez użytkownika 2026-10-24: enkoder A/B/BTN = 5/6/7; schemat referencyjny ma B na 16.
 
 | Urządzenie | Sygnał | GPIO | Status |

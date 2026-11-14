@@ -1,5 +1,17 @@
 # Przegląd możliwości wydania na MIT — 2026-11-01
 
+## Aktualny stan — MIT nadane / ADR0112 / 2026-11-14
+
+Na polecenie użytkownika własny kod StreamOO otrzymał standardową MIT.
+Właściciel wskazany przez użytkownika: Mariusz Księżak. Obowiązują
+[LICENSE](../LICENSE), [zakres i wyjątki](../LICENSING.md) oraz
+[noty zależności](../THIRD_PARTY_NOTICES.md). Mały font pozostaje public domain,
+Krypton OFL, kodeki Espressif na swoich ograniczonych warunkach.
+Dołączono brakujące kopie not SDK/runtime z rejestrem pochodzenia i hashami.
+
+Poniższa analiza jest historyczna. Jej wzmianki o nienadanej licencji własnej
+aplikacji zastępuje ADR0112; licencje materiałów zewnętrznych pozostają odrębne.
+
 ## Aktualizacja fontu — ADR0102 / 2026-11-14
 
 Mały font PL zastąpiono public-domain Misc Fixed Unicode5x8, a sześć klatek wzorcowych zregenerowano. Blokada praw do poprzednich bitmap nie dotyczy już bieżącego fontu ani tych klatek. Historyczne rewizje i materiały referencyjne nie zostały przelicencjonowane. Pozostałe ograniczenia zależności i brak nadanej licencji własnego kodu pozostają; poniższa ocena z2026-11-01 opisuje stan sprzed podmiany.

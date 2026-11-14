@@ -1,5 +1,13 @@
 # 06 — Audio, dekodery, I²S, player state
 
+Aktualne zestawienie kodeków, profili, bitrate CBR/VBR, HTTP/HTTPS i zakresu
+akceleracji: [README](../README.md#kodeki-i-bitrate). Wspierana rodzina AAC
+obejmuje AAC-LC, HE-AAC i HE-AACv2. Nie ustalono gwarantowanego maksimum
+bitrate dla każdego kodeka: parametry próbek MP3/AAC 128 kb/s i Opus 96 kb/s
+nie są limitami dekoderów. Próg 512000 bit/s dotyczy deklaracji `BANDWIDTH`
+wariantów HLS `EXT-X-STREAM-INF`, a 4096 kb/s to kontrola wiarygodności
+metadanych/estymacji, nie potwierdzona przepustowość odtwarzania.
+
 ADR0097: zwykły build wybiera teraz dr_flac + hardware AES/SHA/early init
 i TCP23040/mailbox18, zgodnie z udanym testem liczników ADR0095. Alternatywne
 backendy nadal wybieralne. HTTP startuje bez czasu, HTTPS czeka w readerze

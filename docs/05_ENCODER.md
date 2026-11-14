@@ -1,5 +1,10 @@
 # 05 — Enkoder, gesty, lista stacji
 
+Bieżąca instrukcja użytkownika: [USER_GUIDE.md — enkoder](USER_GUIDE.md#enkoder).
+Obecny próg długiego kliknięcia wynosi 600 ms, akcja jest przy zwolnieniu;
+lista OLED zatrzymuje się na granicach. Są cztery wizualizacje. Dawne opisy
+syntetycznych testów niżej nie opisują zwykłego profilu radia.
+
 **USTALONE:** jeden enkoder z przyciskiem, dwa warianty A/B wybierane przez menuconfig.
 
 | Gest | A (domyślny) | B |

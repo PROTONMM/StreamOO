@@ -1,6 +1,23 @@
 # Plan i indeks dokumentacji
 
+[English documentation](en/00_INDEX.md)
+
 Punkt wznowienia pracy: [RESUME.md](RESUME.md).
+
+## Instrukcje bieżącej wersji
+
+- [Obsługa radia](USER_GUIDE.md): Wi-Fi/AP, enkoder, OLED, WWW i playlisty.
+- [Menuconfig, budowanie i wgrywanie](BUILD_GUIDE.md): środowisko ESP-IDF,
+  prywatne hasło AP, opcje sprzętu/DSP, diagnostyka i aktualizacja.
+- [ADR0113 — instrukcje użytkowe](adr/0113-user-and-build-guides.md).
+- [ADR0114 — angielska dokumentacja końcowa](adr/0114-english-current-documentation.md).
+- [ADR0115 — kodeki, bitrate i akceleracja w README](adr/0115-readme-codecs-bitrate-and-acceleration.md).
+
+Powyższe instrukcje opisują aktualne zachowanie. Dokumenty etapów i protokoły
+odbioru poniżej zawierają także historię rozwoju; dawne akapity „bieżące”
+odnoszą się do wersji z daty danego etapu.
+
+## Plan projektu i historia etapów
 
 Statusy: **USTALONE** = użytkownik podjął decyzję; **PROPONOWANE** = sugestia techniczna do przetestowania; **OTWARTE** = brak potwierdzenia. Etapy projektowe opisują wymagania i kryteria odbioru, nie stwierdzają ukończenia kodu.
 
@@ -258,3 +275,6 @@ Zwarty panel PC/telefon, motywy i format audio: `adr/0109-compact-responsive-web
 Mniejsze sterowanie WWW i poprzednia/następna stacja: `adr/0110-compact-web-transport-and-station-navigation.md`.
 
 Regulacja głośności WWW podczas przesuwania: `adr/0111-live-web-volume-slider.md`.
+
+Licencja MIT własnej aplikacji i wyjątki: `../LICENSE`, `../LICENSING.md`,
+`../licenses/README.md`, `adr/0112-mit-license-for-original-streamoo-code.md`.

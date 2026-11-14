@@ -1,5 +1,9 @@
 # 03 — Platforma, architektura i zasoby
 
+Aktualna procedura instalacji środowiska, budowania i flashowania:
+[BUILD_GUIDE.md](BUILD_GUIDE.md). Opisy pierwszych etapów niżej są historyczne;
+w bieżącej implementacji działają już właściciele stanów player/network/UI.
+
 Aktualny audyt internal/PSRAM i stosów: [MEMORY_AUDIT](MEMORY_AUDIT.md),
 ADR0098. Domyślne źródła testowe wyłączone:9792B mniej stałego DRAM,
 bez zmniejszenia stosów, PCM lub TCP. Runtime heap po zmianie OPEN.

@@ -1,7 +1,10 @@
 # Third-party material in StreamOO
 
-Current release-license assessment: [MIT feasibility review](docs/LICENSING_REVIEW.md).
-Original application licensing does not replace the licenses below.
+Original StreamOO code is licensed under [MIT](LICENSE), copyright (c) 2026
+Mariusz Księżak. See [scope and exceptions](LICENSING.md) and the
+[license-text index](licenses/README.md). This grant does not replace the
+licenses below. Earlier feasibility analysis is retained in
+[the licensing review](docs/LICENSING_REVIEW.md).
 The small font was replaced with public-domain Misc Fixed Unicode 5x8 in ADR0102.
 
 ## ESP-DSP 1.8.2 — vector FFT on ESP32-S3
@@ -149,3 +152,17 @@ the compiler's own license does not automatically apply to the whole app.
 See [full module and replacement analysis](docs/MIT_MIGRATION_ANALYSIS.md)
 and its local toolchain notice paths. Statements above about no imported GPL
 codec implementations do not claim that every runtime file is MIT.
+
+## Retained SDK and runtime license texts — 2026-11-14
+
+The pinned SDK's [copyright inventory](licenses/ESP-IDF-COPYRIGHT.rst),
+[FreeRTOS MIT](licenses/FreeRTOS-MIT.txt), [lwIP](licenses/lwIP-COPYING.txt)
+and [wpa_supplicant](licenses/wpa_supplicant-COPYING.txt) notices are retained.
+Runtime texts are [GCC GPLv3](licenses/GCC-GPL-3.0.txt) **with** the
+[GCC Runtime Library Exception 3.1](licenses/GCC-Runtime-Exception-3.1.txt),
+[Picolibc](licenses/Picolibc-COPYING.txt) and [Newlib](licenses/Newlib-COPYING.txt).
+The selected dr_flac license is also available separately as
+[MIT-0](licenses/dr_flac-MIT-0.txt). Exact copy provenance and hashes:
+[UPSTREAM_SOURCES.json](licenses/UPSTREAM_SOURCES.json).
+These texts supplement existing notices; copying them imports no runtime code
+and does not change the terms of the original application or dependencies.
