@@ -352,6 +352,17 @@ installs `libclang-rt-dev`, which Ubuntu's Clang packages only recommend and
 the workflow's `--no-install-recommends` would omit. No tests were skipped
 or security checks weakened to address the environment failure.
 
+Run `43683446317` subsequently passed firmware, host tests and ASan/UBSan/GCC
+but failed directory-based Cppcheck: it explored invalid N16R8 macro profiles
+and opt-in fixture linker-symbol pointer arithmetic outside the active build.
+CI now uses `python3 tools/check_cppcheck.py build/ci/compile_commands.json`,
+retaining real compiler definitions/includes for active project units while
+excluding third-party translation units. No diagnostic is globally suppressed;
+inactive fixture semantics and optional profiles are outside that check.
+One file/diagnostic-specific exception documents dr_flac's intentional
+`DRFLAC_ASSERT(!"message")` idiom (`incorrectStringBooleanError`); other
+vendor and project diagnostics remain enabled. Upstream source is unchanged.
+
 Follow-up, 2026-11-15: the user confirmed completing review and a successful
 test on a new device: newly flashed firmware, Wi-Fi configuration and import
 of a new station list. **PASS — user-reported** for that basic setup workflow.

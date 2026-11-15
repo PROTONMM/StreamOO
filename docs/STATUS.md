@@ -1,5 +1,17 @@
 # Status implementacji
 
+## CI — Cppcheck z konfiguracją kompilatora — 2026-11-15
+
+Workflow43683446317 potwierdził firmware, testy hostowe i ASan/UBSan/GCC,
+lecz Cppcheck analizował nieaktywne warianty bez poprawnego sdkconfig oraz
+symbole linkerowe fixture. Dodano tools/check_cppcheck.py: filtruje bazę
+compile_commands.json do aktywnych źródeł StreamOO, zachowując rzeczywiste
+definicje i include z ESP-IDF. Biblioteki SDK/third_party nie są oddzielnymi
+celami tej kontroli. Jedyny wyjątek plik/diagnostyka: incorrectStringBooleanError
+dla zamierzonego DRFLAC_ASSERT(!"message") w upstream dr_flac.h; kod upstream
+niezmieniony. Bez globalnego tłumienia ostrzeżeń; opt-in fixture nadal
+mają testy hostowe. Wynik zdalnego wykonania pozostaje do potwierdzenia.
+
 ## CI GitHub — brakujące zależności hostowe — 2026-11-15
 
 Pierwszy zdalny workflow43683074033: firmware PASS, testy hostowe FAIL przez

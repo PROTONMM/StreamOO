@@ -56,9 +56,7 @@ jobs:
       - name: ASan, UBSan and GCC analyzer
         run: /tmp/streamoo-ci-host/bin/python tools/check_host_safety.py
       - name: Cppcheck project sources
-        run: |
-          cppcheck --enable=warning,performance,portability --std=c11 --inline-suppr \
-            --error-exitcode=1 -i components/decoder/third_party -i components/text/generated components main
+        run: /tmp/streamoo-ci-host/bin/python tools/check_cppcheck.py build/ci/compile_commands.json
       - name: Bounded parser fuzz smoke tests
         run: |
           make -f tests/fuzz/Makefile -j2
