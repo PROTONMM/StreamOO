@@ -113,6 +113,21 @@ int main(void){
  call(6,"x",129);assert(strstr(status,"413"));
  const char *volume="{\"action\":\"volume\",\"value\":57}";
  call(7,volume,strlen(volume));assert(strstr(status,"202")&&controls==1);
+ const char *nul_action="{\"action\":\"volume\\u0000ignored\",\"value\":57}";
+ call(7,nul_action,strlen(nul_action));assert(strstr(status,"400")&&controls==1);
+ const char *nul_key="{\"action\\u0000ignored\":\"volume\",\"value\":57}";
+ call(7,nul_key,strlen(nul_key));assert(strstr(status,"400")&&controls==1);
+ const char *nul_zone="{\"timezone\":\"UTC\\u0000ignored\"}";
+ call(6,nul_zone,strlen(nul_zone));assert(strstr(status,"400"));
+ const char *nul_station="{\"station_id\":\"000000000000000b\\u0000ignored\"}";
+ call(11,nul_station,strlen(nul_station));assert(strstr(status,"400"));
+ const char *nul_settings="{\"list_timeout_s\":9,\"list_autoselect\":false,\"autoplay\":true,\"hostname\":\"test\\u0000ignored\"}";
+ call(13,nul_settings,strlen(nul_settings));assert(strstr(status,"400")&&!strcmp(system_settings.hostname,"kitchen-radio"));
+ /* Maximum-size nested JSON, including escaped quotes and brackets in strings. */
+ char nested[513];memset(nested,'[',255);nested[255]='0';memset(nested+256,']',255);nested[511]=0;
+ call(13,nested,511);assert(strstr(status,"400"));
+ const char *escaped="{\"hostname\":\"literal\\\\u0000[\\\"\",\"list_timeout_s\":9,\"list_autoselect\":false,\"autoplay\":true}";
+ call(13,escaped,strlen(escaped));assert(strstr(status,"200")&&!strcmp(system_settings.hostname,"literal\\u0000[\""));
  const char *play="{\"action\":\"play\"}";call(7,play,strlen(play));assert(strstr(status,"409"));
  const char *stop="{\"action\":\"stop\"}";call(7,stop,strlen(stop));assert(strstr(status,"503"));
  const char *bad="{\"action\":\"volume\",\"value\":57.5}";call(7,bad,strlen(bad));assert(strstr(status,"400")&&controls==1);
