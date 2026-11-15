@@ -344,6 +344,12 @@ fixes do not replace audits of ESP Component Registry locks or vendored codecs.
 
 ## Remaining work, in priority order
 
+GitHub CI follow-up: the first push run (`43683074033`) built firmware but
+failed host tests because the container lacked OpenSSL development headers
+and a host-visible CMake. The workflow now explicitly installs `libssl-dev`
+and `cmake`; contributor prerequisites were corrected. No tests were skipped
+or security checks weakened to address the environment failure.
+
 Follow-up, 2026-11-15: the user confirmed completing review and a successful
 test on a new device: newly flashed firmware, Wi-Fi configuration and import
 of a new station list. **PASS — user-reported** for that basic setup workflow.

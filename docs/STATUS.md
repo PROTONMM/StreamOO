@@ -1,5 +1,13 @@
 # Status implementacji
 
+## CI GitHub — brakujące zależności hostowe — 2026-11-15
+
+Pierwszy zdalny workflow43683074033: firmware PASS, testy hostowe FAIL przez
+brak openssl/evp.h oraz CMake widocznego poza aktywacją SDK. Dodano jawne
+pakiety libssl-dev i cmake do CI oraz instrukcji współtworzenia. Bez zmian
+firmware, wyłączania testów lub osłabiania kontroli. Wynik ponownego zdalnego
+wykonania należy potwierdzić przed scaleniem PR#2.
+
 ## Odbiór nowego urządzenia po audycie — 2026-11-15
 
 Użytkownik potwierdził zakończenie przeglądu zmian oraz pozytywny test na

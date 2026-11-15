@@ -9,7 +9,8 @@ Start with [README](README_EN.md), [AGENTS.md](AGENTS.md),
    problem using synthetic data. Follow [build instructions](docs/en/BUILD_GUIDE.md)
    with ESP-IDF 6.1 and the checked-in dependency lock. `idf.py reconfigure`
    fetches managed components also needed by some host tests.
-2. Install host tools: C/C++ compiler, Python 3.9+, FFmpeg/FFprobe and Node.js.
+2. Install host tools: C/C++ compiler, CMake, OpenSSL development headers/library
+   (`libssl-dev` on Debian/Ubuntu), Python 3.9+, FFmpeg/FFprobe and Node.js.
    For the pinned optional packages use a separate Python 3.12+ virtual environment,
    then run `python3 -m pip install -r tests/requirements-host.txt`.
    Run `python3 -m unittest discover -s tests -v`, then

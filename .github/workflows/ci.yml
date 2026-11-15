@@ -29,7 +29,7 @@ jobs:
       - name: Install host tools
         run: |
           apt-get update
-          apt-get install --no-install-recommends -y gcc g++ make ffmpeg nodejs clang cppcheck python3-venv
+          apt-get install --no-install-recommends -y gcc g++ make cmake libssl-dev ffmpeg nodejs clang cppcheck python3-venv
           python3 -m venv /tmp/streamoo-ci-host
           /tmp/streamoo-ci-host/bin/python -m pip install -r tests/requirements-host.txt
       - name: Clean firmware build with a disposable AP build key
