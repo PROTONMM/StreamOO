@@ -72,6 +72,7 @@ static void icy(unsigned chunk){
  assert(streamoo_icy_feed(&s,wire+at,size,out,sizeof out,&written));memcpy(audio+total,out,written);total+=written;at+=size;}
  assert(total==9&&!memcmp(audio,"abcdefghi",9));assert(!strcmp(s.title,"Zażółć")&&s.revision==1&&s.title_audio_offset==3&&s.audio_total==9);
  assert(streamoo_icy_init(&s,0));size_t written=0;assert(streamoo_icy_feed(&s,(uint8_t *)"raw",3,out,sizeof out,&written)&&written==3&&!memcmp(out,"raw",3));
+ assert(streamoo_icy_feed(&s,NULL,0,out,sizeof out,&written)&&written==0);
  assert(!streamoo_icy_init(&s,16777217));assert(!streamoo_icy_feed(&s,(uint8_t *)"raw",3,out,2,&written));
  assert(streamoo_icy_init(&s,1));uint8_t maximum[4083];maximum[0]='a';maximum[1]=255;memset(maximum+2,'x',4080);maximum[4082]='b';
  uint8_t *large=malloc(sizeof maximum);assert(large);assert(streamoo_icy_feed(&s,maximum,sizeof maximum,large,sizeof maximum,&written));assert(written==2&&large[0]=='a'&&large[1]=='b');free(large);

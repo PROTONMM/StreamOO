@@ -41,6 +41,8 @@ bool streamoo_icy_feed(streamoo_icy_t *s, const uint8_t *in, size_t n,
   if (!s || (!in && n) || !out || !written || cap < n)
     return false;
   *written = 0;
+  if (!n)
+    return true;
   if (!s->interval) {
     memcpy(out, in, n);
     *written = n;
