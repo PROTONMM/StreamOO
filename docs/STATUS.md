@@ -1,5 +1,14 @@
 # Status implementacji
 
+## CI — Git w kontenerze — 2026-11-15
+
+Workflow43684154697: build, host, ASan/UBSan/GCC, Cppcheck oraz fuzzing PASS.
+Końcowy git diff nie rozpoznał checkoutu przez dubious ownership: konfiguracja
+safe.directory z checkout action była tymczasowa. Workflow ustawia zaufanie
+wyłącznie dla GITHUB_WORKSPACE, bez wildcard. Kontrolę przeniesiono przed
+kosztowne testy; fetch-depth2 umożliwia git diff --check HEAD^ HEAD dla
+zapisanych zmian zamiast pustego diffu drzewa roboczego.
+
 ## CI — Cppcheck z konfiguracją kompilatora — 2026-11-15
 
 Workflow43683446317 potwierdził firmware, testy hostowe i ASan/UBSan/GCC,

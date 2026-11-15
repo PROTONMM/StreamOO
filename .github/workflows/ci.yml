@@ -26,6 +26,14 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
+          fetch-depth: 2
+      - name: Verify checkout and committed whitespace
+        run: |
+          # Checkout's temporary Git config is not retained by later container steps.
+          # Trust only this runner checkout, never a wildcard directory.
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git rev-parse --show-toplevel
+          git diff --check HEAD^ HEAD
       - name: Install host tools
         run: |
           apt-get update
@@ -65,5 +73,3 @@ jobs:
             cp "tests/fuzz/corpus/$target/"* "build/fuzz/corpus/$target/"
             "build/fuzz/libfuzzer/$target" "build/fuzz/corpus/$target" -runs=2000 -max_len=32768
           done
-      - name: Whitespace check
-        run: git diff --check

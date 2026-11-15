@@ -363,6 +363,13 @@ One file/diagnostic-specific exception documents dr_flac's intentional
 `DRFLAC_ASSERT(!"message")` idiom (`incorrectStringBooleanError`); other
 vendor and project diagnostics remain enabled. Upstream source is unchanged.
 
+Run `43684154697` passed firmware, host tests, sanitizers/GCC, configured
+Cppcheck and parser fuzzing, then failed the Git whitespace step. The log
+also showed `dubious ownership`: checkout's temporary safe-directory config
+was unavailable to later container steps. CI now trusts only its exact
+`GITHUB_WORKSPACE` path, verifies checkout early and uses depth 2 to check
+committed `HEAD^ HEAD` whitespace before expensive checks. No wildcard trust.
+
 Follow-up, 2026-11-15: the user confirmed completing review and a successful
 test on a new device: newly flashed firmware, Wi-Fi configuration and import
 of a new station list. **PASS — user-reported** for that basic setup workflow.
