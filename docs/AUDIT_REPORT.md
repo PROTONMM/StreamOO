@@ -347,7 +347,9 @@ fixes do not replace audits of ESP Component Registry locks or vendored codecs.
 GitHub CI follow-up: the first push run (`43683074033`) built firmware but
 failed host tests because the container lacked OpenSSL development headers
 and a host-visible CMake. The workflow now explicitly installs `libssl-dev`
-and `cmake`; contributor prerequisites were corrected. No tests were skipped
+and `cmake`; contributor prerequisites were corrected. It also explicitly
+installs `libclang-rt-dev`, which Ubuntu's Clang packages only recommend and
+the workflow's `--no-install-recommends` would omit. No tests were skipped
 or security checks weakened to address the environment failure.
 
 Follow-up, 2026-11-15: the user confirmed completing review and a successful

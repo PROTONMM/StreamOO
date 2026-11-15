@@ -4,7 +4,9 @@
 
 Pierwszy zdalny workflow43683074033: firmware PASS, testy hostowe FAIL przez
 brak openssl/evp.h oraz CMake widocznego poza aktywacją SDK. Dodano jawne
-pakiety libssl-dev i cmake do CI oraz instrukcji współtworzenia. Bez zmian
+pakiety libssl-dev i cmake do CI oraz instrukcji współtworzenia. Jawnie dodano
+także libclang-rt-dev dla libFuzzer/ASan: przy --no-install-recommends sam clang
+nie instaluje runtime na Ubuntu24.04. Bez zmian
 firmware, wyłączania testów lub osłabiania kontroli. Wynik ponownego zdalnego
 wykonania należy potwierdzić przed scaleniem PR#2.
 
