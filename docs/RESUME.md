@@ -4,7 +4,8 @@
 
 Przegląd zmian zakończony. Na nowym urządzeniu: nowe firmware, konfiguracja
 Wi-Fi i import nowej listy stacji — użytkownik potwierdza OK. Zgłoszenie
-połączenia zamknięte w tym zakresie, przyczyna nieustalona. Brak hash/logów
+połączenia zamknięte: użytkownik potwierdził błędnie wpisane hasło Wi-Fi.
+Nie stwierdzono usterki firmware w tym zgłoszeniu. Brak hash/logów
 obrazu; pozostałych prób sprzętowych nie uznawać za zaliczone.
 Audyt zapisany w czterech lokalnych commitach51b7a4d..05dd299.
 Teraz zgoda na push i wykonanie zdalnego CI; dalej brakujące próby z

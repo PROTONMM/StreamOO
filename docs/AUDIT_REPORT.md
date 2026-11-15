@@ -347,8 +347,9 @@ fixes do not replace audits of ESP Component Registry locks or vendored codecs.
 Follow-up, 2026-11-15: the user confirmed completing review and a successful
 test on a new device: newly flashed firmware, Wi-Fi configuration and import
 of a new station list. **PASS — user-reported** for that basic setup workflow.
-The earlier connection complaint is closed for this attempt; its root cause
-was not established. No firmware hash, UART log or detailed test protocol was
+The earlier connection complaint is closed: the user subsequently confirmed
+an incorrectly entered Wi-Fi password. No firmware defect was established in
+that incident. No firmware hash, UART log or detailed test protocol was
 provided. Malformed JSON, reconnect stress, timing, soak and power-loss checks
 remain open. This updates the original audit's hardware-blocked status only
 for the explicitly reported setup operations.

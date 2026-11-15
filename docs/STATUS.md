@@ -5,7 +5,9 @@
 Użytkownik potwierdził zakończenie przeglądu zmian oraz pozytywny test na
 nowym urządzeniu: wgranie nowego firmware, konfiguracja Wi-Fi i wgranie
 nowej listy stacji — OK. Wcześniejsze zgłoszenie braku połączenia zamknięte
-dla tej próby; nie ustalono jego przyczyny. Nie podano identyfikatora obrazu,
+dla tej próby. Użytkownik doprecyzował przyczynę: błędnie wpisane hasło Wi-Fi;
+zgłoszenie wynikało z konfiguracji, nie stwierdzono usterki firmware.
+Nie podano identyfikatora obrazu,
 logów ani szczegółowego protokołu, więc wynik zapisujemy jako odbiór użytkownika
 w wymienionym zakresie. Głęboki/błędny JSON, szybkie przełączenia/reconnect,
 DMA/stosy, soak kodeków i odporność na zanik zasilania pozostają OPEN.
