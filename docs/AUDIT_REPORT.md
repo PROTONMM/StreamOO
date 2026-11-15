@@ -344,9 +344,22 @@ fixes do not replace audits of ESP Component Registry locks or vendored codecs.
 
 ## Remaining work, in priority order
 
-1. Review and merge the parser fixes through the normal approved publication
+Follow-up, 2026-11-15: the user confirmed completing review and a successful
+test on a new device: newly flashed firmware, Wi-Fi configuration and import
+of a new station list. **PASS — user-reported** for that basic setup workflow.
+The earlier connection complaint is closed for this attempt; its root cause
+was not established. No firmware hash, UART log or detailed test protocol was
+provided. Malformed JSON, reconnect stress, timing, soak and power-loss checks
+remain open. This updates the original audit's hardware-blocked status only
+for the explicitly reported setup operations.
+
+The four audit groups below were committed locally as `51b7a4d`, `099d8d8`,
+`0e01018` and `05dd299` after review. The opening no-commit statement describes
+the original audit execution; no push or GitHub Actions execution has followed.
+
+1. Merge the reviewed parser fixes through the normal approved publication
    process; execute GitHub CI and resolve any container-specific differences.
-2. On S3 test malformed/deep JSON without reset, normal panel setup/playback,
+2. On S3 test malformed/deep JSON without reset, playback/control,
    rapid station/STOP/reconnect changes, DMA continuity, stack margins and a
    multi-hour soak across supported codecs. Log exact firmware/configuration.
 3. Complete interrupted-write/full-storage, corrupt NVS/catalog and physical
@@ -359,7 +372,7 @@ fixes do not replace audits of ESP Component Registry locks or vendored codecs.
 6. Stress diagnostic task snapshot lifetimes and measure target SIMD/decoder
    performance before changing scheduling, buffers, copies or optimization.
 
-Suggested reviewable commit groups (not committed):
+Audit commit groups (committed locally after review):
 
 - `fix(portal): bound JSON recursion and reject decoded NUL fields`
 - `fix(streaming): handle empty ICY feeds without undefined behavior`

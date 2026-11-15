@@ -1,5 +1,19 @@
 # Status implementacji
 
+## Odbiór nowego urządzenia po audycie — 2026-11-15
+
+Użytkownik potwierdził zakończenie przeglądu zmian oraz pozytywny test na
+nowym urządzeniu: wgranie nowego firmware, konfiguracja Wi-Fi i wgranie
+nowej listy stacji — OK. Wcześniejsze zgłoszenie braku połączenia zamknięte
+dla tej próby; nie ustalono jego przyczyny. Nie podano identyfikatora obrazu,
+logów ani szczegółowego protokołu, więc wynik zapisujemy jako odbiór użytkownika
+w wymienionym zakresie. Głęboki/błędny JSON, szybkie przełączenia/reconnect,
+DMA/stosy, soak kodeków i odporność na zanik zasilania pozostają OPEN.
+
+Zmiany audytu zapisano lokalnie:51b7a4d,099d8d8,0e01018,05dd299.
+Push i zdalne CI nadal oczekują osobnej zgody. Aktualizacja dokumentacji;
+`git diff --check` PASS, bez ponawiania builda/testów funkcjonalnych.
+
 ## Audyt repozytorium i bezpieczeństwa — ADR0116 / 2026-11-15
 
 Osobna gałąź `audit/comprehensive-review-20261115`, czysty stan początkowy.

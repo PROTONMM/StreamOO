@@ -1,5 +1,15 @@
 # Punkt wznowienia StreamOO
 
+## Odbiór użytkownika — 2026-11-15
+
+Przegląd zmian zakończony. Na nowym urządzeniu: nowe firmware, konfiguracja
+Wi-Fi i import nowej listy stacji — użytkownik potwierdza OK. Zgłoszenie
+połączenia zamknięte w tym zakresie, przyczyna nieustalona. Brak hash/logów
+obrazu; pozostałych prób sprzętowych nie uznawać za zaliczone.
+Audyt zapisany w czterech lokalnych commitach51b7a4d..05dd299.
+Teraz zgoda na push i wykonanie zdalnego CI; dalej brakujące próby z
+[raportu](AUDIT_REPORT.md#remaining-work-in-priority-order). Bez push/flash agenta.
+
 ## Audyt repozytorium — ADR0116 / 2026-11-15
 
 Lokalne poprawki i pełny raport: [AUDIT_REPORT.md](AUDIT_REPORT.md).
