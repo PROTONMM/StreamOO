@@ -1,5 +1,17 @@
 # Punkt wznowienia StreamOO
 
+## Audyt repozytorium — ADR0116 / 2026-11-15
+
+Lokalne poprawki i pełny raport: [AUDIT_REPORT.md](AUDIT_REPORT.md).
+Gałąź `audit/comprehensive-review-20261115`. Naprawiono JSON NUL/głębokość
+i pusty ICY; dodano CI, opcjonalny fuzzing i dokumenty dla współtwórców.
+503 testy bez SKIP,217 w zestawie natywnych sanitizerów, GCC/Clang/Cppcheck,
+100000 wykonań fuzz, browser/layout, actionlint oraz build6.1 PASS.
+Obraz z jednorazowym kluczem AP0x177490 B. Szczegóły i ograniczenia w raporcie.
+Teraz review zmian, osobna zgoda na publikację/push, potem zdalne CI i odbiór
+sprzętowy. AFL kampania BLOCKED przez core_pattern. Bez commita/push/flash;
+nie nadpisywać istniejącego v0.1.0 i nie zmieniać ustawień GitHub bez zgody.
+
 ## Możliwości audio i akceleracja w README — ADR0115 / 2026-11-14
 
 README PL/EN mają tabele kodeków/bitrate i akceleracji, opis HTTP/HTTPS,

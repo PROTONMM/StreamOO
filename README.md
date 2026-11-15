@@ -140,6 +140,9 @@ może się zbudować, ale sieć pozostanie wyłączona.
 
 ## Rozwój i weryfikacja
 
+[Współtworzenie](CONTRIBUTING.md) · [Bezpieczeństwo](SECURITY.md) ·
+[Historia zmian](CHANGELOG.md) · [Raport audytu](docs/AUDIT_REPORT.md)
+
 ```sh
 python3 -m unittest discover -s tests -v
 ```

@@ -2,6 +2,9 @@
 
 [English README](../../README_EN.md) · [Polski](../00_INDEX.md)
 
+[Repository audit](../AUDIT_REPORT.md) · [Contributing](../../CONTRIBUTING.md) ·
+[Security](../../SECURITY.md) · [Changelog](../../CHANGELOG.md)
+
 Updated: 2026-11-14. This directory contains complete operating/build guides and
 current technical documentation. At the user's request, the chronological history,
 old reports and full ADR archive remain in Polish. Historical links are labeled;

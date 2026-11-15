@@ -35,17 +35,17 @@ więc wymaga dostępu do Internetu. Wersje zależności określają pliki
 `idf_component.yml` w komponentach i `dependencies.lock`; nie aktualizuj
 ich przy okazji zwykłego budowania.
 
-Użyj checkoutu zawierającego implementację StreamOO. Na dzień tej instrukcji
-implementacja jest na `feature/streamoo-implementation` i jest przedmiotem
-[PR #1](https://github.com/PROTONMM/StreamOO/pull/1) do `main`. Po jego scaleniu
-można korzystać z `main`. Sprawdź gałąź poleceniem `git branch --show-current`.
-
-Jeśli nie masz jeszcze checkoutu implementacji:
+Bieżąca implementacja znajduje się na `main`; PR #1 został scalony.
+Tag `v0.1.0` wskazuje pierwsze wydanie źródeł. Aby uzyskać checkout:
 
 ```sh
-git clone --branch feature/streamoo-implementation https://github.com/PROTONMM/StreamOO.git
+git clone --branch main https://github.com/PROTONMM/StreamOO.git
 cd StreamOO
 ```
+
+Dla odtworzenia konkretnego wydania użyj `git switch --detach v0.1.0`.
+Poprawki po wydaniu znajdują się na `main` dopiero po scaleniu.
+Wskazówki dla współtwórców: [CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Gdzie zmienia się ustawienia
 
