@@ -35,17 +35,17 @@ needs Internet access. Component `idf_component.yml` manifests and
 `dependencies.lock` define dependency versions. Do not update them as part of
 a routine build.
 
-Use a checkout containing the implementation. As recorded for this documentation
-on 2026-11-14, it is on `feature/streamoo-implementation`, proposed for `main`
-in [PR #1](https://github.com/PROTONMM/StreamOO/pull/1). Once merged, `main` can
-be used. Check your branch with `git branch --show-current`.
-
-To obtain an implementation checkout:
+The implementation is on `main`; PR #1 has been merged. Tag `v0.1.0`
+identifies the first source release. To obtain a checkout:
 
 ```sh
-git clone --branch feature/streamoo-implementation https://github.com/PROTONMM/StreamOO.git
+git clone --branch main https://github.com/PROTONMM/StreamOO.git
 cd StreamOO
 ```
+
+To reproduce that release, use `git switch --detach v0.1.0`.
+Post-release fixes reach `main` when merged. See
+[CONTRIBUTING.md](../../CONTRIBUTING.md) for contributor checks.
 
 ## Where settings are changed
 

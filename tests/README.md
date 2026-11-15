@@ -1,5 +1,14 @@
 # Testy hostowe
 
+Powtarzalny zestaw ASan/UBSan dla natywnych executable i GCC `-fanalyzer`:
+`python3 tools/check_host_safety.py` (Linux; po pobraniu zależności przez
+`idf.py reconfigure`). Opcjonalne oracles/generatory:
+`python3 -m pip install -r tests/requirements-host.txt` w osobnym venv Python3.12+.
+Fuzzery libFuzzer/AFL++, seedy, replay i minimalizacja:
+[fuzz/README.md](fuzz/README.md). Wyniki bieżącego audytu i granice pokrycia:
+[AUDIT_REPORT.md](../docs/AUDIT_REPORT.md). Zdalny CI wymaga wykonania na GitHub;
+lokalne wyniki nie są potwierdzeniem zdalnego workflow.
+
 Aktualizacje OLED po zmianie pikseli: testy w test_ssd1322.py oraz stress
 GDDRAM/awarii częściowego zapisu:
 

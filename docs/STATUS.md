@@ -1,5 +1,75 @@
 # Status implementacji
 
+## CI — Git w kontenerze — 2026-11-15
+
+Workflow43684154697: build, host, ASan/UBSan/GCC, Cppcheck oraz fuzzing PASS.
+Końcowy git diff nie rozpoznał checkoutu przez dubious ownership: konfiguracja
+safe.directory z checkout action była tymczasowa. Workflow ustawia zaufanie
+wyłącznie dla GITHUB_WORKSPACE, bez wildcard. Kontrolę przeniesiono przed
+kosztowne testy; fetch-depth2 umożliwia git diff --check HEAD^ HEAD dla
+zapisanych zmian zamiast pustego diffu drzewa roboczego.
+
+## CI — Cppcheck z konfiguracją kompilatora — 2026-11-15
+
+Workflow43683446317 potwierdził firmware, testy hostowe i ASan/UBSan/GCC,
+lecz Cppcheck analizował nieaktywne warianty bez poprawnego sdkconfig oraz
+symbole linkerowe fixture. Dodano tools/check_cppcheck.py: filtruje bazę
+compile_commands.json do aktywnych źródeł StreamOO, zachowując rzeczywiste
+definicje i include z ESP-IDF. Biblioteki SDK/third_party nie są oddzielnymi
+celami tej kontroli. Jedyny wyjątek plik/diagnostyka: incorrectStringBooleanError
+dla zamierzonego DRFLAC_ASSERT(!"message") w upstream dr_flac.h; kod upstream
+niezmieniony. Bez globalnego tłumienia ostrzeżeń; opt-in fixture nadal
+mają testy hostowe. Wynik zdalnego wykonania pozostaje do potwierdzenia.
+
+## CI GitHub — brakujące zależności hostowe — 2026-11-15
+
+Pierwszy zdalny workflow43683074033: firmware PASS, testy hostowe FAIL przez
+brak openssl/evp.h oraz CMake widocznego poza aktywacją SDK. Dodano jawne
+pakiety libssl-dev i cmake do CI oraz instrukcji współtworzenia. Jawnie dodano
+także libclang-rt-dev dla libFuzzer/ASan: przy --no-install-recommends sam clang
+nie instaluje runtime na Ubuntu24.04. Bez zmian
+firmware, wyłączania testów lub osłabiania kontroli. Wynik ponownego zdalnego
+wykonania należy potwierdzić przed scaleniem PR#2.
+
+## Odbiór nowego urządzenia po audycie — 2026-11-15
+
+Użytkownik potwierdził zakończenie przeglądu zmian oraz pozytywny test na
+nowym urządzeniu: wgranie nowego firmware, konfiguracja Wi-Fi i wgranie
+nowej listy stacji — OK. Wcześniejsze zgłoszenie braku połączenia zamknięte
+dla tej próby. Użytkownik doprecyzował przyczynę: błędnie wpisane hasło Wi-Fi;
+zgłoszenie wynikało z konfiguracji, nie stwierdzono usterki firmware.
+Nie podano identyfikatora obrazu,
+logów ani szczegółowego protokołu, więc wynik zapisujemy jako odbiór użytkownika
+w wymienionym zakresie. Głęboki/błędny JSON, szybkie przełączenia/reconnect,
+DMA/stosy, soak kodeków i odporność na zanik zasilania pozostają OPEN.
+
+Zmiany audytu zapisano lokalnie:51b7a4d,099d8d8,0e01018,05dd299.
+Push i zdalne CI nadal oczekują osobnej zgody. Aktualizacja dokumentacji;
+`git diff --check` PASS, bez ponawiania builda/testów funkcjonalnych.
+
+## Audyt repozytorium i bezpieczeństwa — ADR0116 / 2026-11-15
+
+Osobna gałąź `audit/comprehensive-review-20261115`, czysty stan początkowy.
+Odtworzono akceptację NUL w JSON i UB pustego ICY; poprawiono oba błędy.
+Dodano także limit głębokości przed rekurencją cJSON: 511 B może opisać
+255 poziomów, więcej niż pozwala stos HTTP8192 B (parse_value64 B według
+kompilatora Xtensa). Cztery endpointy używają wspólnego preflightu.
+Bez zmian GPIO, partycji, kodeków, zależności i gorącego toru I2S.
+
+Dodano CI, runner host safety, pięć opcjonalnych fuzzerów/seedy/instrukcje,
+SECURITY/CONTRIBUTING/CHANGELOG oraz korektę PL/EN checkoutu na main.
+GitHub: Issues włączone, v0.1.0/tag istnieje; Topics brak, prywatne zgłaszanie
+i skanowanie sekretów wyłączone. Podano komendy, bez zmian administracyjnych.
+
+503 testy hostowe bez SKIP PASS; 217 wybranych testów z ASan/UBSan natywnych
+executable PASS; GCC/Clang na19 przenośnych jednostkach i Cppcheck PASS.
+Pięć libFuzzer×20000 oraz replay granic/truncation PASS. AFL++ build/replay
+PASS, kampania BLOCKED przez systemowy core_pattern, bez obchodzenia kontroli.
+Chromium i sześć układów PASS; actionlint PASS. Czysty ESP-IDF6.1 build oraz
+build z jednorazowym kluczem AP PASS, obraz0x177490 B/90% wolne.
+Raport: [AUDIT_REPORT.md](AUDIT_REPORT.md). Sprzęt, soak i GitHub Actions
+OPEN/BLOCKED. Bez flash, commita, push i publikacji.
+
 ## Zdjęcia i charakter projektu w README — 2026-11-14
 
 README PL/EN zawierają zdjęcie radia `20261114_095225.jpg` i mobilny podgląd

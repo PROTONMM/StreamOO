@@ -84,6 +84,40 @@ static uint8_t *body(httpd_req_t *r, size_t limit) {
   data[done] = 0;
   return data;
 }
+/* Bound recursive cJSON work before parsing on the 8 KiB HTTP task stack.
+ * These endpoints only accept flat objects. Track string escapes so a literal
+ * backslash followed by u0000 remains distinct from a decoded NUL. */
+static cJSON *parse_json(const uint8_t *data, size_t bytes) {
+  if (memchr(data, 0, bytes))
+    return NULL;
+  unsigned depth = 0;
+  bool quoted = false;
+  for (size_t i = 0; i < bytes; ++i) {
+    uint8_t c = data[i];
+    if (quoted) {
+      if (c == '\\') {
+        if (++i == bytes)
+          return NULL;
+        if (data[i] == 'u' && bytes - i >= 5 &&
+            !memcmp(data + i + 1, "0000", 4))
+          return NULL;
+      } else if (c == '"')
+        quoted = false;
+    } else if (c == '"')
+      quoted = true;
+    else if (c == '{' || c == '[') {
+      if (++depth > 4)
+        return NULL;
+    } else if (c == '}' || c == ']') {
+      if (!depth)
+        return NULL;
+      --depth;
+    }
+  }
+  if (depth || quoted)
+    return NULL;
+  return cJSON_ParseWithLengthOpts((const char *)data, bytes + 1, NULL, true);
+}
 static bool content_type(httpd_req_t *r, const char *expected) {
   char type[64];
   if (httpd_req_get_hdr_value_str(r, "Content-Type", type, sizeof type) !=
@@ -201,7 +235,7 @@ static esp_err_t clock_post(httpd_req_t *r) {
   if(!request_allowed(r))return ESP_FAIL;
   if(!content_type(r,"application/json"))return reply(r,"415 Unsupported Media Type","{\"error\":\"json_required\"}");
   uint8_t *data=body(r,128);if(!data)return ESP_FAIL;
-  cJSON *root=memchr(data,0,r->content_len) ? NULL:cJSON_ParseWithLengthOpts((char *)data,r->content_len+1,NULL,true);
+  cJSON *root=parse_json(data, r->content_len);
   cJSON *field=root ? cJSON_GetObjectItemCaseSensitive(root,"timezone"):NULL;
   streamoo_clock_zone_t zone;
   bool valid=cJSON_IsObject(root) && cJSON_GetArraySize(root)==1 && cJSON_IsString(field) &&
@@ -225,7 +259,7 @@ static esp_err_t settings_post(httpd_req_t *r){
   if(!request_allowed(r))return ESP_FAIL;
   if(!content_type(r,"application/json"))return reply(r,"415 Unsupported Media Type","{\"error\":\"json_required\"}");
   uint8_t *data=body(r,512);if(!data)return ESP_FAIL;
-  cJSON *root=memchr(data,0,r->content_len)?NULL:cJSON_ParseWithLengthOpts((char *)data,r->content_len+1,NULL,true);
+  cJSON *root=parse_json(data, r->content_len);
   cJSON *timeout=cJSON_GetObjectItemCaseSensitive(root,"list_timeout_s"),
         *select=cJSON_GetObjectItemCaseSensitive(root,"list_autoselect"),
         *autoplay=cJSON_GetObjectItemCaseSensitive(root,"autoplay"),
@@ -245,7 +279,7 @@ static esp_err_t player_post(httpd_req_t *r) {
   if(!request_allowed(r))return ESP_FAIL;
   if(!content_type(r,"application/json"))return reply(r,"415 Unsupported Media Type","{\"error\":\"json_required\"}");
   uint8_t *data=body(r,128);if(!data)return ESP_FAIL;
-  cJSON *root=memchr(data,0,r->content_len) ? NULL:cJSON_ParseWithLengthOpts((char *)data,r->content_len+1,NULL,true);
+  cJSON *root=parse_json(data, r->content_len);
   cJSON *action=root ? cJSON_GetObjectItemCaseSensitive(root,"action"):NULL;
   cJSON *value=root ? cJSON_GetObjectItemCaseSensitive(root,"value"):NULL;
   bool valid=cJSON_IsObject(root) && cJSON_IsString(action);
@@ -345,7 +379,7 @@ static esp_err_t station_select(httpd_req_t *r){
   if(!generation(r,&expected))return reply(r,"400 Bad Request","{\"error\":\"catalog_generation_required\"}");
   if(!content_type(r,"application/json"))return reply(r,"415 Unsupported Media Type","{\"error\":\"json_required\"}");
   uint8_t *data=body(r,64);if(!data)return ESP_FAIL;
-  cJSON *root=memchr(data,0,r->content_len)?NULL:cJSON_ParseWithLengthOpts((char *)data,r->content_len+1,NULL,true);
+  cJSON *root=parse_json(data, r->content_len);
   cJSON *value=root ? cJSON_GetObjectItemCaseSensitive(root,"station_id"):NULL;
   bool valid=cJSON_IsObject(root)&&cJSON_GetArraySize(root)==1&&cJSON_IsString(value)&&strlen(value->valuestring)==16;
   uint64_t id=0;

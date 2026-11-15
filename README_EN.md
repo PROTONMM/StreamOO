@@ -143,6 +143,9 @@ but networking will remain disabled.
 
 ## Development and validation
 
+[Contributing](CONTRIBUTING.md) · [Security](SECURITY.md) ·
+[Changelog](CHANGELOG.md) · [Repository audit](docs/AUDIT_REPORT.md)
+
 ```sh
 python3 -m unittest discover -s tests -v
 ```

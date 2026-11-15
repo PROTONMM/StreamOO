@@ -1,0 +1,75 @@
+name: Build and host safety
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    container:
+      # Official multiarch ESP-IDF 6.1 image, verified 2026-11-15.
+      image: espressif/idf:v6.1@sha256:81893c71bb5e570088901f21def8684c25cd2a9020281bd01b843a7655edb18c
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          fetch-depth: 2
+      - name: Verify checkout and committed whitespace
+        run: |
+          # Checkout's temporary Git config is not retained by later container steps.
+          # Trust only this runner checkout, never a wildcard directory.
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git rev-parse --show-toplevel
+          git diff --check HEAD^ HEAD
+      - name: Install host tools
+        run: |
+          apt-get update
+          apt-get install --no-install-recommends -y gcc g++ make cmake libssl-dev ffmpeg nodejs clang libclang-rt-dev cppcheck python3-venv
+          python3 -m venv /tmp/streamoo-ci-host
+          /tmp/streamoo-ci-host/bin/python -m pip install -r tests/requirements-host.txt
+      - name: Clean firmware build with a disposable AP build key
+        env:
+          XDG_CONFIG_HOME: /tmp/streamoo-ci-private
+        run: |
+          # Compile the actual network owner too, without using a user's key.
+          # No firmware artifacts are uploaded. The random value is never logged.
+          python - <<'PY'
+          import os, secrets
+          from pathlib import Path
+          from tools.configure_network import save_private
+          save_private(Path(os.environ['XDG_CONFIG_HOME']) / 'streamoo/network.json', secrets.token_urlsafe(24))
+          PY
+          . /opt/esp/idf/export.sh
+          idf.py -B build/ci -D SDKCONFIG=build/ci-sdkconfig -D IDF_TARGET=esp32s3 build
+          python tools/check_config.py build/ci-sdkconfig --platform
+      - name: All host tests, with required optional tools
+        run: |
+          /tmp/streamoo-ci-host/bin/python -m unittest discover -s tests -v 2>&1 | tee /tmp/host-tests.log
+          if grep -Eq 'skipped=|\.\.\. skipped ' /tmp/host-tests.log; then
+            echo 'Required host coverage was skipped'; exit 1
+          fi
+      - name: ASan, UBSan and GCC analyzer
+        run: /tmp/streamoo-ci-host/bin/python tools/check_host_safety.py
+      - name: Cppcheck project sources
+        run: /tmp/streamoo-ci-host/bin/python tools/check_cppcheck.py build/ci/compile_commands.json
+      - name: Bounded parser fuzz smoke tests
+        run: |
+          make -f tests/fuzz/Makefile -j2
+          for target in playlist hls icy stations wifi; do
+            mkdir -p "build/fuzz/corpus/$target"
+            cp "tests/fuzz/corpus/$target/"* "build/fuzz/corpus/$target/"
+            "build/fuzz/libfuzzer/$target" "build/fuzz/corpus/$target" -runs=2000 -max_len=32768
+          done

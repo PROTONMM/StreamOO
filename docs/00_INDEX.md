@@ -4,6 +4,11 @@
 
 Punkt wznowienia pracy: [RESUME.md](RESUME.md).
 
+Audyt repozytorium i bezpieczeństwa: [AUDIT_REPORT.md](AUDIT_REPORT.md),
+[ADR0116](adr/0116-repository-audit-and-parser-safety.md).
+Zasady współtworzenia i zgłoszeń: [CONTRIBUTING](../CONTRIBUTING.md),
+[SECURITY](../SECURITY.md), [CHANGELOG](../CHANGELOG.md).
+
 ## Instrukcje bieżącej wersji
 
 - [Obsługa radia](USER_GUIDE.md): Wi-Fi/AP, enkoder, OLED, WWW i playlisty.
